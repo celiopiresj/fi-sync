@@ -1,0 +1,5565 @@
+{
+  "meta": {
+    "source": "AccountSync.xlsx",
+    "cutoffDate": "2026-08-01"
+  },
+  "accounts": [
+    {
+      "key": "chk_will",
+      "name": "Will",
+      "type": "CHECKING"
+    },
+    {
+      "key": "chk_nubank",
+      "name": "Nubank",
+      "type": "CHECKING"
+    },
+    {
+      "key": "cc_ame",
+      "name": "Ame",
+      "type": "CREDIT_CARD",
+      "limit": 700.0,
+      "closingDay": 30,
+      "dueDay": 12,
+      "cards": [
+        {
+          "key": "cc_ame_titular",
+          "name": "Titular",
+          "lastFourDigits": "6236"
+        }
+      ]
+    },
+    {
+      "key": "cc_c6",
+      "name": "C6",
+      "type": "CREDIT_CARD",
+      "limit": 6200.0,
+      "closingDay": 9,
+      "dueDay": 15,
+      "cards": [
+        {
+          "key": "cc_c6_titular",
+          "name": "Titular",
+          "lastFourDigits": "8100"
+        },
+        {
+          "key": "cc_c6_alexandre",
+          "name": "Alexandre",
+          "lastFourDigits": "8669"
+        },
+        {
+          "key": "cc_c6_virtual",
+          "name": "Virtual",
+          "lastFourDigits": "7861"
+        }
+      ]
+    },
+    {
+      "key": "cc_inter",
+      "name": "Inter",
+      "type": "CREDIT_CARD",
+      "limit": 2860.0,
+      "closingDay": 6,
+      "dueDay": 12,
+      "cards": [
+        {
+          "key": "cc_inter_titular",
+          "name": "Titular",
+          "lastFourDigits": "9574"
+        }
+      ]
+    },
+    {
+      "key": "cc_ita",
+      "name": "Itaú",
+      "type": "CREDIT_CARD",
+      "limit": 2500.0,
+      "closingDay": 1,
+      "dueDay": 9,
+      "cards": [
+        {
+          "key": "cc_ita_titular",
+          "name": "Titular",
+          "lastFourDigits": "5191"
+        }
+      ]
+    },
+    {
+      "key": "cc_next",
+      "name": "Next",
+      "type": "CREDIT_CARD",
+      "limit": 13040.0,
+      "closingDay": 28,
+      "dueDay": 12,
+      "cards": [
+        {
+          "key": "cc_next_titular",
+          "name": "Titular",
+          "lastFourDigits": "6200"
+        }
+      ]
+    },
+    {
+      "key": "cc_nubank",
+      "name": "Nubank",
+      "type": "CREDIT_CARD",
+      "limit": 2750.0,
+      "closingDay": 8,
+      "dueDay": 15,
+      "cards": [
+        {
+          "key": "cc_nubank_titular",
+          "name": "Titular",
+          "lastFourDigits": "2054"
+        }
+      ]
+    },
+    {
+      "key": "cc_will",
+      "name": "Will",
+      "type": "CREDIT_CARD",
+      "limit": 15000.0,
+      "closingDay": 12,
+      "dueDay": 15,
+      "cards": [
+        {
+          "key": "cc_will_titular",
+          "name": "Titular",
+          "lastFourDigits": "5233"
+        }
+      ]
+    },
+    {
+      "key": "cc_amazon",
+      "name": "Amazon",
+      "type": "CREDIT_CARD",
+      "limit": 900.0,
+      "closingDay": 2,
+      "dueDay": 15,
+      "cards": [
+        {
+          "key": "cc_amazon_titular",
+          "name": "Titular",
+          "lastFourDigits": "3017"
+        }
+      ]
+    }
+  ],
+  "categories": [
+    "Alimentação",
+    "Assinaturas",
+    "Bilhete Único",
+    "Bônus",
+    "Cartão",
+    "Cofrinho (Aporte)",
+    "Cofrinho (Resgate)",
+    "Compras Pessoais",
+    "Contas da Casa",
+    "Cuidados Pessoais",
+    "Depósito",
+    "Desconto",
+    "Dizimo",
+    "Dívidas",
+    "Educação",
+    "Empréstimo (Despesa)",
+    "Empréstimo (Recebimento)",
+    "Entretenimento",
+    "Farmácia",
+    "Internet",
+    "Investimentos (Aporte)",
+    "Investimentos (Resgate)",
+    "Juros",
+    "Lazer",
+    "Mercado",
+    "Padaria",
+    "Pagamento",
+    "Petshop",
+    "Presente",
+    "Reembolsos",
+    "Reforma e Manutenção",
+    "Resgates (Despesa)",
+    "Resgates (Recebimento)",
+    "Transporte",
+    "Vendas",
+    "Vestuário"
+  ],
+  "people": [
+    {
+      "key": "p_rogerio",
+      "name": "Rogerio",
+      "phoneCountryCode": "+55",
+      "phone": "21993520463"
+    },
+    {
+      "key": "p_m_e",
+      "name": "Mãe",
+      "phoneCountryCode": "+55",
+      "phone": "21986274460"
+    },
+    {
+      "key": "p_stefany",
+      "name": "Stefany",
+      "phoneCountryCode": "+55",
+      "phone": "21982944058"
+    },
+    {
+      "key": "p_pai",
+      "name": "Pai",
+      "phoneCountryCode": "+55",
+      "phone": "21985977421"
+    },
+    {
+      "key": "p_renata",
+      "name": "Renata",
+      "phoneCountryCode": "+55",
+      "phone": "21982169319"
+    },
+    {
+      "key": "p_matheus",
+      "name": "Matheus",
+      "phoneCountryCode": "+55",
+      "phone": "21987882762"
+    },
+    {
+      "key": "eu",
+      "name": "Eu",
+      "phoneCountryCode": "+55",
+      "phone": "21988260577"
+    },
+    {
+      "key": "p_marileide",
+      "name": "Marileide",
+      "phoneCountryCode": "+55",
+      "phone": "21981357811"
+    },
+    {
+      "key": "p_juliana",
+      "name": "Juliana",
+      "phoneCountryCode": "+55",
+      "phone": "21979004562"
+    },
+    {
+      "key": "p_victor",
+      "name": "Victor",
+      "phoneCountryCode": "+55",
+      "phone": "21987754974"
+    },
+    {
+      "key": "p_pai_pago",
+      "name": "Pai Pago",
+      "phoneCountryCode": null,
+      "phone": null
+    },
+    {
+      "key": "p_pamela",
+      "name": "Pamela",
+      "phoneCountryCode": "+55",
+      "phone": "21982781388"
+    },
+    {
+      "key": "p_aline",
+      "name": "Aline",
+      "phoneCountryCode": "+55",
+      "phone": "21975440062"
+    },
+    {
+      "key": "p_suricate",
+      "name": "Suricate",
+      "phoneCountryCode": "+55",
+      "phone": "21965603434"
+    },
+    {
+      "key": "p_laiza",
+      "name": "Laiza",
+      "phoneCountryCode": "+55",
+      "phone": "21992886698"
+    },
+    {
+      "key": "p_alexandre",
+      "name": "Alexandre",
+      "phoneCountryCode": "+55",
+      "phone": "21990686675"
+    },
+    {
+      "key": "p_yasmin",
+      "name": "Yasmin",
+      "phoneCountryCode": "+55",
+      "phone": "21979227896"
+    },
+    {
+      "key": "p_claudio",
+      "name": "Claudio",
+      "phoneCountryCode": "+55",
+      "phone": "21998862115"
+    }
+  ],
+  "recurrences": [
+    {
+      "key": "rec_c3e614b1",
+      "description": "Youtube",
+      "amount": -8.9,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2025-08-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_47e17f32",
+      "description": "Youtube",
+      "amount": -9.0,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_aline",
+      "startDate": "2025-08-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_c75293e4",
+      "description": "Youtube",
+      "amount": -9.0,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_laiza",
+      "startDate": "2025-08-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_18c17855",
+      "description": "Youtube",
+      "amount": -9.0,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_alexandre",
+      "startDate": "2025-08-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_955081bb",
+      "description": "Youtube",
+      "amount": -9.0,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_marileide",
+      "startDate": "2025-08-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_6356d1b8",
+      "description": "Netflix",
+      "amount": -28.8,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2024-10-18",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_bf7af205",
+      "description": "Netflix",
+      "amount": -28.9,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_juliana",
+      "startDate": "2024-10-18",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_efghjks1",
+      "description": "Claro Celio",
+      "amount": -39.99,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2025-10-10",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_1b6ec96d",
+      "description": "Netflix",
+      "amount": -59.9,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "startDate": "2025-07-04",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_64cd0a8d",
+      "description": "Meli+",
+      "amount": -19.9,
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2025-12-15",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_f50e5466",
+      "description": "TotalPass",
+      "amount": -149.9,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2025-10-31",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_8b1fc9c3",
+      "description": "Apple",
+      "amount": -14.99,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "startDate": "2026-02-16",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_2cfb2ce8",
+      "description": "Claro",
+      "amount": -44.9,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_m_e",
+      "startDate": "2026-03-17",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_3d7feae0",
+      "description": "Apple",
+      "amount": -19.9,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "startDate": "2026-03-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_62e46d6d",
+      "description": "Youtube",
+      "amount": -9.0,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_victor",
+      "startDate": "2026-04-11",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_12df6fc8",
+      "description": "Claude",
+      "amount": -117.73,
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2026-06-15",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_75f7dc33",
+      "description": "Amazon Prime",
+      "amount": -19.9,
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "startDate": "2026-06-25",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_bc61f22b",
+      "description": "Academia",
+      "amount": -79.95,
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2026-07-01",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_7c3a5464",
+      "description": "MedCenter",
+      "amount": -198.0,
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cuidados Pessoais",
+      "personKey": "eu",
+      "startDate": "2026-08-07",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_d0a6992e",
+      "description": "Internet",
+      "amount": -99.9,
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Internet",
+      "personKey": "eu",
+      "startDate": "2026-07-04",
+      "frequency": "MONTHLY"
+    },
+    {
+      "key": "rec_5e98a8b6",
+      "description": "Curso de Inglês",
+      "amount": -270.0,
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "startDate": "2026-07-04",
+      "frequency": "MONTHLY"
+    }
+  ],
+  "transactions": [
+    {
+      "source": "Movimentacao#baf32a10",
+      "description": "Cartão",
+      "amount": 150.0,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#778e613b",
+      "description": "Pão",
+      "amount": -2.0,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#310ee620",
+      "description": "Lanche",
+      "amount": -20.0,
+      "date": "2026-08-03",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#9276553b",
+      "description": "Roupa",
+      "amount": -50.0,
+      "date": "2026-08-03",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#e960a9b1",
+      "description": "Emprestado",
+      "amount": 250.0,
+      "date": "2026-08-03",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_laiza",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#8034b1c6",
+      "description": "Caneta",
+      "amount": -10.0,
+      "date": "2026-08-02",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#bfbfd1aa",
+      "description": "Lanche",
+      "amount": -15.0,
+      "date": "2026-08-01",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#e9da70f6",
+      "description": "Lanche",
+      "amount": 10.0,
+      "date": "2026-08-01",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_victor",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#afbd2d31",
+      "description": "Cartão",
+      "amount": 355.0,
+      "date": "2026-08-01",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_suricate",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#76841382",
+      "description": "Rifa",
+      "amount": -3.0,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#3114a698",
+      "description": "Salário",
+      "amount": 5067.64,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Depósito",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#badafd55",
+      "description": "Cartão",
+      "amount": 700.0,
+      "date": "2026-08-05",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_pai",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#b8b63576",
+      "description": "Cartão",
+      "amount": 200.0,
+      "date": "2026-08-05",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_m_e",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#f1871481",
+      "description": "Cabelo + lanche",
+      "amount": -77.0,
+      "date": "2026-08-06",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#ab6e465c",
+      "description": "Cartão",
+      "amount": 439.17,
+      "date": "2026-08-06",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_marileide",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#c2f1032e",
+      "description": "Lanche",
+      "amount": -19.0,
+      "date": "2026-08-07",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#301fa396",
+      "description": "Claudio",
+      "amount": 225.0,
+      "date": "2026-08-08",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#bea7109b",
+      "description": "Lanche",
+      "amount": -10.0,
+      "date": "2026-08-08",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#d7ec4ab5",
+      "description": "Cartão",
+      "amount": 550.0,
+      "date": "2026-08-08",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_alexandre",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#b206403f",
+      "description": "Lanche",
+      "amount": -3.0,
+      "date": "2026-08-09",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#3f7f686f",
+      "description": "Cartão",
+      "amount": 28.9,
+      "date": "2026-08-09",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_juliana",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#57e30da4",
+      "description": "Cartão",
+      "amount": 95.0,
+      "date": "2026-08-09",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_renata",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#95500e3e",
+      "description": "Cartão",
+      "amount": 341.75,
+      "date": "2026-08-09",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_aline",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#9c27fa5a",
+      "description": "Cartão",
+      "amount": 336.54,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_alexandre",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#6a6ed8cd",
+      "description": "Cartão",
+      "amount": -2634.83,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_claudio",
+      "paymentMethod": "BOLETO",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#84975fe7",
+      "description": "Cartão",
+      "amount": 640.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#32cf5833",
+      "description": "Cartão",
+      "amount": 266.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#ff90d7f5",
+      "description": "Cartão",
+      "amount": 669.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_yasmin",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#32ed8b35",
+      "description": "Cartão",
+      "amount": 312.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#fbc3e876",
+      "description": "Presente",
+      "amount": -25.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#a0a95db7",
+      "description": "Cartão",
+      "amount": 211.59,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_matheus",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#caa432f9",
+      "description": "Emprestado",
+      "amount": 40.0,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Empréstimo (Recebimento)",
+      "personKey": "p_matheus",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#65db2bed",
+      "description": "Netflix",
+      "amount": -28.9,
+      "date": "2026-08-12",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "DEBIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#1bfea864",
+      "description": "Netflix",
+      "amount": -28.9,
+      "date": "2026-08-12",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "p_juliana",
+      "paymentMethod": "DEBIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#23e6a135",
+      "description": "Refrigerante",
+      "amount": -14.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#f5415090",
+      "description": "Cartão",
+      "amount": 100.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_m_e",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#a36c30e7",
+      "description": "Cartão",
+      "amount": 450.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_m_e",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#844965b6",
+      "description": "Cartão",
+      "amount": 74.5,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_m_e",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#00714af0",
+      "description": "Cartão",
+      "amount": 600.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_rogerio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#6771f50f",
+      "description": "Cartão",
+      "amount": 283.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#e46e7d04",
+      "description": "Cartão",
+      "amount": 193.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#61f5ae5f",
+      "description": "Cartão",
+      "amount": 501.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_claudio",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#c58617fb",
+      "description": "Cartão",
+      "amount": -2.0,
+      "date": "2026-08-11",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "Movimentacao#a4eacc49",
+      "description": "Cartão",
+      "amount": 645.98,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cartão",
+      "personKey": "p_pamela",
+      "paymentMethod": "BANK_TRANSFER",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c433a9ec",
+      "description": "Baú",
+      "amount": -100.0,
+      "date": "2026-07-15",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "18b24899",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#222f002d",
+      "description": "Emprestimo",
+      "amount": -144.16,
+      "date": "2026-07-15",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Alimentação",
+      "personKey": "p_stefany",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e51e2d82",
+        "number": 11,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#02f4b632",
+      "description": "Poupança",
+      "amount": -300.0,
+      "date": "2026-09-07",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Bônus",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "424e7f8f",
+        "number": 12,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e0c35770",
+      "description": "Baú",
+      "amount": -100.0,
+      "date": "2026-08-15",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "18b24899",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5df7108d",
+      "description": "Emprestimo",
+      "amount": -144.16,
+      "date": "2026-08-15",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Alimentação",
+      "personKey": "p_stefany",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e51e2d82",
+        "number": 12,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#818366a5",
+      "description": "Celular",
+      "amount": -215.73,
+      "date": "2026-07-26",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "2310c27b",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#86d3cdae",
+      "description": "Celular",
+      "amount": -215.73,
+      "date": "2026-08-26",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "2310c27b",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b736563a",
+      "description": "Zass",
+      "amount": -47.88,
+      "date": "2026-07-13",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b25a2515",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1e8defca",
+      "description": "Zass",
+      "amount": -47.88,
+      "date": "2026-08-13",
+      "accountKey": "cc_will",
+      "cardKey": "cc_will_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b25a2515",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#67aa5204",
+      "description": "IOF",
+      "amount": -2.64,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1837538f",
+      "description": "Celular",
+      "amount": -298.96,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4357d8e1",
+        "number": 9,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#2893923d",
+      "description": "Celular",
+      "amount": -298.96,
+      "date": "2026-09-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4357d8e1",
+        "number": 10,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c89b2034",
+      "description": "Celular",
+      "amount": -298.96,
+      "date": "2026-10-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4357d8e1",
+        "number": 11,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5907ee4f",
+      "description": "Celular",
+      "amount": -298.96,
+      "date": "2026-11-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4357d8e1",
+        "number": 12,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c78cbd2c",
+      "description": "Empréstimo",
+      "amount": -199.88,
+      "date": "2026-07-10",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ab722ee1",
+        "number": 8,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e35772db",
+      "description": "Empréstimo",
+      "amount": -199.88,
+      "date": "2026-08-10",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ab722ee1",
+        "number": 9,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#78436c92",
+      "description": "Ar Condicionado",
+      "amount": -46.66,
+      "date": "2026-07-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 8,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bd2660e4",
+      "description": "Ar Condicionado",
+      "amount": -46.66,
+      "date": "2026-08-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 9,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ebb5eeb7",
+      "description": "Ar Condicionado",
+      "amount": -46.66,
+      "date": "2026-09-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 10,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#4e1e974b",
+      "description": "Ar Condicionado",
+      "amount": -146.66,
+      "date": "2026-10-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 11,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#09f1f17e",
+      "description": "Ar Condicionado",
+      "amount": -146.66,
+      "date": "2026-11-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 12,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#30b13380",
+      "description": "Ar Condicionado",
+      "amount": -146.66,
+      "date": "2026-12-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 13,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#79b1fd93",
+      "description": "Ar Condicionado",
+      "amount": -146.66,
+      "date": "2027-01-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 14,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ea2e7ecd",
+      "description": "Ar Condicionado",
+      "amount": -146.66,
+      "date": "2027-02-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "abe253d9",
+        "number": 15,
+        "count": 15
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7667e1c2",
+      "description": "Emprestimo",
+      "amount": -589.15,
+      "date": "2026-07-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c92fbc4a",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e9384a6d",
+      "description": "Emprestimo",
+      "amount": -589.15,
+      "date": "2026-08-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c92fbc4a",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#252f780d",
+      "description": "Emprestimo",
+      "amount": -589.15,
+      "date": "2026-09-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c92fbc4a",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#53527273",
+      "description": "Escola",
+      "amount": -150.0,
+      "date": "2026-07-30",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55766a66",
+        "number": 8,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3c1dabd9",
+      "description": "Escola",
+      "amount": -150.0,
+      "date": "2026-08-30",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55766a66",
+        "number": 9,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ca0734eb",
+      "description": "Escola",
+      "amount": -150.0,
+      "date": "2026-09-30",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55766a66",
+        "number": 10,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e1700d74",
+      "description": "Escola",
+      "amount": -150.0,
+      "date": "2026-10-30",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55766a66",
+        "number": 11,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#759db452",
+      "description": "Escola",
+      "amount": -150.0,
+      "date": "2026-11-30",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55766a66",
+        "number": 12,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5a10dc37",
+      "description": "TV",
+      "amount": -184.9,
+      "date": "2026-07-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "86475b33",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3b4336b7",
+      "description": "TV",
+      "amount": -184.9,
+      "date": "2026-08-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "86475b33",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0702c3f1",
+      "description": "TV",
+      "amount": -184.9,
+      "date": "2026-09-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "86475b33",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f7821770",
+      "description": "TV",
+      "amount": -184.9,
+      "date": "2026-10-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "86475b33",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d887d465",
+      "description": "Ar condicionado",
+      "amount": -100.0,
+      "date": "2026-07-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "17c1a175",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#dcdd9da9",
+      "description": "Ar condicionado",
+      "amount": -100.0,
+      "date": "2026-08-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "17c1a175",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5266dd79",
+      "description": "Ar condicionado",
+      "amount": -100.0,
+      "date": "2026-09-16",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "17c1a175",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bbc2a896",
+      "description": "Uber",
+      "amount": -3.91,
+      "date": "2026-07-08",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bfbb1e51",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-08-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#89fa99e0",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-09-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8e40932f",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-10-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#31de50dc",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-11-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d49bf1a2",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-12-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#srec29sf",
+      "description": "Youtube",
+      "amount": -8.9,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_c3e614b1"
+    },
+    {
+      "source": "MovimentacaoCartao#9c7e1f4b",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-08-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a7fe6dea",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-09-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#4c16bcc7",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-10-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a67bdf38",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-11-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#739ff462",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-12-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#18721992",
+      "description": "Uber",
+      "amount": -8.91,
+      "date": "2026-07-15",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0162d39c",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-08-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f6059415",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-09-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b38803fa",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-10-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#833d7423",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-11-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9deb72c8",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-12-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d3d3f812",
+      "description": "Pneu",
+      "amount": -155.3,
+      "date": "2026-07-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "76365362",
+        "number": 5,
+        "count": 5
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#93d9f0e3",
+      "description": "Wifi",
+      "amount": -53.81,
+      "date": "2026-08-24",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e0e0e927",
+        "number": 6,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#26cc1fe3",
+      "description": "Wifi",
+      "amount": -53.81,
+      "date": "2026-09-24",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e0e0e927",
+        "number": 7,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#02c724f7",
+      "description": "Wifi",
+      "amount": -53.81,
+      "date": "2026-10-24",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e0e0e927",
+        "number": 8,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#142141ee",
+      "description": "Wifi",
+      "amount": -53.81,
+      "date": "2026-11-24",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e0e0e927",
+        "number": 9,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0735f641",
+      "description": "CNPJ - DAS",
+      "amount": -86.05,
+      "date": "2026-07-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d1348c09",
+        "number": 5,
+        "count": 8
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#90b696d2",
+      "description": "CNPJ - DAS",
+      "amount": -86.05,
+      "date": "2026-08-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d1348c09",
+        "number": 6,
+        "count": 8
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a27277b2",
+      "description": "CNPJ - DAS",
+      "amount": -86.05,
+      "date": "2026-09-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d1348c09",
+        "number": 7,
+        "count": 8
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#23316b2c",
+      "description": "CNPJ - DAS",
+      "amount": -86.05,
+      "date": "2026-10-10",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d1348c09",
+        "number": 8,
+        "count": 8
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ufncg25j",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_47e17f32"
+    },
+    {
+      "source": "MovimentacaoCartao#8e4937d6",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5ddfba82",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-09-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#89d81897",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-10-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#fa574e6d",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-11-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ee87f96d",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-12-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#cb449f77",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2027-01-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7y8s9rlu",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_laiza",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_c75293e4"
+    },
+    {
+      "source": "MovimentacaoCartao#ec1a90c3",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2026-08-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#cc18dfa7",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2026-09-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#de97650b",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2026-10-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f6e72ef5",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2026-11-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#20c7f5a9",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2026-12-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d6d4e259",
+      "description": "Geladeira",
+      "amount": -233.23,
+      "date": "2027-01-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5f7e2w9q",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_18c17855"
+    },
+    {
+      "source": "MovimentacaoCartao#f4f4d540",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-08-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8e13d78f",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-09-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#20716ab5",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-10-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c201257f",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-11-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1b47fc02",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-12-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b68bd219",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2027-01-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#h6uhp6u5",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_955081bb"
+    },
+    {
+      "source": "MovimentacaoCartao#eb0c732a",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-07-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 3,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#864ffc63",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-08-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e0228ef3",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-09-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#42abb420",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-10-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d0d6c1e1",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-11-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#be2b6376",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2026-12-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#01bc4201",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2027-01-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0412dc5c",
+      "description": "Emprestimo",
+      "amount": -168.67,
+      "date": "2027-02-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "39bd18a5",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5aacc631",
+      "description": "Farma",
+      "amount": -110.0,
+      "date": "2026-07-20",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "684d3024",
+        "number": 3,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9ea7b6cd",
+      "description": "Farma",
+      "amount": -110.0,
+      "date": "2026-08-20",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "684d3024",
+        "number": 4,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d7bd6d01",
+      "description": "Farma",
+      "amount": -110.0,
+      "date": "2026-09-20",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "684d3024",
+        "number": 5,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bd094d8f",
+      "description": "Farma",
+      "amount": -110.0,
+      "date": "2026-10-20",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "684d3024",
+        "number": 6,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1266a999",
+      "description": "Farma",
+      "amount": -110.0,
+      "date": "2026-11-20",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "684d3024",
+        "number": 7,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f370daae",
+      "description": "Presente",
+      "amount": -56.54,
+      "date": "2026-07-10",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Presente",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "29165310",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#28b2fc04",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-07-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 2,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#05f09951",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-08-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 3,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#232ec42e",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-09-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 4,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b64cdf3f",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-10-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 5,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0fb76ac3",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-11-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 6,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9cf400ed",
+      "description": "Emprestimo",
+      "amount": -211.59,
+      "date": "2026-12-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_matheus",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "13e8ac7a",
+        "number": 7,
+        "count": 7
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#lt14228e",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_victor",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_62e46d6d"
+    },
+    {
+      "source": "MovimentacaoCartao#346eab39",
+      "description": "Mercado Livre",
+      "amount": -305.76,
+      "date": "2026-07-26",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "323a0c2c",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d50b1101",
+      "description": "Mercado Livre",
+      "amount": -48.44,
+      "date": "2026-07-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "27309125",
+        "number": 2,
+        "count": 6
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e80475ad",
+      "description": "Mercado Livre",
+      "amount": -48.44,
+      "date": "2026-08-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "27309125",
+        "number": 3,
+        "count": 6
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b7658cd2",
+      "description": "Mercado Livre",
+      "amount": -48.44,
+      "date": "2026-09-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "27309125",
+        "number": 4,
+        "count": 6
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8f62eef7",
+      "description": "Mercado Livre",
+      "amount": -48.44,
+      "date": "2026-10-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "27309125",
+        "number": 5,
+        "count": 6
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#2c9227a8",
+      "description": "Mercado Livre",
+      "amount": -48.44,
+      "date": "2026-11-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_suricate",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "27309125",
+        "number": 6,
+        "count": 6
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6d3489e7",
+      "description": "Mercado Livre",
+      "amount": -26.49,
+      "date": "2026-07-21",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c88c9768",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#498ae20f",
+      "description": "Mercado Livre",
+      "amount": -29.58,
+      "date": "2026-07-21",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "7ba12593",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3aebd329",
+      "description": "Uber",
+      "amount": -10.95,
+      "date": "2026-07-15",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8101a360",
+      "description": "Uber",
+      "amount": -12.95,
+      "date": "2026-07-10",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a84974da",
+      "description": "Mercado",
+      "amount": -13.95,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f8189446",
+      "description": "Lanche",
+      "amount": -24.4,
+      "date": "2026-07-13",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6hga2flf",
+      "description": "Netflix",
+      "amount": -28.8,
+      "date": "2026-07-18",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_6356d1b8"
+    },
+    {
+      "source": "MovimentacaoCartao#8gvhd584",
+      "description": "Netflix",
+      "amount": -28.9,
+      "date": "2026-07-18",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_juliana",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_bf7af205"
+    },
+    {
+      "source": "MovimentacaoCartao#hv8lyirf",
+      "description": "Claro Celio",
+      "amount": -39.99,
+      "date": "2026-07-10",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_efghjks1"
+    },
+    {
+      "source": "MovimentacaoCartao#1gk09n8x",
+      "description": "Netflix",
+      "amount": -59.9,
+      "date": "2026-08-04",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_1b6ec96d"
+    },
+    {
+      "source": "MovimentacaoCartao#af962756",
+      "description": "Receitas",
+      "amount": -27.9,
+      "date": "2026-07-08",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#vbe3sjii",
+      "description": "Meli+",
+      "amount": -19.9,
+      "date": "2026-07-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_64cd0a8d"
+    },
+    {
+      "source": "MovimentacaoCartao#jiek6y7j",
+      "description": "Apple",
+      "amount": -14.99,
+      "date": "2026-07-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_8b1fc9c3"
+    },
+    {
+      "source": "MovimentacaoCartao#epk8g5dg",
+      "description": "Claro",
+      "amount": -44.9,
+      "date": "2026-07-17",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_2cfb2ce8"
+    },
+    {
+      "source": "MovimentacaoCartao#9x21p9nd",
+      "description": "Apple",
+      "amount": -19.9,
+      "date": "2026-07-11",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_3d7feae0"
+    },
+    {
+      "source": "MovimentacaoCartao#a86277d7",
+      "description": "Pelicula",
+      "amount": -29.88,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a20gkyqr",
+      "description": "Claude",
+      "amount": -117.73,
+      "date": "2026-07-15",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_12df6fc8"
+    },
+    {
+      "source": "MovimentacaoCartao#0c094620",
+      "description": "Uber",
+      "amount": -29.96,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#312f6ac2",
+      "description": "Farmacia",
+      "amount": -99.0,
+      "date": "2026-07-30",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c834b860",
+        "number": 2,
+        "count": 5
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b5a7f418",
+      "description": "Farmacia",
+      "amount": -99.0,
+      "date": "2026-08-30",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c834b860",
+        "number": 3,
+        "count": 5
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1849b38d",
+      "description": "Farmacia",
+      "amount": -99.0,
+      "date": "2026-09-30",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c834b860",
+        "number": 4,
+        "count": 5
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6e9e1947",
+      "description": "Farmacia",
+      "amount": -99.0,
+      "date": "2026-10-30",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c834b860",
+        "number": 5,
+        "count": 5
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#901c63f2",
+      "description": "Lanche",
+      "amount": -30.0,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e8bbf84a",
+      "description": "Adaptador",
+      "amount": -30.69,
+      "date": "2026-07-12",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#dd99c51a",
+      "description": "Micro-ondas",
+      "amount": -30.82,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "eec9483f",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#299133f9",
+      "description": "Uber",
+      "amount": -31.96,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c3f474cb",
+      "description": "Farmacia",
+      "amount": -41.0,
+      "date": "2026-07-10",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1cee8c54",
+      "description": "Uber",
+      "amount": -42.72,
+      "date": "2026-07-03",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#84be6c06",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 2,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#63b74304",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-09-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 3,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#765a6aaf",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-10-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 4,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e99d84f6",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-11-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 5,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#74d8d7fc",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-12-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 6,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#70b7476d",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-01-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 7,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ce0a08da",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-02-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 8,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6419c0c5",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-03-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 9,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#cda6135d",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-04-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 10,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#11edebf1",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-05-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 11,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b4feba15",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2027-06-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 12,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ef66eca9",
+      "description": "Grelha",
+      "amount": -43.79,
+      "date": "2026-07-16",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9d3b6bf9",
+      "description": "Farmacia",
+      "amount": -44.0,
+      "date": "2026-07-03",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9fc20c7b",
+      "description": "Passagem",
+      "amount": -104.14,
+      "date": "2026-08-04",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Transporte",
+      "personKey": "p_rogerio",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "9cd5ca4f",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#72999733",
+      "description": "Farmacia",
+      "amount": -380.0,
+      "date": "2026-08-05",
+      "accountKey": "cc_inter",
+      "cardKey": "cc_inter_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_pamela",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d8223f11",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#2878a1ed",
+      "description": "Micro-ondas",
+      "amount": -45.0,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai_pago",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "793bca17",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a7b9f96f",
+      "description": "Panela",
+      "amount": -125.68,
+      "date": "2026-08-07",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e94106de",
+        "number": 2,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#2d2384c9",
+      "description": "Panela",
+      "amount": -125.68,
+      "date": "2026-09-07",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e94106de",
+        "number": 3,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#55d2d29c",
+      "description": "Panela",
+      "amount": -125.68,
+      "date": "2026-10-07",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e94106de",
+        "number": 4,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#fa5b4c8b",
+      "description": "Uber",
+      "amount": -48.96,
+      "date": "2026-07-03",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#32e27eb6",
+      "description": "Ingresso",
+      "amount": -49.02,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Entretenimento",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#35b8c585",
+      "description": "Curso",
+      "amount": -50.8,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Educação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6728ca38",
+      "description": "Forma",
+      "amount": -52.99,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#dede7305",
+      "description": "Balança",
+      "amount": -53.56,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#2a065727",
+      "description": "Wifi",
+      "amount": -53.73,
+      "date": "2026-07-24",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e0e0e927",
+        "number": 5,
+        "count": 9
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9202263a",
+      "description": "Presente",
+      "amount": -59.66,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "6d1bb63d",
+        "number": 3,
+        "count": 3
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#717d4302",
+      "description": "Panelas",
+      "amount": -70.5,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "b16b98b4",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c456df07",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-07-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 1,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#017da3cb",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-08-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 2,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#da5083fe",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-09-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 3,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7a48d4dd",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-10-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5c6aaea6",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-11-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8f46d2ba",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2026-12-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5cefd191",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2027-01-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a52fa43f",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2027-02-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c3c4e69f",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2027-03-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#23223be2",
+      "description": "Emprestimo",
+      "amount": -251.71,
+      "date": "2027-04-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ad9e239c",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#8bbd6237",
+      "description": "Remédio",
+      "amount": -113.99,
+      "date": "2026-07-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "7144f6a0",
+        "number": 1,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bd3bf763",
+      "description": "Remédio",
+      "amount": -113.99,
+      "date": "2026-08-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "7144f6a0",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a09b4cf9",
+      "description": "Mercado",
+      "amount": -100.16,
+      "date": "2026-07-09",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bcb22de1",
+      "description": "Lanche",
+      "amount": -51.3,
+      "date": "2026-07-08",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7ef7bfb7",
+      "description": "Ração",
+      "amount": -80.94,
+      "date": "2026-07-10",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Petshop",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c8e10006",
+        "number": 1,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#68c989d4",
+      "description": "Ração",
+      "amount": -80.94,
+      "date": "2026-08-10",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Petshop",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "c8e10006",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#e28be98a",
+      "description": "Pizza",
+      "amount": -72.8,
+      "date": "2026-07-17",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#48ed2bc5",
+      "description": "Pacheco",
+      "amount": -74.19,
+      "date": "2026-07-17",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "f746c9cc",
+        "number": 2,
+        "count": 3
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c319943a",
+      "description": "Academia",
+      "amount": -79.95,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_bc61f22b"
+    },
+    {
+      "source": "MovimentacaoCartao#9209804e",
+      "description": "TV Mãe",
+      "amount": -89.99,
+      "date": "2026-07-02",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "cf59e949",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bd5f2d4c",
+      "description": "Farmácia",
+      "amount": -30.69,
+      "date": "2026-07-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5fdb94c1",
+      "description": "Mercado",
+      "amount": -34.98,
+      "date": "2026-07-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#adb6e9c8",
+      "description": "Frango",
+      "amount": -47.7,
+      "date": "2026-07-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a6fb7090",
+      "description": "Mercado",
+      "amount": -34.53,
+      "date": "2026-07-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#030bdb85",
+      "description": "Lanche",
+      "amount": -53.4,
+      "date": "2026-07-15",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#54721c1a",
+      "description": "Nou Shopping",
+      "amount": -49.76,
+      "date": "2026-07-13",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "007456f7",
+        "number": 1,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f5655b14",
+      "description": "Nou Shopping",
+      "amount": -49.76,
+      "date": "2026-08-13",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "007456f7",
+        "number": 2,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3db34ad7",
+      "description": "Nou Shopping",
+      "amount": -49.76,
+      "date": "2026-09-13",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "007456f7",
+        "number": 3,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c0bc392c",
+      "description": "Nou Shopping",
+      "amount": -49.76,
+      "date": "2026-10-13",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "007456f7",
+        "number": 4,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a5286d65",
+      "description": "Lanche",
+      "amount": -35.0,
+      "date": "2026-07-11",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#fba71217",
+      "description": "Farmácia",
+      "amount": -79.07,
+      "date": "2026-07-19",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Farmácia",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f0bc6702",
+      "description": "Farmácia",
+      "amount": -82.1,
+      "date": "2026-07-19",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Farmácia",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3a3e9907",
+      "description": "Empório Martins",
+      "amount": -30.71,
+      "date": "2026-07-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Alimentação",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#315837ae",
+      "description": "Rações",
+      "amount": -6.9,
+      "date": "2026-07-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Cartão",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1097bd9d",
+      "description": "Cartão",
+      "amount": -179.0,
+      "date": "2026-07-14",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_virtual",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_rogerio",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7426dfe9",
+      "description": "Mercado",
+      "amount": -154.98,
+      "date": "2026-07-10",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Alimentação",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9df0a33e",
+      "description": "Dona do Salgado",
+      "amount": -1.89,
+      "date": "2026-07-10",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Alimentação",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#77d915d4",
+      "description": "Pizzaria",
+      "amount": -67.38,
+      "date": "2026-07-19",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9b368062",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-07-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 1,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#eddd2987",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-08-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 2,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#932a4416",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-09-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 3,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c60313c1",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-10-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9419e6cd",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-11-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#64d03477",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2026-12-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#38030b2f",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2027-01-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ec113b7e",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2027-02-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#79f9f58f",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2027-03-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#fb526daf",
+      "description": "Dentista",
+      "amount": -72.99,
+      "date": "2027-04-14",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Farmácia",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4fdad9fe",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#ca7748fa",
+      "description": "Geladeira",
+      "amount": -100.0,
+      "date": "2026-07-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pai",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "1ce72c1e",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9c52d57f",
+      "description": "Panela",
+      "amount": -125.7,
+      "date": "2026-07-07",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "e94106de",
+        "number": 1,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#56h3ukq6",
+      "description": "TotalPass",
+      "amount": -149.9,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_f50e5466"
+    },
+    {
+      "source": "MovimentacaoCartao#8897ca01",
+      "description": "Celular",
+      "amount": -224.35,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "015519d6",
+        "number": 1,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#f6b5c0e0",
+      "description": "Geladeira",
+      "amount": -233.21,
+      "date": "2026-07-06",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "385c7ee3",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#bc47475e",
+      "description": "Mercado",
+      "amount": -285.13,
+      "date": "2026-07-07",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#a470a184",
+      "description": "Celular",
+      "amount": -298.92,
+      "date": "2026-07-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "4357d8e1",
+        "number": 8,
+        "count": 12
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#857c61b9",
+      "description": "Emprrestimo",
+      "amount": -311.97,
+      "date": "2026-07-14",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Empréstimo (Despesa)",
+      "personKey": "p_rogerio",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3d141a14",
+      "description": "Hortifruti",
+      "amount": -26.32,
+      "date": "2026-07-22",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#97e571bf",
+      "description": "Lanche",
+      "amount": -34.0,
+      "date": "2026-07-23",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#1d5dcde0",
+      "description": "Mercado",
+      "amount": -78.9,
+      "date": "2026-07-25",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#fba3f5db",
+      "description": "Lanche",
+      "amount": -32.29,
+      "date": "2026-07-30",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d6db2e1c",
+      "description": "Aro de ovo",
+      "amount": -32.9,
+      "date": "2026-07-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#0471efd8",
+      "description": "Lanche",
+      "amount": -85.0,
+      "date": "2026-07-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9d761c5a",
+      "description": "Nebolizador",
+      "amount": -53.09,
+      "date": "2026-07-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ce2b2daf",
+        "number": 1,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#165b1fa1",
+      "description": "Nebolizador",
+      "amount": -53.09,
+      "date": "2026-08-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ce2b2daf",
+        "number": 2,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#eef86bb6",
+      "description": "Nebolizador",
+      "amount": -53.09,
+      "date": "2026-09-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ce2b2daf",
+        "number": 3,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c8c13990",
+      "description": "Nebolizador",
+      "amount": -53.09,
+      "date": "2026-10-30",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "ce2b2daf",
+        "number": 4,
+        "count": 4
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7992902f",
+      "description": "PetShop",
+      "amount": -59.04,
+      "date": "2026-07-26",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Petshop",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#5925c374",
+      "description": "Lanche",
+      "amount": -24.5,
+      "date": "2026-07-03",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#54cab51d",
+      "description": "Mercado",
+      "amount": -740.0,
+      "date": "2026-07-08",
+      "accountKey": "cc_amazon",
+      "cardKey": "cc_amazon_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#af57ea00",
+      "description": "SuperKibarato",
+      "amount": -39.24,
+      "date": "2026-07-29",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Alimentação",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9d2c43ea",
+      "description": "Posto",
+      "amount": -50.0,
+      "date": "2026-07-21",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_alexandre",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#xltasybc",
+      "description": "Amazon Prime",
+      "amount": -19.9,
+      "date": "2026-07-25",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_75f7dc33"
+    },
+    {
+      "source": "MovimentacaoCartao#eb815642",
+      "description": "MedCenter",
+      "amount": -198.0,
+      "date": "2026-07-07",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cuidados Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3106a121",
+      "description": "Empréstimo",
+      "amount": -500.0,
+      "date": "2026-07-30",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d20229c4",
+        "number": 1,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c7705e8d",
+      "description": "Empréstimo",
+      "amount": -500.0,
+      "date": "2026-08-30",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_yasmin",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "d20229c4",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#brvo7zxp",
+      "description": "Youtube",
+      "amount": -8.9,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_c3e614b1"
+    },
+    {
+      "source": "MovimentacaoCartao#8mkp9kk5",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_aline",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_47e17f32"
+    },
+    {
+      "source": "MovimentacaoCartao#se3p89sf",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_laiza",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_c75293e4"
+    },
+    {
+      "source": "MovimentacaoCartao#10i0l4ce",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_alexandre",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_18c17855"
+    },
+    {
+      "source": "MovimentacaoCartao#7ewcc41f",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_marileide",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_955081bb"
+    },
+    {
+      "source": "MovimentacaoCartao#yus7vzej",
+      "description": "Netflix",
+      "amount": -28.8,
+      "date": "2026-08-18",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_6356d1b8"
+    },
+    {
+      "source": "MovimentacaoCartao#ofbk20ei",
+      "description": "Netflix",
+      "amount": -28.9,
+      "date": "2026-08-18",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_juliana",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_bf7af205"
+    },
+    {
+      "source": "MovimentacaoCartao#mmz6azdp",
+      "description": "Claro Celio",
+      "amount": -39.99,
+      "date": "2026-08-10",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_efghjks1"
+    },
+    {
+      "source": "MovimentacaoCartao#34zdg46j",
+      "description": "Netflix",
+      "amount": -59.9,
+      "date": "2026-09-04",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_1b6ec96d"
+    },
+    {
+      "source": "MovimentacaoCartao#clt2egw7",
+      "description": "Meli+",
+      "amount": -19.9,
+      "date": "2026-08-15",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_64cd0a8d"
+    },
+    {
+      "source": "MovimentacaoCartao#ynzkm0xo",
+      "description": "TotalPass",
+      "amount": -149.9,
+      "date": "2026-08-08",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_f50e5466"
+    },
+    {
+      "source": "MovimentacaoCartao#w04soeqe",
+      "description": "Apple",
+      "amount": -14.99,
+      "date": "2026-08-16",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_8b1fc9c3"
+    },
+    {
+      "source": "MovimentacaoCartao#0ziuc672",
+      "description": "Claro",
+      "amount": -44.9,
+      "date": "2026-08-17",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_m_e",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_2cfb2ce8"
+    },
+    {
+      "source": "MovimentacaoCartao#8wkbw5va",
+      "description": "Apple",
+      "amount": -19.9,
+      "date": "2026-08-11",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_renata",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_3d7feae0"
+    },
+    {
+      "source": "MovimentacaoCartao#5nt6w8my",
+      "description": "Youtube",
+      "amount": -9.0,
+      "date": "2026-08-11",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "p_victor",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_62e46d6d"
+    },
+    {
+      "source": "MovimentacaoCartao#gl2778m3",
+      "description": "Claude",
+      "amount": -117.73,
+      "date": "2026-08-15",
+      "accountKey": "cc_nubank",
+      "cardKey": "cc_nubank_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_12df6fc8"
+    },
+    {
+      "source": "MovimentacaoCartao#f6brgst7",
+      "description": "Amazon Prime",
+      "amount": -19.9,
+      "date": "2026-08-25",
+      "accountKey": "cc_c6",
+      "cardKey": "cc_c6_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_75f7dc33"
+    },
+    {
+      "source": "MovimentacaoCartao#6xi0trcp",
+      "description": "Academia",
+      "amount": -79.95,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_bc61f22b"
+    },
+    {
+      "source": "MovimentacaoCartao#dd0bdcd4",
+      "description": "MedCenter",
+      "amount": -198.0,
+      "date": "2026-08-07",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Cuidados Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_7c3a5464"
+    },
+    {
+      "source": "MovimentacaoCartao#cc1aa21d",
+      "description": "Internet",
+      "amount": -99.9,
+      "date": "2026-07-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Internet",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_d0a6992e"
+    },
+    {
+      "source": "MovimentacaoCartao#e7cf47a1",
+      "description": "Curso de Inglês",
+      "amount": -270.0,
+      "date": "2026-07-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_5e98a8b6"
+    },
+    {
+      "source": "MovimentacaoCartao#fdf6ee03",
+      "description": "Emprestimo",
+      "amount": -265.37,
+      "date": "2026-08-04",
+      "accountKey": "cc_inter",
+      "cardKey": "cc_inter_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pamela",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55c0a608",
+        "number": 1,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#37321c69",
+      "description": "Emprestimo",
+      "amount": -265.37,
+      "date": "2026-09-04",
+      "accountKey": "cc_inter",
+      "cardKey": "cc_inter_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "p_pamela",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "55c0a608",
+        "number": 2,
+        "count": 2
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#xqlmlv47",
+      "description": "Internet",
+      "amount": -99.9,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Internet",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_d0a6992e"
+    },
+    {
+      "source": "MovimentacaoCartao#f4w8so3f",
+      "description": "Curso de Inglês",
+      "amount": -270.0,
+      "date": "2026-08-04",
+      "accountKey": "chk_nubank",
+      "cardKey": null,
+      "categoryName": "Assinaturas",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": "rec_5e98a8b6"
+    },
+    {
+      "source": "MovimentacaoCartao#a70c24cc",
+      "description": "Remedio",
+      "amount": -63.0,
+      "date": "2026-08-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Farmácia",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#d8e3c867",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2026-08-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 1,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#287b2adc",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2026-09-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 2,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#6ac04e6b",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2026-10-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 3,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#46e59d1c",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2026-11-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 4,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#cfc53444",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2026-12-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 5,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#9fccbeeb",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2027-01-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 6,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#dc263f7a",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2027-02-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 7,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#7cd9f9f7",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2027-03-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 8,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#add1bf00",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2027-04-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 9,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3148be5c",
+      "description": "Maquina",
+      "amount": -66.33,
+      "date": "2027-05-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Compras Pessoais",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": {
+        "groupId": "901c56fc",
+        "number": 10,
+        "count": 10
+      },
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#3cd9c7b3",
+      "description": "Mercado",
+      "amount": -862.35,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#be173080",
+      "description": "Lanche",
+      "amount": -7.47,
+      "date": "2026-08-04",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#b1acecf9",
+      "description": "Mercado",
+      "amount": -99.08,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#acdfa754",
+      "description": "Mercado",
+      "amount": -20.63,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Alimentação",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    },
+    {
+      "source": "MovimentacaoCartao#c0176a0a",
+      "description": "Uber",
+      "amount": -29.5,
+      "date": "2026-08-01",
+      "accountKey": "cc_next",
+      "cardKey": "cc_next_titular",
+      "categoryName": "Transporte",
+      "personKey": "eu",
+      "paymentMethod": "CREDIT_CARD",
+      "installment": null,
+      "recurrenceKey": null
+    }
+  ]
+}
