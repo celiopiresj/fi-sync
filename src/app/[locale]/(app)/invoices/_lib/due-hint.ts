@@ -22,7 +22,7 @@ function diffDays(fromKey: string, toKey: string): number {
 }
 
 export function getDueHint(
-  displayStatus: "OPEN" | "CLOSED" | "PAID",
+  displayStatus: "OPEN" | "CLOSED" | "PARTIALLY_PAID" | "PAID",
   closingDateKey: string,
   dueDateKey: string,
   todayKey: string,
@@ -34,6 +34,8 @@ export function getDueHint(
     return days <= 0 ? { kind: "closesToday" } : { kind: "closesInDays", days };
   }
 
+  // CLOSED or PARTIALLY_PAID — both still have a real due date pending,
+  // just at different stages of being settled.
   const days = diffDays(todayKey, dueDateKey);
   if (days > 0) return { kind: "dueInDays", days };
   if (days === 0) return { kind: "dueToday" };

@@ -2,13 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
+import { addDays } from "date-fns";
+import { allocate, BRL, dinero, toDecimal } from "dinero.js";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
-import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
+import { parseCalendarDate, todayCalendarDate, toAppZoned, fromAppZoned } from "@/lib/date";
+import { resolveInvoiceForDate } from "@/lib/invoice-resolution";
+import { recomputeInvoiceStatus, sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
+import { formatPersonName } from "@/lib/format-person-name";
 import { invoicePeriodRange } from "./_lib/period";
 import {
-  markInvoicePaidSchema,
-  type MarkInvoicePaidFormValues,
+  payInvoiceSchema,
+  refinePayInvoice,
+  type PayInvoiceFormValues,
   type InvoiceDisplayStatus,
 } from "./_schema/schema";
 import type { InvoicePeriod } from "./_types/types";
@@ -23,24 +29,16 @@ async function requireUserId() {
 
 // Derives the status shown to the user without ever writing "CLOSED" to
 // the DB — see the doc comment on invoiceDisplayStatusValues in
-// _schema/schema.ts. `PAID` always wins once set explicitly
-// (markInvoicePaid below); otherwise it's OPEN until the closing date has
-// passed, then CLOSED.
+// _schema/schema.ts. `PARTIALLY_PAID`/`PAID` always win once set (by
+// recomputeInvoiceStatus, src/lib/invoice-total.ts); otherwise it's OPEN
+// until the closing date has passed, then CLOSED.
 function deriveDisplayStatus(
   invoice: { status: string; closingDate: Date },
   todayDate: Date,
 ): InvoiceDisplayStatus {
+  if (invoice.status === "PARTIALLY_PAID") return "PARTIALLY_PAID";
   if (invoice.status === "PAID") return "PAID";
   return invoice.closingDate <= todayDate ? "CLOSED" : "OPEN";
-}
-
-function sumInvoiceTotal(
-  transactionInvoices: { transaction: { amount: { toNumber(): number } } }[],
-): number {
-  return transactionInvoices.reduce(
-    (sum, ti) => sum + Math.abs(ti.transaction.amount.toNumber()),
-    0,
-  );
 }
 
 // Light-weight options for the account filter dropdown — deliberately
@@ -82,8 +80,9 @@ export type InvoiceFilters = {
 
 // No Invoice is ever created here — every row already exists, generated
 // lazily by resolveInvoiceForDate (src/lib/invoice-resolution.ts) the
-// moment a credit-card transaction/occurrence is lit. This screen is
-// read-only except for markInvoicePaid below.
+// moment a credit-card transaction/occurrence is lit, or force-created by
+// payInvoice below when an overpayment needs somewhere to park its
+// credit. This screen is read-only except for payInvoice below.
 export async function listInvoices(filters: InvoiceFilters = {}) {
   const userId = await requireUserId();
   const todayDate = parseCalendarDate(todayCalendarDate());
@@ -104,22 +103,33 @@ export async function listInvoices(filters: InvoiceFilters = {}) {
       transactionInvoices: {
         include: { transaction: { select: { amount: true } } },
       },
+      payments: { select: { amount: true } },
+      creditsReceived: { select: { amount: true } },
     },
     orderBy: { closingDate: "desc" },
   });
 
-  const mapped = invoices.map((invoice) => ({
-    id: invoice.id,
-    accountId: invoice.accountId,
-    account: invoice.account,
-    closingDate: invoice.closingDate,
-    dueDate: invoice.dueDate,
-    displayStatus: deriveDisplayStatus(invoice, todayDate),
-    paidAmount: invoice.paidAmount?.toNumber() ?? null,
-    paidAt: invoice.paidAt,
-    total: sumInvoiceTotal(invoice.transactionInvoices),
-    transactionCount: invoice.transactionInvoices.length,
-  }));
+  const mapped = invoices.map((invoice) => {
+    const total = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
+    const creditApplied = invoice.creditsReceived.reduce(
+      (sum, credit) => sum + credit.amount.toNumber(),
+      0,
+    );
+    return {
+      id: invoice.id,
+      accountId: invoice.accountId,
+      account: invoice.account,
+      closingDate: invoice.closingDate,
+      dueDate: invoice.dueDate,
+      displayStatus: deriveDisplayStatus(invoice, todayDate),
+      paidAmount: invoice.paidAmount?.toNumber() ?? null,
+      paidAt: invoice.paidAt,
+      total,
+      creditApplied,
+      remainingDue: Math.max(0, total - (invoice.paidAmount?.toNumber() ?? 0) - creditApplied),
+      transactionCount: invoice.transactionInvoices.length,
+    };
+  });
 
   if (!filters.status || filters.status === "all") return mapped;
   return mapped.filter((invoice) => invoice.displayStatus === filters.status);
@@ -148,9 +158,21 @@ export async function getInvoiceDetail(id: string) {
         },
         orderBy: { transaction: { date: "asc" } },
       },
+      payments: {
+        select: { id: true, amount: true, paidAt: true, transaction: { select: { accountId: true } } },
+        orderBy: { paidAt: "desc" },
+      },
+      creditsReceived: { select: { amount: true } },
     },
   });
   if (!invoice) return null;
+
+  const total = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
+  const creditApplied = invoice.creditsReceived.reduce(
+    (sum, credit) => sum + credit.amount.toNumber(),
+    0,
+  );
+  const paidAmount = invoice.paidAmount?.toNumber() ?? null;
 
   return {
     id: invoice.id,
@@ -159,9 +181,17 @@ export async function getInvoiceDetail(id: string) {
     closingDate: invoice.closingDate,
     dueDate: invoice.dueDate,
     displayStatus: deriveDisplayStatus(invoice, todayDate),
-    paidAmount: invoice.paidAmount?.toNumber() ?? null,
+    paidAmount,
     paidAt: invoice.paidAt,
-    total: sumInvoiceTotal(invoice.transactionInvoices),
+    total,
+    creditApplied,
+    remainingDue: Math.max(0, total - (paidAmount ?? 0) - creditApplied),
+    payments: invoice.payments.map((payment) => ({
+      id: payment.id,
+      amount: payment.amount.toNumber(),
+      paidAt: payment.paidAt,
+      accountId: payment.transaction.accountId,
+    })),
     transactions: invoice.transactionInvoices.map((ti) => ({
       id: ti.transaction.id,
       description: ti.transaction.description,
@@ -173,24 +203,217 @@ export async function getInvoiceDetail(id: string) {
   };
 }
 
-export async function markInvoicePaid(id: string, data: MarkInvoicePaidFormValues) {
+// Which people still have a balance owed on this invoice, and how much
+// — feeds the manual allocation picker in pay-invoice-dialog.tsx (only
+// shown once the user enters an amount that doesn't match remainingDue).
+// Same "owed minus already settled" weighting payInvoice's own automatic
+// path uses below, exposed here so the picker's people list and its
+// initial per-person suggestion line up with what an automatic payment
+// would have done.
+export async function getInvoicePeopleOwed(id: string) {
   const userId = await requireUserId();
-  const result = markInvoicePaidSchema.safeParse(data);
 
-  if (!result.success) {
-    return { error: result.error.issues[0]?.message ?? "Invalid data" };
+  const invoice = await prisma.invoice.findFirst({
+    where: { id, account: { userId } },
+    include: {
+      transactionInvoices: {
+        include: {
+          transaction: {
+            select: { amount: true, splits: { select: { personId: true, amount: true } } },
+          },
+        },
+      },
+      payments: {
+        select: {
+          transaction: { select: { splits: { select: { personId: true, amount: true } } } },
+        },
+      },
+    },
+  });
+  if (!invoice) return [];
+
+  const alreadyPaidByPerson = new Map<string, number>();
+  for (const payment of invoice.payments) {
+    for (const split of payment.transaction.splits) {
+      const cents = Math.round(Math.abs(split.amount.toNumber()) * 100);
+      alreadyPaidByPerson.set(split.personId, (alreadyPaidByPerson.get(split.personId) ?? 0) + cents);
+    }
   }
 
-  const value = result.data;
-  const t = await getTranslations("scrn-invoices");
+  const owedTotalsCents = new Map<string, number>();
+  let selfPersonId: string | null | undefined;
+
+  for (const ti of invoice.transactionInvoices) {
+    const splits = ti.transaction.splits;
+    if (splits.length === 0) {
+      if (selfPersonId === undefined) {
+        const self = await prisma.person.findFirst({
+          where: { userId, isSelf: true },
+          select: { id: true },
+        });
+        selfPersonId = self?.id ?? null;
+      }
+      if (selfPersonId) {
+        const cents = Math.round(Math.abs(ti.transaction.amount.toNumber()) * 100);
+        owedTotalsCents.set(selfPersonId, (owedTotalsCents.get(selfPersonId) ?? 0) + cents);
+      }
+      continue;
+    }
+    for (const split of splits) {
+      const cents = Math.round(Math.abs(split.amount.toNumber()) * 100);
+      owedTotalsCents.set(split.personId, (owedTotalsCents.get(split.personId) ?? 0) + cents);
+    }
+  }
+
+  const personIds = [...owedTotalsCents.keys()];
+  if (personIds.length === 0) return [];
+
+  const people = await prisma.person.findMany({
+    where: { id: { in: personIds } },
+    select: { id: true, name: true },
+  });
+  const nameById = new Map(people.map((person) => [person.id, person.name]));
+
+  return personIds
+    .map((personId) => ({
+      personId,
+      personName: formatPersonName(nameById.get(personId) ?? ""),
+      remainingCents: owedTotalsCents.get(personId)! - (alreadyPaidByPerson.get(personId) ?? 0),
+    }))
+    .filter((person) => person.remainingCents > 0);
+}
+
+// A single hop's worth of overflow credit — how much of it this
+// specific downstream invoice can absorb right now. An invoice with no
+// real transactions linked yet (a bare future cycle, likely just
+// force-created by resolveInvoiceForDate below) has no known total to
+// compare against, so it simply absorbs everything remaining and the
+// loop stops there — same reasoning as projections/actions.ts treating
+// an as-yet-empty month as having nothing to project. An invoice that
+// DOES already carry real purchases only absorbs up to its own
+// remaining due, letting genuine leftover keep rolling to the invoice
+// after it.
+async function applyOverflowCredit(
+  tx: Parameters<typeof recomputeInvoiceStatus>[0],
+  accountId: string,
+  sourcePaymentId: string,
+  fromClosingDate: Date,
+  cardDetails: { closingDay: number; dueDay: number },
+  overflowCents: number,
+) {
+  let remainingCents = overflowCents;
+  let cursorDate = fromClosingDate;
+  // A card cycle is effectively always monthly — this many hops covers
+  // years of rolling overpayment, far past anything a real user would
+  // hit, and exists only as a guard against an unbounded loop.
+  const MAX_HOPS = 24;
+
+  for (let hop = 0; hop < MAX_HOPS && remainingCents > 0; hop++) {
+    cursorDate = fromAppZoned(addDays(toAppZoned(cursorDate), 1));
+    const nextInvoice = await resolveInvoiceForDate(accountId, cursorDate, cardDetails, tx);
+
+    const nextData = await tx.invoice.findUniqueOrThrow({
+      where: { id: nextInvoice.id },
+      include: {
+        transactionInvoices: { include: { transaction: { select: { amount: true } } } },
+        payments: { select: { amount: true } },
+        creditsReceived: { select: { amount: true } },
+      },
+    });
+    const hasKnownTotal = nextData.transactionInvoices.length > 0;
+    const nextTotalCents = Math.round(sumInvoiceTransactionsTotal(nextData.transactionInvoices) * 100);
+    const nextPaidCents = Math.round(
+      nextData.payments.reduce((sum, payment) => sum + payment.amount.toNumber(), 0) * 100,
+    );
+    const nextCreditCents = Math.round(
+      nextData.creditsReceived.reduce((sum, credit) => sum + credit.amount.toNumber(), 0) * 100,
+    );
+    const nextRemainingCents = Math.max(0, nextTotalCents - nextPaidCents - nextCreditCents);
+
+    const creditForThisHop = hasKnownTotal ? Math.min(remainingCents, nextRemainingCents) : remainingCents;
+
+    if (creditForThisHop > 0) {
+      await tx.invoiceCredit.create({
+        data: {
+          sourcePaymentId,
+          targetInvoiceId: nextInvoice.id,
+          amount: creditForThisHop / 100,
+        },
+      });
+      await recomputeInvoiceStatus(tx, nextInvoice.id);
+      remainingCents -= creditForThisHop;
+    }
+
+    cursorDate = nextInvoice.closingDate;
+    // Landed on a cycle with no purchases yet — its eventual total is
+    // unknowable right now, so there's nothing meaningful to compare a
+    // remainder against; park everything here and stop instead of
+    // guessing forward past it.
+    if (!hasKnownTotal) break;
+  }
+}
+
+// Registers a payment against an invoice — may fully or only partially
+// cover what's due (see PARTIALLY_PAID in the InvoiceStatus enum), and
+// may repeat over time until the invoice is fully settled. Renamed from
+// the old markInvoicePaid: a call here no longer always "marks paid".
+export async function payInvoice(id: string, data: PayInvoiceFormValues) {
+  const userId = await requireUserId();
 
   const existing = await prisma.invoice.findFirst({
     where: { id, account: { userId } },
-    include: { account: { select: { name: true } } },
+    include: {
+      account: {
+        select: { id: true, name: true, creditCardDetails: { select: { closingDay: true, dueDay: true } } },
+      },
+      transactionInvoices: {
+        include: {
+          transaction: {
+            select: {
+              amount: true,
+              splits: { select: { personId: true, amount: true } },
+            },
+          },
+        },
+      },
+      payments: {
+        select: {
+          amount: true,
+          transaction: { select: { splits: { select: { personId: true, amount: true } } } },
+        },
+      },
+      creditsReceived: { select: { amount: true } },
+    },
   });
   if (!existing) {
     return { error: "Not found" };
   }
+
+  const total = sumInvoiceTransactionsTotal(existing.transactionInvoices);
+  const paidSoFar = existing.payments.reduce((sum, payment) => sum + payment.amount.toNumber(), 0);
+  const creditReceived = existing.creditsReceived.reduce(
+    (sum, credit) => sum + credit.amount.toNumber(),
+    0,
+  );
+  const remainingDueCents = Math.max(0, Math.round((total - paidSoFar - creditReceived) * 100));
+
+  const t = await getTranslations("scrn-invoices");
+  const tValidation = await getTranslations("common.validation");
+
+  const schema = payInvoiceSchema.superRefine((value, ctx) =>
+    refinePayInvoice(value, ctx, {
+      remainingDueCents,
+      messages: {
+        allocationsRequired: tValidation("required"),
+        allocationsMismatch: t("detail.markPaid.allocations.mismatch"),
+      },
+    }),
+  );
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    return { error: result.error.issues[0]?.message ?? "Invalid data" };
+  }
+  const value = result.data;
 
   const payAccount = await prisma.account.findFirst({
     where: { id: value.accountId, userId, type: { in: ["CHECKING", "SAVINGS", "CASH"] } },
@@ -200,35 +423,136 @@ export async function markInvoicePaid(id: string, data: MarkInvoicePaidFormValue
   }
 
   const paidAt = parseCalendarDate(value.paidAt);
+  const paidCents = Math.round(value.paidAmount * 100);
+  const appliedCents = Math.min(paidCents, remainingDueCents);
+  const overflowCents = Math.max(0, paidCents - remainingDueCents);
+
+  let splitsCreateInput: { personId: string; amount: number }[];
+
+  if (value.allocations.length > 0) {
+    // Manual allocation — the user picked exactly who this payment
+    // covers and how much (refinePayInvoice already verified it sums to
+    // appliedCents).
+    splitsCreateInput = value.allocations.map((allocation) => ({
+      personId: allocation.personId,
+      amount: -allocation.amount,
+    }));
+  } else {
+    // Auto path — only reachable when paidCents === remainingDueCents
+    // (refinePayInvoice's own gate), so appliedCents === paidCents here.
+    // Mirror each purchase's own person split, scaled to what's still
+    // owed — same rule the app always used, extended to subtract
+    // whatever a PRIOR partial payment already settled for that person,
+    // so a second automatic payment can't double-count someone who was
+    // already paid off. A purchase with no splits of its own counts
+    // toward whichever Person is marked isSelf (people/actions.ts's
+    // setSelfPerson); if no such Person exists, that slice just doesn't
+    // get a split (same as before).
+    const alreadyPaidByPerson = new Map<string, number>();
+    for (const payment of existing.payments) {
+      for (const split of payment.transaction.splits) {
+        const cents = Math.round(Math.abs(split.amount.toNumber()) * 100);
+        alreadyPaidByPerson.set(
+          split.personId,
+          (alreadyPaidByPerson.get(split.personId) ?? 0) + cents,
+        );
+      }
+    }
+
+    const owedTotalsCents = new Map<string, number>();
+    let selfPersonId: string | null | undefined;
+
+    for (const ti of existing.transactionInvoices) {
+      const splits = ti.transaction.splits;
+      if (splits.length === 0) {
+        if (selfPersonId === undefined) {
+          const self = await prisma.person.findFirst({
+            where: { userId, isSelf: true },
+            select: { id: true },
+          });
+          selfPersonId = self?.id ?? null;
+        }
+        if (selfPersonId) {
+          const cents = Math.round(Math.abs(ti.transaction.amount.toNumber()) * 100);
+          owedTotalsCents.set(selfPersonId, (owedTotalsCents.get(selfPersonId) ?? 0) + cents);
+        }
+        continue;
+      }
+      for (const split of splits) {
+        const cents = Math.round(Math.abs(split.amount.toNumber()) * 100);
+        owedTotalsCents.set(split.personId, (owedTotalsCents.get(split.personId) ?? 0) + cents);
+      }
+    }
+
+    const remainingByPersonCents = new Map<string, number>();
+    for (const [personId, owedCents] of owedTotalsCents) {
+      const remaining = owedCents - (alreadyPaidByPerson.get(personId) ?? 0);
+      if (remaining > 0) remainingByPersonCents.set(personId, remaining);
+    }
+
+    const personIds = [...remainingByPersonCents.keys()];
+    splitsCreateInput =
+      personIds.length > 0
+        ? allocate(
+            dinero({ amount: appliedCents, currency: BRL }),
+            personIds.map((personId) => remainingByPersonCents.get(personId)!),
+          ).map((share, index) => ({
+            personId: personIds[index]!,
+            amount: -Number(toDecimal(share)),
+          }))
+        : [];
+  }
 
   // Paying a card invoice is, in effect, an expense on the account the
   // money actually left from — same spirit as a transfer's two linked
   // rows (see prisma/schema.prisma's top comment), except here only the
   // "outgoing" leg exists (the credit-card account itself has no running
   // balance to credit; Invoice.status/paidAmount already represents that
-  // side). Both writes happen in one transaction so a paid invoice can
-  // never exist without its matching expense, or vice versa.
-  await prisma.$transaction([
-    prisma.invoice.update({
-      where: { id },
-      data: { status: "PAID", paidAmount: value.paidAmount, paidAt },
-    }),
-    prisma.transaction.create({
+  // side). Interactive transaction (not a plain array): the InvoicePayment
+  // row needs the just-created settlement Transaction's id, and any
+  // overflow credit needs the just-created InvoicePayment's id.
+  await prisma.$transaction(async (tx) => {
+    const paymentTransaction = await tx.transaction.create({
       data: {
         userId,
         accountId: payAccount.id,
-        description: t("markPaid.transactionDescription", {
+        description: t("detail.markPaid.transactionDescription", {
           card: existing.account.name,
         }),
-        amount: -value.paidAmount,
+        amount: -(appliedCents / 100),
         date: paidAt,
+        splits: { create: splitsCreateInput },
       },
-    }),
-  ]);
+    });
+
+    const invoicePayment = await tx.invoicePayment.create({
+      data: {
+        invoiceId: id,
+        transactionId: paymentTransaction.id,
+        amount: appliedCents / 100,
+        paidAt,
+      },
+    });
+
+    await recomputeInvoiceStatus(tx, id);
+
+    if (overflowCents > 0 && existing.account.creditCardDetails) {
+      await applyOverflowCredit(
+        tx,
+        existing.accountId,
+        invoicePayment.id,
+        existing.closingDate,
+        existing.account.creditCardDetails,
+        overflowCents,
+      );
+    }
+  });
 
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/cards");
   revalidatePath("/accounts");
+  revalidatePath("/people");
+  revalidatePath("/projections");
   return { error: null };
 }

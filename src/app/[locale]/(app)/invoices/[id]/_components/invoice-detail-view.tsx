@@ -5,21 +5,15 @@ import { useTranslations, useFormatter } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter, Link } from "@/i18n/navigation";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
-import { MarkPaidDialog } from "./mark-paid-dialog";
+import { PayInvoiceDialog } from "./pay-invoice-dialog";
+import {
+  InvoiceStatusBadge,
+  invoiceStatusMessageKey,
+} from "../../_components/invoice-status-badge";
 import type { InvoiceDetail, PayableAccountOption } from "../../_types/types";
-
-const statusVariant: Record<
-  InvoiceDetail["displayStatus"],
-  "default" | "secondary" | "outline"
-> = {
-  OPEN: "outline",
-  CLOSED: "secondary",
-  PAID: "default",
-};
 
 type InvoiceDetailViewProps = {
   invoice: InvoiceDetail;
@@ -31,7 +25,7 @@ export function InvoiceDetailView({ invoice, accounts }: InvoiceDetailViewProps)
   const format = useFormatter();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [markPaidOpen, setMarkPaidOpen] = useState(false);
+  const [payOpen, setPayOpen] = useState(false);
 
   function money(value: number) {
     return format.number(value, { style: "currency", currency: "BRL" });
@@ -48,9 +42,12 @@ export function InvoiceDetailView({ invoice, accounts }: InvoiceDetailViewProps)
     queryClient.invalidateQueries({ queryKey: ["invoices"] });
     queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
     // Paying an invoice now creates an expense Transaction on the chosen
-    // account (see markInvoicePaid in actions.ts), which changes that
+    // account (see payInvoice in actions.ts), which changes that
     // account's balance on /accounts.
     queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    // Who still owes what on this invoice just changed — refetch before
+    // the dialog (or its own next open) shows stale amounts.
+    queryClient.invalidateQueries({ queryKey: ["invoice-people-owed", invoice.id] });
     router.refresh();
   }
 
@@ -75,9 +72,10 @@ export function InvoiceDetailView({ invoice, accounts }: InvoiceDetailViewProps)
               })}
             </p>
           </div>
-          <Badge variant={statusVariant[invoice.displayStatus]}>
-            {t(`status.${invoice.displayStatus.toLowerCase()}`)}
-          </Badge>
+          <InvoiceStatusBadge
+            status={invoice.displayStatus}
+            label={t(`status.${invoiceStatusMessageKey(invoice.displayStatus)}`)}
+          />
         </div>
 
         <div className="flex flex-col gap-1">
@@ -89,17 +87,74 @@ export function InvoiceDetailView({ invoice, accounts }: InvoiceDetailViewProps)
           </span>
         </div>
 
-        {invoice.displayStatus === "PAID" && invoice.paidAt ? (
-          <p className="text-xs text-muted-foreground">
-            {t("detail.paidSummary", {
-              date: format.dateTime(invoice.paidAt, DATE_ONLY_FORMAT_OPTIONS),
-              amount: money(invoice.paidAmount ?? 0),
-            })}
-          </p>
-        ) : (
-          <Button onClick={() => setMarkPaidOpen(true)} className="w-fit">
+        {(invoice.paidAmount || invoice.creditApplied > 0) && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            {invoice.paidAmount ? (
+              <span>
+                {t("detail.summary.paidSoFar")}{" "}
+                <span className="font-medium text-positive">
+                  {money(invoice.paidAmount)}
+                </span>
+              </span>
+            ) : null}
+            {invoice.creditApplied > 0 ? (
+              <span>
+                {t("detail.summary.creditApplied")}{" "}
+                <span className="font-medium text-positive">
+                  {money(invoice.creditApplied)}
+                </span>
+              </span>
+            ) : null}
+            {invoice.displayStatus !== "PAID" ? (
+              <span>
+                {t("detail.summary.remainingDue")}{" "}
+                <span className="font-medium text-negative">
+                  {money(invoice.remainingDue)}
+                </span>
+              </span>
+            ) : null}
+          </div>
+        )}
+
+        {invoice.displayStatus !== "PAID" && (
+          <Button onClick={() => setPayOpen(true)} className="w-fit">
             {t("detail.markPaid.button")}
           </Button>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-medium">{t("detail.payments.title")}</h2>
+
+        {invoice.payments.length === 0 ? (
+          <p className="rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+            {t("detail.payments.empty")}
+          </p>
+        ) : (
+          <div className="rounded-md border border-border">
+            <div className="divide-y divide-border">
+              {invoice.payments.map((payment) => {
+                const accountName =
+                  accounts.find((account) => account.id === payment.accountId)?.name ?? "";
+                return (
+                  <div
+                    key={payment.id}
+                    className="flex items-center justify-between gap-3 px-3 py-2.5"
+                  >
+                    <span className="text-sm text-muted-foreground">
+                      {t("detail.payments.row", {
+                        date: format.dateTime(payment.paidAt, DATE_ONLY_FORMAT_OPTIONS),
+                        account: accountName,
+                      })}
+                    </span>
+                    <span className="shrink-0 text-sm font-medium tabular-nums text-negative">
+                      {money(payment.amount)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
 
@@ -165,11 +220,11 @@ export function InvoiceDetailView({ invoice, accounts }: InvoiceDetailViewProps)
         )}
       </div>
 
-      <MarkPaidDialog
-        open={markPaidOpen}
-        onOpenChange={setMarkPaidOpen}
+      <PayInvoiceDialog
+        open={payOpen}
+        onOpenChange={setPayOpen}
         invoiceId={invoice.id}
-        defaultAmount={invoice.total}
+        remainingDue={invoice.remainingDue}
         accounts={accounts}
         onPaid={handlePaid}
       />

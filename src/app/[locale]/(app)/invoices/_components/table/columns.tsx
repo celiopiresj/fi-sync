@@ -1,10 +1,10 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { InvoiceRow } from "../../_types/types";
+import { InvoiceStatusBadge } from "../invoice-status-badge";
 
 type ColumnMessages = {
   columns: {
@@ -19,15 +19,6 @@ type ColumnMessages = {
 
 type ColumnActions = {
   onOpen: (row: InvoiceRow) => void;
-};
-
-const statusVariant: Record<
-  InvoiceRow["displayStatus"],
-  "default" | "secondary" | "outline"
-> = {
-  OPEN: "outline",
-  CLOSED: "secondary",
-  PAID: "default",
 };
 
 export function getInvoiceColumns(
@@ -61,9 +52,10 @@ export function getInvoiceColumns(
       header: () => <div className="w-24">{messages.columns.status}</div>,
       cell: ({ row }) => (
         <div className="w-24 shrink-0">
-          <Badge variant={statusVariant[row.original.displayStatus]}>
-            {messages.statusLabel(row.original.displayStatus)}
-          </Badge>
+          <InvoiceStatusBadge
+            status={row.original.displayStatus}
+            label={messages.statusLabel(row.original.displayStatus)}
+          />
         </div>
       ),
     },

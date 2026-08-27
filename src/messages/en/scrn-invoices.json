@@ -1,0 +1,130 @@
+{
+  "title": "Invoices",
+  "description": "Track closing dates, due dates and committed limit across your cards",
+  "header": {
+    "subtitle": "{count, plural, =0 {No invoices listed} one {# invoice listed} other {# invoices listed}}"
+  },
+  "period": {
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+  "kpis": {
+    "toPay": "To pay (closed)",
+    "toPayLegend": "{count, plural, =0 {No invoice awaiting payment} one {# invoice awaiting payment} other {# invoices awaiting payment}}",
+    "open": "Open (partial)",
+    "openLegend": "Accruing until the closing date",
+    "partiallyPaid": "Partially paid",
+    "partiallyPaidLegend": "{count, plural, =0 {No invoice with a remaining balance} one {# invoice with a remaining balance} other {# invoices with a remaining balance}}",
+    "paid": "Paid this month",
+    "paidLegend": "{count, plural, =0 {No invoice settled} one {# invoice settled} other {# invoices settled}}",
+    "total": "Total committed",
+    "totalLegend": "Sum across every card"
+  },
+  "search": {
+    "placeholder": "Search invoice or amount...",
+    "clear": "Clear search"
+  },
+  "viewMode": {
+    "grid": "Grid view",
+    "table": "Table view"
+  },
+  "card": {
+    "valueLabel": "Invoice amount",
+    "itemsCount": "{count, plural, =0 {No purchases} one {# purchase} other {# purchases}}",
+    "closing": "Closing",
+    "due": "Due",
+    "viewItems": "View items",
+    "pay": "Pay",
+    "dueHint": {
+      "closesToday": "Closes today!",
+      "closesInDays": "Closes in {days} days",
+      "dueToday": "Due today!",
+      "dueInDays": "Due in {days} days",
+      "overdueDays": "Overdue by {days} days",
+      "paidOn": "Paid on {date}"
+    }
+  },
+  "filters": {
+    "account": "Card",
+    "allAccounts": "All cards",
+    "status": "Status"
+  },
+  "status": {
+    "all": "All",
+    "open": "Open",
+    "closed": "Closed",
+    "partiallyPaid": "Partially paid",
+    "paid": "Paid"
+  },
+  "table": {
+    "columns": {
+      "account": "Card",
+      "period": "Period",
+      "status": "Status",
+      "total": "Total"
+    },
+    "period": "{closing} – {due}",
+    "open": "View invoice",
+    "empty": {
+      "title": "No invoices found",
+      "description": "Invoices show up here as soon as the first purchase of the cycle is entered."
+    }
+  },
+  "detail": {
+    "back": "Back",
+    "summary": {
+      "period": "Closes {closing} · Due {due}",
+      "total": "Invoice total",
+      "paidSoFar": "Paid",
+      "creditApplied": "Credit applied",
+      "remainingDue": "Remaining"
+    },
+    "transactions": {
+      "title": "Transactions",
+      "categoryCardJoin": "{category} · {card}",
+      "subtitleJoin": "{date} · {detail}",
+      "empty": "No transactions on this invoice yet"
+    },
+    "payments": {
+      "title": "Payments",
+      "empty": "No payment recorded yet",
+      "row": "{date} · {account}"
+    },
+    "markPaid": {
+      "button": "Register payment",
+      "title": "Register payment",
+      "description": "Enter the amount paid. This frees up the matching limit on the card.",
+      "amountLabel": "Amount paid",
+      "amountPlaceholder": "0.00",
+      "accountLabel": "Debit from account",
+      "accountPlaceholder": "Select the account",
+      "dateLabel": "Payment date",
+      "transactionDescription": "Invoice payment {card}",
+      "allocations": {
+        "toggleLabel": "Split between people",
+        "hint": "The amount entered differs from what's due — select who this payment covers.",
+        "overflowHint": "The excess of {value} becomes credit on the next invoice(s).",
+        "personLabel": "Person",
+        "amountLabel": "Amount",
+        "addPerson": "Add person",
+        "remove": "Remove person",
+        "empty": "No one has a charge on this invoice",
+        "mismatch": "The split total must match the amount this payment covers"
+      },
+      "confirm": "Confirm payment",
+      "cancel": "Cancel"
+    },
+    "notFound": {
+      "title": "Invoice not found",
+      "description": "It may have been removed, or you don't have access to it.",
+      "button": "Back to invoices"
+    }
+  },
+  "toast": {
+    "paymentRegistered": "Payment recorded",
+    "error": "Couldn't complete the action"
+  },
+  "aria": {
+    "close": "Close"
+  }
+}

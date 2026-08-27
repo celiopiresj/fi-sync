@@ -1,6 +1,13 @@
 "use client";
 
 import { DataTable } from "@/components/data-table/data-table";
+import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
+import { PageHeader, PeriodStepper } from "@/components/screen/page-header";
+import { SearchInput } from "@/components/screen/search-input";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/screen/view-mode-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +25,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,19 +43,13 @@ import {
 import { cn } from "@/lib/utils";
 import {
   CalendarIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
   CreditCardIcon,
-  ListIcon,
   LockIcon,
-  MagnifyingGlassIcon,
   ReceiptIcon,
-  SquaresFourIcon,
-  XIcon,
 } from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
-import { MarkPaidDialog } from "../[id]/_components/mark-paid-dialog";
+import { PayInvoiceDialog } from "../[id]/_components/pay-invoice-dialog";
 import { useInvoicesData } from "../_hooks/use-invoices-data";
 import { getAccountColorClasses } from "../_lib/account-color";
 import { getDueHint } from "../_lib/due-hint";
@@ -66,19 +66,18 @@ import type {
 } from "../_types/types";
 import type { InvoiceFilters } from "../actions";
 import { getInvoiceColumns } from "./table/columns";
+import { InvoiceStatusBadge, invoiceStatusMessageKey } from "./invoice-status-badge";
 
 const ALL_VALUE = "__all__";
 type StatusFilter = InvoiceRow["displayStatus"] | "all";
-type ViewMode = "grid" | "table";
 
-const statusVariant: Record<
-  InvoiceRow["displayStatus"],
-  "default" | "secondary" | "outline"
-> = {
-  OPEN: "outline",
-  CLOSED: "secondary",
-  PAID: "default",
-};
+// A payable invoice is one still owing money — CLOSED (never paid) or
+// PARTIALLY_PAID (some real payment/credit already landed, balance
+// remains). Payment isn't offered while still OPEN (accruing, not yet
+// closed) or once fully PAID.
+function canPayInvoice(status: InvoiceRow["displayStatus"]): boolean {
+  return status === "CLOSED" || status === "PARTIALLY_PAID";
+}
 
 type InvoicesViewProps = {
   initialInvoices: InvoiceRow[];
@@ -100,7 +99,7 @@ export function InvoicesView({
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchText, setSearchText] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [payingInvoice, setPayingInvoice] = useState<InvoiceRow | null>(null);
 
   function money(value: number) {
@@ -124,24 +123,37 @@ export function InvoicesView({
     isDefaultFilters,
   );
 
-  const { toPay, toPayCount, open, paid, paidCount, total } = useMemo(() => {
-    return invoices.reduce(
-      (acc, invoice) => {
-        acc.total += invoice.total;
-        if (invoice.displayStatus === "CLOSED") {
-          acc.toPay += invoice.total;
-          acc.toPayCount += 1;
-        } else if (invoice.displayStatus === "OPEN") {
-          acc.open += invoice.total;
-        } else {
-          acc.paid += invoice.total;
-          acc.paidCount += 1;
-        }
-        return acc;
-      },
-      { toPay: 0, toPayCount: 0, open: 0, paid: 0, paidCount: 0, total: 0 },
-    );
-  }, [invoices]);
+  const { toPay, toPayCount, open, partiallyPaid, partiallyPaidCount, paid, paidCount, total } =
+    useMemo(() => {
+      return invoices.reduce(
+        (acc, invoice) => {
+          acc.total += invoice.total;
+          if (invoice.displayStatus === "CLOSED") {
+            acc.toPay += invoice.total;
+            acc.toPayCount += 1;
+          } else if (invoice.displayStatus === "OPEN") {
+            acc.open += invoice.total;
+          } else if (invoice.displayStatus === "PARTIALLY_PAID") {
+            acc.partiallyPaid += invoice.remainingDue;
+            acc.partiallyPaidCount += 1;
+          } else {
+            acc.paid += invoice.total;
+            acc.paidCount += 1;
+          }
+          return acc;
+        },
+        {
+          toPay: 0,
+          toPayCount: 0,
+          open: 0,
+          partiallyPaid: 0,
+          partiallyPaidCount: 0,
+          paid: 0,
+          paidCount: 0,
+          total: 0,
+        },
+      );
+    }, [invoices]);
 
   const filteredInvoices = useMemo(() => {
     const query = searchText.trim().toLowerCase();
@@ -165,7 +177,7 @@ export function InvoicesView({
   }
 
   function statusLabel(value: InvoiceRow["displayStatus"]) {
-    return t(`status.${value.toLowerCase()}`);
+    return t(`status.${invoiceStatusMessageKey(value)}`);
   }
 
   function handleOpen(row: InvoiceRow) {
@@ -222,118 +234,69 @@ export function InvoicesView({
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">{t("title")}</h1>
-            <Badge variant="secondary">
-              {t("header.subtitle", { count: invoices.length })}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("description")}
+        badge={
+          <Badge variant="secondary">
+            {t("header.subtitle", { count: invoices.length })}
+          </Badge>
+        }
+        right={
+          <PeriodStepper
+            label={periodLabel}
+            onPrevious={() =>
               setPeriod((current) => shiftInvoicePeriod(current, -1))
             }
-            aria-label={t("period.previous")}>
-            <CaretLeftIcon />
-          </Button>
-          <span className="min-w-32 text-center text-sm font-medium capitalize">
-            {periodLabel}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
+            onNext={() =>
               setPeriod((current) => shiftInvoicePeriod(current, 1))
             }
-            aria-label={t("period.next")}>
-            <CaretRightIcon />
-          </Button>
-        </div>
-      </div>
+            previousLabel={t("period.previous")}
+            nextLabel={t("period.next")}
+          />
+        }
+      />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-amber-600">
-              {t("kpis.toPay")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(toPay)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("kpis.toPayLegend", { count: toPayCount })}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-sky-600">
-              {t("kpis.open")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(open)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("kpis.openLegend")}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-emerald-600">
-              {t("kpis.paid")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(paid)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("kpis.paidLegend", { count: paidCount })}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("kpis.total")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(total)}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t("kpis.totalLegend")}
-            </span>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiGrid>
+        <KpiCard
+          label={t("kpis.toPay")}
+          value={money(toPay)}
+          tone="warning"
+          subtitle={t("kpis.toPayLegend", { count: toPayCount })}
+        />
+        <KpiCard
+          label={t("kpis.open")}
+          value={money(open)}
+          subtitle={t("kpis.openLegend")}
+        />
+        <KpiCard
+          label={t("kpis.partiallyPaid")}
+          value={money(partiallyPaid)}
+          tone="warning"
+          subtitle={t("kpis.partiallyPaidLegend", { count: partiallyPaidCount })}
+        />
+        <KpiCard
+          label={t("kpis.paid")}
+          value={money(paid)}
+          tone="positive"
+          subtitle={t("kpis.paidLegend", { count: paidCount })}
+        />
+        <KpiCard
+          label={t("kpis.total")}
+          value={money(total)}
+          subtitle={t("kpis.totalLegend")}
+        />
+      </KpiGrid>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="relative w-full max-w-md">
-            <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              placeholder={t("search.placeholder")}
-              className="h-9 pl-9 pr-8"
-            />
-            {searchText && (
-              <button
-                type="button"
-                onClick={() => setSearchText("")}
-                aria-label={t("search.clear")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                <XIcon className="size-4" />
-              </button>
-            )}
-          </div>
+        <SearchInput
+          value={searchText}
+          onChange={setSearchText}
+          placeholder={t("search.placeholder")}
+          clearLabel={t("search.clear")}
+        />
 
+        <div className="flex flex-wrap items-center gap-3">
           <Select
             value={accountId ?? ALL_VALUE}
             onValueChange={(value) =>
@@ -367,30 +330,24 @@ export function InvoicesView({
               {t("status.closed")}
             </ToggleGroupItem>
             <ToggleGroupItem value="OPEN">{t("status.open")}</ToggleGroupItem>
+            <ToggleGroupItem value="PARTIALLY_PAID">
+              {t("status.partiallyPaid")}
+            </ToggleGroupItem>
             <ToggleGroupItem value="PAID">{t("status.paid")}</ToggleGroupItem>
           </ToggleGroup>
-        </div>
 
-        <ToggleGroup
-          type="single"
-          variant="tabs"
-          size="sm"
-          value={viewMode}
-          onValueChange={(value) => {
-            if (value) setViewMode(value as ViewMode);
-          }}>
-          <ToggleGroupItem value="grid" aria-label={t("viewMode.grid")}>
-            <SquaresFourIcon />
-          </ToggleGroupItem>
-          <ToggleGroupItem value="table" aria-label={t("viewMode.table")}>
-            <ListIcon />
-          </ToggleGroupItem>
-        </ToggleGroup>
+          <ViewModeToggle
+            value={viewMode}
+            onValueChange={setViewMode}
+            cardsLabel={t("viewMode.grid")}
+            listLabel={t("viewMode.table")}
+          />
+        </div>
       </div>
 
       {filteredInvoices.length === 0 ? (
         <div className="rounded-md border border-border">{emptyStateNode}</div>
-      ) : viewMode === "table" ? (
+      ) : viewMode === "list" ? (
         <DataTable
           columns={columns}
           data={filteredInvoices}
@@ -401,7 +358,7 @@ export function InvoicesView({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filteredInvoices.map((invoice) => {
             const color = getAccountColorClasses(invoice.accountId);
-            const canPay = invoice.displayStatus === "CLOSED";
+            const canPay = canPayInvoice(invoice.displayStatus);
             const dueHint = getDueHint(
               invoice.displayStatus,
               dateOnlyKey(invoice.closingDate),
@@ -435,7 +392,7 @@ export function InvoicesView({
                 : "text-muted-foreground";
 
             return (
-              <Card key={invoice.id} className="rounded-2xl">
+              <Card key={invoice.id} radius="lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3 text-base">
                     <span
@@ -451,18 +408,25 @@ export function InvoicesView({
                     {invoice.account.name}
                   </CardTitle>
                   <CardAction>
-                    <Badge variant={statusVariant[invoice.displayStatus]}>
-                      {statusLabel(invoice.displayStatus)}
-                    </Badge>
+                    <InvoiceStatusBadge
+                      status={invoice.displayStatus}
+                      label={statusLabel(invoice.displayStatus)}
+                    />
                   </CardAction>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1 rounded-xl bg-muted/50 p-3">
                     <span className="text-xs text-muted-foreground">
-                      {t("card.valueLabel")}
+                      {invoice.displayStatus === "PARTIALLY_PAID"
+                        ? t("detail.summary.remainingDue")
+                        : t("card.valueLabel")}
                     </span>
                     <span className="text-2xl font-bold tabular-nums text-negative">
-                      {money(invoice.total)}
+                      {money(
+                        invoice.displayStatus === "PARTIALLY_PAID"
+                          ? invoice.remainingDue
+                          : invoice.total,
+                      )}
                     </span>
                     <div className="flex items-center justify-between gap-2 text-xs">
                       <span className="flex items-center gap-1 text-muted-foreground">
@@ -529,13 +493,13 @@ export function InvoicesView({
       )}
 
       {payingInvoice ? (
-        <MarkPaidDialog
+        <PayInvoiceDialog
           open={payingInvoice !== null}
           onOpenChange={(open) => {
             if (!open) setPayingInvoice(null);
           }}
           invoiceId={payingInvoice.id}
-          defaultAmount={payingInvoice.total}
+          remainingDue={payingInvoice.remainingDue}
           accounts={payableAccounts}
           onPaid={handlePaid}
         />

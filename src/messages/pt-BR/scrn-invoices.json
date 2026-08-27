@@ -1,0 +1,130 @@
+{
+  "title": "Faturas",
+  "description": "Acompanhe datas de fechamento, vencimentos e limite comprometido de seus cartões",
+  "header": {
+    "subtitle": "{count, plural, =0 {Nenhuma fatura listada} one {# fatura listada} other {# faturas listadas}}"
+  },
+  "period": {
+    "previous": "Mês anterior",
+    "next": "Próximo mês"
+  },
+  "kpis": {
+    "toPay": "A pagar (fechadas)",
+    "toPayLegend": "{count, plural, =0 {Nenhuma fatura aguardando pagamento} one {# fatura aguardando pagamento} other {# faturas aguardando pagamento}}",
+    "open": "Em aberto (parcial)",
+    "openLegend": "Acumulando até a data de corte",
+    "partiallyPaid": "Parcialmente pagas",
+    "partiallyPaidLegend": "{count, plural, =0 {Nenhuma fatura com saldo restante} one {# fatura com saldo restante} other {# faturas com saldo restante}}",
+    "paid": "Pagas no mês",
+    "paidLegend": "{count, plural, =0 {Nenhuma fatura liquidada} one {# fatura liquidada} other {# faturas liquidadas}}",
+    "total": "Comprometimento total",
+    "totalLegend": "Soma de todos os cartões"
+  },
+  "search": {
+    "placeholder": "Buscar fatura ou valor...",
+    "clear": "Limpar busca"
+  },
+  "viewMode": {
+    "grid": "Visualização em grade",
+    "table": "Visualização em tabela"
+  },
+  "card": {
+    "valueLabel": "Valor da fatura",
+    "itemsCount": "{count, plural, =0 {Nenhuma compra} one {# compra} other {# compras}}",
+    "closing": "Fechamento",
+    "due": "Vencimento",
+    "viewItems": "Ver lançamentos",
+    "pay": "Pagar",
+    "dueHint": {
+      "closesToday": "Fecha hoje!",
+      "closesInDays": "Fecha em {days} dias",
+      "dueToday": "Vence hoje!",
+      "dueInDays": "Vence em {days} dias",
+      "overdueDays": "Venceu há {days} dias",
+      "paidOn": "Pago em {date}"
+    }
+  },
+  "filters": {
+    "account": "Cartão",
+    "allAccounts": "Todos os cartões",
+    "status": "Status"
+  },
+  "status": {
+    "all": "Todas",
+    "open": "Aberta",
+    "closed": "Fechada",
+    "partiallyPaid": "Parcialmente paga",
+    "paid": "Paga"
+  },
+  "table": {
+    "columns": {
+      "account": "Cartão",
+      "period": "Período",
+      "status": "Status",
+      "total": "Total"
+    },
+    "period": "{closing} – {due}",
+    "open": "Ver fatura",
+    "empty": {
+      "title": "Nenhuma fatura encontrada",
+      "description": "As faturas aparecem aqui assim que a primeira compra do ciclo é lançada."
+    }
+  },
+  "detail": {
+    "back": "Voltar",
+    "summary": {
+      "period": "Fechamento {closing} · Vencimento {due}",
+      "total": "Total da fatura",
+      "paidSoFar": "Pago",
+      "creditApplied": "Crédito aplicado",
+      "remainingDue": "Restante"
+    },
+    "transactions": {
+      "title": "Transações",
+      "categoryCardJoin": "{category} · {card}",
+      "subtitleJoin": "{date} · {detail}",
+      "empty": "Nenhuma transação nesta fatura ainda"
+    },
+    "payments": {
+      "title": "Pagamentos",
+      "empty": "Nenhum pagamento registrado ainda",
+      "row": "{date} · {account}"
+    },
+    "markPaid": {
+      "button": "Registrar pagamento",
+      "title": "Registrar pagamento",
+      "description": "Informe o valor pago. Isso libera o limite correspondente no cartão.",
+      "amountLabel": "Valor pago",
+      "amountPlaceholder": "0,00",
+      "accountLabel": "Debitar da conta",
+      "accountPlaceholder": "Selecione a conta",
+      "dateLabel": "Data do pagamento",
+      "transactionDescription": "Pagamento fatura {card}",
+      "allocations": {
+        "toggleLabel": "Dividir entre pessoas",
+        "hint": "O valor digitado é diferente do saldo devedor — selecione quem esse pagamento cobre.",
+        "overflowHint": "O excedente de {value} vira crédito na(s) próxima(s) fatura(s).",
+        "personLabel": "Pessoa",
+        "amountLabel": "Valor",
+        "addPerson": "Adicionar pessoa",
+        "remove": "Remover pessoa",
+        "empty": "Nenhuma pessoa com gasto nesta fatura",
+        "mismatch": "A soma da divisão precisa bater com o valor coberto pelo pagamento"
+      },
+      "confirm": "Confirmar pagamento",
+      "cancel": "Cancelar"
+    },
+    "notFound": {
+      "title": "Fatura não encontrada",
+      "description": "Ela pode ter sido removida ou você não tem acesso a ela.",
+      "button": "Voltar para faturas"
+    }
+  },
+  "toast": {
+    "paymentRegistered": "Pagamento registrado",
+    "error": "Não foi possível concluir a ação"
+  },
+  "aria": {
+    "close": "Fechar"
+  }
+}
