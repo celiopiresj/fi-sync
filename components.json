@@ -1,0 +1,23 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-mira",
+  "tailwind": {
+    "css": "src/app/[locale]/globals.css",
+    "baseColor": "mist",
+    "cssVariables": true
+  },
+  "rsc": true,
+  "tsx": true,
+  "aliases": {
+    "components": "@/components",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks",
+    "utils": "@/lib/utils"
+  },
+  "iconLibrary": "phosphor",
+  "rtl": false,
+  "menuColor": "inverted",
+  "menuAccent": "subtle",
+  "registries": {}
+}
