@@ -102,7 +102,7 @@ export function CategoryForm({
           <form.Field name="type">
             {(field) => (
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {t("fields.type.label")}
                 </label>
                 <CategoryTypeSelector
@@ -116,7 +116,7 @@ export function CategoryForm({
           <form.Field name="colorStyle">
             {(field) => (
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {t("fields.color.label")}
                 </label>
                 <CategoryColorPicker
@@ -130,7 +130,7 @@ export function CategoryForm({
           <form.Field name="icon">
             {(field) => (
               <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {t("fields.icon.label")}
                 </label>
                 <CategoryIconPicker

@@ -1,6 +1,10 @@
+import { createElement, type ReactNode } from "react";
 import type { CategoryType } from "@/generated/prisma/client";
 import { AVAILABLE_ICONS, resolveCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   PiggyBankIcon,
   TrendDownIcon,
@@ -10,6 +14,30 @@ import { useTranslations } from "next-intl";
 import { AVAILABLE_COLORS, ColorPicker as CategoryColorPicker } from "@/components/form/color-picker";
 
 export { AVAILABLE_COLORS, CategoryColorPicker };
+
+// Category type → status token, shared by the preview card, the type
+// selector's selected state, and categories-view.tsx's badges/KPIs —
+// AGENTS.md's "Status/money colors" convention (expense = negative,
+// income = positive; investment has no dedicated token, so it reuses
+// "warning" as a third distinct tone rather than inventing a raw color).
+const TYPE_TEXT: Record<CategoryType, string> = {
+  EXPENSE: "text-negative",
+  INCOME: "text-positive",
+  INVESTMENT: "text-warning",
+};
+
+// Written as full literal class strings (not built by string
+// concatenation) so Tailwind's static build-time scanner can see and
+// generate each `data-[state=on]:*` utility — a dynamically-assembled
+// string wouldn't be picked up by the scanner.
+const TYPE_SELECTED: Record<CategoryType, string> = {
+  EXPENSE:
+    "data-[state=on]:border-negative/40 data-[state=on]:bg-negative/10 data-[state=on]:text-negative",
+  INCOME:
+    "data-[state=on]:border-positive/40 data-[state=on]:bg-positive/10 data-[state=on]:text-positive",
+  INVESTMENT:
+    "data-[state=on]:border-warning/40 data-[state=on]:bg-warning/10 data-[state=on]:text-warning",
+};
 
 export function CategoryPreviewCard({
   name,
@@ -25,49 +53,43 @@ export function CategoryPreviewCard({
   isSystem?: boolean;
 }) {
   const t = useTranslations("scrn-categories");
-  const Icon = resolveCategoryIcon(icon);
 
   return (
-    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-2">
-      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+    <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 p-4">
+      <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {t("drawer.previewTitle")}
       </span>
-      <div className="flex items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0 transition-all",
-              colorStyle ||
-                "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
-            )}>
-            <Icon className="w-5 h-5" />
-          </div>
-          <div className="truncate">
-            <span className="font-bold text-xs text-slate-900 dark:text-white block truncate">
-              {name || t("fields.name.label")}
-            </span>
-            <span
+      <Card radius="lg">
+        <div className="flex items-center justify-between gap-3 px-4 py-3.5">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
               className={cn(
-                "inline-block text-[10px] font-semibold",
-                type === "EXPENSE" && "text-rose-600 dark:text-rose-400",
-                type === "INCOME" && "text-emerald-600 dark:text-emerald-400",
-                type === "INVESTMENT" && "text-indigo-600 dark:text-indigo-400",
-              )}>
-              • {t(`fields.type.${type.toLowerCase()}`)}
-            </span>
+                "flex size-10 shrink-0 items-center justify-center rounded-lg transition-all",
+                colorStyle || "bg-muted text-muted-foreground",
+              )}
+            >
+              {createElement(resolveCategoryIcon(icon), { className: "size-5" })}
+            </div>
+            <div className="min-w-0">
+              <span className="block truncate text-sm font-semibold">
+                {name || t("fields.name.label")}
+              </span>
+              <span
+                className={cn(
+                  "inline-block text-xs font-medium",
+                  TYPE_TEXT[type],
+                )}
+              >
+                {t(`fields.type.${type.toLowerCase()}`)}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <span
-          className={cn(
-            "px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0",
-            isSystem
-              ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-              : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
-          )}>
-          {t(`table.origin.${isSystem ? "system" : "custom"}`)}
-        </span>
-      </div>
+          <Badge variant={isSystem ? "secondary" : "outline"} className="shrink-0">
+            {t(`table.origin.${isSystem ? "system" : "custom"}`)}
+          </Badge>
+        </div>
+      </Card>
     </div>
   );
 }
@@ -81,51 +103,38 @@ export function CategoryTypeSelector({
 }) {
   const t = useTranslations("scrn-categories");
 
+  const options: { type: CategoryType; icon: ReactNode }[] = [
+    { type: "EXPENSE", icon: <TrendDownIcon className="size-4" /> },
+    { type: "INCOME", icon: <TrendUpIcon className="size-4" /> },
+    { type: "INVESTMENT", icon: <PiggyBankIcon className="size-4" /> },
+  ];
+
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <button
-        type="button"
-        onClick={() => onChange("EXPENSE")}
-        className={cn(
-          "p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all",
-          value === "EXPENSE"
-            ? "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-900"
-            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800",
-        )}>
-        <TrendDownIcon className="w-4 h-4" />
-        <span>{t("fields.type.expense")}</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onChange("INCOME")}
-        className={cn(
-          "p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all",
-          value === "INCOME"
-            ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900"
-            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800",
-        )}>
-        <TrendUpIcon className="w-4 h-4" />
-        <span>{t("fields.type.income")}</span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => onChange("INVESTMENT")}
-        className={cn(
-          "p-2.5 rounded-xl border text-xs font-bold flex flex-col items-center gap-1 transition-all",
-          value === "INVESTMENT"
-            ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-900"
-            : "border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800",
-        )}>
-        <PiggyBankIcon className="w-4 h-4" />
-        <span>{t("fields.type.investment")}</span>
-      </button>
-    </div>
+    <ToggleGroup
+      type="single"
+      variant="outline"
+      value={value}
+      onValueChange={(next) => {
+        if (next) onChange(next as CategoryType);
+      }}
+      className="grid w-full grid-cols-3 gap-2"
+    >
+      {options.map(({ type, icon }) => (
+        <ToggleGroupItem
+          key={type}
+          value={type}
+          className={cn(
+            "h-auto flex-col gap-1 rounded-lg py-2.5 text-xs font-semibold",
+            TYPE_SELECTED[type],
+          )}
+        >
+          {icon}
+          <span>{t(`fields.type.${type.toLowerCase()}`)}</span>
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   );
 }
-
-
 
 export function CategoryIconPicker({
   value,
@@ -135,24 +144,22 @@ export function CategoryIconPicker({
   onChange: (val: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-6 gap-2 p-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800 max-h-48 overflow-y-auto">
-      {AVAILABLE_ICONS.map((iconKey) => {
-        const Icon = resolveCategoryIcon(iconKey);
-        return (
-          <button
-            key={iconKey}
-            type="button"
-            onClick={() => onChange(iconKey)}
-            className={cn(
-              "p-2 rounded-xl border flex items-center justify-center transition-all",
-              value === iconKey
-                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
-                : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800",
-            )}>
-            <Icon className="w-4 h-4" />
-          </button>
-        );
-      })}
+    <div className="grid max-h-48 grid-cols-6 gap-2 overflow-y-auto rounded-lg border border-border bg-muted/40 p-2">
+      {AVAILABLE_ICONS.map((iconKey) => (
+        <button
+          key={iconKey}
+          type="button"
+          onClick={() => onChange(iconKey)}
+          className={cn(
+            "flex items-center justify-center rounded-md border p-2 transition-colors",
+            value === iconKey
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:bg-muted",
+          )}
+        >
+          {createElement(resolveCategoryIcon(iconKey), { className: "size-4" })}
+        </button>
+      ))}
     </div>
   );
 }

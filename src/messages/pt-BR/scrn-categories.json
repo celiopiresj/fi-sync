@@ -1,0 +1,103 @@
+{
+  "title": "Categorias",
+  "subtitle": "Classifique suas receitas, despesas e investimentos para relatórios precisos.",
+  "counts": "{count, plural, =0 {Nenhuma cadastrada} one {1 cadastrada} other {# cadastradas}}",
+  "buttons": {
+    "add": "Nova Categoria",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "kpi": {
+    "total": {
+      "title": "Total",
+      "description": "Categorias ativas"
+    },
+    "expenses": {
+      "title": "Despesas",
+      "description": "Saídas e gastos"
+    },
+    "incomes": {
+      "title": "Receitas",
+      "description": "Entradas e ganhos"
+    },
+    "investments": {
+      "title": "Investimentos",
+      "description": "Aportes e reservas"
+    }
+  },
+  "filters": {
+    "searchPlaceholder": "Buscar por nome da categoria...",
+    "clearSearch": "Limpar busca",
+    "all": "Todas",
+    "expense": "Despesas",
+    "income": "Receitas",
+    "investment": "Investimentos",
+    "viewMode": {
+      "cards": "Modo cards",
+      "list": "Modo lista"
+    }
+  },
+  "fields": {
+    "name": {
+      "label": "Nome da Categoria",
+      "placeholder": "Ex: Supermercado, Salário..."
+    },
+    "type": {
+      "label": "Tipo da Categoria",
+      "expense": "Despesa",
+      "income": "Receita",
+      "investment": "Investimento"
+    },
+    "color": {
+      "label": "Cor Temática"
+    },
+    "icon": {
+      "label": "Escolha um Ícone"
+    }
+  },
+  "table": {
+    "columns": {
+      "name": "Categoria",
+      "type": "Tipo",
+      "origin": "Origem",
+      "actions": "Ações"
+    },
+    "empty": {
+      "title": "Nenhuma categoria encontrada",
+      "description": "Tente buscar por outro termo ou selecione o filtro 'Todas'."
+    },
+    "origin": {
+      "system": "Sistema",
+      "custom": "Personalizada"
+    }
+  },
+  "dialog": {
+    "create": {
+      "title": "Nova Categoria",
+      "description": "Personalize o nome, tipo, ícone e cor",
+      "confirm": "Salvar Categoria",
+      "cancel": "Cancelar"
+    },
+    "edit": {
+      "title": "Editar Categoria",
+      "description": "Personalize o nome, tipo, ícone e cor",
+      "confirm": "Salvar Categoria",
+      "cancel": "Cancelar"
+    },
+    "delete": {
+      "title": "Excluir Categoria",
+      "description": "Tem certeza que deseja excluir esta categoria?",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    }
+  },
+  "drawer": {
+    "previewTitle": "Pré-visualização da Categoria"
+  },
+  "toast": {
+    "error": "Erro",
+    "created": "Categoria criada com sucesso.",
+    "updated": "Categoria atualizada com sucesso.",
+    "deleted": "Categoria excluída com sucesso."
+  }
+}
