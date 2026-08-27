@@ -1,0 +1,23 @@
+{
+  "i18n-ally.localesPaths": ["src/messages"],
+  "i18n-ally.sourceLanguage": "pt-BR",
+  "i18n-ally.displayLanguage": "pt-BR",
+  "i18n-ally.pathMatcher": "{locale}/{namespace}.json",
+  "i18n-ally.keystyle": "nested",
+  "i18n-ally.namespace": true,
+  "i18n-ally.enabledFrameworks": ["custom"],
+  "i18n-ally.customFrameworks": [".vscode/i18n-ally-custom-framework.yml"],
+  "i18n-ally.annotationDelimiter": " - ",
+  "i18n-ally.sortKeys": true,
+  "i18n-ally.annotationInPlace": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit",
+    "source.sortMembers": "explicit"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"]
+  ],
+  "claudegate.fileWatcher.enabled": true
+}

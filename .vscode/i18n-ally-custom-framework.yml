@@ -1,0 +1,19 @@
+languageIds:
+  - javascript
+  - typescript
+  - javascriptreact
+  - typescriptreact
+
+refactorTemplates:
+  - "t('$key')"
+  - "timg('$key')"
+  - "{t('$key')}"
+  - "{timg('$key')}"
+
+usageMatchRegex:
+  - "[^\\w\\d]t\\(['\"`]({key})['\"`]"
+  - "[^\\w\\d]t\\s*\\.(?:rich|markup|raw)\\s*\\(\\s*['\"`]({key})['\"`]"
+
+scopeRangeRegex: "(?:useTranslations|getTranslations)\\(\\s*\\[?\\s*['\"`](.*?)['\"`]"
+
+monopoly: true

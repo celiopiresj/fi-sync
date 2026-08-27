@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "dinero-best-practices": {
+      "source": "dinerojs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dinero-best-practices/SKILL.md",
+      "computedHash": "692f782a8f3e078771a3230c3f1b10153f7d0ca711952c2be3c004d63636a75c"
+    },
+    "dinero-currency-patterns": {
+      "source": "dinerojs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dinero-currency-patterns/SKILL.md",
+      "computedHash": "56f0e8ee43619e90a17de1737dd453cdb1e6e0318c5242f97696ee951c8a54a7"
+    },
+    "dinero-formatting": {
+      "source": "dinerojs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/dinero-formatting/SKILL.md",
+      "computedHash": "0f62d05de1e446aed79e229a86a09228a99e6a8a41ce6ef4c0eb871fbabb4d2c"
+    }
+  }
+}
