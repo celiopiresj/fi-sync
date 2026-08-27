@@ -1,0 +1,155 @@
+{
+  "title": "Investments",
+  "description": "Manage your investments and savings pockets",
+
+  "buttons": {
+    "add": "New account",
+    "addTile": "Add account",
+    "contribute": "Contribute",
+    "withdraw": "Withdraw"
+  },
+
+  "card": {
+    "viewHistory": "View history"
+  },
+
+  "kpis": {
+    "totalInvested": "Total invested",
+    "totalPockets": "Total in pockets",
+    "totalWealth": "Total wealth"
+  },
+
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "E.g: Emergency fund, Treasury bonds"
+    },
+    "type": {
+      "label": "Type",
+      "investment": "Investments",
+      "pocket": "Pockets"
+    },
+    "balance": {
+      "label": "Balance"
+    }
+  },
+
+  "empty": {
+    "title": "No investments yet",
+    "description": "Create your first pocket or investment",
+    "button": "New account",
+    "perType": {
+      "investment": "No investment yet.",
+      "pocket": "No pocket yet."
+    }
+  },
+
+  "menu": {
+    "edit": "Edit",
+    "archive": "Archive",
+    "reactivate": "Reactivate",
+    "delete": "Delete"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "New account",
+      "description": "Fill in the account details",
+      "confirm": "Create"
+    },
+    "edit": {
+      "title": "Edit account",
+      "description": "Update the account details",
+      "confirm": "Save"
+    },
+    "delete": {
+      "title": "Delete account?",
+      "description": "This action cannot be undone. Transactions linked to this account will also be deleted.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+
+  "movement": {
+    "dialog": {
+      "contribution": {
+        "title": "Contribute",
+        "description": "Record a new contribution or yield on this account"
+      },
+      "withdrawal": {
+        "title": "Withdraw",
+        "description": "Record a withdrawal from this account"
+      },
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
+    "fields": {
+      "kind": {
+        "label": "Movement type",
+        "contribution": "Contribution",
+        "yield": "Yield",
+        "withdrawal": "Withdrawal"
+      },
+      "amount": {
+        "label": "Amount",
+        "placeholder": "0.00",
+        "exceedsBalance": "The amount can't be more than the current balance"
+      },
+      "currentValue": {
+        "label": "Account's current value",
+        "placeholder": "0.00",
+        "hint": "The recorded entry will be the difference between this value and the current balance"
+      },
+      "date": {
+        "label": "Date"
+      },
+      "description": {
+        "label": "Description (optional)"
+      }
+    },
+    "errors": {
+      "noChange": "The current value entered matches the balance — nothing to record"
+    },
+    "defaultDescription": {
+      "contribution": "Contribution",
+      "yield": "Yield",
+      "withdrawal": "Withdrawal"
+    },
+    "toast": {
+      "contribution": "Contribution recorded",
+      "yield": "Yield recorded",
+      "withdrawal": "Withdrawal recorded"
+    }
+  },
+
+  "detail": {
+    "back": "Back",
+    "kpis": {
+      "yieldLastMonth": "Yielded last month",
+      "yieldTotal": "Total yield"
+    },
+    "movements": {
+      "title": "Movements",
+      "empty": "No movement recorded yet"
+    },
+    "notFound": {
+      "title": "Account not found",
+      "description": "It may have been removed, or you don't have access to it.",
+      "button": "Back to investments"
+    }
+  },
+
+  "toast": {
+    "created": "Account created successfully",
+    "updated": "Account updated",
+    "archived": "Account archived",
+    "reactivated": "Account reactivated",
+    "deleted": "Account deleted",
+    "error": "Couldn't complete the action"
+  },
+
+  "aria": {
+    "close": "Close",
+    "menu": "Open actions menu"
+  }
+}
