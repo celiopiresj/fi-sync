@@ -34,8 +34,15 @@ export function SelectField({
       <label htmlFor={field.name} className="text-sm font-medium">
         {label}
       </label>
+      {/* Always a defined string (never `|| undefined`) — Radix decides
+          controlled-vs-uncontrolled from whether `value` is defined on
+          the *first* render, so a field that starts unselected ("")
+          and later gets a real id would otherwise flip from
+          uncontrolled to controlled and trigger React's warning. "" has
+          no matching SelectItem, so the placeholder still shows exactly
+          like it did with the old undefined fallback. */}
       <Select
-        value={field.state.value || undefined}
+        value={field.state.value}
         onValueChange={(value) => field.handleChange(value)}
         disabled={disabled || options.length === 0}
       >

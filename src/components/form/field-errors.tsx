@@ -12,7 +12,7 @@ export function FieldErrors({ errors }: FieldErrorsProps) {
   if (!errors || errors.length === 0) return null;
 
   return (
-    <p className="text-xs text-red-600 dark:text-red-400">
+    <p className="text-xs text-destructive">
       {errors
         .filter(Boolean)
         .map((err) =>

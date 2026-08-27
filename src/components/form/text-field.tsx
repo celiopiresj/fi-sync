@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { useFieldContext } from "@/lib/form/form-context";
 import { Input } from "@/components/ui/input";
+import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { FieldErrors } from "./field-errors";
 
 // Registered as `TextField` on `useAppForm` (src/lib/form/use-app-form.ts).
@@ -16,6 +19,9 @@ type TextFieldProps = {
   type?: "text" | "email" | "password" | "tel" | "number";
   placeholder?: string;
   disabled?: boolean;
+  // Rendered next to the label (e.g. a "forgot password?" link) — only
+  // the password field on the sign-in screen uses this today.
+  labelAction?: ReactNode;
 };
 
 export function TextField({
@@ -23,24 +29,54 @@ export function TextField({
   type = "text",
   placeholder,
   disabled,
+  labelAction,
 }: TextFieldProps) {
   const field = useFieldContext<string>();
+  const tCommon = useTranslations("common");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isPassword = type === "password";
+  const resolvedType = isPassword && showPassword ? "text" : type;
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={field.name} className="text-sm font-medium">
-        {label}
-      </label>
-      <Input
-        id={field.name}
-        name={field.name}
-        type={type}
-        value={field.state.value}
-        onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-      />
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={field.name} className="text-sm font-medium">
+          {label}
+        </label>
+        {labelAction}
+      </div>
+      <div className="relative">
+        <Input
+          id={field.name}
+          name={field.name}
+          type={resolvedType}
+          value={field.state.value}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={isPassword ? "pr-9" : undefined}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
+            aria-label={
+              showPassword
+                ? tCommon("form.hidePassword")
+                : tCommon("form.showPassword")
+            }
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="size-4" />
+            ) : (
+              <EyeIcon className="size-4" />
+            )}
+          </button>
+        )}
+      </div>
       {field.state.meta.isTouched ? (
         <FieldErrors errors={field.state.meta.errors} />
       ) : null}
