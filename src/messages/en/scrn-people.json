@@ -1,0 +1,185 @@
+{
+  "title": "People",
+  "description": "Manage the people used to split expenses across transactions",
+
+  "buttons": {
+    "add": "New person",
+    "viewStatement": "View statement",
+    "charge": "Charge",
+    "newExpense": "New expense"
+  },
+
+  "search": {
+    "placeholder": "Search person by name or phone...",
+    "clear": "Clear search"
+  },
+
+  "kpis": {
+    "toReceive": "To receive",
+    "toPay": "To pay",
+    "registered": "People registered",
+    "pending": "{count, plural, =0 {none pending} one {# pending} other {# pending}}"
+  },
+
+  "filters": {
+    "status": {
+      "label": "Status",
+      "all": "All",
+      "toReceive": "To receive",
+      "toPay": "To pay",
+      "settled": "Settled"
+    }
+  },
+
+  "viewMode": {
+    "grid": "Grid view",
+    "table": "Table view"
+  },
+
+  "table": {
+    "columns": {
+      "person": "Person",
+      "phone": "Phone",
+      "splitsCount": "Transactions",
+      "balance": "Balance"
+    },
+    "menu": {
+      "openMenu": "Open actions menu"
+    }
+  },
+
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "E.g: Mom"
+    },
+    "phone": {
+      "label": "Phone",
+      "placeholder": "E.g: +55 11 91234-5678"
+    }
+  },
+
+  "card": {
+    "balanceLabel": "Current Balance",
+    "splitsCount": "{count, plural, =0 {No linked transactions} one {# linked transaction} other {# linked transactions}}",
+    "selfBadge": "You",
+    "balanceStatus": {
+      "toReceive": "They owe you",
+      "toPay": "You owe them",
+      "settled": "Settled"
+    }
+  },
+
+  "empty": {
+    "title": "No people yet",
+    "description": "Add people to split expenses across transactions",
+    "button": "New person",
+    "noResults": {
+      "title": "No matching people",
+      "description": "Try searching a different name",
+      "button": "Clear search"
+    }
+  },
+
+  "menu": {
+    "edit": "Edit",
+    "setSelf": "Mark as me",
+    "delete": "Delete"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "New person",
+      "description": "Fill in the person's details",
+      "confirm": "Create",
+      "cancel": "Cancel"
+    },
+    "edit": {
+      "title": "Edit person",
+      "description": "Update the person's details",
+      "confirm": "Save",
+      "cancel": "Cancel"
+    },
+    "delete": {
+      "title": "Delete person?",
+      "description": "This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "deleteBlocked": {
+      "title": "Can't delete this person",
+      "close": "Close"
+    }
+  },
+
+  "toast": {
+    "created": "Person created successfully",
+    "updated": "Person updated",
+    "deleted": "Person deleted",
+    "selfUpdated": "{name} marked as you",
+    "error": "Couldn't complete the action"
+  },
+
+  "errors": {
+    "hasSplits": "{count, plural, one {This person is linked to # transaction. Remove that split before deleting.} other {This person is linked to # transactions. Remove those splits before deleting.}}",
+    "invalidPhone": "Enter a valid phone number, including the country code"
+  },
+
+  "aria": {
+    "close": "Close",
+    "menu": "Open actions menu"
+  },
+
+  "detail": {
+    "back": "Back",
+    "notFound": {
+      "title": "Person not found",
+      "description": "This person doesn't exist or was deleted.",
+      "button": "Back to People"
+    },
+    "header": {
+      "whatsappButton": "Send via WhatsApp",
+      "noPhone": "Add a phone number to send via WhatsApp"
+    },
+    "period": {
+      "previous": "Previous month",
+      "next": "Next month"
+    },
+    "summary": {
+      "balance": "Account balance",
+      "invoice": "Card invoice",
+      "paidThisMonth": "Paid this month",
+      "totalToPay": "Total to pay",
+      "totalToReceive": "Total to receive",
+      "totalToPayLegend": "You owe this amount to this person",
+      "totalToReceiveLegend": "This person owes you this amount"
+    },
+    "movements": {
+      "title": "Account movements",
+      "rangeOpen": "{from} to {to} · in progress",
+      "rangeClosed": "{from} to {to}",
+      "empty": "No movements in this period"
+    },
+    "invoices": {
+      "title": "{month} invoice",
+      "installment": "{number}/{count}",
+      "cash": "One-time",
+      "total": "Invoice total"
+    },
+    "empty": "No movements or invoices in this period",
+    "whatsapp": {
+      "messageTitle": "Statement",
+      "remainingLabel": "Remaining",
+      "greeting": {
+        "morning": "Good morning",
+        "afternoon": "Good afternoon",
+        "evening": "Good evening"
+      },
+      "previewTitle": "Preview message",
+      "previewDescription": "Review the text before sending",
+      "send": "Send",
+      "cancel": "Cancel",
+      "noPhoneToast": "This person has no phone number on file"
+    }
+  }
+}

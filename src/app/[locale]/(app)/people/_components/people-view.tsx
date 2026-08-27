@@ -6,23 +6,18 @@ import { toast } from "sonner";
 import {
   ChatCircleIcon,
   DotsThreeIcon,
-  ListIcon,
-  MagnifyingGlassIcon,
   PhoneIcon,
   ReceiptIcon,
   SpinnerIcon,
-  SquaresFourIcon,
   TrendDownIcon,
   TrendUpIcon,
   UsersIcon,
-  XIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Link, useRouter } from "@/i18n/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Card,
@@ -38,11 +33,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { PageHeader } from "@/components/screen/page-header";
+import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
+import { SearchInput } from "@/components/screen/search-input";
+import { ViewModeToggle, type ViewMode } from "@/components/screen/view-mode-toggle";
 import { PersonSheet } from "./form/person-sheet";
 import { DeleteDialog } from "./delete-dialog";
 import type { PersonFormValues } from "../_schema/schema";
-import { createPerson, deletePerson, updatePerson } from "../actions";
+import { createPerson, deletePerson, setSelfPerson, updatePerson } from "../actions";
 import { joinPersonPhone } from "../_lib/phone";
 import { getPersonColorClasses, getPersonInitial } from "../_lib/person-avatar";
 import { currentStatementPeriod } from "../_lib/cash-cycle";
@@ -60,7 +67,6 @@ type DialogState =
   | null;
 
 type BalanceStatusFilter = "all" | "toReceive" | "toPay" | "settled";
-type ViewMode = "grid" | "table";
 
 type PeopleViewProps = {
   initialPeople: PersonRow[];
@@ -76,7 +82,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState<BalanceStatusFilter>("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [chargingPersonId, setChargingPersonId] = useState<string | null>(null);
   const [chargePreview, setChargePreview] = useState<{
     message: string;
@@ -132,6 +138,16 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
     }
 
     return result;
+  }
+
+  async function handleSetSelf(person: PersonRow) {
+    const result = await setSelfPerson(person.id);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      invalidatePeople();
+      toast.success(t("toast.selfUpdated", { name: person.name }));
+    }
   }
 
   async function handleDeleteConfirm() {
@@ -194,13 +210,20 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
           splitsCount: (count) => t("card.splitsCount", { count }),
           balanceStatus: (status) => t(`card.balanceStatus.${status}`),
           viewStatement: t("buttons.viewStatement"),
-          menu: { edit: t("menu.edit"), delete: t("menu.delete"), openMenu: t("table.menu.openMenu") },
+          selfBadge: t("card.selfBadge"),
+          menu: {
+            edit: t("menu.edit"),
+            delete: t("menu.delete"),
+            setSelf: t("menu.setSelf"),
+            openMenu: t("table.menu.openMenu"),
+          },
         },
         money,
         {
           onViewStatement: (row) => router.push(`/people/${row.id}`),
           onEdit: (row) => setDialogState({ mode: "edit", row }),
           onDelete: (row) => setDeletingPerson(row),
+          onSetSelf: handleSetSelf,
         },
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -211,99 +234,67 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-        </div>
-        <Button onClick={() => setDialogState({ mode: "create" })}>
-          {t("buttons.add")}
-        </Button>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("description")}
+        right={
+          <Button onClick={() => setDialogState({ mode: "create" })}>
+            {t("buttons.add")}
+          </Button>
+        }
+      />
 
       {!hasPeople ? (
-        <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-12">
-          <p className="text-sm font-medium">{t("empty.title")}</p>
-          <p className="text-xs text-muted-foreground">
-            {t("empty.description")}
-          </p>
-          <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
-            {t("empty.button")}
-          </Button>
-        </div>
+        <Empty className="border-none py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <UsersIcon />
+            </EmptyMedia>
+            <EmptyTitle>{t("empty.title")}</EmptyTitle>
+            <EmptyDescription>{t("empty.description")}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
+              {t("empty.button")}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Card>
-              <CardContent className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                  <TrendUpIcon className="size-5" />
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    {t("kpis.toReceive")}
+          <KpiGrid columns={3}>
+            <KpiCard
+              label={t("kpis.toReceive")}
+              value={money(totalToReceive)}
+              tone="positive"
+              icon={<TrendUpIcon className="size-5" />}
+            />
+            <KpiCard
+              label={t("kpis.toPay")}
+              value={money(totalToPay)}
+              tone="negative"
+              icon={<TrendDownIcon className="size-5" />}
+            />
+            <KpiCard
+              label={t("kpis.registered")}
+              value={
+                <>
+                  {people.length}{" "}
+                  <span className="text-xs font-normal text-muted-foreground">
+                    ({t("kpis.pending", { count: pendingCount })})
                   </span>
-                  <span className="text-lg font-semibold tabular-nums">
-                    {money(totalToReceive)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
-                  <TrendDownIcon className="size-5" />
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    {t("kpis.toPay")}
-                  </span>
-                  <span className="text-lg font-semibold tabular-nums">
-                    {money(totalToPay)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="flex items-center gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                  <UsersIcon className="size-5" />
-                </span>
-                <div className="flex flex-col">
-                  <span className="text-xs text-muted-foreground">
-                    {t("kpis.registered")}
-                  </span>
-                  <span className="text-lg font-semibold tabular-nums">
-                    {people.length}{" "}
-                    <span className="text-xs font-normal text-muted-foreground">
-                      ({t("kpis.pending", { count: pendingCount })})
-                    </span>
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                </>
+              }
+              icon={<UsersIcon className="size-5" />}
+            />
+          </KpiGrid>
 
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="relative w-full max-w-md">
-              <MagnifyingGlassIcon className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder={t("search.placeholder")}
-                className="h-9 pl-9 pr-8"
-              />
-              {searchText && (
-                <button
-                  type="button"
-                  onClick={() => setSearchText("")}
-                  aria-label={t("search.clear")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <XIcon className="size-4" />
-                </button>
-              )}
-            </div>
+            <SearchInput
+              value={searchText}
+              onChange={setSearchText}
+              placeholder={t("search.placeholder")}
+              clearLabel={t("search.clear")}
+            />
 
             <div className="flex flex-wrap items-center gap-3">
               <ToggleGroup
@@ -329,36 +320,33 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 </ToggleGroupItem>
               </ToggleGroup>
 
-              <ToggleGroup
-                type="single"
-                variant="tabs"
-                size="sm"
+              <ViewModeToggle
                 value={viewMode}
-                onValueChange={(value) => {
-                  if (value) setViewMode(value as ViewMode);
-                }}
-              >
-                <ToggleGroupItem value="grid" aria-label={t("viewMode.grid")}>
-                  <SquaresFourIcon />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="table" aria-label={t("viewMode.table")}>
-                  <ListIcon />
-                </ToggleGroupItem>
-              </ToggleGroup>
+                onValueChange={setViewMode}
+                cardsLabel={t("viewMode.grid")}
+                listLabel={t("viewMode.table")}
+              />
             </div>
           </div>
 
           {filteredPeople.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-12">
-              <p className="text-sm font-medium">{t("empty.noResults.title")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("empty.noResults.description")}
-              </p>
-              <Button size="sm" variant="outline" onClick={() => setSearchText("")}>
-                {t("empty.noResults.button")}
-              </Button>
-            </div>
-          ) : viewMode === "table" ? (
+            <Empty className="border-none py-12">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <UsersIcon />
+                </EmptyMedia>
+                <EmptyTitle>{t("empty.noResults.title")}</EmptyTitle>
+                <EmptyDescription>
+                  {t("empty.noResults.description")}
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button size="sm" variant="outline" onClick={() => setSearchText("")}>
+                  {t("empty.noResults.button")}
+                </Button>
+              </EmptyContent>
+            </Empty>
+          ) : viewMode === "list" ? (
             <DataTable
               columns={columns}
               data={filteredPeople}
@@ -395,7 +383,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 const isCharging = chargingPersonId === person.id;
 
                 return (
-                  <Card key={person.id} className="rounded-2xl">
+                  <Card key={person.id} radius="lg">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-3 text-base">
                         <Avatar>
@@ -404,7 +392,12 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col gap-0.5">
-                          <span>{person.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            {person.name}
+                            {person.isSelf && (
+                              <Badge variant="secondary">{t("card.selfBadge")}</Badge>
+                            )}
+                          </span>
                           {phone ? (
                             <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
                               <PhoneIcon className="size-3" />
@@ -429,6 +422,11 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                             >
                               {t("menu.edit")}
                             </DropdownMenuItem>
+                            {!person.isSelf && (
+                              <DropdownMenuItem onSelect={() => handleSetSelf(person)}>
+                                {t("menu.setSelf")}
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               variant="destructive"
                               onSelect={() => setDeletingPerson(person)}

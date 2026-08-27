@@ -4,17 +4,14 @@ import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
-import {
-  ArrowLeftIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  WhatsappLogoIcon,
-} from "@phosphor-icons/react";
+import { ArrowLeftIcon, ReceiptIcon, WhatsappLogoIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { DATE_ONLY_FORMAT_OPTIONS, parseCalendarDate } from "@/lib/date";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { PeriodStepper } from "@/components/screen/page-header";
+import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
 import { getPersonColorClasses, getPersonInitial } from "../../_lib/person-avatar";
 import { joinPersonPhone } from "../../_lib/phone";
 import {
@@ -148,76 +145,35 @@ export function PersonDetailView({
         </Button>
       </div>
 
-      <div className="flex items-center justify-center gap-1">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setPeriod((current) => shiftStatementPeriod(current, -1))}
-          aria-label={t("detail.period.previous")}
-        >
-          <CaretLeftIcon />
-        </Button>
-        <span className="min-w-36 text-center text-sm font-medium capitalize">
-          {periodLabel}
-        </span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setPeriod((current) => shiftStatementPeriod(current, 1))}
-          aria-label={t("detail.period.next")}
-        >
-          <CaretRightIcon />
-        </Button>
-      </div>
+      <PeriodStepper
+        className="justify-center"
+        label={periodLabel}
+        onPrevious={() => setPeriod((current) => shiftStatementPeriod(current, -1))}
+        onNext={() => setPeriod((current) => shiftStatementPeriod(current, 1))}
+        previousLabel={t("detail.period.previous")}
+        nextLabel={t("detail.period.next")}
+      />
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">
-              {t("detail.summary.balance")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(statement.balance)}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">
-              {t("detail.summary.invoice")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(Math.abs(statement.pendingCardTotal))}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">
-              {t("detail.summary.paidThisMonth")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(statement.paidThisMonth)}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs text-muted-foreground">{t(totalTitleKey)}</span>
-            <span
-              className={cn(
-                "text-xl font-semibold tabular-nums",
-                isTotalOwedByUser ? "text-negative" : "text-positive",
-              )}
-            >
-              {money(Math.abs(statement.totalToSettle))}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {t(totalLegendKey)}
-            </span>
-          </CardContent>
-        </Card>
-      </div>
+      <KpiGrid>
+        <KpiCard
+          label={t("detail.summary.balance")}
+          value={money(statement.balance)}
+        />
+        <KpiCard
+          label={t("detail.summary.invoice")}
+          value={money(Math.abs(statement.pendingCardTotal))}
+        />
+        <KpiCard
+          label={t("detail.summary.paidThisMonth")}
+          value={money(statement.paidThisMonth)}
+        />
+        <KpiCard
+          label={t(totalTitleKey)}
+          value={money(Math.abs(statement.totalToSettle))}
+          tone={isTotalOwedByUser ? "negative" : "positive"}
+          subtitle={t(totalLegendKey)}
+        />
+      </KpiGrid>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -228,9 +184,14 @@ export function PersonDetailView({
         </div>
 
         {statement.movements.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
-            {t("detail.movements.empty")}
-          </p>
+          <Empty className="border-none py-8">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <ReceiptIcon />
+              </EmptyMedia>
+              <EmptyTitle>{t("detail.movements.empty")}</EmptyTitle>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="rounded-md border border-border">
             <div className="divide-y divide-border">

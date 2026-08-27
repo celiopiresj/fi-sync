@@ -1,0 +1,185 @@
+{
+  "title": "Pessoas",
+  "description": "Cadastre as pessoas usadas para dividir despesas nas transações",
+
+  "buttons": {
+    "add": "Nova pessoa",
+    "viewStatement": "Ver extrato",
+    "charge": "Cobrar",
+    "newExpense": "Nova despesa"
+  },
+
+  "search": {
+    "placeholder": "Buscar pessoa por nome ou telefone...",
+    "clear": "Limpar busca"
+  },
+
+  "kpis": {
+    "toReceive": "A receber",
+    "toPay": "A pagar",
+    "registered": "Pessoas cadastradas",
+    "pending": "{count, plural, =0 {nenhuma pendente} one {# pendente} other {# pendentes}}"
+  },
+
+  "filters": {
+    "status": {
+      "label": "Status",
+      "all": "Todos",
+      "toReceive": "A receber",
+      "toPay": "A pagar",
+      "settled": "Quitados"
+    }
+  },
+
+  "viewMode": {
+    "grid": "Visualização em grade",
+    "table": "Visualização em tabela"
+  },
+
+  "table": {
+    "columns": {
+      "person": "Pessoa",
+      "phone": "Telefone",
+      "splitsCount": "Transações",
+      "balance": "Saldo"
+    },
+    "menu": {
+      "openMenu": "Abrir menu de ações"
+    }
+  },
+
+  "fields": {
+    "name": {
+      "label": "Nome",
+      "placeholder": "Ex: Mãe"
+    },
+    "phone": {
+      "label": "Telefone",
+      "placeholder": "Ex: +55 11 91234-5678"
+    }
+  },
+
+  "card": {
+    "balanceLabel": "Saldo Atual",
+    "splitsCount": "{count, plural, =0 {Nenhuma transação vinculada} one {# transação vinculada} other {# transações vinculadas}}",
+    "selfBadge": "Você",
+    "balanceStatus": {
+      "toReceive": "Você recebe",
+      "toPay": "Você deve",
+      "settled": "Quitado"
+    }
+  },
+
+  "empty": {
+    "title": "Nenhuma pessoa cadastrada",
+    "description": "Cadastre pessoas para dividir despesas nas transações",
+    "button": "Nova pessoa",
+    "noResults": {
+      "title": "Nenhuma pessoa encontrada",
+      "description": "Tente buscar por outro nome",
+      "button": "Limpar busca"
+    }
+  },
+
+  "menu": {
+    "edit": "Editar",
+    "setSelf": "Marcar como eu",
+    "delete": "Excluir"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "Nova pessoa",
+      "description": "Preencha os dados da pessoa",
+      "confirm": "Criar",
+      "cancel": "Cancelar"
+    },
+    "edit": {
+      "title": "Editar pessoa",
+      "description": "Atualize os dados da pessoa",
+      "confirm": "Salvar",
+      "cancel": "Cancelar"
+    },
+    "delete": {
+      "title": "Excluir pessoa?",
+      "description": "Essa ação não pode ser desfeita.",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    },
+    "deleteBlocked": {
+      "title": "Não é possível excluir",
+      "close": "Fechar"
+    }
+  },
+
+  "toast": {
+    "created": "Pessoa criada com sucesso",
+    "updated": "Pessoa atualizada",
+    "deleted": "Pessoa excluída",
+    "selfUpdated": "{name} marcado(a) como você",
+    "error": "Não foi possível concluir a ação"
+  },
+
+  "errors": {
+    "hasSplits": "{count, plural, one {Esta pessoa está vinculada a # transação. Remova essa divisão antes de excluir.} other {Esta pessoa está vinculada a # transações. Remova essas divisões antes de excluir.}}",
+    "invalidPhone": "Informe um telefone válido, incluindo o código do país"
+  },
+
+  "aria": {
+    "close": "Fechar",
+    "menu": "Abrir menu de ações"
+  },
+
+  "detail": {
+    "back": "Voltar",
+    "notFound": {
+      "title": "Pessoa não encontrada",
+      "description": "Essa pessoa não existe ou foi excluída.",
+      "button": "Voltar para Pessoas"
+    },
+    "header": {
+      "whatsappButton": "Enviar via WhatsApp",
+      "noPhone": "Cadastre um telefone para enviar pelo WhatsApp"
+    },
+    "period": {
+      "previous": "Mês anterior",
+      "next": "Próximo mês"
+    },
+    "summary": {
+      "balance": "Saldo na conta",
+      "invoice": "Fatura do cartão",
+      "paidThisMonth": "Já pago no mês",
+      "totalToPay": "Total a pagar",
+      "totalToReceive": "Total a receber",
+      "totalToPayLegend": "Você deve esse valor à pessoa",
+      "totalToReceiveLegend": "A pessoa deve enviar esse valor"
+    },
+    "movements": {
+      "title": "Movimentações da conta",
+      "rangeOpen": "{from} a {to} · em andamento",
+      "rangeClosed": "{from} a {to}",
+      "empty": "Nenhuma movimentação nesse período"
+    },
+    "invoices": {
+      "title": "Fatura de {month}",
+      "installment": "{number}/{count}",
+      "cash": "À vista",
+      "total": "Total fatura"
+    },
+    "empty": "Nenhuma movimentação ou fatura nesse período",
+    "whatsapp": {
+      "messageTitle": "Extrato",
+      "remainingLabel": "Resta",
+      "greeting": {
+        "morning": "Bom dia",
+        "afternoon": "Boa tarde",
+        "evening": "Boa noite"
+      },
+      "previewTitle": "Pré-visualizar mensagem",
+      "previewDescription": "Confira o texto antes de enviar",
+      "send": "Enviar",
+      "cancel": "Cancelar",
+      "noPhoneToast": "Essa pessoa não tem telefone cadastrado"
+    }
+  }
+}

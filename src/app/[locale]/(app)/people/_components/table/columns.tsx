@@ -46,9 +46,11 @@ export type PeopleColumnMessages = {
   splitsCount: (count: number) => string;
   balanceStatus: (status: BalanceStatus) => string;
   viewStatement: string;
+  selfBadge: string;
   menu: {
     edit: string;
     delete: string;
+    setSelf: string;
     openMenu: string;
   };
 };
@@ -57,6 +59,7 @@ export type PeopleColumnActions = {
   onViewStatement: (row: PersonRow) => void;
   onEdit: (row: PersonRow) => void;
   onDelete: (row: PersonRow) => void;
+  onSetSelf: (row: PersonRow) => void;
 };
 
 export function getPeopleColumns(
@@ -80,6 +83,9 @@ export function getPeopleColumns(
               </AvatarFallback>
             </Avatar>
             <span className="text-sm font-medium">{person.name}</span>
+            {person.isSelf && (
+              <Badge variant="secondary">{messages.selfBadge}</Badge>
+            )}
           </div>
         );
       },
@@ -144,6 +150,11 @@ export function getPeopleColumns(
               <DropdownMenuItem onSelect={() => actions.onEdit(row.original)}>
                 {messages.menu.edit}
               </DropdownMenuItem>
+              {!row.original.isSelf && (
+                <DropdownMenuItem onSelect={() => actions.onSetSelf(row.original)}>
+                  {messages.menu.setSelf}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 variant="destructive"
                 onSelect={() => actions.onDelete(row.original)}
