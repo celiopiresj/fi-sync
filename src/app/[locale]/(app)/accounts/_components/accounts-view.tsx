@@ -20,6 +20,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import { PageHeader } from "@/components/screen/page-header";
 import { AccountSheet } from "./form/account-sheet";
 import { DeleteDialog } from "./delete-dialog";
 import {
@@ -115,26 +124,31 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("description")}</p>
-        </div>
-        <Button onClick={() => setDialogState({ mode: "create" })}>
-          {t("buttons.add")}
-        </Button>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("description")}
+        right={
+          <Button onClick={() => setDialogState({ mode: "create" })}>
+            {t("buttons.add")}
+          </Button>
+        }
+      />
 
       {!hasAccounts ? (
-        <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-12">
-          <p className="text-sm font-medium">{t("empty.title")}</p>
-          <p className="text-xs text-muted-foreground">
-            {t("empty.description")}
-          </p>
-          <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
-            {t("empty.button")}
-          </Button>
-        </div>
+        <Empty className="border-none py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <BankIcon />
+            </EmptyMedia>
+            <EmptyTitle>{t("empty.title")}</EmptyTitle>
+            <EmptyDescription>{t("empty.description")}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
+              {t("empty.button")}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div className="flex flex-col gap-6">
           {groups.map((group) => (

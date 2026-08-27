@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
+import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import {
   accountSchema,
   accountTypeValues,
@@ -25,12 +26,19 @@ async function requireUserId() {
 // same Prisma model but are out of scope here and never returned.
 //
 // `balance` isn't a stored column (see prisma/schema.prisma's note on
-// Account) — it's the sum of every Transaction on that account, computed
-// in the database via groupBy (same pattern as getMonthlyBalances in
-// transactions/actions.ts) rather than pulled client-side, then converted
-// from Decimal to number once at this read boundary.
+// Account) — it's the sum of every Transaction on that account up to and
+// including today, computed in the database via groupBy (same pattern as
+// getMonthlyBalances in transactions/actions.ts) rather than pulled
+// client-side, then converted from Decimal to number once at this read
+// boundary. `date: { lte: todayDate }` is deliberate, not incidental — a
+// recurrence can generate real, already-persisted PENDING Transaction
+// rows dated in the future (see recurrences/actions.ts), and those must
+// never count toward a "current balance" figure, same rule
+// projections/actions.ts's computeMonthSeries follows for its own
+// past-balance sum.
 export async function listAccounts() {
   const userId = await requireUserId();
+  const todayDate = parseCalendarDate(todayCalendarDate());
 
   const [accounts, sums] = await Promise.all([
     prisma.account.findMany({
@@ -39,7 +47,7 @@ export async function listAccounts() {
     }),
     prisma.transaction.groupBy({
       by: ["accountId"],
-      where: { userId },
+      where: { userId, date: { lte: todayDate } },
       _sum: { amount: true },
     }),
   ]);

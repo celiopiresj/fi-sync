@@ -1,0 +1,78 @@
+{
+  "title": "Contas",
+  "description": "Gerencie suas contas correntes, poupança e dinheiro físico",
+
+  "buttons": {
+    "add": "Nova conta",
+    "addTile": "Adicionar conta"
+  },
+
+  "fields": {
+    "name": {
+      "label": "Nome",
+      "placeholder": "Ex: Conta corrente Itaú"
+    },
+    "type": {
+      "label": "Tipo",
+      "checking": "Conta corrente",
+      "savings": "Poupança",
+      "cash": "Dinheiro"
+    },
+    "balance": {
+      "label": "Saldo"
+    }
+  },
+
+  "empty": {
+    "title": "Nenhuma conta cadastrada",
+    "description": "Crie sua primeira conta corrente, poupança ou dinheiro físico",
+    "button": "Nova conta",
+    "perType": {
+      "checking": "Nenhuma conta corrente cadastrada.",
+      "savings": "Nenhuma conta poupança cadastrada.",
+      "cash": "Nenhuma conta de dinheiro físico cadastrada."
+    }
+  },
+
+  "menu": {
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "reactivate": "Reativar",
+    "delete": "Excluir"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "Nova conta",
+      "description": "Preencha os dados da conta",
+      "confirm": "Criar",
+      "cancel": "Cancelar"
+    },
+    "edit": {
+      "title": "Editar conta",
+      "description": "Atualize os dados da conta",
+      "confirm": "Salvar",
+      "cancel": "Cancelar"
+    },
+    "delete": {
+      "title": "Excluir conta?",
+      "description": "Essa ação não pode ser desfeita. As transações associadas a esta conta também serão excluídas.",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    }
+  },
+
+  "toast": {
+    "created": "Conta criada com sucesso",
+    "updated": "Conta atualizada",
+    "archived": "Conta arquivada",
+    "reactivated": "Conta reativada",
+    "deleted": "Conta excluída",
+    "error": "Não foi possível concluir a ação"
+  },
+
+  "aria": {
+    "close": "Fechar",
+    "menu": "Abrir menu de ações"
+  }
+}

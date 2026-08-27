@@ -1,0 +1,78 @@
+{
+  "title": "Accounts",
+  "description": "Manage your checking, savings and cash accounts",
+
+  "buttons": {
+    "add": "New account",
+    "addTile": "Add account"
+  },
+
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "E.g: Chase checking account"
+    },
+    "type": {
+      "label": "Type",
+      "checking": "Checking",
+      "savings": "Savings",
+      "cash": "Cash"
+    },
+    "balance": {
+      "label": "Balance"
+    }
+  },
+
+  "empty": {
+    "title": "No accounts yet",
+    "description": "Create your first checking, savings or cash account",
+    "button": "New account",
+    "perType": {
+      "checking": "No checking account yet.",
+      "savings": "No savings account yet.",
+      "cash": "No cash account yet."
+    }
+  },
+
+  "menu": {
+    "edit": "Edit",
+    "archive": "Archive",
+    "reactivate": "Reactivate",
+    "delete": "Delete"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "New account",
+      "description": "Fill in the account details",
+      "confirm": "Create",
+      "cancel": "Cancel"
+    },
+    "edit": {
+      "title": "Edit account",
+      "description": "Update the account details",
+      "confirm": "Save",
+      "cancel": "Cancel"
+    },
+    "delete": {
+      "title": "Delete account?",
+      "description": "This action cannot be undone. Transactions linked to this account will also be deleted.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+
+  "toast": {
+    "created": "Account created successfully",
+    "updated": "Account updated",
+    "archived": "Account archived",
+    "reactivated": "Account reactivated",
+    "deleted": "Account deleted",
+    "error": "Couldn't complete the action"
+  },
+
+  "aria": {
+    "close": "Close",
+    "menu": "Open actions menu"
+  }
+}
