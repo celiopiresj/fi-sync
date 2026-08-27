@@ -8,7 +8,9 @@ import {
   ArrowsClockwiseIcon,
   CreditCardIcon,
   ChartPieSliceIcon,
+  PiggyBankIcon,
   TagIcon,
+  TrendUpIcon,
   type IconProps,
 } from "@phosphor-icons/react";
 
@@ -26,24 +28,30 @@ export type NavItem = {
     | "people"
     | "invoices"
     | "accounts"
+    | "investments"
     | "recurrences"
     | "cards"
     | "categories"
-    | "budgets";
+    | "budgets"
+    | "projections";
   icon: ComponentType<IconProps>;
 };
 
 export type NavSection = {
   // Matches a key under `nav.sections` in common.json.
-  labelKey: "dayToDay" | "planning" | "records";
+  labelKey: "dayToDay" | "wallet" | "planning" | "records";
   items: NavItem[];
 };
 
-// Grouped for the sidebar (tasks/xxx, transactions screen redesign
-// section 6): "Dia a dia" for the screens used day-to-day, "Planejamento"
-// for forward-looking planning tools (budgets), "Cadastros" for the ones
-// that manage setup/registry data (accounts, cards, invoices, people)
-// rather than being visited constantly.
+// Grouped for the sidebar: "Dia a dia" for the screens used day-to-day,
+// "Carteira" for the ones tracking real money/liquidity — every
+// account-shaped entity (checking/savings/cash, investments/pockets,
+// credit cards) plus their statements (faturas), split out from
+// "Cadastros" specifically so that section doesn't mix real balances/debt
+// with plain organizational lookup tables, "Planejamento" for
+// forward-looking planning tools (budgets, projections), "Cadastros" for
+// the reusable, non-monetary entities (categories, people) referenced
+// elsewhere in the app.
 export const navSections: NavSection[] = [
   {
     labelKey: "dayToDay",
@@ -62,6 +70,15 @@ export const navSections: NavSection[] = [
     ],
   },
   {
+    labelKey: "wallet",
+    items: [
+      { href: "/accounts", labelKey: "accounts", icon: BankIcon },
+      { href: "/investments", labelKey: "investments", icon: PiggyBankIcon },
+      { href: "/cards", labelKey: "cards", icon: CreditCardIcon },
+      { href: "/invoices", labelKey: "invoices", icon: ReceiptIcon },
+    ],
+  },
+  {
     labelKey: "planning",
     items: [
       {
@@ -69,15 +86,17 @@ export const navSections: NavSection[] = [
         labelKey: "budgets",
         icon: ChartPieSliceIcon,
       },
+      {
+        href: "/projections",
+        labelKey: "projections",
+        icon: TrendUpIcon,
+      },
     ],
   },
   {
     labelKey: "records",
     items: [
-      { href: "/accounts", labelKey: "accounts", icon: BankIcon },
-      { href: "/cards", labelKey: "cards", icon: CreditCardIcon },
       { href: "/categories", labelKey: "categories", icon: TagIcon },
-      { href: "/invoices", labelKey: "invoices", icon: ReceiptIcon },
       { href: "/people", labelKey: "people", icon: UsersThreeIcon },
     ],
   },
