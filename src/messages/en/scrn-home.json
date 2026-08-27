@@ -1,0 +1,61 @@
+{
+  "title": "Home",
+  "breadcrumb": "General Overview • {month}",
+  "greeting": "Hi, {name}! 👋",
+
+  "buttons": {
+    "newTransaction": "New Transaction"
+  },
+
+  "kpis": {
+    "totalBalance": "Total balance",
+    "totalBalanceSubtitle": "{value} this month",
+    "monthIncome": "Income this month",
+    "incomeChange": "{value} vs. last month",
+    "monthExpenses": "Expenses this month",
+    "underBudget": "{value} under budget",
+    "overBudget": "{value} over budget",
+    "invoicesDue": "Due on invoices",
+    "invoicesDueSubtitle": "{count, plural, =0 {No invoice awaiting settlement} one {# invoice awaiting settlement} other {# invoices awaiting settlement}}"
+  },
+
+  "chart": {
+    "title": "Monthly Financial Trend",
+    "subtitle": "Income vs. expenses over the last few months",
+    "income": "Income (R$)",
+    "expenses": "Expenses (R$)",
+    "range6": "6 months",
+    "range12": "12 months",
+    "empty": "Not enough history yet"
+  },
+
+  "categoryBreakdown": {
+    "title": "Spending by Category",
+    "viewAll": "View all",
+    "empty": "No expenses this month",
+    "uncategorized": "Uncategorized"
+  },
+
+  "attention": {
+    "title": "Needs Attention",
+    "empty": "All caught up",
+    "and": "and",
+    "count": "{count, plural, one {# alert} other {# alerts}}",
+    "closedInvoices": "{count, plural, one {# invoice awaiting payment} other {# invoices awaiting payment}}",
+    "closedInvoicesDetail": "Total due: {value}",
+    "payNow": "Pay now",
+    "highUsageCards": "{count, plural, one {# card with critical usage} other {# cards with critical usage}}",
+    "adjustLimit": "Adjust limit",
+    "overBudget": "{count, plural, one {# category went over its monthly budget} other {# categories went over their monthly budget}}",
+    "viewBudget": "View budget",
+    "recurrencesNeedingExtension": "{count, plural, one {# recurrence needs more occurrences generated} other {# recurrences need more occurrences generated}}",
+    "generate": "Generate"
+  },
+
+  "recentTransactions": {
+    "title": "Recent Transactions",
+    "viewAll": "View statement",
+    "empty": "No transaction recorded yet",
+    "addNew": "Add new entry"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "title": "Início",
+  "breadcrumb": "Resumo Geral • {month}",
+  "greeting": "Olá, {name}! 👋",
+
+  "buttons": {
+    "newTransaction": "Nova Transação"
+  },
+
+  "kpis": {
+    "totalBalance": "Saldo total",
+    "totalBalanceSubtitle": "{value} este mês",
+    "monthIncome": "Receitas do mês",
+    "incomeChange": "{value} vs. mês anterior",
+    "monthExpenses": "Despesas do mês",
+    "underBudget": "{value} dentro do orçamento",
+    "overBudget": "{value} acima do orçamento",
+    "invoicesDue": "A pagar em faturas",
+    "invoicesDueSubtitle": "{count, plural, =0 {Nenhuma fatura aguardando liquidação} one {# fatura aguardando liquidação} other {# faturas aguardando liquidação}}"
+  },
+
+  "chart": {
+    "title": "Evolução Financeira Mensal",
+    "subtitle": "Comparativo de entradas vs. saídas nos últimos meses",
+    "income": "Receitas (R$)",
+    "expenses": "Despesas (R$)",
+    "range6": "6 meses",
+    "range12": "12 meses",
+    "empty": "Sem histórico suficiente"
+  },
+
+  "categoryBreakdown": {
+    "title": "Gastos por Categoria",
+    "viewAll": "Ver tudo",
+    "empty": "Sem despesas neste mês",
+    "uncategorized": "Sem categoria"
+  },
+
+  "attention": {
+    "title": "Atenção Necessária",
+    "empty": "Tudo em dia",
+    "and": "e",
+    "count": "{count, plural, one {# alerta} other {# alertas}}",
+    "closedInvoices": "{count, plural, one {# fatura aguardando pagamento} other {# faturas aguardando pagamento}}",
+    "closedInvoicesDetail": "Total acumulado: {value}",
+    "payNow": "Pagar agora",
+    "highUsageCards": "{count, plural, one {# cartão com uso crítico de limite} other {# cartões com uso crítico de limite}}",
+    "adjustLimit": "Ajustar limite",
+    "overBudget": "{count, plural, one {# categoria estourou o orçamento mensal} other {# categorias estouraram o orçamento mensal}}",
+    "viewBudget": "Ver orçamento",
+    "recurrencesNeedingExtension": "{count, plural, one {# recorrência precisa de mais ocorrências geradas} other {# recorrências precisam de mais ocorrências geradas}}",
+    "generate": "Gerar"
+  },
+
+  "recentTransactions": {
+    "title": "Últimas Transações",
+    "viewAll": "Ver extrato",
+    "empty": "Nenhuma transação registrada ainda",
+    "addNew": "Adicionar novo lançamento"
+  }
+}
