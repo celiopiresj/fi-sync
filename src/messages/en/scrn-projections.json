@@ -1,0 +1,95 @@
+{
+  "title": "Projections",
+  "subtitle": "Cash flow and projected balance for the next {count} months",
+
+  "periodToggle": {
+    "3": "3 months",
+    "6": "6 months",
+    "12": "1 year"
+  },
+
+  "kpi": {
+    "currentBalance": "Current Balance",
+    "lowestPoint": "Critical Low",
+    "futureCardCommitment": "Card Commitment",
+    "expectedIncome": "Expected Income"
+  },
+
+  "chart": {
+    "title": "Balance Trend Curve (Cash Flow)",
+    "subtitle": "The green line shows the projected balance. The dashed red line shows total expenses — when it rides above the balance, that month's commitments outpace what's projected.",
+    "balanceLabel": "Balance",
+    "expensesLabel": "Expenses"
+  },
+
+  "viewMode": {
+    "cards": "Card view",
+    "list": "List view"
+  },
+
+  "table": {
+    "columns": {
+      "month": "Month",
+      "income": "Income",
+      "expenses": "Expenses",
+      "balance": "Projected balance",
+      "status": "Status"
+    }
+  },
+
+  "status": {
+    "ok": "Healthy",
+    "warning": "Watch",
+    "danger": "Cash risk"
+  },
+
+  "card": {
+    "currentMonthBadge": "Current month",
+    "projectedBalance": "Projected Balance",
+    "cardExpenses": "Card spending",
+    "accountExpenses": "Account spending",
+    "totalExpenses": "Total spending",
+    "incomeForecast": "Expected income",
+    "viewDetail": "View details"
+  },
+
+  "detail": {
+    "title": "Breakdown: {month}",
+    "subtitle": "Full breakdown of projected income and expenses for this month",
+    "back": "Back",
+    "viewStatement": "View full statement",
+    "notFound": {
+      "title": "Month not found",
+      "description": "That month is outside the projection horizon.",
+      "button": "Back to projections"
+    },
+    "statusBadge": {
+      "ok": "Positive balance",
+      "warning": "Watch",
+      "danger": "Cash risk"
+    },
+    "summary": {
+      "initialBalance": "Starting Balance",
+      "receivables": "Expected Income",
+      "totalExpenses": "Total Expenses",
+      "predictedBalance": "Final Projected Balance"
+    },
+    "sections": {
+      "cards": {
+        "title": "Credit Card Invoices",
+        "empty": "No invoices expected this month.",
+        "dueDate": "Due: {date}"
+      },
+      "accounts": {
+        "title": "Fixed / Recurring Bills",
+        "empty": "No expenses expected this month.",
+        "dueDate": "Date: {date}"
+      },
+      "receivables": {
+        "title": "Expected Income",
+        "empty": "No income expected this month.",
+        "dueDate": "Expected: {date}"
+      }
+    }
+  }
+}

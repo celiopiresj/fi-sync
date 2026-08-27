@@ -1,0 +1,95 @@
+{
+  "title": "Projeções",
+  "subtitle": "Fluxo de caixa e saldo previsto para os próximos {count} meses",
+
+  "periodToggle": {
+    "3": "3 meses",
+    "6": "6 meses",
+    "12": "1 ano"
+  },
+
+  "kpi": {
+    "currentBalance": "Saldo Atual",
+    "lowestPoint": "Pico Crítico",
+    "futureCardCommitment": "Comprometimento em Cartões",
+    "expectedIncome": "Receitas Previstas"
+  },
+
+  "chart": {
+    "title": "Curva de Tendência de Saldo (Fluxo de Caixa)",
+    "subtitle": "Linha verde indica o saldo previsto. A linha tracejada vermelha mostra o total de saídas — quando ela fica acima do saldo, os compromissos do mês superam o previsto.",
+    "balanceLabel": "Saldo",
+    "expensesLabel": "Gastos"
+  },
+
+  "viewMode": {
+    "cards": "Modo cards",
+    "list": "Modo lista"
+  },
+
+  "table": {
+    "columns": {
+      "month": "Mês",
+      "income": "Receitas",
+      "expenses": "Saídas",
+      "balance": "Saldo previsto",
+      "status": "Status"
+    }
+  },
+
+  "status": {
+    "ok": "Saudável",
+    "warning": "Atenção",
+    "danger": "Risco de caixa"
+  },
+
+  "card": {
+    "currentMonthBadge": "Mês atual",
+    "projectedBalance": "Saldo Previsto",
+    "cardExpenses": "Gasto no cartão",
+    "accountExpenses": "Gasto em conta",
+    "totalExpenses": "Total gasto",
+    "incomeForecast": "Previsão a receber",
+    "viewDetail": "Ver detalhes"
+  },
+
+  "detail": {
+    "title": "Detalhamento: {month}",
+    "subtitle": "Composição completa de receitas e saídas projetadas para este mês",
+    "back": "Voltar",
+    "viewStatement": "Ver extrato completo",
+    "notFound": {
+      "title": "Mês não encontrado",
+      "description": "Esse mês está fora do horizonte de projeção.",
+      "button": "Voltar para projeções"
+    },
+    "statusBadge": {
+      "ok": "Saldo positivo",
+      "warning": "Atenção",
+      "danger": "Risco de caixa"
+    },
+    "summary": {
+      "initialBalance": "Saldo Anterior",
+      "receivables": "Receitas Previstas",
+      "totalExpenses": "Total de Saídas",
+      "predictedBalance": "Saldo Final Previsto"
+    },
+    "sections": {
+      "cards": {
+        "title": "Faturas de Cartão de Crédito",
+        "empty": "Nenhuma fatura prevista neste mês.",
+        "dueDate": "Vencimento: {date}"
+      },
+      "accounts": {
+        "title": "Contas Fixas / Recorrentes",
+        "empty": "Nenhuma saída prevista neste mês.",
+        "dueDate": "Data: {date}"
+      },
+      "receivables": {
+        "title": "Receitas e Entradas Esperadas",
+        "empty": "Nenhuma receita prevista neste mês.",
+        "dueDate": "Previsão: {date}"
+      }
+    }
+  }
+}
