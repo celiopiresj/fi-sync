@@ -1,36 +1,92 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# fi-sync
 
-## Getting Started
+Personal finance app — multi-user, each user only sees their own data
+(accounts, transactions, categories, budgets, investments). Transfers
+between accounts are modeled as two linked transactions instead of a
+separate type. Built to work well on desktop, laptop, tablet, and phone.
 
-First, run the development server:
+## Features
+
+- **Transactions** — income/expense tracking with categories, expense
+  splitting between people, credit card installments, and recurring
+  transactions.
+- **Accounts** — checking, savings, cash, credit card, and investment
+  accounts, each with their own balance/history.
+- **Credit cards & invoices** — cards, statements/invoices, due dates, and
+  payments.
+- **Categories** — system-seeded starter set (expense/income/investment)
+  plus user-created categories with custom icon and color.
+- **Budgets** — monthly budgets per category, grouped, with over/under
+  alerts.
+- **Investments** — investment accounts and movements (contributions,
+  withdrawals, returns).
+- **Projections** — monthly cash-flow projections based on recurring
+  transactions and budgets.
+- **People** — track who a shared expense belongs to.
+- Email/password and Google sign-in (Neon Auth), with a mandatory
+  onboarding step for new users and a full password-recovery flow.
+- Portuguese (pt-BR) and English, fully localized.
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
+shadcn/ui · Prisma ORM 7 on Neon Postgres · Neon Auth (Managed Better
+Auth) · next-intl · TanStack Query/DB/Table/Form · dinero.js · date-fns.
+
+See [AGENTS.md](./AGENTS.md) for the full stack rationale and the
+project's coding conventions (money/date handling, i18n message
+structure, form patterns, etc.) — read it before making changes.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env   # fill in DATABASE_URL and DIRECT_URL from Neon,
+                        # plus the NEON_AUTH_* variables
+pnpm prisma generate    # generates the Prisma client into src/generated/prisma
+pnpm prisma migrate dev # apply migrations to your database
+pnpm dev                # start the dev server on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Optional: seed some demo data.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm prisma db seed
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commands
 
-## Learn More
+```bash
+pnpm dev      # start dev server (localhost:3000)
+pnpm build    # production build
+pnpm start    # run production build
+pnpm lint     # eslint
+```
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm prisma migrate dev   # create + apply a migration
+pnpm prisma generate      # regenerate client (run after every schema change)
+pnpm prisma studio        # inspect data
+pnpm prisma db seed       # run the seed script
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Everything app-related lives under `src/` (Next.js `src` directory
+convention). Routes are grouped under `src/app/[locale]/`:
 
-## Deploy on Vercel
+- `(app)/` — the authenticated app, one folder per screen (accounts,
+  transactions, budgets, cards, invoices, categories, people, recurrences,
+  investments, projections, home).
+- `auth/` — sign-in, sign-up, forgot/reset password, OAuth callback.
+- `onboarding/` — mandatory first-account setup for new users.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Each screen route follows a private-folder layout
+(`_components/`, `_schema/`, `_lib/`, `_hooks/`, `_types/`) documented in
+AGENTS.md. Messages live in `src/messages/{locale}/`, one JSON file per
+screen plus a shared `common.json`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Planning notes
+
+`tasks/` holds the sequenced build-out notes for each feature — see
+[tasks/README.md](./tasks/README.md).
