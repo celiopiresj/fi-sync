@@ -37,5 +37,5 @@ export async function signUpWithEmail(data: SignUpValues) {
   }
 
   const locale = await getLocale();
-  redirect({ href: "/", locale });
+  redirect({ href: "/onboarding", locale });
 }

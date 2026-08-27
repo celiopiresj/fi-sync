@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ArrowRightIcon } from "@phosphor-icons/react";
 import { Link } from "@/i18n/navigation";
-import Image from "next/image";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { AuthDivider } from "@/components/auth/auth-divider";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { FormError } from "@/components/form/form-error";
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
@@ -37,25 +39,21 @@ export default function SignInPage() {
   });
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 px-4">
-      <div className="w-full max-w-sm text-center">
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/Fi-sync-logo.png"
-            alt="fi-sync logo"
-            width={120}
-            height={40}
-            className="object-contain"
-            priority
-          />
-        </div>
-        <h1 className="text-2xl font-semibold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          {t("description")}
-        </p>
-      </div>
-
+    <AuthShell
+      title={t("title")}
+      description={t("description")}
+      footer={
+        <>
+          {t("footer.noAccount")}{" "}
+          <Link href="/auth/sign-up" className="font-medium text-primary">
+            {t("footer.signUp")}
+          </Link>
+        </>
+      }
+    >
       <GoogleSignInButton label={t("buttons.google")} />
+
+      <AuthDivider label={t("divider")} />
 
       <form
         onSubmit={(e) => {
@@ -63,7 +61,7 @@ export default function SignInPage() {
           e.stopPropagation();
           form.handleSubmit();
         }}
-        className="flex w-full max-w-sm flex-col gap-4"
+        className="flex w-full flex-col gap-4"
       >
         <form.AppField name="email">
           {(field) => (
@@ -80,6 +78,14 @@ export default function SignInPage() {
             <field.TextField
               label={t("fields.password.label")}
               type="password"
+              labelAction={
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm font-medium text-primary"
+                >
+                  {t("buttons.forgotPassword")}
+                </Link>
+              }
             />
           )}
         </form.AppField>
@@ -90,16 +96,11 @@ export default function SignInPage() {
           <form.SubmitButton
             label={t("buttons.submit")}
             submittingLabel={t("buttons.submitting")}
+            className="w-full"
+            icon={<ArrowRightIcon className="size-4" />}
           />
         </form.AppForm>
       </form>
-
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        {t("footer.noAccount")}{" "}
-        <Link href="/auth/sign-up" className="font-medium underline">
-          {t("footer.signUp")}
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

@@ -1,0 +1,30 @@
+{
+  "title": "Crie sua conta no Fi-sync",
+  "description": "Comece a gerenciar suas finanças de forma simples e visual",
+
+  "divider": "Ou com e-mail",
+
+  "fields": {
+    "name": { "label": "Nome completo", "placeholder": "Ex: Célio Pires" },
+    "email": { "label": "E-mail", "placeholder": "voce@exemplo.com" },
+    "password": { "label": "Senha", "placeholder": "" }
+  },
+
+  "buttons": {
+    "submit": "Criar minha conta",
+    "submitting": "Criando conta…",
+    "google": "Continuar com Google"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Não foi possível criar a conta",
+      "description": "Tente novamente em instantes"
+    }
+  },
+
+  "footer": {
+    "hasAccount": "Já possui uma conta?",
+    "signIn": "Fazer login"
+  }
+}

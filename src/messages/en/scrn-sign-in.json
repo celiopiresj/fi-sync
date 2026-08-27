@@ -1,0 +1,30 @@
+{
+  "title": "Access your account",
+  "description": "Sign in with your email and password or continue with Google",
+
+  "divider": "Or with email",
+
+  "fields": {
+    "email": { "label": "Email", "placeholder": "you@example.com" },
+    "password": { "label": "Password", "placeholder": "" }
+  },
+
+  "buttons": {
+    "submit": "Sign in to your account",
+    "submitting": "Signing in…",
+    "google": "Continue with Google",
+    "forgotPassword": "Forgot your password?"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Couldn't sign in",
+      "description": "Check your email and password and try again"
+    }
+  },
+
+  "footer": {
+    "noAccount": "Don't have an account?",
+    "signUp": "Create a free account"
+  }
+}

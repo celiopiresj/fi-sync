@@ -1,0 +1,30 @@
+{
+  "title": "Create your Fi-sync account",
+  "description": "Start managing your finances in a simple, visual way",
+
+  "divider": "Or with email",
+
+  "fields": {
+    "name": { "label": "Full name", "placeholder": "E.g. Celio Pires" },
+    "email": { "label": "Email", "placeholder": "you@example.com" },
+    "password": { "label": "Password", "placeholder": "" }
+  },
+
+  "buttons": {
+    "submit": "Create my account",
+    "submitting": "Creating account…",
+    "google": "Continue with Google"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Couldn't create the account",
+      "description": "Please try again in a moment"
+    }
+  },
+
+  "footer": {
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in"
+  }
+}

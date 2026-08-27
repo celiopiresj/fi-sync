@@ -1,0 +1,30 @@
+{
+  "title": "Acesse sua conta",
+  "description": "Entre com seu e-mail e senha ou continue com o Google",
+
+  "divider": "Ou com e-mail",
+
+  "fields": {
+    "email": { "label": "E-mail", "placeholder": "voce@exemplo.com" },
+    "password": { "label": "Senha", "placeholder": "" }
+  },
+
+  "buttons": {
+    "submit": "Entrar na conta",
+    "submitting": "Entrando…",
+    "google": "Continuar com Google",
+    "forgotPassword": "Esqueceu a senha?"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Não foi possível entrar",
+      "description": "Verifique seu e-mail e senha e tente novamente"
+    }
+  },
+
+  "footer": {
+    "noAccount": "Não tem uma conta?",
+    "signUp": "Criar conta gratuitamente"
+  }
+}

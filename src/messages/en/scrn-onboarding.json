@@ -1,0 +1,20 @@
+{
+  "title": "Welcome to Fi-sync",
+  "description": "Create your first account to start recording your transactions. You can change its type or add more accounts later in Accounts.",
+
+  "fields": {
+    "name": { "label": "Account name", "placeholder": "E.g. Checking account" }
+  },
+
+  "buttons": {
+    "submit": "Create account and continue",
+    "submitting": "Creating…"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Couldn't create the account",
+      "description": "Please try again in a moment"
+    }
+  }
+}

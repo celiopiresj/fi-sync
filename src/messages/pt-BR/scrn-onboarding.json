@@ -1,0 +1,20 @@
+{
+  "title": "Bem-vindo(a) ao Fi-sync",
+  "description": "Crie sua primeira conta para começar a registrar suas transações. Você pode ajustar o tipo ou adicionar mais contas depois em Contas.",
+
+  "fields": {
+    "name": { "label": "Nome da conta", "placeholder": "Ex: Conta corrente Itaú" }
+  },
+
+  "buttons": {
+    "submit": "Criar conta e continuar",
+    "submitting": "Criando…"
+  },
+
+  "errors": {
+    "generic": {
+      "title": "Não foi possível criar a conta",
+      "description": "Tente novamente em instantes"
+    }
+  }
+}

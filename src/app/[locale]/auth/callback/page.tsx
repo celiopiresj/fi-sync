@@ -13,9 +13,10 @@ export default async function AuthCallbackPage() {
   const locale = await getLocale();
   const { data: session } = await auth.getSession();
 
+  let isNewUser = false;
   if (session?.user?.id) {
-    await ensureUserSynced(session.user.id);
+    ({ isNewUser } = await ensureUserSynced(session.user.id));
   }
 
-  redirect({ href: "/", locale });
+  redirect({ href: isNewUser ? "/onboarding" : "/", locale });
 }
