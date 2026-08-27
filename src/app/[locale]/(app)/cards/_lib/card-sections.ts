@@ -6,8 +6,8 @@ import type {
 } from "../_types/types";
 
 // The cards screen's "Resumo" aggregate — see CardsSummary's own comment
-// on why totalAvailable excludes disabled accounts while
-// totalLimit/totalSpent don't.
+// on why totalLimit/totalAvailable exclude disabled accounts while
+// totalSpent doesn't.
 export function buildSummary(accounts: CreditCardAccountRow[]): CardsSummary {
   let totalLimit = 0;
   let totalSpent = 0;
@@ -17,11 +17,11 @@ export function buildSummary(accounts: CreditCardAccountRow[]): CardsSummary {
   let physicalCardsCount = 0;
 
   for (const account of accounts) {
-    totalLimit += account.limit;
     totalSpent += account.spent;
     physicalCardsCount += account.cards.length;
 
     if (account.status === "ACTIVE") {
+      totalLimit += account.limit;
       totalAvailable += account.availableLimit;
       activeCount += 1;
     } else {

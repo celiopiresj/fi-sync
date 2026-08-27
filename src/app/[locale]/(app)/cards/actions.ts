@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
+import { sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
 import { daysUntilDue } from "./_lib/next-due-date";
 import {
   creditCardAccountSchema,
@@ -33,14 +34,17 @@ async function validateCreditCardAccount(data: CreditCardAccountFormValues) {
 // screen is where you'd reactivate one — the "hide inactive" rule only
 // applies to transaction-form.tsx/recurrence-form.tsx's own account
 // pickers). `availableLimit` is computed here rather than stored: limit
-// minus the total of every invoice that hasn't been marked PAID yet
+// minus the *remaining* due of every invoice that isn't fully PAID yet
 // (tasks/013.md's User Review Required answer — a paid invoice no
-// longer consumes limit, an open or past-due one still does). `status`
-// on `CreditCardDetails.status`? No such field — CLOSED is never
-// written to Invoice.status (see listInvoices in the invoices route for
-// the same "derive from date, don't persist CLOSED" rule), so filtering
-// `status: { not: "PAID" }` here already covers every invoice that still
-// counts against the limit.
+// longer consumes limit, an open, past-due, or partially-paid one still
+// does, but only for whatever balance is actually still outstanding, not
+// its full original total — a partial payment frees up that much limit
+// immediately). `status` on `CreditCardDetails.status`? No such field —
+// CLOSED is never written to Invoice.status (see listInvoices in the
+// invoices route for the same "derive from date, don't persist CLOSED"
+// rule), so filtering `status: { not: "PAID" }` here already covers
+// every invoice that still counts against the limit (this also already
+// includes PARTIALLY_PAID, which is exactly what should still count).
 export async function listCreditCardAccounts() {
   const userId = await requireUserId();
 
@@ -58,6 +62,8 @@ export async function listCreditCardAccounts() {
           transactionInvoices: {
             include: { transaction: { select: { amount: true } } },
           },
+          payments: { select: { amount: true } },
+          creditsReceived: { select: { amount: true } },
         },
       },
       _count: { select: { transactions: true } },
@@ -69,11 +75,16 @@ export async function listCreditCardAccounts() {
 
   return accounts.map((account) => {
     const outstanding = account.invoices.reduce((sum, invoice) => {
-      const invoiceTotal = invoice.transactionInvoices.reduce(
-        (total, ti) => total + Math.abs(ti.transaction.amount.toNumber()),
+      const invoiceTotal = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
+      const paidAmount = invoice.payments.reduce(
+        (paidSum, payment) => paidSum + payment.amount.toNumber(),
         0,
       );
-      return sum + invoiceTotal;
+      const creditApplied = invoice.creditsReceived.reduce(
+        (creditSum, credit) => creditSum + credit.amount.toNumber(),
+        0,
+      );
+      return sum + Math.max(0, invoiceTotal - paidAmount - creditApplied);
     }, 0);
     const limit = account.creditCardDetails?.limit.toNumber() ?? 0;
     const dueDay = account.creditCardDetails?.dueDay ?? null;

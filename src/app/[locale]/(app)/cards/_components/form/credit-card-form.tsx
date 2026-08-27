@@ -8,7 +8,7 @@ import { useZodForm } from "@/lib/form/use-zod-form";
 import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { PlusIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
+import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
 import {
   creditCardAccountSchema,
@@ -98,7 +98,6 @@ export function CreditCardForm({
   });
 
   const cards = useStore(form.store, (state) => state.values.cards);
-  const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
 
   async function handleToggleCard(cardId: string) {
     setTogglingCardId(cardId);
@@ -269,8 +268,8 @@ export function CreditCardForm({
                 <form.Field name={`cards[${index}].colorStyle`}>
                   {(field) => (
                     <div className="space-y-2 pt-2">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block">
-                        {t("fields.card.color.label", { fallback: "Color" })}
+                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        {t("fields.card.color.label")}
                       </label>
                       <ColorPicker
                         value={field.state.value}
@@ -296,14 +295,14 @@ export function CreditCardForm({
 
       <FormError title={t("toast.error")} description={serverError} />
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-primary text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
-        {isSubmitting && <SpinnerIcon className="size-4 animate-spin" />}
-        {t(isEditing ? "dialog.edit.confirm" : "dialog.create.confirm")}
-      </button>
+      <form.AppForm>
+        <form.SubmitButton
+          label={t(isEditing ? "dialog.edit.confirm" : "dialog.create.confirm")}
+          submittingLabel={t(
+            isEditing ? "dialog.edit.confirm" : "dialog.create.confirm",
+          )}
+        />
+      </form.AppForm>
     </form>
   );
 }

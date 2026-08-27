@@ -3,7 +3,16 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { CreditCardIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { CreditCardSheet } from "./form/credit-card-sheet";
 import { DeleteDialog } from "./delete-dialog";
 import { CardsHeader } from "./cards-header";
@@ -110,13 +119,20 @@ export function CardsView({ initialAccounts }: CardsViewProps) {
       />
 
       {!hasAccounts ? (
-        <div className="flex flex-col items-center gap-2 rounded-md border border-dashed border-border py-12">
-          <p className="text-sm font-medium">{t("empty.title")}</p>
-          <p className="text-xs text-muted-foreground">{t("empty.description")}</p>
-          <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
-            {t("empty.button")}
-          </Button>
-        </div>
+        <Empty className="border-none py-12">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <CreditCardIcon />
+            </EmptyMedia>
+            <EmptyTitle>{t("empty.title")}</EmptyTitle>
+            <EmptyDescription>{t("empty.description")}</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
+              {t("empty.button")}
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <>
           <CardsSummary summary={summary} />

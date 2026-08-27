@@ -1,0 +1,178 @@
+{
+  "title": "Cartões de crédito",
+  "description": "Gerencie seus cartões de crédito, limite e cartões físicos",
+
+  "header": {
+    "activeCount": "{count, plural, one {# cartão ativo} other {# cartões ativos}}",
+    "inactiveCount": "{count, plural, =0 {# desativados} one {# desativado} other {# desativados}}"
+  },
+
+  "buttons": {
+    "add": "Novo cartão",
+    "edit": "Editar",
+    "viewInvoice": "Ver Fatura",
+    "payInvoice": "Pagar Fatura",
+    "adjustLimit": "Ajustar limite"
+  },
+
+  "status": {
+    "disabled": "Desativado",
+    "disabledNote": "Não aceita novas compras · fatura recorrente até quitar"
+  },
+
+  "sections": {
+    "summary": {
+      "title": "Resumo",
+      "totalLimit": "Limite total",
+      "totalSpent": "Total gasto",
+      "totalAvailable": "Disponível total",
+      "overallUsage": "Uso do limite"
+    },
+    "attention": {
+      "title": "Atenção necessária ({count, plural, one {# cartão crítico} other {# cartões críticos}})",
+      "usageLine": "{usagePercent}% de {limit}",
+      "spentLabel": "Gasto: {value}",
+      "limitLabel": "Limite: {value}",
+      "overBadge": "{percentage}% do limite",
+      "nearBadge": "{percentage}% Utilizado",
+      "exceededMessage": "Excedido em +{amount}. Risco de bloqueio de novas compras.",
+      "nearLimitMessage": "{available} disponível — limite quase esgotado."
+    },
+    "upcoming": {
+      "title": "Próximos vencimentos de fatura",
+      "sortedHint": "Ordenado por proximidade de data",
+      "groupLabel": "Vence dia {dueDay}",
+      "daysUntil": "{days, plural, =0 {Vence hoje} one {Falta # dia} other {Faltam # dias}}"
+    },
+    "all": {
+      "title": "Todos os cartões",
+      "meta": "{usagePercent}% · disp. {available} · fecha {closingDay} · vence {dueDay}",
+      "usageLabel": "Uso do limite",
+      "spentLabel": "Total gasto",
+      "availableLabel": "Disponível",
+      "filters": {
+        "all": "Todos ({count})",
+        "active": "Ativos ({count})",
+        "disabled": "Desativados ({count})"
+      }
+    }
+  },
+
+  "viewMode": {
+    "cards": "Modo cards",
+    "list": "Modo lista"
+  },
+
+  "table": {
+    "columns": {
+      "card": "Cartão",
+      "usage": "Uso do limite",
+      "spent": "Total gasto",
+      "available": "Disponível",
+      "cycle": "Fecha/vence"
+    }
+  },
+
+  "fields": {
+    "name": {
+      "label": "Nome",
+      "placeholder": "Ex: Cartão Nubank"
+    },
+    "limit": {
+      "label": "Limite",
+      "placeholder": "0,00"
+    },
+    "availableLimit": {
+      "label": "Limite disponível"
+    },
+    "closingDay": {
+      "label": "Dia de fechamento",
+      "placeholder": "1–31"
+    },
+    "dueDay": {
+      "label": "Dia de vencimento",
+      "placeholder": "1–31"
+    },
+    "status": {
+      "activeLabel": "Cartão ativo",
+      "activeHelp": "Desative para arquivar — o cartão deixa de aceitar novas compras, mas o histórico continua disponível.",
+      "inactiveLabel": "Cartão desativado",
+      "inactiveHelp": "Reative para voltar a aceitar novas compras neste cartão."
+    },
+    "card": {
+      "name": {
+        "label": "Nome do cartão físico",
+        "placeholder": "Ex: Titular, Adicional"
+      },
+      "lastFourDigits": {
+        "label": "Últimos 4 dígitos",
+        "placeholder": "0000"
+      },
+      "color": {
+        "label": "Cor"
+      }
+    }
+  },
+
+  "cards": {
+    "title": "Cartões físicos",
+    "rowLabel": "Cartão {index}",
+    "add": "Adicionar cartão",
+    "remove": "Remover cartão",
+    "disable": "Desabilitar",
+    "enable": "Habilitar",
+    "cycleSummary": "Fecha dia {closingDay} · vence dia {dueDay}",
+    "count": "{count, plural, =0 {Nenhum cartão físico} one {# cartão físico} other {# cartões físicos}}"
+  },
+
+  "empty": {
+    "title": "Nenhum cartão de crédito cadastrado",
+    "description": "Crie seu primeiro cartão de crédito para começar a lançar compras",
+    "button": "Novo cartão"
+  },
+
+  "menu": {
+    "edit": "Editar",
+    "archive": "Arquivar",
+    "reactivate": "Reativar",
+    "delete": "Excluir"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "Novo cartão de crédito",
+      "description": "Preencha os dados do cartão e cadastre pelo menos um cartão físico",
+      "confirm": "Criar"
+    },
+    "edit": {
+      "title": "Editar cartão de crédito",
+      "description": "Atualize os dados do cartão",
+      "confirm": "Salvar"
+    },
+    "delete": {
+      "title": "Excluir cartão de crédito?",
+      "description": "Essa ação não pode ser desfeita.",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    }
+  },
+
+  "toast": {
+    "created": "Cartão criado com sucesso",
+    "updated": "Cartão atualizado",
+    "archived": "Cartão arquivado",
+    "reactivated": "Cartão reativado",
+    "deleted": "Cartão excluído",
+    "error": "Não foi possível concluir a ação"
+  },
+
+  "errors": {
+    "cardHasTransactions": "Não é possível remover um cartão físico com transações vinculadas — desabilite-o em vez de remover",
+    "accountHasTransactions": "Não é possível excluir um cartão com transações vinculadas — arquive-o em vez de excluir"
+  },
+
+  "aria": {
+    "close": "Fechar",
+    "menu": "Abrir menu de ações"
+  }
+}

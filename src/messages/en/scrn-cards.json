@@ -1,0 +1,178 @@
+{
+  "title": "Credit cards",
+  "description": "Manage your credit cards, limit, and physical cards",
+
+  "header": {
+    "activeCount": "{count, plural, one {# active card} other {# active cards}}",
+    "inactiveCount": "{count, plural, one {# disabled} other {# disabled}}"
+  },
+
+  "buttons": {
+    "add": "New card",
+    "edit": "Edit",
+    "viewInvoice": "View Invoice",
+    "payInvoice": "Pay Invoice",
+    "adjustLimit": "Adjust limit"
+  },
+
+  "status": {
+    "disabled": "Disabled",
+    "disabledNote": "Not accepting new purchases · recurring invoice until paid off"
+  },
+
+  "sections": {
+    "summary": {
+      "title": "Summary",
+      "totalLimit": "Total limit",
+      "totalSpent": "Total spent",
+      "totalAvailable": "Total available",
+      "overallUsage": "Limit usage"
+    },
+    "attention": {
+      "title": "Needs attention ({count, plural, one {# critical card} other {# critical cards}})",
+      "usageLine": "{usagePercent}% of {limit}",
+      "spentLabel": "Spent: {value}",
+      "limitLabel": "Limit: {value}",
+      "overBadge": "{percentage}% of limit",
+      "nearBadge": "{percentage}% Used",
+      "exceededMessage": "Exceeded by +{amount}. Risk of new purchases being blocked.",
+      "nearLimitMessage": "{available} available — limit nearly maxed out."
+    },
+    "upcoming": {
+      "title": "Upcoming invoice due dates",
+      "sortedHint": "Sorted by closest date",
+      "groupLabel": "Due on day {dueDay}",
+      "daysUntil": "{days, plural, =0 {Due today} one {# day left} other {# days left}}"
+    },
+    "all": {
+      "title": "All cards",
+      "meta": "{usagePercent}% · avail. {available} · closes {closingDay} · due {dueDay}",
+      "usageLabel": "Limit usage",
+      "spentLabel": "Total spent",
+      "availableLabel": "Available",
+      "filters": {
+        "all": "All ({count})",
+        "active": "Active ({count})",
+        "disabled": "Disabled ({count})"
+      }
+    }
+  },
+
+  "viewMode": {
+    "cards": "Card view",
+    "list": "List view"
+  },
+
+  "table": {
+    "columns": {
+      "card": "Card",
+      "usage": "Limit usage",
+      "spent": "Total spent",
+      "available": "Available",
+      "cycle": "Closes/due"
+    }
+  },
+
+  "fields": {
+    "name": {
+      "label": "Name",
+      "placeholder": "e.g. Nubank Card"
+    },
+    "limit": {
+      "label": "Limit",
+      "placeholder": "0.00"
+    },
+    "availableLimit": {
+      "label": "Available limit"
+    },
+    "closingDay": {
+      "label": "Closing day",
+      "placeholder": "1–31"
+    },
+    "dueDay": {
+      "label": "Due day",
+      "placeholder": "1–31"
+    },
+    "status": {
+      "activeLabel": "Card active",
+      "activeHelp": "Turn off to archive it — it stops accepting new purchases, but its history stays available.",
+      "inactiveLabel": "Card disabled",
+      "inactiveHelp": "Turn on to start accepting new purchases on this card again."
+    },
+    "card": {
+      "name": {
+        "label": "Physical card name",
+        "placeholder": "e.g. Primary, Additional"
+      },
+      "lastFourDigits": {
+        "label": "Last 4 digits",
+        "placeholder": "0000"
+      },
+      "color": {
+        "label": "Color"
+      }
+    }
+  },
+
+  "cards": {
+    "title": "Physical cards",
+    "rowLabel": "Card {index}",
+    "add": "Add card",
+    "remove": "Remove card",
+    "disable": "Disable",
+    "enable": "Enable",
+    "cycleSummary": "Closes on day {closingDay} · due on day {dueDay}",
+    "count": "{count, plural, =0 {No physical cards} one {# physical card} other {# physical cards}}"
+  },
+
+  "empty": {
+    "title": "No credit cards registered",
+    "description": "Create your first credit card to start entering purchases",
+    "button": "New card"
+  },
+
+  "menu": {
+    "edit": "Edit",
+    "archive": "Archive",
+    "reactivate": "Reactivate",
+    "delete": "Delete"
+  },
+
+  "dialog": {
+    "create": {
+      "title": "New credit card",
+      "description": "Fill in the card's details and register at least one physical card",
+      "confirm": "Create"
+    },
+    "edit": {
+      "title": "Edit credit card",
+      "description": "Update the card's details",
+      "confirm": "Save"
+    },
+    "delete": {
+      "title": "Delete credit card?",
+      "description": "This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+
+  "toast": {
+    "created": "Card created successfully",
+    "updated": "Card updated",
+    "archived": "Card archived",
+    "reactivated": "Card reactivated",
+    "deleted": "Card deleted",
+    "error": "Couldn't complete the action"
+  },
+
+  "errors": {
+    "cardHasTransactions": "Can't remove a physical card with linked transactions — disable it instead of removing it",
+    "accountHasTransactions": "Can't delete a card with linked transactions — archive it instead of deleting it"
+  },
+
+  "aria": {
+    "close": "Close",
+    "menu": "Open actions menu"
+  }
+}

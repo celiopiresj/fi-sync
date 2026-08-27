@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { WarningIcon } from "@phosphor-icons/react";
 import type { CreditCardAccountRow } from "../_types/types";
 import { AttentionCard } from "./attention-card";
 
@@ -26,8 +27,10 @@ export function AttentionSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-negative">
-        {t("sections.attention.title")}
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-negative">
+        <span className="size-2 shrink-0 rounded-full bg-negative" />
+        <WarningIcon className="size-4 shrink-0" />
+        {t("sections.attention.title", { count: accounts.length })}
       </h2>
       <div className="flex flex-wrap gap-3">
         {accounts.map((account) => (
