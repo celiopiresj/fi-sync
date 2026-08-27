@@ -22,6 +22,13 @@ type TextFieldProps = {
   // Rendered next to the label (e.g. a "forgot password?" link) — only
   // the password field on the sign-in screen uses this today.
   labelAction?: ReactNode;
+  // No sensible default to infer, especially for "password" — the browser
+  // needs to know "current-password" (sign-in) vs "new-password" (sign-up/
+  // reset) vs plain "email"/"name", and only the call site knows which.
+  // Left unset, the browser falls back to guessing from the field's name/
+  // type, which is exactly the DOM warning ("Input elements should have
+  // autocomplete attributes") this prop exists to silence.
+  autoComplete?: string;
 };
 
 export function TextField({
@@ -30,6 +37,7 @@ export function TextField({
   placeholder,
   disabled,
   labelAction,
+  autoComplete,
 }: TextFieldProps) {
   const field = useFieldContext<string>();
   const tCommon = useTranslations("common");
@@ -56,6 +64,7 @@ export function TextField({
           onChange={(e) => field.handleChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
+          autoComplete={autoComplete}
           className={isPassword ? "pr-9" : undefined}
         />
         {isPassword && (

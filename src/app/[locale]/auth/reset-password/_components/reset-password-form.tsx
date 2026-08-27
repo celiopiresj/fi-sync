@@ -47,6 +47,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           <field.TextField
             label={t("fields.newPassword.label")}
             type="password"
+            autoComplete="new-password"
           />
         )}
       </form.AppField>

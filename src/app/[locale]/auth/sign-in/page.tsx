@@ -69,6 +69,7 @@ export default function SignInPage() {
               label={t("fields.email.label")}
               type="email"
               placeholder={t("fields.email.placeholder")}
+              autoComplete="email"
             />
           )}
         </form.AppField>
@@ -78,6 +79,7 @@ export default function SignInPage() {
             <field.TextField
               label={t("fields.password.label")}
               type="password"
+              autoComplete="current-password"
               labelAction={
                 <Link
                   href="/auth/forgot-password"

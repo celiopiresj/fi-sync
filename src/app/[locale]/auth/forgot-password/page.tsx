@@ -63,6 +63,7 @@ export default function ForgotPasswordPage() {
                 label={t("fields.email.label")}
                 type="email"
                 placeholder={t("fields.email.placeholder")}
+                autoComplete="email"
               />
             )}
           </form.AppField>

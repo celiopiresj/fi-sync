@@ -70,6 +70,7 @@ export default function SignUpPage() {
             <field.TextField
               label={t("fields.name.label")}
               placeholder={t("fields.name.placeholder")}
+              autoComplete="name"
             />
           )}
         </form.AppField>
@@ -80,6 +81,7 @@ export default function SignUpPage() {
               label={t("fields.email.label")}
               type="email"
               placeholder={t("fields.email.placeholder")}
+              autoComplete="email"
             />
           )}
         </form.AppField>
@@ -89,6 +91,7 @@ export default function SignUpPage() {
             <field.TextField
               label={t("fields.password.label")}
               type="password"
+              autoComplete="new-password"
             />
           )}
         </form.AppField>
