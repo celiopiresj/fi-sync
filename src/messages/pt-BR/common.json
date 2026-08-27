@@ -1,0 +1,65 @@
+{
+  "buttons": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "nav": {
+    "home": "Início",
+    "transactions": "Transações",
+    "people": "Pessoas",
+    "invoices": "Faturas",
+    "accounts": "Contas",
+    "investments": "Investimentos",
+    "recurrences": "Recorrências",
+    "cards": "Cartões",
+    "categories": "Categorias",
+    "budgets": "Orçamentos",
+    "projections": "Projeções",
+    "sections": {
+      "dayToDay": "Dia a dia",
+      "wallet": "Carteira",
+      "planning": "Planejamento",
+      "records": "Cadastros"
+    }
+  },
+  "userMenu": {
+    "open": "Abrir menu da conta",
+    "theme": "Tema",
+    "language": "Idioma",
+    "signOut": "Sair"
+  },
+  "language": {
+    "label": "Idioma",
+    "pt-BR": "Português (Brasil)",
+    "en": "Inglês"
+  },
+  "theme": {
+    "light": "Claro",
+    "dark": "Escuro",
+    "system": "Sistema"
+  },
+  "errorGeneric": "Algo deu errado. Tente novamente.",
+  "status": {
+    "active": "Ativa",
+    "inactive": "Inativa",
+    "pending": "Pendente",
+    "completed": "Concluída",
+    "failed": "Falhou",
+    "loading": "Carregando…"
+  },
+  "validation": {
+    "required": "Campo obrigatório",
+    "invalid": "Valor inválido",
+    "min": "Valor mínimo: {min}",
+    "max": "Valor máximo: {max}",
+    "minLength": "Mínimo de {min} caracteres",
+    "maxLength": "Máximo de {max} caracteres",
+    "email": "E-mail inválido"
+  },
+  "form": {
+    "showPassword": "Mostrar senha",
+    "hidePassword": "Ocultar senha"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "nav": {
+    "home": "Home",
+    "transactions": "Transactions",
+    "people": "People",
+    "invoices": "Invoices",
+    "accounts": "Accounts",
+    "investments": "Investments",
+    "recurrences": "Recurrences",
+    "cards": "Cards",
+    "categories": "Categories",
+    "budgets": "Budgets",
+    "projections": "Projections",
+    "sections": {
+      "dayToDay": "Everyday",
+      "wallet": "Wallet",
+      "planning": "Planning",
+      "records": "Records"
+    }
+  },
+  "userMenu": {
+    "open": "Open account menu",
+    "theme": "Theme",
+    "language": "Language",
+    "signOut": "Sign out"
+  },
+  "language": {
+    "label": "Language",
+    "pt-BR": "Portuguese (Brazil)",
+    "en": "English"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "errorGeneric": "Something went wrong. Please try again.",
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "loading": "Loading…"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalid": "Invalid value",
+    "min": "Minimum value: {min}",
+    "max": "Maximum value: {max}",
+    "minLength": "At least {min} characters",
+    "maxLength": "At most {max} characters",
+    "email": "Invalid email"
+  },
+  "form": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  }
+}
