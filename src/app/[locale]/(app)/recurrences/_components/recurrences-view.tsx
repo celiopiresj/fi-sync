@@ -6,11 +6,9 @@ import { toast } from "sonner";
 import {
   ArrowsClockwiseIcon,
   CaretDownIcon,
-  MagnifyingGlassIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +23,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { PageHeader } from "@/components/screen/page-header";
+import { SearchInput } from "@/components/screen/search-input";
+import type { Column } from "@tanstack/react-table";
 import { DataTable } from "@/components/data-table/data-table";
+import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
+import { formatPersonName } from "@/lib/format-person-name";
 import { SummaryCards } from "./summary-cards";
 import { RecurrenceMobileList } from "./table/recurrence-mobile-list";
 import { FiltersSheet } from "./table/filters-sheet";
@@ -247,6 +250,18 @@ export function RecurrencesView({
     [invalidate, t],
   );
 
+  function renderSubRows(row: RecurrenceRow, columns: Column<RecurrenceRow, unknown>[]) {
+    return renderSplitSubRows(
+      row.splits.map((split) => ({
+        key: split.personId,
+        personName: formatPersonName(split.person.name),
+        amount: split.amount,
+      })),
+      columns,
+      formatAmount,
+    );
+  }
+
   const columns = useMemo(
     () =>
       getRecurrenceColumns(
@@ -258,10 +273,12 @@ export function RecurrencesView({
             frequency: t("table.columns.frequency"),
             duration: t("table.columns.duration"),
             amount: t("table.columns.amount"),
+            person: t("table.columns.person"),
           },
           noCategory: t("table.noCategory"),
           frequencyLabel,
           finishedLabel: t("table.finishedBadge"),
+          splitPillLabel: (count) => t("table.splitPill", { count }),
           extendLabel: t("table.extend.label"),
           extendingLabel: t("table.extend.pending"),
           creditCardAccountLabel: t("table.creditCardAccount"),
@@ -400,35 +417,19 @@ export function RecurrencesView({
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold">{t("title")}</h1>
-        <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
-      </div>
+      <PageHeader title={t("title")} subtitle={headerSubtitle} />
 
       <SummaryCards recurrences={recurrences} />
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-3">
-            <div className="relative w-full max-w-md">
-              <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder={t("search.placeholder")}
-                className="h-8 pl-8 pr-8"
-              />
-              {searchText && (
-                <button
-                  type="button"
-                  onClick={() => setSearchText("")}
-                  aria-label={t("search.clear")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <XIcon className="size-4" />
-                </button>
-              )}
-            </div>
+            <SearchInput
+              value={searchText}
+              onChange={setSearchText}
+              placeholder={t("search.placeholder")}
+              clearLabel={t("search.clear")}
+            />
             <FiltersSheet
               filters={sheetFilters}
               onChange={setSheetFilters}
@@ -499,6 +500,7 @@ export function RecurrencesView({
           <DataTable
             columns={columns}
             data={recurrences}
+            renderSubRows={renderSubRows}
             emptyState={emptyStateNode}
             getRowId={(row) => row.id}
           />

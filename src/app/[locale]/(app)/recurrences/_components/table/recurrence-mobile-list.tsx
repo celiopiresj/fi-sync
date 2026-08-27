@@ -71,16 +71,22 @@ export function RecurrenceMobileList({
       <div className="divide-y divide-border">
         {recurrences.map((recurrence) => {
           const CategoryIcon = resolveCategoryIcon(recurrence.category?.icon);
-          // Every person the recurrence is split across, not just
-          // splits[0] — same fix as the desktop table's own columns.tsx.
-          const peopleLabel = recurrence.splits
-            .map((split) => formatPersonName(split.person.name))
-            .join(", ");
-          const subtitle = messages.cardSubtitle(
-            recurrence.account.name,
-            messages.frequencyLabel(recurrence.frequency),
-            peopleLabel,
-          );
+          // More than one person splits this one differently below (each
+          // on their own line with their own amount) — same fix as the
+          // desktop table's own columns.tsx. cardSubtitle's `{person}`
+          // slot only ever holds a single name, so a multi-split
+          // recurrence drops it from the subtitle template entirely
+          // (account · frequency only) rather than pass it something
+          // that reads oddly ("Conta · Mensal · Mãe, Irmão").
+          const hasMultipleSplits = recurrence.splits.length > 1;
+          const frequencyLabel = messages.frequencyLabel(recurrence.frequency);
+          const subtitle = hasMultipleSplits
+            ? `${recurrence.account.name} · ${frequencyLabel}`
+            : messages.cardSubtitle(
+                recurrence.account.name,
+                frequencyLabel,
+                formatPersonName(recurrence.splits[0]!.person.name),
+              );
           const pending = actions.isExtending(recurrence.id);
 
           return (
@@ -128,6 +134,28 @@ export function RecurrenceMobileList({
                       </Badge>
                     )}
                   </div>
+                  {hasMultipleSplits && (
+                    <div className="mt-1 flex flex-col gap-0.5 border-t border-border/60 pt-1">
+                      {recurrence.splits.map((split) => (
+                        <div
+                          key={split.personId}
+                          className="flex items-center justify-between gap-2 text-xs"
+                        >
+                          <span className="min-w-0 truncate text-muted-foreground">
+                            {formatPersonName(split.person.name)}
+                          </span>
+                          <span
+                            className={cn(
+                              "shrink-0 tabular-nums",
+                              split.amount < 0 ? "text-negative" : "text-positive",
+                            )}
+                          >
+                            {formatAmount(split.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

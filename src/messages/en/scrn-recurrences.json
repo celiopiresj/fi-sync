@@ -1,0 +1,193 @@
+{
+  "title": "Recurrences",
+  "header": {
+    "subtitle": "{count, plural, =0 {No recurrences} one {# recurrence} other {# recurrences}}"
+  },
+  "search": {
+    "placeholder": "Search by description",
+    "clear": "Clear search"
+  },
+  "buttons": {
+    "add": {
+      "title": "New recurrence",
+      "debit": "Debit recurrence",
+      "credit": "Recurring card expense"
+    }
+  },
+  "filters": {
+    "title": "Filters",
+    "description": "Refine the recurrences list.",
+    "account": "Account",
+    "allAccounts": "All accounts",
+    "category": "Category",
+    "allCategories": "All categories",
+    "status": "Status",
+    "clear": "Clear",
+    "apply": "Apply",
+    "clearAll": "Clear filters",
+    "chips": {
+      "account": "Account: {value}",
+      "category": "Category: {value}",
+      "type": "Type: {value}",
+      "status": "Status: {value}",
+      "remove": "Remove {value} filter"
+    }
+  },
+  "tabs": {
+    "all": "All",
+    "income": "Income",
+    "expenses": "Expenses"
+  },
+  "status": {
+    "active": "Active",
+    "finished": "Finished",
+    "all": "All"
+  },
+  "table": {
+    "columns": {
+      "description": "Description",
+      "account": "Account",
+      "category": "Category",
+      "frequency": "Frequency",
+      "duration": "Duration",
+      "amount": "Amount",
+      "person": "Person"
+    },
+    "frequency": {
+      "DAILY": "Daily",
+      "WEEKLY": "Weekly",
+      "MONTHLY": "Monthly"
+    },
+    "duration": {
+      "range": "{start} – {end}",
+      "openEnded": "Starting {start}"
+    },
+    "noCategory": "No category",
+    "finishedBadge": "Finished",
+    "splitPill": "{count, plural, one {Split (# person)} other {Split (# people)}}",
+    "creditCardAccount": "Credit card",
+    "cardSubtitle": "{account} · {frequency} · {person}",
+    "extend": {
+      "label": "Generate 12 more months",
+      "pending": "Generating…"
+    },
+    "empty": {
+      "title": "No recurrences found",
+      "description": "Adjust the filters or create a new recurrence.",
+      "button": "New recurrence"
+    }
+  },
+  "summary": {
+    "title": "Fixed monthly impact",
+    "incomeLabel": "Fixed income: {value}/mo",
+    "expensesLabel": "Fixed expenses: {value}/mo",
+    "balanceLabel": "Fixed monthly balance"
+  },
+  "dialog": {
+    "create": {
+      "title": "New recurrence",
+      "description": "Creates the rule and generates the upcoming occurrences (up to 12 months at a time)."
+    },
+    "edit": {
+      "title": "Edit recurrence",
+      "description": "Changes only affect occurrences that are still in the future and pending."
+    },
+    "createCredit": {
+      "title": "New recurring card expense",
+      "description": "Creates the rule and generates the upcoming occurrences (up to 12 months at a time)."
+    },
+    "editCredit": {
+      "title": "Edit recurring card expense",
+      "description": "Changes only affect occurrences that are still in the future and pending."
+    },
+    "delete": {
+      "title": "Delete recurrence?",
+      "description": "Occurrences that are still in the future and pending will also be deleted. Past or already-completed occurrences stay in your history. This action cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    }
+  },
+  "fields": {
+    "type": {
+      "label": "Type",
+      "income": "Income",
+      "expense": "Expense",
+      "creditIncome": "Refund"
+    },
+    "amount": {
+      "label": "Amount",
+      "placeholder": "0.00",
+      "calculated": "= {value}"
+    },
+    "description": {
+      "label": "Description",
+      "placeholder": "e.g. Rent, subscription, salary",
+      "placeholderCredit": "e.g. Subscription, membership"
+    },
+    "account": {
+      "label": "Account"
+    },
+    "category": {
+      "label": "Category"
+    },
+    "paymentMethod": {
+      "label": "Payment method",
+      "CASH": "Cash",
+      "DEBIT_CARD": "Debit card",
+      "BANK_TRANSFER": "Bank transfer",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Other"
+    },
+    "card": {
+      "label": "Card",
+      "placeholder": "Select the card"
+    },
+    "person": {
+      "label": "Person",
+      "placeholder": "Select the person"
+    },
+    "frequency": {
+      "label": "Frequency"
+    },
+    "startDate": {
+      "label": "Start date"
+    },
+    "endDate": {
+      "toggleLabel": "Set an end date",
+      "toggleHelp": "If off, the recurrence continues indefinitely.",
+      "label": "End date"
+    },
+    "choosePlaceholder": "Select"
+  },
+  "splits": {
+    "toggleLabel": "Split with other people",
+    "needsPersonFirst": "Choose a person above to split",
+    "payerLabel": "Paid",
+    "owesLabel": "Owes",
+    "exceeds": "Exceeds by {value}",
+    "addPerson": "Add person",
+    "newPerson": "Register new person",
+    "newPersonPlaceholder": "Person's name",
+    "remove": "Remove person",
+    "mismatch": "The split total must match the recurrence amount",
+    "empty": "No people registered yet"
+  },
+  "scheduleSummary": "Repeats {frequency}, starting {start}. Frequency and start date can't be changed after creation — delete and create a new one to change the schedule.",
+  "toast": {
+    "created": "Recurrence created",
+    "updated": "Recurrence updated",
+    "updatedCascade": "{count, plural, =0 {Recurrence updated} one {Recurrence updated — # upcoming occurrence was also updated} other {Recurrence updated — # upcoming occurrences were also updated}}",
+    "deleted": "Recurrence deleted",
+    "extended": "{count, plural, one {# more occurrence generated} other {# more occurrences generated}}",
+    "error": "Couldn't complete the action"
+  },
+  "aria": {
+    "close": "Close"
+  },
+  "menu": {
+    "aria": "Open menu",
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}

@@ -14,9 +14,13 @@ import { resolveCategoryIcon } from "@/lib/category-icons";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
   ArrowsClockwiseIcon,
+  CaretDownIcon,
+  CaretUpIcon,
   CreditCardIcon,
   DotsThreeIcon,
   PencilSimpleIcon,
+  ShuffleIcon,
+  UserIcon,
 } from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { RecurrenceRow } from "../../_types/types";
@@ -29,10 +33,16 @@ type ColumnMessages = {
     frequency: string;
     duration: string;
     amount: string;
+    person: string;
   };
   noCategory: string;
   frequencyLabel: (frequency: RecurrenceRow["frequency"]) => string;
   finishedLabel: string;
+  // "Dividido (N pessoas)" (table.splitPill) — the collapsed pill shown
+  // in the Person column for a multi-split recurrence; clicking it
+  // toggles the per-person breakdown rows below (see renderSubRows in
+  // recurrences-view.tsx). Mirrors transactions' own splitPillLabel.
+  splitPillLabel: (count: number) => string;
   // "Gerar mais 12 meses" / "Gerando…" — shown under the description for
   // rows listRecurrences flagged needsExtension (tasks/012's low-runway
   // prompt), see actions.extend/isExtending below.
@@ -69,13 +79,6 @@ export function getRecurrenceColumns(
       header: messages.columns.description,
       cell: ({ row }) => {
         const CategoryIcon = resolveCategoryIcon(row.original.category?.icon);
-        // Every person the recurrence is split across, not just
-        // splits[0] ("quem pagou") — a recurrence divided between
-        // several people should show all of them here, same convention
-        // as transactions' own Person column (table/columns.tsx there).
-        const peopleLabel = row.original.splits
-          .map((split) => formatPersonName(split.person.name))
-          .join(", ");
         const pending = actions.isExtending(row.original.id);
         return (
           <div className="flex min-w-0 flex-col gap-0.5">
@@ -96,29 +99,67 @@ export function getRecurrenceColumns(
                 )}
               </div>
             </div>
-            {(peopleLabel || row.original.needsExtension) && (
-              <div className="flex min-w-0 items-center gap-2.5 pl-9">
-                {peopleLabel && (
-                  <span className="min-w-0 truncate text-xs text-muted-foreground">
-                    {peopleLabel}
-                  </span>
-                )}
-                {row.original.needsExtension && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      actions.onExtend(row.original);
-                    }}
-                    disabled={pending}
-                    className="flex shrink-0 items-center gap-1 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
-                  >
-                    <ArrowsClockwiseIcon className="size-3" />
-                    {pending ? messages.extendingLabel : messages.extendLabel}
-                  </button>
-                )}
-              </div>
+            {row.original.needsExtension && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  actions.onExtend(row.original);
+                }}
+                disabled={pending}
+                className="flex w-fit shrink-0 items-center gap-1 pl-9 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+              >
+                <ArrowsClockwiseIcon className="size-3" />
+                {pending ? messages.extendingLabel : messages.extendLabel}
+              </button>
             )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "person",
+      accessorFn: (row) =>
+        row.splits.map((split) => formatPersonName(split.person.name)).join(", "),
+      header: () => <div className="w-40">{messages.columns.person}</div>,
+      cell: ({ row, getValue }) => {
+        const splits = row.original.splits;
+        if (splits.length <= 1) {
+          return (
+            <div className="w-40 shrink-0">
+              <Badge variant="secondary" className="max-w-full gap-1 font-normal">
+                <UserIcon className="size-3 shrink-0" />
+                <span className="min-w-0 truncate">{getValue() as string}</span>
+              </Badge>
+            </div>
+          );
+        }
+        // More than one person — the "Valor" column already shows the
+        // recurrence's total, so this collapses to a "Dividido (N
+        // pessoas)" pill that expands (via row.toggleExpanded(), rendered
+        // by DataTable's renderSubRows) into one indented row per person
+        // below, each showing their own split amount.
+        return (
+          <div className="w-40 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                row.toggleExpanded();
+              }}
+              aria-expanded={row.getIsExpanded()}
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning transition-colors hover:bg-warning/25"
+            >
+              <ShuffleIcon className="size-3 shrink-0" />
+              <span className="min-w-0 truncate">
+                {messages.splitPillLabel(splits.length)}
+              </span>
+              {row.getIsExpanded() ? (
+                <CaretUpIcon className="size-3 shrink-0" />
+              ) : (
+                <CaretDownIcon className="size-3 shrink-0" />
+              )}
+            </button>
           </div>
         );
       },
