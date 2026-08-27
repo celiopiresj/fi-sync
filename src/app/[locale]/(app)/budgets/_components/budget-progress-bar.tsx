@@ -6,15 +6,13 @@ import {
   clampPercentage,
 } from "../_lib/budget-calculations";
 
-// Tailwind classes for each threshold color — using `bg-*` utilities
-// against the shadcn semantic palette where possible, falling back to
-// Tailwind's named-color utilities for yellow/orange which don't have
-// a one-to-one shadcn token.
+// Tailwind classes for each threshold color — the app's own
+// positive/warning/negative status tokens (AGENTS.md's "Status/money
+// colors" convention), not raw Tailwind palette classes.
 export const BAR_CLASSES: Record<string, string> = {
-  green: "bg-emerald-500",
-  yellow: "bg-amber-400",
-  orange: "bg-orange-500",
-  red: "bg-destructive",
+  positive: "bg-positive",
+  warning: "bg-warning",
+  negative: "bg-destructive",
 };
 
 type BudgetProgressBarProps = {
@@ -29,7 +27,7 @@ export function BudgetProgressBar({
   const t = useTranslations("scrn-budgets");
   const color = thresholdColorForPercentage(percentage);
   const clamped = clampPercentage(percentage);
-  const barClass = BAR_CLASSES[color] ?? BAR_CLASSES.green;
+  const barClass = BAR_CLASSES[color] ?? BAR_CLASSES.positive;
 
   return (
     <div

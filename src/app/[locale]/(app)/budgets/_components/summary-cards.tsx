@@ -1,8 +1,7 @@
 "use client";
 
 import { useFormatter, useTranslations } from "next-intl";
-import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
 import { sumAmounts } from "../_lib/budget-calculations";
 import type { BudgetWithSpending } from "../_types/types";
 
@@ -32,89 +31,32 @@ export function SummaryCards({ budget }: SummaryCardsProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardContent className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("cards.expectedIncome.title")}
-          </span>
-          <span className="text-2xl font-bold tabular-nums">
-            {money(budget.expectedIncome)}
-          </span>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("cards.totalBudgeted.title")}
-          </span>
-          <span className="text-2xl font-bold tabular-nums">
-            {money(totalBudgeted)}
-          </span>
-          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            {t("cards.totalBudgeted.percentage", {
-              percentage: allocatedPercentage,
-            })}
-          </span>
-        </CardContent>
-      </Card>
-
-      <Card
-        className={cn(
-          isSpentOverLimit && "border-destructive/30 dark:border-destructive/40",
-        )}
-      >
-        <CardContent className="flex flex-col gap-1">
-          <span
-            className={cn(
-              "text-xs font-medium",
-              isSpentOverLimit ? "text-destructive" : "text-muted-foreground",
-            )}
-          >
-            {t("cards.totalSpent.title")}
-          </span>
-          <span
-            className={cn(
-              "text-2xl font-bold tabular-nums",
-              isSpentOverLimit && "text-destructive",
-            )}
-          >
-            {money(totalSpent)}
-          </span>
-          <span
-            className={cn(
-              "text-xs font-semibold",
-              isSpentOverLimit ? "text-destructive" : "text-muted-foreground",
-            )}
-          >
-            {t("cards.totalSpent.percentage", {
-              percentage: spentPercentage,
-            })}
-          </span>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("cards.remainingIncome.title")}
-          </span>
-          <span
-            className={cn(
-              "text-2xl font-bold tabular-nums",
-              isIncomeOverAllocated
-                ? "text-destructive"
-                : "text-emerald-600 dark:text-emerald-400",
-            )}
-          >
-            {money(remainingIncome)}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {t("cards.remainingIncome.subtitle")}
-          </span>
-        </CardContent>
-      </Card>
-    </div>
+    <KpiGrid>
+      <KpiCard
+        label={t("cards.expectedIncome.title")}
+        value={money(budget.expectedIncome)}
+      />
+      <KpiCard
+        label={t("cards.totalBudgeted.title")}
+        value={money(totalBudgeted)}
+        subtitle={t("cards.totalBudgeted.percentage", {
+          percentage: allocatedPercentage,
+        })}
+      />
+      <KpiCard
+        label={t("cards.totalSpent.title")}
+        value={money(totalSpent)}
+        tone={isSpentOverLimit ? "negative" : "default"}
+        subtitle={t("cards.totalSpent.percentage", {
+          percentage: spentPercentage,
+        })}
+      />
+      <KpiCard
+        label={t("cards.remainingIncome.title")}
+        value={money(remainingIncome)}
+        tone={isIncomeOverAllocated ? "negative" : "positive"}
+        subtitle={t("cards.remainingIncome.subtitle")}
+      />
+    </KpiGrid>
   );
 }

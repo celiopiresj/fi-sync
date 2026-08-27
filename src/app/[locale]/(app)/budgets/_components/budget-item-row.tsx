@@ -25,9 +25,7 @@ export function BudgetItemRow({ item }: BudgetItemRowProps) {
   });
 
   const isOverBudget = item.percentage > 100;
-  const colorClass =
-    item.category.colorStyle ||
-    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+  const colorClass = item.category.colorStyle || "bg-muted text-muted-foreground";
 
   return (
     <div className="flex flex-col gap-1.5 py-2">
@@ -56,9 +54,7 @@ export function BudgetItemRow({ item }: BudgetItemRowProps) {
           </span>
           <span
             className={`text-xs tabular-nums font-medium ${
-              isOverBudget
-                ? "text-destructive"
-                : "text-muted-foreground"
+              isOverBudget ? "text-negative" : "text-muted-foreground"
             }`}
           >
             {isOverBudget

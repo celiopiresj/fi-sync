@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import {
+  currentPeriod,
+  periodRange,
+  periodsEqual,
+  shiftPeriod,
+  type Period,
+} from "@/app/[locale]/(app)/transactions/_lib/period";
+import { PageHeader, PeriodStepper } from "@/components/screen/page-header";
+import { SearchInput } from "@/components/screen/search-input";
+import {
+  ViewModeToggle,
+  type ViewMode,
+} from "@/components/screen/view-mode-toggle";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,40 +28,30 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { APP_TIME_ZONE, parseCalendarDate } from "@/lib/date";
-import {
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  ChartPieSliceIcon,
-  ListIcon,
-  MagnifyingGlassIcon,
-  SquaresFourIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { CaretDownIcon, ChartPieSliceIcon } from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useBudgetData } from "../_hooks/use-budget-data";
-import { useBudgetMutations } from "../_hooks/use-budget-mutations";
-import {
-  currentPeriod,
-  periodRange,
-  periodsEqual,
-  shiftPeriod,
-  type Period,
-} from "@/app/[locale]/(app)/transactions/_lib/period";
 import {
   ALERT_THRESHOLD_DANGER,
   ALERT_THRESHOLD_WARNING,
 } from "../_constants/constants";
-import type { BudgetWithSpending, CategoryOption, GroupOption } from "../_types/types";
+import { useBudgetData } from "../_hooks/use-budget-data";
+import { useBudgetMutations } from "../_hooks/use-budget-mutations";
 import type { BudgetFormValues } from "../_schema/schema";
-import { SummaryCards } from "./summary-cards";
+import type {
+  BudgetWithSpending,
+  CategoryOption,
+  GroupOption,
+} from "../_types/types";
 import { BudgetGroupSection } from "./budget-group-section";
 import { BudgetSheet } from "./form/budget-sheet";
 import { GroupManagerDialog } from "./form/group-manager-dialog";
+import { SummaryCards } from "./summary-cards";
 
 type ItemsFilter = "all" | "exceeded" | "within";
-type ViewMode = "cards" | "list";
 
 type BudgetsViewProps = {
   initialBudget: BudgetWithSpending | null;
@@ -192,9 +191,7 @@ export function BudgetsView({
       }
     }
 
-    return [...groupMap.values()].sort(
-      (a, b) => a.sortOrder - b.sortOrder,
-    );
+    return [...groupMap.values()].sort((a, b) => a.sortOrder - b.sortOrder);
   }, [filteredItems, t]);
 
   const hasNoSearchResults =
@@ -265,42 +262,22 @@ export function BudgetsView({
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
       {/* Header with period stepper */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t("subtitle", {
-              month: periodMonthNameLong,
-              count: itemCount,
-            })}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
-              setPeriod((current) => shiftPeriod(current, -1))
-            }
-            aria-label={t("header.previousPeriod")}
-          >
-            <CaretLeftIcon />
-          </Button>
-          <span className="min-w-28 text-center text-sm font-medium">
-            {periodStepperLabel}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() =>
-              setPeriod((current) => shiftPeriod(current, 1))
-            }
-            aria-label={t("header.nextPeriod")}
-          >
-            <CaretRightIcon />
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle", {
+          month: periodMonthNameLong,
+          count: itemCount,
+        })}
+        right={
+          <PeriodStepper
+            label={periodStepperLabel}
+            onPrevious={() => setPeriod((current) => shiftPeriod(current, -1))}
+            onNext={() => setPeriod((current) => shiftPeriod(current, 1))}
+            previousLabel={t("header.previousPeriod")}
+            nextLabel={t("header.nextPeriod")}
+          />
+        }
+      />
 
       {/* Content: empty state or budget data */}
       {!budget ? (
@@ -318,18 +295,14 @@ export function BudgetsView({
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 size="sm"
-                onClick={() =>
-                  setSheetState({ open: true, mode: "create" })
-                }
-              >
+                onClick={() => setSheetState({ open: true, mode: "create" })}>
                 {t("empty.createFromScratch")}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleCopyFromPrevious}
-                disabled={mutations.isPending}
-              >
+                disabled={mutations.isPending}>
                 {t("empty.createFromAverage")}
               </Button>
             </div>
@@ -342,27 +315,14 @@ export function BudgetsView({
 
           {/* Toolbar: search + status filter (left), view toggle + edit menu (right) */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative w-full max-w-md">
-                <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  placeholder={t("search.placeholder")}
-                  className="h-8 pl-8 pr-8"
-                />
-                {searchText && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchText("")}
-                    aria-label={t("search.clear")}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  >
-                    <XIcon className="size-4" />
-                  </button>
-                )}
-              </div>
+            <SearchInput
+              value={searchText}
+              onChange={setSearchText}
+              placeholder={t("search.placeholder")}
+              clearLabel={t("search.clear")}
+            />
 
+            <div className="flex items-center gap-2">
               <ToggleGroup
                 type="single"
                 variant="tabs"
@@ -370,8 +330,7 @@ export function BudgetsView({
                 value={itemsFilter}
                 onValueChange={(value) => {
                   if (value) setItemsFilter(value as ItemsFilter);
-                }}
-              >
+                }}>
                 <ToggleGroupItem value="all">
                   {t("filters.tabs.all")}
                 </ToggleGroupItem>
@@ -382,25 +341,12 @@ export function BudgetsView({
                   {t("filters.tabs.within")}
                 </ToggleGroupItem>
               </ToggleGroup>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <ToggleGroup
-                type="single"
-                variant="tabs"
-                size="sm"
+              <ViewModeToggle
                 value={viewMode}
-                onValueChange={(value) => {
-                  if (value) setViewMode(value as ViewMode);
-                }}
-              >
-                <ToggleGroupItem value="cards" aria-label={t("filters.viewMode.cards")}>
-                  <SquaresFourIcon />
-                </ToggleGroupItem>
-                <ToggleGroupItem value="list" aria-label={t("filters.viewMode.list")}>
-                  <ListIcon />
-                </ToggleGroupItem>
-              </ToggleGroup>
+                onValueChange={setViewMode}
+                cardsLabel={t("filters.viewMode.cards")}
+                listLabel={t("filters.viewMode.list")}
+              />
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -413,16 +359,13 @@ export function BudgetsView({
                   <DropdownMenuItem
                     onSelect={() =>
                       setSheetState({ open: true, mode: "edit" })
-                    }
-                  >
+                    }>
                     {t("buttons.edit")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={handleCopyFromPrevious}>
                     {t("buttons.copyPrevious")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => setGroupDialogOpen(true)}
-                  >
+                  <DropdownMenuItem onSelect={() => setGroupDialogOpen(true)}>
                     {t("buttons.manageGroups")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -463,9 +406,7 @@ export function BudgetsView({
       {/* Budget create/edit sheet */}
       <BudgetSheet
         open={sheetState.open}
-        onOpenChange={(open) =>
-          setSheetState((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setSheetState((prev) => ({ ...prev, open }))}
         mode={sheetState.mode}
         monthLabel={periodMonthNameLong}
         previousMonthLabel={previousMonthLabel}
@@ -475,9 +416,7 @@ export function BudgetsView({
         groups={groups}
         budget={budget}
         onSubmit={
-          sheetState.mode === "create"
-            ? handleCreateBudget
-            : handleUpdateBudget
+          sheetState.mode === "create" ? handleCreateBudget : handleUpdateBudget
         }
         isPending={mutations.isPending}
       />

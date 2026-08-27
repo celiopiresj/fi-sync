@@ -26,7 +26,7 @@ export function thresholdColorForPercentage(
   for (const tier of PROGRESS_THRESHOLDS) {
     if (percentage <= tier.max) return tier.color;
   }
-  return "red";
+  return "negative";
 }
 
 // Clamp a percentage to [0, 100] for rendering a progress bar width —

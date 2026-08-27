@@ -2,7 +2,7 @@
 
 import { createElement } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { WarningCircleIcon, CheckIcon } from "@phosphor-icons/react";
+import { WarningCircleIcon, CheckIcon, TrendUpIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
@@ -24,17 +24,13 @@ export function BudgetItemCard({ item, onEdit }: BudgetItemCardProps) {
 
   const isOverBudget = item.spent > item.limit;
   const percentage = Math.round(item.percentage);
-  const colorClass =
-    item.category.colorStyle ||
-    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400";
+  const colorClass = item.category.colorStyle || "bg-muted text-muted-foreground";
 
   return (
     <div
       className={cn(
         "flex flex-col gap-4 rounded-lg border bg-card p-4 transition-shadow hover:shadow-md",
-        isOverBudget
-          ? "border-destructive/30 dark:border-destructive/40"
-          : "border-border",
+        isOverBudget ? "border-negative/30" : "border-border",
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -62,11 +58,12 @@ export function BudgetItemCard({ item, onEdit }: BudgetItemCardProps) {
         </div>
 
         <Badge
-          variant={isOverBudget ? "destructive" : "outline"}
+          variant="outline"
           className={cn(
             "shrink-0",
-            !isOverBudget &&
-              "border-emerald-200 text-emerald-700 dark:border-emerald-900 dark:text-emerald-400",
+            isOverBudget
+              ? "border-negative/30 bg-negative/10 text-negative"
+              : "border-positive/30 bg-positive/10 text-positive",
           )}
         >
           {isOverBudget ? <WarningCircleIcon /> : <CheckIcon />}
@@ -81,39 +78,40 @@ export function BudgetItemCard({ item, onEdit }: BudgetItemCardProps) {
           <span
             className={cn(
               "tabular-nums",
-              isOverBudget
-                ? "font-semibold text-destructive"
-                : "text-foreground",
+              isOverBudget ? "font-semibold text-negative" : "text-foreground",
             )}
           >
-            {t("item.spent", {
-              spent: money(item.spent),
-              limit: money(item.limit),
-            })}
+            {t("item.spentLabel", { value: money(item.spent) })}
+          </span>
+          <span className="tabular-nums text-muted-foreground">
+            {t("item.limitLabel", { value: money(item.limit) })}
           </span>
         </div>
 
         <BudgetProgressBar percentage={item.percentage} limit={money(item.limit)} />
 
-        <span
-          className={cn(
-            "text-xs font-medium",
-            isOverBudget ? "text-destructive" : "text-muted-foreground",
-          )}
-        >
-          {isOverBudget
-            ? t("item.exceededBy", { amount: money(item.spent - item.limit) })
-            : t("item.available", { amount: money(item.limit - item.spent) })}
-        </span>
-      </div>
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={cn(
+              "flex items-center gap-1 text-xs font-medium",
+              isOverBudget ? "text-negative" : "text-muted-foreground",
+            )}
+          >
+            {isOverBudget && <TrendUpIcon className="size-3" />}
+            {isOverBudget
+              ? t("item.exceededBy", { amount: money(item.spent - item.limit) })
+              : t("item.available", { amount: money(item.limit - item.spent) })}
+          </span>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        className="self-end text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
-      >
-        {t("buttons.adjust")}
-      </button>
+          <button
+            type="button"
+            onClick={onEdit}
+            className="text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            {t("buttons.adjust")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -112,21 +112,20 @@ export function BudgetForm({
       }}
       className="flex h-full flex-col"
     >
-      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4">
+      <div className="shrink-0 flex flex-col gap-4 px-4 pb-4">
         <form.AppField name="expectedIncome">
           {(field) => (
             <field.AmountField
               label={t("fields.expectedIncome.label")}
               placeholder={t("fields.expectedIncome.placeholder")}
-              size="lg"
             />
           )}
         </form.AppField>
 
         {/* Real-time allocation summary — recomputed from the live form
             state above, not a snapshot taken at open time. */}
-        <Card className="gap-3 bg-surface-1 py-4">
-          <CardContent className="flex flex-col gap-3">
+        <Card className="gap-3 bg-surface-1 py-3 shadow-sm">
+          <CardContent className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-2 text-xs font-medium">
               <span className="text-muted-foreground">{t("summary.title")}</span>
               <Badge variant={allocation.isOverBudget ? "destructive" : "default"}>
@@ -148,12 +147,12 @@ export function BudgetForm({
                 percentage: allocation.percentage,
                 income: money(allocation.allocatedAmount),
               })}
-              className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+              className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
             >
               <div
                 className={cn(
                   "h-full rounded-full transition-all duration-300",
-                  allocation.isOverBudget ? BAR_CLASSES.red : BAR_CLASSES.green,
+                  allocation.isOverBudget ? BAR_CLASSES.negative : BAR_CLASSES.positive,
                 )}
                 style={{ width: `${clampedPercentage}%` }}
               />
@@ -184,6 +183,9 @@ export function BudgetForm({
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4">
 
         <div className="flex flex-col gap-3">
           <span className="text-sm font-medium">

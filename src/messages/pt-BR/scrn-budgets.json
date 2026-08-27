@@ -1,0 +1,167 @@
+{
+  "title": "Orçamentos",
+  "subtitle": "{month} · {count, plural, =0 {nenhuma categoria} one {# categoria} other {# categorias}}",
+  "header": {
+    "previousPeriod": "Mês anterior",
+    "nextPeriod": "Próximo mês"
+  },
+  "cards": {
+    "expectedIncome": {
+      "title": "Renda Esperada",
+      "empty": "Não definida"
+    },
+    "totalBudgeted": {
+      "title": "Total Orçado",
+      "percentage": "{percentage}% da renda alocada"
+    },
+    "totalSpent": {
+      "title": "Total Gasto",
+      "percentage": "{percentage}% do limite atingido"
+    },
+    "remainingIncome": {
+      "title": "Renda Livre",
+      "subtitle": "Saldo não alocado"
+    }
+  },
+  "buttons": {
+    "create": "Criar Orçamento",
+    "edit": "Editar Orçamento",
+    "copyPrevious": "Copiar do mês anterior",
+    "suggest": "Sugerir limites",
+    "addTransaction": "Nova Transação",
+    "manageGroups": "Gerenciar Grupos",
+    "addCategory": "Adicionar Categoria de Gasto",
+    "removeCategory": "Remover categoria",
+    "adjust": "Ajustar"
+  },
+  "filters": {
+    "tabs": {
+      "all": "Todas",
+      "exceeded": "Excedidas",
+      "within": "Dentro da Meta"
+    },
+    "viewMode": {
+      "cards": "Modo cards",
+      "list": "Modo lista"
+    }
+  },
+  "search": {
+    "placeholder": "Buscar por categoria...",
+    "clear": "Limpar busca",
+    "empty": {
+      "title": "Nenhum orçamento encontrado",
+      "description": "Tente buscar por outro nome de categoria ou grupo."
+    }
+  },
+
+  "summary": {
+    "title": "Resumo do Planejamento",
+    "allocatedBadge": "{percentage}% Alocado",
+    "allocatedBadgeOverBudget": "{percentage}% (Excedido)",
+    "allocatedLabel": "Limites Definidos",
+    "remainingLabel": "Renda Livre"
+  },
+  "empty": {
+    "title": "Nenhum orçamento para {month}",
+    "description": "Crie um orçamento para acompanhar seus gastos por categoria neste mês.",
+    "createFromScratch": "Criar do zero",
+    "createFromAverage": "Sugerir com base nos últimos 3 meses"
+  },
+  "group": {
+    "ungrouped": "Sem grupo",
+    "totalLabel": "{spent} / {limit}",
+    "categoryCount": "{count, plural, one {# categoria} other {# categorias}}",
+    "spentLabel": "Gasto: {value}",
+    "limitLabel": "Meta: {value}"
+  },
+  "item": {
+    "spent": "{spent} / {limit}",
+    "spentLabel": "Gasto: {value}",
+    "limitLabel": "Meta: {value}",
+    "percentage": "{percentage}%",
+    "committed": "{amount} comprometido",
+    "overBudget": "Acima do orçamento",
+    "overLimitBadge": "Acima do limite ({percentage}%)",
+    "usedBadge": "{percentage}% utilizado",
+    "exceededBy": "Excedido em +{amount}",
+    "available": "Disponível: {amount}"
+  },
+  "dialog": {
+    "create": {
+      "title": "Criar Orçamento",
+      "description": "Defina a renda esperada e os limites de gasto por categoria para {month}.",
+      "copyPreviousButton": "Importar orçamento de {month}"
+    },
+    "edit": {
+      "title": "Editar Orçamento",
+      "description": "Ajuste a renda esperada e os limites de gasto por categoria."
+    },
+    "copyPrevious": {
+      "title": "Copiar do mês anterior",
+      "description": "Os limites e grupos de {previousMonth} serão copiados para {currentMonth}. Você poderá ajustá-los depois.",
+      "confirm": "Copiar",
+      "cancel": "Cancelar"
+    },
+    "suggest": {
+      "title": "Sugerir limites",
+      "description": "Os limites serão calculados com base na média dos seus gastos dos últimos {count, plural, one {# mês} other {# meses}}.",
+      "confirm": "Aplicar sugestões",
+      "cancel": "Cancelar"
+    },
+    "deleteGroup": {
+      "title": "Excluir grupo",
+      "description": "O grupo \"{name}\" será excluído. As categorias que pertencem a ele ficarão sem grupo.",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    }
+  },
+  "fields": {
+    "expectedIncome": {
+      "label": "Renda esperada",
+      "placeholder": "0,00"
+    },
+    "categoryLimit": {
+      "label": "Limite",
+      "placeholder": "0,00"
+    },
+    "groupName": {
+      "label": "Nome do grupo",
+      "placeholder": "Ex: Essenciais"
+    },
+    "group": {
+      "label": "Grupo",
+      "none": "Sem grupo"
+    }
+  },
+  "groups": {
+    "title": "Gerenciar Grupos",
+    "description": "Crie e organize grupos para categorizar seus limites de gastos.",
+    "add": "Novo grupo",
+    "empty": "Nenhum grupo criado ainda."
+  },
+  "toast": {
+    "created": "Orçamento criado.",
+    "updated": "Orçamento atualizado.",
+    "copied": "Orçamento copiado do mês anterior.",
+    "suggested": "Limites sugeridos aplicados.",
+    "groupCreated": "Grupo criado.",
+    "groupUpdated": "Grupo atualizado.",
+    "groupDeleted": "Grupo excluído.",
+    "alert80": "{count, plural, one {# categoria ultrapassou} other {# categorias ultrapassaram}} 80% do orçamento.",
+    "alert100": "{count, plural, one {# categoria ultrapassou} other {# categorias ultrapassaram}} o orçamento."
+  },
+  "aria": {
+    "progressBar": "Progresso de gasto: {percentage}% de {limit}",
+    "allocationBar": "Alocação do orçamento: {percentage}% da renda esperada, {income} definidos em limites"
+  },
+  "errors": {
+    "noPreviousBudget": {
+      "title": "Sem orçamento anterior",
+      "description": "Não existe um orçamento no mês anterior para copiar."
+    },
+    "noTransactionHistory": {
+      "title": "Sem histórico",
+      "description": "Não há transações suficientes para sugerir limites."
+    }
+  }
+}

@@ -43,7 +43,7 @@ export function BudgetGroupSection({
           <span
             className={cn(
               "size-2.5 rounded-full",
-              isGroupOverBudget ? "bg-destructive" : "bg-emerald-500",
+              isGroupOverBudget ? "bg-negative" : "bg-positive",
             )}
           />
           <h3 className="text-xs font-extrabold uppercase tracking-wider text-foreground">
@@ -54,7 +54,7 @@ export function BudgetGroupSection({
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs font-semibold">
-          <span className={cn(isGroupOverBudget && "text-destructive")}>
+          <span className={cn(isGroupOverBudget && "text-negative")}>
             {t("group.spentLabel", { value: spentFormatted })}
           </span>
           <span className="font-normal text-muted-foreground">
