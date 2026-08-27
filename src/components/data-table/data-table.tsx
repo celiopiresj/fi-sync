@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import type {
+  Column,
   ColumnDef,
   ExpandedState,
   OnChangeFn,
@@ -74,6 +75,22 @@ type DataTableProps<TData> = {
   renderGroupHeader?: (row: Row<TData>) => ReactNode;
   getRowId?: (row: TData) => string;
   selection?: SelectionConfig;
+  // Opt-in per-row expandable detail rendered as extra row(s) directly
+  // below a given row (e.g. "this transaction splits across N people,
+  // show each one indented below it") — orthogonal to `groupBy` (which
+  // clusters many rows under one synthetic header instead of nesting
+  // inside a single row). The toggle itself lives in whichever of the
+  // caller's own column cells needs it, via that cell's own
+  // `row.toggleExpanded()`/`row.getIsExpanded()` (both already part of
+  // the `row` every `cell` renderer receives) — this prop only supplies
+  // what to render once a row IS expanded, reusing the same per-row
+  // `expanded` state TanStack Table already tracks for grouped rows.
+  // Gets the table's own visible leaf columns (in display order) so the
+  // caller can figure out which of its own columns (e.g. "amount") a
+  // sub-row's own value should land under — see split-sub-rows.tsx's
+  // `columnSpanAround`. Return null/undefined for a row with nothing to
+  // expand into.
+  renderSubRows?: (data: TData, columns: Column<TData, unknown>[]) => ReactNode;
 };
 
 export function DataTable<TData>({
@@ -84,6 +101,7 @@ export function DataTable<TData>({
   renderGroupHeader,
   getRowId,
   selection,
+  renderSubRows,
 }: DataTableProps<TData>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   // Groups start fully expanded (`true` is TanStack's shorthand for "all
@@ -262,18 +280,25 @@ export function DataTable<TData>({
                 );
               }
 
+              const subRows =
+                renderSubRows && row.getIsExpanded()
+                  ? renderSubRows(row.original, table.getVisibleLeafColumns())
+                  : null;
+
               return (
-                <TableRow
-                  key={row.id}
-                  className="group"
-                  data-state={row.getIsSelected() ? "selected" : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <Fragment key={row.id}>
+                  <TableRow
+                    className="group"
+                    data-state={row.getIsSelected() ? "selected" : undefined}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {subRows}
+                </Fragment>
               );
             })
           ) : (
