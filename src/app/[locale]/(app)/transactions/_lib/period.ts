@@ -48,3 +48,18 @@ export function periodRange(period: Period): { from: string; to: string } {
 export function periodsEqual(a: Period, b: Period): boolean {
   return a.year === b.year && a.month === b.month;
 }
+
+// Parses a "yyyy-MM" period key (the projections screen's "Ver extrato"
+// link — src/app/[locale]/(app)/projections — passes one via the
+// `?month=` query param so the transactions screen opens already
+// scoped to that month) back into a Period. Returns null for anything
+// missing or malformed, so callers fall back to currentPeriod().
+export function parsePeriodKey(value: string | null | undefined): Period | null {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  if (month < 0 || month > 11) return null;
+  return { year, month };
+}

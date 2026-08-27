@@ -4,9 +4,11 @@ import { addDays, addMonths, addWeeks } from "date-fns";
 import { getTranslations } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth/server";
 import { parseCalendarDate, toAppZoned, fromAppZoned } from "@/lib/date";
 import { computeInvoiceCycle, resolveInvoiceForDate } from "@/lib/invoice-resolution";
+import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import {
   debitTransactionSchema,
   refineDebitTransaction,
@@ -103,6 +105,7 @@ export async function getTransactionFormOptions() {
 export type TransactionFilters = {
   accountId?: string;
   categoryId?: string;
+  personId?: string;
   search?: string;
   from?: string;
   to?: string;
@@ -115,6 +118,23 @@ export async function listTransactions(filters: TransactionFilters = {}) {
   const where: Record<string, unknown> = { userId };
   if (filters.accountId) where.accountId = filters.accountId;
   if (filters.categoryId) where.categoryId = filters.categoryId;
+  if (filters.personId) {
+    // An unattributed transaction (no splits at all) is implicitly the
+    // user's own (same convention transactions/columns.tsx's `selfLabel`
+    // fallback and projections/_lib/self-share.ts both rely on) — so
+    // filtering by the Person marked isSelf has to match those rows too,
+    // not just ones with an explicit split naming them.
+    const person = await prisma.person.findUnique({
+      where: { id: filters.personId, userId },
+      select: { isSelf: true },
+    });
+    where.OR = person?.isSelf
+      ? [
+          { splits: { some: { personId: filters.personId } } },
+          { splits: { none: {} } },
+        ]
+      : [{ splits: { some: { personId: filters.personId } } }];
+  }
   if (filters.search) {
     where.description = { contains: filters.search, mode: "insensitive" };
   }
@@ -389,10 +409,69 @@ function revalidateTransactions() {
 
 // Also revalidates /invoices and /cards — a credit-card purchase affects
 // the invoice it landed in and the card's available limit shown there.
+// /people and /projections too — both read Transaction/TransactionSplit
+// data directly (person balances, the self-share cash-flow projection).
 function revalidateCreditTransactions() {
   revalidatePath("/transactions");
   revalidatePath("/invoices");
   revalidatePath("/cards");
+  revalidatePath("/people");
+  revalidatePath("/projections");
+}
+
+// If `transactionIds` includes a settlement expense payInvoice
+// (invoices/actions.ts) created for a card invoice payment
+// (InvoicePayment.transactionId), deleting that row would otherwise
+// leave the invoice's cached status/paidAmount stale (still counting
+// money that no longer has a transaction behind it). Must be called
+// BEFORE the delete (it needs to see the InvoicePayment/InvoiceCredit
+// rows that are about to cascade away) — pair with recomputeAffectedInvoices
+// AFTER the delete, both inside the same $transaction as the actual
+// tx.transaction.deleteMany so the whole thing is atomic.
+//
+// An invoice a deleted payment had funded a CREDIT toward (its own
+// overflow, see payInvoice's applyOverflowCredit) is captured here too
+// (`targetInvoiceId`) — deleting the settlement Transaction cascades
+// (schema.prisma) through InvoicePayment straight to any InvoiceCredit
+// it had generated, so that credit needs recomputing as well.
+// recomputeInvoiceStatus is itself transitive, so a credit chain (A
+// funded B, B's own resulting overflow funded C) unwinds correctly once
+// every directly and indirectly affected invoice here gets recomputed.
+async function invoiceIdsAffectedByDeleting(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  transactionIds: string[],
+): Promise<string[]> {
+  const payments = await tx.invoicePayment.findMany({
+    where: { transactionId: { in: transactionIds }, invoice: { account: { userId } } },
+    select: {
+      invoiceId: true,
+      creditsGiven: { select: { targetInvoiceId: true } },
+    },
+  });
+
+  const affectedInvoiceIds = new Set<string>();
+  for (const payment of payments) {
+    affectedInvoiceIds.add(payment.invoiceId);
+    for (const credit of payment.creditsGiven) {
+      affectedInvoiceIds.add(credit.targetInvoiceId);
+    }
+  }
+  return [...affectedInvoiceIds];
+}
+
+// See invoiceIdsAffectedByDeleting above — call this AFTER the delete
+// with the ids it returned, so each invoice's cached status/paidAmount
+// is recomputed from whatever InvoicePayment/InvoiceCredit rows actually
+// survived.
+async function recomputeAffectedInvoices(
+  tx: Prisma.TransactionClient,
+  invoiceIds: string[],
+) {
+  const visited = new Set<string>();
+  for (const invoiceId of invoiceIds) {
+    await recomputeInvoiceStatus(tx, invoiceId, visited);
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -876,7 +955,11 @@ export async function createCreditTransactionsBatch(
 export async function deleteTransaction(id: string) {
   const userId = await requireUserId();
 
-  await prisma.transaction.deleteMany({ where: { id, userId } });
+  await prisma.$transaction(async (tx) => {
+    const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, [id]);
+    await tx.transaction.deleteMany({ where: { id, userId } });
+    await recomputeAffectedInvoices(tx, affectedInvoiceIds);
+  });
 
   revalidateCreditTransactions();
   return { error: null };
@@ -921,8 +1004,11 @@ export async function deleteTransactionsBulk(ids: string[]) {
   const userId = await requireUserId();
   if (ids.length === 0) return { error: null, count: 0 };
 
-  const result = await prisma.transaction.deleteMany({
-    where: { id: { in: ids }, userId },
+  const result = await prisma.$transaction(async (tx) => {
+    const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, ids);
+    const deleteResult = await tx.transaction.deleteMany({ where: { id: { in: ids }, userId } });
+    await recomputeAffectedInvoices(tx, affectedInvoiceIds);
+    return deleteResult;
   });
 
   revalidateCreditTransactions();

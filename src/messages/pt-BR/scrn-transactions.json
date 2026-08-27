@@ -1,0 +1,392 @@
+{
+  "title": "Transações",
+  "subtitle": "Acompanhe suas movimentações",
+  "description": "Veja, filtre e edite os lançamentos da conta selecionada",
+
+  "header": {
+    "subtitle": "{account} · {count, plural, one {# lançamento} other {# lançamentos}}",
+    "previousPeriod": "Mês anterior",
+    "nextPeriod": "Próximo mês"
+  },
+
+  "breadcrumb": {
+    "home": "Início",
+    "current": "Transações"
+  },
+
+  "buttons": {
+    "add": {
+      "title": "Nova transação",
+      "description": "Adicionar um lançamento manual",
+      "debit": "Transação no débito",
+      "credit": "Despesa no cartão"
+    },
+    "import": {
+      "title": "Importar",
+      "description": "Importar extrato via arquivo"
+    },
+    "export": {
+      "title": "Exportar",
+      "description": "Exportar transações filtradas"
+    }
+  },
+
+  "messages": {
+    "title": "",
+    "subtitle": "",
+    "description": ""
+  },
+
+  "cards": {
+    "balance": {
+      "title": "Saldo do período",
+      "description": "Diferença entre receitas e despesas"
+    },
+    "income": {
+      "title": "Receitas",
+      "description": "Total recebido no período"
+    },
+    "expenses": {
+      "title": "Despesas",
+      "description": "Total gasto no período"
+    }
+  },
+
+  "summary": {
+    "balanceLabel": "Saldo do período",
+    "comparisonAbove": "{value} acima de {month}",
+    "comparisonBelow": "{value} abaixo de {month}",
+    "comparisonEqual": "Igual a {month}",
+    "comparisonUnavailable": "Sem dados de {month}",
+    "legendIncome": "Receitas {value}",
+    "legendExpenses": "Despesas {value}"
+  },
+
+  "search": {
+    "placeholder": "Buscar lançamento",
+    "clear": "Limpar busca"
+  },
+
+  "chart": {
+    "monthlyBalance": {
+      "title": "Saldo mensal",
+      "tooltipLabel": "Saldo",
+      "empty": "Sem histórico suficiente"
+    },
+    "byCategory": {
+      "title": "Gastos por categoria",
+      "legend": "Categoria",
+      "axisX": "Mês",
+      "axisY": "Valor",
+      "tooltip": "{category}: {value}",
+      "empty": "Sem despesas neste período",
+      "other": "Outras",
+      "uncategorized": "Sem categoria"
+    }
+  },
+
+  "fields": {
+    "description": {
+      "label": "Descrição",
+      "placeholder": "Ex: Supermercado",
+      "placeholderCredit": "Ex: Supermercado, Estorno de compra"
+    },
+    "account": {
+      "label": "Conta",
+      "placeholder": "Selecione uma conta",
+      "empty": "Nenhuma conta cadastrada ainda"
+    },
+    "type": {
+      "label": "Tipo",
+      "income": "Receita",
+      "expense": "Despesa",
+      "creditIncome": "Estorno"
+    },
+    "amount": {
+      "label": "Valor",
+      "placeholder": "0,00",
+      "help": "Use vírgula para centavos, ou uma expressão como 120+35",
+      "calculated": "= {value}"
+    },
+    "category": {
+      "label": "Categoria",
+      "placeholder": "Selecione uma categoria",
+      "empty": "Nenhuma categoria cadastrada ainda"
+    },
+    "person": {
+      "label": "Pessoa",
+      "placeholder": "Selecione a pessoa",
+      "none": "Ninguém"
+    },
+    "paymentMethod": {
+      "label": "Método de pagamento",
+      "placeholder": "Selecione o método",
+      "CASH": "Dinheiro",
+      "DEBIT_CARD": "Cartão de débito",
+      "CREDIT_CARD": "Cartão de crédito",
+      "BANK_TRANSFER": "Transferência",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Outro"
+    },
+    "card": {
+      "label": "Cartão",
+      "placeholder": "Selecione o cartão"
+    },
+    "installments": {
+      "label": "Parcelas",
+      "placeholder": "Número de parcelas",
+      "optionLabel": "{count}x"
+    },
+    "installmentAmountMode": {
+      "label": "O valor digitado é",
+      "total": "Valor total da compra",
+      "perInstallment": "Valor de cada parcela",
+      "totalPreview": "Total: {value}"
+    },
+    "invoicePreview": {
+      "label": "Cai na fatura que fecha em {closingDate} e vence em {dueDate}"
+    },
+    "date": {
+      "label": "Data"
+    },
+    "status": {
+      "label": "Status"
+    },
+    "recurrence": {
+      "label": "Repetir",
+      "none": "Não repetir",
+      "daily": "Diariamente",
+      "weekly": "Semanalmente",
+      "monthly": "Mensalmente",
+      "countLabel": "Quantas vezes",
+      "countPlaceholder": "Número de repetições"
+    },
+    "choosePlaceholder": "Escolher"
+  },
+
+  "splits": {
+    "toggleLabel": "Dividir com outras pessoas",
+    "needsPersonFirst": "Escolha uma pessoa acima para dividir",
+    "payerLabel": "Pagou",
+    "owesLabel": "Deve",
+    "exceeds": "Excede em {value}",
+    "addPerson": "Adicionar pessoa",
+    "newPerson": "Cadastrar nova pessoa",
+    "newPersonPlaceholder": "Nome da pessoa",
+    "remove": "Remover pessoa",
+    "mismatch": "A soma da divisão precisa bater com o valor da transação",
+    "empty": "Nenhuma pessoa cadastrada ainda"
+  },
+
+  "moreOptions": {
+    "title": "Mais opções"
+  },
+
+  "recurrence": {
+    "conflict": "Repetição e parcelamento não podem ser usados juntos"
+  },
+
+  "footer": {
+    "saveAndCreateAnother": "Salvar e criar outro",
+    "missingField": "Falta preencher: {field}"
+  },
+
+  "mode": {
+    "single": "Uma de cada vez",
+    "batch": "Adicionar em lote"
+  },
+
+  "batch": {
+    "title": "Lançamento em lote",
+    "description": "Adicione várias transações de uma vez",
+    "add": "Adicionar",
+    "saveChange": "Salvar alteração",
+    "cancelEdit": "Cancelar edição",
+    "editingRow": "Editando item da fila",
+    "queueTitle": "Na fila ({count})",
+    "editRow": "Editar linha",
+    "removeRow": "Remover linha",
+    "empty": "Nenhuma linha adicionada ainda",
+    "submit": "Lançar tudo",
+    "totalIncome": "Receitas",
+    "totalExpense": "Despesas",
+    "netTotal": "Saldo líquido",
+    "total": "Total",
+    "personRequired": "Selecione uma pessoa para essa linha",
+    "paymentMethodRequired": "Selecione um método de pagamento para essa linha",
+    "missingField": "Preencha: {field}",
+    "creditCardNotAllowed": "Contas de cartão de crédito não são aceitas no lote — use o formulário único para lançamentos de cartão.",
+    "creditCardRequired": "Selecione um cartão de crédito válido para essa linha",
+    "noPeopleTitle": "Nenhuma pessoa cadastrada",
+    "noPeopleDescription": "Cadastre uma pessoa para começar a lançar em lote",
+    "columns": {
+      "date": "Data",
+      "category": "Categoria",
+      "person": "Pessoa",
+      "account": "Conta",
+      "paymentMethod": "Pagamento",
+      "installments": "Parcelas"
+    }
+  },
+
+  "table": {
+    "columns": {
+      "date": "Data",
+      "description": "Descrição",
+      "account": "Conta",
+      "category": "Categoria",
+      "person": "Pessoa",
+      "paymentMethod": "Pagamento",
+      "amount": "Valor",
+      "status": "Status"
+    },
+    "subtitleJoin": "{category} · {paymentMethod}",
+    "mobileSubtitle": "{category} · {paymentMethod} · {person}",
+    "self": "Eu",
+    "splitPill": "{count, plural, one {Dividido (# pessoa)} other {Dividido (# pessoas)}}",
+    "installment": "{number}/{count}",
+    "oneTimePayment": "À vista",
+    "creditCardAccount": "Cartão de crédito",
+    "empty": {
+      "title": "Nenhuma transação encontrada",
+      "titleWithPeriod": "Nenhum lançamento em {month}",
+      "description": "Ajuste os filtros ou adicione um novo lançamento",
+      "button": "Nova transação"
+    },
+    "selection": "{count, plural, =0 {Nenhuma selecionada} one {# selecionada} other {# selecionadas}}",
+    "bulk": {
+      "categorize": "Categorizar",
+      "changeStatus": "Mudar status",
+      "clear": "Cancelar seleção",
+      "selectRow": "Selecionar transação",
+      "selectAll": "Selecionar todas as transações"
+    }
+  },
+
+  "group": {
+    "today": "Hoje, {date}",
+    "yesterday": "Ontem, {date}",
+    "dateHeader": "{weekday}, {date}",
+    "summary": "Dia {dayValue} · Acum. {accValue}"
+  },
+
+  "menu": {
+    "edit": "Editar",
+    "duplicate": "Duplicar",
+    "archive": "Arquivar",
+    "delete": "Excluir"
+  },
+
+  "filters": {
+    "title": "Filtros",
+    "description": "Refine a lista de transações",
+    "search": "Busca",
+    "searchPlaceholder": "Buscar por descrição…",
+    "account": "Conta",
+    "allAccounts": "Todas as contas",
+    "category": "Categoria",
+    "allCategories": "Todas as categorias",
+    "person": "Pessoa",
+    "allPeople": "Todas as pessoas",
+    "period": "Período",
+    "periodFrom": "De",
+    "periodTo": "Até",
+    "clear": "Limpar filtros",
+    "clearAll": "Limpar tudo",
+    "apply": "Aplicar filtros",
+    "chips": {
+      "account": "Conta: {value}",
+      "category": "Categoria: {value}",
+      "person": "Pessoa: {value}",
+      "dateRange": "Data: {value}",
+      "type": "Tipo: {value}",
+      "remove": "Remover filtro {value}"
+    }
+  },
+
+  "dialog": {
+    "delete": {
+      "title": "Excluir transação?",
+      "description": "Essa ação não pode ser desfeita.",
+      "titleBulk": "{count, plural, one {Excluir # transação?} other {Excluir # transações?}}",
+      "descriptionBulk": "{count, plural, one {Essa ação vai excluir # transação selecionada e não pode ser desfeita.} other {Essa ação vai excluir # transações selecionadas e não pode ser desfeita.}}",
+      "confirm": "Excluir",
+      "cancel": "Cancelar"
+    },
+    "create": {
+      "title": "Nova transação",
+      "description": "Preencha os dados do lançamento",
+      "confirm": "Criar",
+      "cancel": "Cancelar"
+    },
+    "edit": {
+      "title": "Editar transação",
+      "description": "Atualize os dados do lançamento",
+      "confirm": "Salvar",
+      "cancel": "Cancelar"
+    },
+    "createCredit": {
+      "title": "Nova despesa no cartão",
+      "description": "Lance uma compra no cartão de crédito",
+      "confirm": "Criar",
+      "cancel": "Cancelar"
+    },
+    "editCredit": {
+      "title": "Editar despesa no cartão",
+      "description": "Atualize os dados da compra",
+      "confirm": "Salvar",
+      "cancel": "Cancelar"
+    }
+  },
+
+  "toast": {
+    "created": "Transação criada com sucesso",
+    "updated": "Transação atualizada",
+    "deleted": "Transação excluída",
+    "error": "Não foi possível concluir a ação",
+    "batchCreated": "{count, plural, one {# transação criada} other {# transações criadas}}",
+    "bulkCategorized": "{count, plural, one {# transação categorizada} other {# transações categorizadas}}",
+    "bulkStatusChanged": "{count, plural, one {# transação atualizada} other {# transações atualizadas}}",
+    "bulkDeleted": "{count, plural, one {# transação excluída} other {# transações excluídas}}"
+  },
+
+  "tabs": {
+    "all": "Todas",
+    "income": "Receitas",
+    "expenses": "Despesas"
+  },
+
+  "pagination": {
+    "showing": "Mostrando {from}–{to} de {total}",
+    "next": "Próxima",
+    "previous": "Anterior"
+  },
+
+  "tooltip": {
+    "balance": "Saldo calculado a partir das transações confirmadas",
+    "pending": "Transação ainda não confirmada pelo banco"
+  },
+
+  "aria": {
+    "close": "Fechar",
+    "menu": "Abrir menu de ações",
+    "sort": "Ordenar coluna",
+    "delete": "Excluir transação"
+  },
+
+  "errors": {
+    "load": {
+      "title": "Não foi possível carregar as transações",
+      "description": "Verifique sua conexão e tente novamente"
+    },
+    "permission": {
+      "title": "Sem permissão",
+      "description": "Você não tem acesso a essas transações"
+    },
+    "network": {
+      "title": "Falha de conexão",
+      "description": "Não foi possível se conectar ao servidor"
+    }
+  }
+}

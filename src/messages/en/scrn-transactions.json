@@ -1,0 +1,392 @@
+{
+  "title": "Transactions",
+  "subtitle": "Track your activity",
+  "description": "View, filter and edit entries for the selected account",
+
+  "header": {
+    "subtitle": "{account} · {count, plural, one {# entry} other {# entries}}",
+    "previousPeriod": "Previous month",
+    "nextPeriod": "Next month"
+  },
+
+  "breadcrumb": {
+    "home": "Home",
+    "current": "Transactions"
+  },
+
+  "buttons": {
+    "add": {
+      "title": "New transaction",
+      "description": "Add a manual entry",
+      "debit": "Debit transaction",
+      "credit": "Card expense"
+    },
+    "import": {
+      "title": "Import",
+      "description": "Import a statement file"
+    },
+    "export": {
+      "title": "Export",
+      "description": "Export filtered transactions"
+    }
+  },
+
+  "messages": {
+    "title": "",
+    "subtitle": "",
+    "description": ""
+  },
+
+  "cards": {
+    "balance": {
+      "title": "Period balance",
+      "description": "Difference between income and expenses"
+    },
+    "income": {
+      "title": "Income",
+      "description": "Total received in the period"
+    },
+    "expenses": {
+      "title": "Expenses",
+      "description": "Total spent in the period"
+    }
+  },
+
+  "summary": {
+    "balanceLabel": "Period balance",
+    "comparisonAbove": "{value} above {month}",
+    "comparisonBelow": "{value} below {month}",
+    "comparisonEqual": "Same as {month}",
+    "comparisonUnavailable": "No data for {month}",
+    "legendIncome": "Income {value}",
+    "legendExpenses": "Expenses {value}"
+  },
+
+  "search": {
+    "placeholder": "Search transactions",
+    "clear": "Clear search"
+  },
+
+  "chart": {
+    "monthlyBalance": {
+      "title": "Monthly balance",
+      "tooltipLabel": "Balance",
+      "empty": "Not enough history yet"
+    },
+    "byCategory": {
+      "title": "Spending by category",
+      "legend": "Category",
+      "axisX": "Month",
+      "axisY": "Amount",
+      "tooltip": "{category}: {value}",
+      "empty": "No expenses this period",
+      "other": "Other",
+      "uncategorized": "Uncategorized"
+    }
+  },
+
+  "fields": {
+    "description": {
+      "label": "Description",
+      "placeholder": "E.g: Groceries",
+      "placeholderCredit": "E.g: Groceries, Purchase refund"
+    },
+    "account": {
+      "label": "Account",
+      "placeholder": "Select an account",
+      "empty": "No accounts registered yet"
+    },
+    "type": {
+      "label": "Type",
+      "income": "Income",
+      "expense": "Expense",
+      "creditIncome": "Refund"
+    },
+    "amount": {
+      "label": "Amount",
+      "placeholder": "0.00",
+      "help": "Use a period for decimals, or an expression like 120+35",
+      "calculated": "= {value}"
+    },
+    "category": {
+      "label": "Category",
+      "placeholder": "Select a category",
+      "empty": "No categories registered yet"
+    },
+    "person": {
+      "label": "Person",
+      "placeholder": "Select the person",
+      "none": "Nobody"
+    },
+    "paymentMethod": {
+      "label": "Payment method",
+      "placeholder": "Select the method",
+      "CASH": "Cash",
+      "DEBIT_CARD": "Debit card",
+      "CREDIT_CARD": "Credit card",
+      "BANK_TRANSFER": "Bank transfer",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Other"
+    },
+    "card": {
+      "label": "Card",
+      "placeholder": "Select the card"
+    },
+    "installments": {
+      "label": "Installments",
+      "placeholder": "Number of installments",
+      "optionLabel": "{count}x"
+    },
+    "installmentAmountMode": {
+      "label": "The amount entered is",
+      "total": "The total purchase amount",
+      "perInstallment": "Each installment's amount",
+      "totalPreview": "Total: {value}"
+    },
+    "invoicePreview": {
+      "label": "Falls in the invoice that closes on {closingDate} and is due on {dueDate}"
+    },
+    "date": {
+      "label": "Date"
+    },
+    "status": {
+      "label": "Status"
+    },
+    "recurrence": {
+      "label": "Repeat",
+      "none": "Don't repeat",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "countLabel": "How many times",
+      "countPlaceholder": "Number of repetitions"
+    },
+    "choosePlaceholder": "Choose"
+  },
+
+  "splits": {
+    "toggleLabel": "Split with other people",
+    "needsPersonFirst": "Choose a person above to split",
+    "payerLabel": "Paid",
+    "owesLabel": "Owes",
+    "exceeds": "Exceeds by {value}",
+    "addPerson": "Add person",
+    "newPerson": "Register new person",
+    "newPersonPlaceholder": "Person's name",
+    "remove": "Remove person",
+    "mismatch": "The split total must match the transaction amount",
+    "empty": "No people registered yet"
+  },
+
+  "moreOptions": {
+    "title": "More options"
+  },
+
+  "recurrence": {
+    "conflict": "Recurrence and installments can't be used together"
+  },
+
+  "footer": {
+    "saveAndCreateAnother": "Save and create another",
+    "missingField": "Missing: {field}"
+  },
+
+  "mode": {
+    "single": "One at a time",
+    "batch": "Add in bulk"
+  },
+
+  "batch": {
+    "title": "Batch entry",
+    "description": "Add several transactions at once",
+    "add": "Add",
+    "saveChange": "Save change",
+    "cancelEdit": "Cancel edit",
+    "editingRow": "Editing queued item",
+    "queueTitle": "Queued ({count})",
+    "editRow": "Edit row",
+    "removeRow": "Remove row",
+    "empty": "No rows added yet",
+    "submit": "Create all",
+    "totalIncome": "Income",
+    "totalExpense": "Expenses",
+    "netTotal": "Net balance",
+    "total": "Total",
+    "personRequired": "Select a person for this row",
+    "paymentMethodRequired": "Select a payment method for this row",
+    "missingField": "Fill in: {field}",
+    "creditCardNotAllowed": "Credit card accounts aren't supported in batch entry — use the single-transaction form for card charges.",
+    "creditCardRequired": "Select a valid credit card for this row",
+    "noPeopleTitle": "No people registered yet",
+    "noPeopleDescription": "Add a person to start batch entry",
+    "columns": {
+      "date": "Date",
+      "category": "Category",
+      "person": "Person",
+      "account": "Account",
+      "paymentMethod": "Payment",
+      "installments": "Installments"
+    }
+  },
+
+  "table": {
+    "columns": {
+      "date": "Date",
+      "description": "Description",
+      "account": "Account",
+      "category": "Category",
+      "person": "Person",
+      "paymentMethod": "Payment",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "subtitleJoin": "{category} · {paymentMethod}",
+    "mobileSubtitle": "{category} · {paymentMethod} · {person}",
+    "self": "Me",
+    "splitPill": "{count, plural, one {Split (# person)} other {Split (# people)}}",
+    "installment": "{number}/{count}",
+    "oneTimePayment": "One-time",
+    "creditCardAccount": "Credit card",
+    "empty": {
+      "title": "No transactions found",
+      "titleWithPeriod": "No entries in {month}",
+      "description": "Adjust the filters or add a new entry",
+      "button": "New transaction"
+    },
+    "selection": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
+    "bulk": {
+      "categorize": "Categorize",
+      "changeStatus": "Change status",
+      "clear": "Clear selection",
+      "selectRow": "Select transaction",
+      "selectAll": "Select all transactions"
+    }
+  },
+
+  "group": {
+    "today": "Today, {date}",
+    "yesterday": "Yesterday, {date}",
+    "dateHeader": "{weekday}, {date}",
+    "summary": "Day {dayValue} · Accum. {accValue}"
+  },
+
+  "menu": {
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "archive": "Archive",
+    "delete": "Delete"
+  },
+
+  "filters": {
+    "title": "Filters",
+    "description": "Refine the transactions list",
+    "search": "Search",
+    "searchPlaceholder": "Search by description…",
+    "account": "Account",
+    "allAccounts": "All accounts",
+    "category": "Category",
+    "allCategories": "All categories",
+    "person": "Person",
+    "allPeople": "All people",
+    "period": "Period",
+    "periodFrom": "From",
+    "periodTo": "To",
+    "clear": "Clear filters",
+    "clearAll": "Clear all",
+    "apply": "Apply filters",
+    "chips": {
+      "account": "Account: {value}",
+      "category": "Category: {value}",
+      "person": "Person: {value}",
+      "dateRange": "Date: {value}",
+      "type": "Type: {value}",
+      "remove": "Remove filter {value}"
+    }
+  },
+
+  "dialog": {
+    "delete": {
+      "title": "Delete transaction?",
+      "description": "This action cannot be undone.",
+      "titleBulk": "{count, plural, one {Delete # transaction?} other {Delete # transactions?}}",
+      "descriptionBulk": "{count, plural, one {This will delete # selected transaction and cannot be undone.} other {This will delete # selected transactions and cannot be undone.}}",
+      "confirm": "Delete",
+      "cancel": "Cancel"
+    },
+    "create": {
+      "title": "New transaction",
+      "description": "Fill in the entry details",
+      "confirm": "Create",
+      "cancel": "Cancel"
+    },
+    "edit": {
+      "title": "Edit transaction",
+      "description": "Update the entry details",
+      "confirm": "Save",
+      "cancel": "Cancel"
+    },
+    "createCredit": {
+      "title": "New card expense",
+      "description": "Enter a credit card purchase",
+      "confirm": "Create",
+      "cancel": "Cancel"
+    },
+    "editCredit": {
+      "title": "Edit card expense",
+      "description": "Update the purchase's details",
+      "confirm": "Save",
+      "cancel": "Cancel"
+    }
+  },
+
+  "toast": {
+    "created": "Transaction created successfully",
+    "updated": "Transaction updated",
+    "deleted": "Transaction deleted",
+    "error": "Couldn't complete the action",
+    "batchCreated": "{count, plural, one {# transaction created} other {# transactions created}}",
+    "bulkCategorized": "{count, plural, one {# transaction categorized} other {# transactions categorized}}",
+    "bulkStatusChanged": "{count, plural, one {# transaction updated} other {# transactions updated}}",
+    "bulkDeleted": "{count, plural, one {# transaction deleted} other {# transactions deleted}}"
+  },
+
+  "tabs": {
+    "all": "All",
+    "income": "Income",
+    "expenses": "Expenses"
+  },
+
+  "pagination": {
+    "showing": "Showing {from}–{to} of {total}",
+    "next": "Next",
+    "previous": "Previous"
+  },
+
+  "tooltip": {
+    "balance": "Balance calculated from confirmed transactions",
+    "pending": "Transaction not yet confirmed by the bank"
+  },
+
+  "aria": {
+    "close": "Close",
+    "menu": "Open actions menu",
+    "sort": "Sort column",
+    "delete": "Delete transaction"
+  },
+
+  "errors": {
+    "load": {
+      "title": "Couldn't load transactions",
+      "description": "Check your connection and try again"
+    },
+    "permission": {
+      "title": "No permission",
+      "description": "You don't have access to these transactions"
+    },
+    "network": {
+      "title": "Connection failed",
+      "description": "Couldn't connect to the server"
+    }
+  }
+}

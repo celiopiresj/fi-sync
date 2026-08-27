@@ -125,11 +125,15 @@ export function TransactionMobileList({
             <div className="divide-y divide-border">
               {rows.map((row) => {
                 const CategoryIcon = resolveCategoryIcon(row.category?.icon);
-                const personLabel =
-                  row.splits.length > 0
-                    ? row.splits
-                        .map((split) => formatPersonName(split.person.name))
-                        .join(", ")
+                // More than one person splits this one differently below
+                // (each on their own line with their own amount) — the
+                // subtitle's own person slot only carries a single name
+                // ("Eu" or the lone person) in that case, same as before.
+                const hasMultipleSplits = row.splits.length > 1;
+                const personLabel = hasMultipleSplits
+                  ? null
+                  : row.splits.length === 1
+                    ? formatPersonName(row.splits[0]!.person.name)
                     : messages.selfLabel;
                 // A credit-card row never has paymentMethod (implicitly
                 // "credit card") — its detail slot shows the physical
@@ -144,7 +148,7 @@ export function TransactionMobileList({
                 const subtitleParts = [
                   row.category?.name ?? null,
                   detail,
-                  personLabel || null,
+                  personLabel,
                 ].filter((part): part is string => Boolean(part));
                 const subtitle =
                   subtitleParts.length === 3
@@ -201,6 +205,28 @@ export function TransactionMobileList({
                           </Badge>
                         )}
                       </div>
+                      {hasMultipleSplits && (
+                        <div className="mt-1 flex flex-col gap-0.5 border-t border-border/60 pt-1">
+                          {row.splits.map((split) => (
+                            <div
+                              key={split.id}
+                              className="flex items-center justify-between gap-2 text-xs"
+                            >
+                              <span className="min-w-0 truncate text-muted-foreground">
+                                {formatPersonName(split.person.name)}
+                              </span>
+                              <span
+                                className={cn(
+                                  "shrink-0 tabular-nums",
+                                  split.amount < 0 ? "text-negative" : "text-positive",
+                                )}
+                              >
+                                {formatAmount(split.amount)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

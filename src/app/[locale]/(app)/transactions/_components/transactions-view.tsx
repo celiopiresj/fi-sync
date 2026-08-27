@@ -1,6 +1,7 @@
 "use client";
 
 import { DataTable } from "@/components/data-table/data-table";
+import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,26 +17,27 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Input } from "@/components/ui/input";
+import { PageHeader, PeriodStepper } from "@/components/screen/page-header";
+import { SearchInput } from "@/components/screen/search-input";
 import { APP_TIME_ZONE, dateOnlyKey, parseCalendarDate } from "@/lib/date";
 import {
   CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  MagnifyingGlassIcon,
   ReceiptIcon,
   XIcon,
 } from "@phosphor-icons/react";
-import type { Row } from "@tanstack/react-table";
+import type { Column, Row } from "@tanstack/react-table";
 import { useFormatter, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTransactionFormOptions } from "../_hooks/use-transaction-form-options";
 import { useTransactionsData } from "../_hooks/use-transactions-data";
 import { formatGroupDateHeader } from "../_lib/format-group-date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
+import { formatPersonName } from "@/lib/format-person-name";
 import {
   currentPeriod,
+  parsePeriodKey,
   periodRange,
   periodsEqual,
   shiftPeriod,
@@ -99,6 +101,8 @@ type TransactionsViewProps = {
 const CHIP_FIELD = {
   account: "accountId",
   category: "categoryId",
+  person: "personId",
+  dateRange: "dateFrom",
   type: "type",
 } as const;
 
@@ -112,7 +116,12 @@ const CHIP_FIELD = {
 // on what "no filter" means.
 function hasActiveSheetFilters(value: SheetFilters): boolean {
   return Boolean(
-    value.accountId || value.categoryId || (value.type && value.type !== "all"),
+    value.accountId ||
+      value.categoryId ||
+      value.personId ||
+      value.dateFrom ||
+      value.dateTo ||
+      (value.type && value.type !== "all"),
   );
 }
 
@@ -134,9 +143,28 @@ export function TransactionsView({
   // below, so FiltersSheet's own "Limpar filtros" can't accidentally
   // wipe out the period or search the user has set elsewhere on the
   // screen — see the SheetFilters comment in _types/types.ts.
-  const [initialPeriod] = useState(() => currentPeriod());
+  // `?month=yyyy-MM` (set by the projections screen's "Ver extrato"
+  // link) opens the screen already scoped to that month instead of the
+  // current one — page.tsx's own initial fetch mirrors this same
+  // resolution so the two can't disagree on what "the default" is.
+  // `?person=`/`?category=`/`?type=` (set the same way `?month=` is — the
+  // projections screen's "Ver extrato" link, tasks/016) seed the sheet's
+  // own filters too, so a link can open the screen already scoped to a
+  // specific person/category/income-or-expense instead of just the month.
+  const searchParams = useSearchParams();
+  const [initialPeriod] = useState(
+    () => parsePeriodKey(searchParams.get("month")) ?? currentPeriod(),
+  );
   const [period, setPeriod] = useState<Period>(initialPeriod);
-  const [sheetFilters, setSheetFilters] = useState<SheetFilters>({});
+  const [initialSheetFilters] = useState<SheetFilters>(() => {
+    const personId = searchParams.get("person") ?? undefined;
+    const categoryId = searchParams.get("category") ?? undefined;
+    const typeParam = searchParams.get("type");
+    const type =
+      typeParam === "income" || typeParam === "expenses" ? typeParam : undefined;
+    return { personId, categoryId, type };
+  });
+  const [sheetFilters, setSheetFilters] = useState<SheetFilters>(initialSheetFilters);
   const [searchText, setSearchText] = useState("");
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
@@ -157,12 +185,21 @@ export function TransactionsView({
   const [isBulkActionPending, setIsBulkActionPending] = useState(false);
 
   const { from, to } = useMemo(() => periodRange(period), [period]);
+  // `sheetFilters.dateFrom`/`dateTo` (the filter sheet's own custom
+  // range) override the period stepper's own from/to on whichever side
+  // is actually set — picking just "De" keeps the stepper's own end of
+  // month, and vice versa. Reconstructed explicitly (not `...sheetFilters`)
+  // so `dateFrom`/`dateTo` — not real TransactionFilters keys — never
+  // leak into the object passed to listTransactions.
   const filters: TransactionFilters = useMemo(
     () => ({
-      ...sheetFilters,
+      accountId: sheetFilters.accountId,
+      categoryId: sheetFilters.categoryId,
+      personId: sheetFilters.personId,
+      type: sheetFilters.type,
       search: searchText.trim() || undefined,
-      from,
-      to,
+      from: sheetFilters.dateFrom || from,
+      to: sheetFilters.dateTo || to,
     }),
     [sheetFilters, searchText, from, to],
   );
@@ -193,9 +230,15 @@ export function TransactionsView({
     () => periodRange(previousPeriod),
     [previousPeriod],
   );
+  // Always period-based (ignores sheetFilters.dateFrom/dateTo, unlike
+  // `filters` above) — "the same period, one month back" doesn't have an
+  // obvious equivalent once a custom range is in play.
   const previousFilters: TransactionFilters = useMemo(
     () => ({
-      ...sheetFilters,
+      accountId: sheetFilters.accountId,
+      categoryId: sheetFilters.categoryId,
+      personId: sheetFilters.personId,
+      type: sheetFilters.type,
       search: searchText.trim() || undefined,
       from: previousRange.from,
       to: previousRange.to,
@@ -203,12 +246,15 @@ export function TransactionsView({
     [sheetFilters, searchText, previousRange],
   );
 
-  // page.tsx now fetches exactly this default (current period, no other
-  // filters) for `initialTransactions` — this mirrors that condition so
-  // the cache seed is only trusted while nothing's actually changed from
-  // what the server used to produce it (see the comment in page.tsx).
+  // page.tsx now fetches exactly this default (current period + whatever
+  // sheet filters the URL itself specified) for `initialTransactions` —
+  // this mirrors that condition so the cache seed is only trusted while
+  // nothing's actually changed from what the server used to produce it
+  // (see the comment in page.tsx). Compares against `initialSheetFilters`
+  // (the URL-seeded snapshot), not "no filters at all" — a `?person=`
+  // link's starting state IS the default for this session.
   const isDefaultFilters =
-    !hasActiveSheetFilters(sheetFilters) &&
+    JSON.stringify(sheetFilters) === JSON.stringify(initialSheetFilters) &&
     searchText === "" &&
     periodsEqual(period, initialPeriod);
 
@@ -321,6 +367,21 @@ export function TransactionsView({
     );
   }
 
+  function renderSubRows(row: TransactionRow, columns: Column<TransactionRow, unknown>[]) {
+    return renderSplitSubRows(
+      row.splits.map((split) => ({
+        key: split.id,
+        personName: formatPersonName(split.person.name),
+        amount: split.amount,
+      })),
+      columns,
+      (amount) =>
+        formatSignedAmount(amount, (value) =>
+          format.number(value, { style: "currency", currency: "BRL" }),
+        ),
+    );
+  }
+
   const columns = useMemo(
     () =>
       getTransactionColumns(
@@ -332,6 +393,7 @@ export function TransactionsView({
             amount: t("table.columns.amount"),
           },
           selfLabel: t("table.self"),
+          splitPillLabel: (count) => t("table.splitPill", { count }),
           subtitleJoin: (category, paymentMethod) =>
             t("table.subtitleJoin", { category, paymentMethod }),
           statusLabel: (status) => tCommon(`status.${status.toLowerCase()}`),
@@ -563,6 +625,26 @@ export function TransactionsView({
           ?.name ?? "";
       return t("filters.chips.category", { value: name });
     }
+    if (kind === "person" && sheetFilters.personId) {
+      const name =
+        people.find((person) => person.id === sheetFilters.personId)?.name ?? "";
+      return t("filters.chips.person", { value: name });
+    }
+    if (kind === "dateRange" && (sheetFilters.dateFrom || sheetFilters.dateTo)) {
+      // Both are parseCalendarDate'd user input (from the sheet's own
+      // `<input type="date">`), not values read back from a @db.Date
+      // column — the plain dateStyle formatter (APP_TIME_ZONE, applied
+      // globally by next-intl's own config) is correct here, not
+      // DATE_ONLY_FORMAT_OPTIONS' UTC override (src/lib/date.ts).
+      const fromDate = sheetFilters.dateFrom
+        ? format.dateTime(parseCalendarDate(sheetFilters.dateFrom), { dateStyle: "short" })
+        : null;
+      const toDate = sheetFilters.dateTo
+        ? format.dateTime(parseCalendarDate(sheetFilters.dateTo), { dateStyle: "short" })
+        : null;
+      const value = [fromDate, toDate].filter(Boolean).join(" – ");
+      return t("filters.chips.dateRange", { value });
+    }
     if (kind === "type" && sheetFilters.type && sheetFilters.type !== "all") {
       return t("filters.chips.type", { value: t(`tabs.${sheetFilters.type}`) });
     }
@@ -579,6 +661,11 @@ export function TransactionsView({
       const next = { ...current };
       if (kind === "account") delete next.accountId;
       if (kind === "category") delete next.categoryId;
+      if (kind === "person") delete next.personId;
+      if (kind === "dateRange") {
+        delete next.dateFrom;
+        delete next.dateTo;
+      }
       if (kind === "type") delete next.type;
       return next;
     });
@@ -638,31 +725,19 @@ export function TransactionsView({
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-semibold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{headerSubtitle}</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setPeriod((current) => shiftPeriod(current, -1))}
-            aria-label={t("header.previousPeriod")}>
-            <CaretLeftIcon />
-          </Button>
-          <span className="min-w-28 text-center text-sm font-medium">
-            {periodStepperLabel}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={() => setPeriod((current) => shiftPeriod(current, 1))}
-            aria-label={t("header.nextPeriod")}>
-            <CaretRightIcon />
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title={t("title")}
+        subtitle={headerSubtitle}
+        right={
+          <PeriodStepper
+            label={periodStepperLabel}
+            onPrevious={() => setPeriod((current) => shiftPeriod(current, -1))}
+            onNext={() => setPeriod((current) => shiftPeriod(current, 1))}
+            previousLabel={t("header.previousPeriod")}
+            nextLabel={t("header.nextPeriod")}
+          />
+        }
+      />
 
       <SummaryCards
         transactions={transactions}
@@ -683,29 +758,18 @@ export function TransactionsView({
               lands between the groups (list controls vs. primary action)
               instead of inside the search box. */}
           <div className="flex items-center gap-3">
-            <div className="relative w-full max-w-md">
-              <MagnifyingGlassIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder={t("search.placeholder")}
-                className="h-8 pl-8 pr-8"
-              />
-              {searchText && (
-                <button
-                  type="button"
-                  onClick={() => setSearchText("")}
-                  aria-label={t("search.clear")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  <XIcon className="size-4" />
-                </button>
-              )}
-            </div>
+            <SearchInput
+              value={searchText}
+              onChange={setSearchText}
+              placeholder={t("search.placeholder")}
+              clearLabel={t("search.clear")}
+            />
             <FiltersSheet
               filters={sheetFilters}
               onChange={setSheetFilters}
               accounts={accounts}
               categories={categories}
+              people={people}
             />
           </div>
           <div className="flex-1" />
@@ -779,6 +843,7 @@ export function TransactionsView({
             data={transactions}
             groupBy="date"
             renderGroupHeader={renderGroupHeader}
+            renderSubRows={renderSubRows}
             emptyState={emptyStateNode}
             getRowId={(row) => row.id}
             selection={tableSelection}

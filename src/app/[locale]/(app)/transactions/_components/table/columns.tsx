@@ -12,7 +12,15 @@ import {
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { dateOnlyKey } from "@/lib/date";
-import { CreditCardIcon, DotsThreeIcon, PencilSimpleIcon } from "@phosphor-icons/react";
+import {
+  CaretDownIcon,
+  CaretUpIcon,
+  CreditCardIcon,
+  DotsThreeIcon,
+  PencilSimpleIcon,
+  ShuffleIcon,
+  UserIcon,
+} from "@phosphor-icons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { TransactionRow } from "../../_types/types";
 import { formatPersonName } from "@/lib/format-person-name";
@@ -33,6 +41,11 @@ type ColumnMessages = {
   // single-transaction form (see the personId/splits comments in
   // _schema/schema.ts) — before that, splits was never actually empty.
   selfLabel: string;
+  // "Dividido (N pessoas)" (table.splitPill) — the collapsed pill shown
+  // in the Person column for a multi-split row; clicking it toggles the
+  // per-person breakdown rows below (see renderSubRows in
+  // transactions-view.tsx).
+  splitPillLabel: (count: number) => string;
   // "{category} · {paymentMethod}" (table.subtitleJoin) — only called when
   // both pieces are present; a lone piece is rendered as-is, no join. For
   // a credit-card row (no paymentMethod — see the detail fallback below)
@@ -194,16 +207,55 @@ export function getTransactionColumns(
     },
     {
       id: "person",
+      // Sorting/filtering (if this column ever needs it) still works off
+      // the joined name string — only the *cell* below switches to a
+      // per-person breakdown when there's more than one split.
       accessorFn: (row) =>
         row.splits.length > 0
           ? row.splits.map((split) => formatPersonName(split.person.name)).join(", ")
           : messages.selfLabel,
-      header: () => <div className="w-21">{messages.columns.person}</div>,
-      cell: ({ getValue }) => (
-        <div className="w-21 shrink-0 truncate text-sm">
-          {getValue() as string}
-        </div>
-      ),
+      header: () => <div className="w-40">{messages.columns.person}</div>,
+      cell: ({ row, getValue }) => {
+        const splits = row.original.splits;
+        if (splits.length <= 1) {
+          return (
+            <div className="w-40 shrink-0">
+              <Badge variant="secondary" className="max-w-full gap-1 font-normal">
+                <UserIcon className="size-3 shrink-0" />
+                <span className="min-w-0 truncate">{getValue() as string}</span>
+              </Badge>
+            </div>
+          );
+        }
+        // More than one person — the main "Valor" column already shows
+        // the transaction's total, so this collapses to a "Dividido (N
+        // pessoas)" pill that expands (via row.toggleExpanded(), rendered
+        // by DataTable's renderSubRows) into one indented row per person
+        // below, each showing their own split amount.
+        return (
+          <div className="w-40 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                row.toggleExpanded();
+              }}
+              aria-expanded={row.getIsExpanded()}
+              className="inline-flex max-w-full items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning transition-colors hover:bg-warning/25"
+            >
+              <ShuffleIcon className="size-3 shrink-0" />
+              <span className="min-w-0 truncate">
+                {messages.splitPillLabel(splits.length)}
+              </span>
+              {row.getIsExpanded() ? (
+                <CaretUpIcon className="size-3 shrink-0" />
+              ) : (
+                <CaretDownIcon className="size-3 shrink-0" />
+              )}
+            </button>
+          </div>
+        );
+      },
     },
     {
       id: "actions",

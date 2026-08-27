@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Funnel } from "@phosphor-icons/react";
@@ -23,28 +24,36 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { AccountOption, CategoryOption, SheetFilters } from "../../_types/types";
+import type {
+  AccountOption,
+  CategoryOption,
+  PersonOption,
+  SheetFilters,
+} from "../../_types/types";
 
 type FiltersSheetProps = {
   filters: SheetFilters;
   onChange: (filters: SheetFilters) => void;
   accounts: AccountOption[];
   categories: CategoryOption[];
+  people: PersonOption[];
 };
 
 const ALL_VALUE = "__all__";
 
 // A filter counts as "active" once it differs from its unset value —
-// `undefined` for the two selects, "all" for the type toggle. Shared
-// between the trigger badge (counts the applied `filters`) and the Clear
-// button (counts the in-progress `draft`). Search and the period range
-// aren't this sheet's concern anymore — see the SheetFilters comment in
+// `undefined` for the selects, "all" for the type toggle. Shared between
+// the trigger badge (counts the applied `filters`) and the Clear button
+// (counts the in-progress `draft`). Search and the period range aren't
+// this sheet's concern anymore — see the SheetFilters comment in
 // _types/types.ts — so unlike the old version this only ever looks at
-// exactly these three keys.
+// exactly these keys.
 function countActiveFilters(value: SheetFilters) {
   let count = 0;
   if (value.accountId) count++;
   if (value.categoryId) count++;
+  if (value.personId) count++;
+  if (value.dateFrom || value.dateTo) count++;
   if (value.type && value.type !== "all") count++;
   return count;
 }
@@ -54,6 +63,7 @@ export function FiltersSheet({
   onChange,
   accounts,
   categories,
+  people,
 }: FiltersSheetProps) {
   const t = useTranslations("scrn-transactions");
   const [open, setOpen] = useState(false);
@@ -147,6 +157,63 @@ export function FiltersSheet({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="filter-person">{t("filters.person")}</Label>
+              <Select
+                value={draft.personId ?? ALL_VALUE}
+                onValueChange={(value) =>
+                  setDraft({
+                    ...draft,
+                    personId: value === ALL_VALUE ? undefined : value,
+                  })
+                }
+              >
+                <SelectTrigger id="filter-person" className="w-full">
+                  <SelectValue placeholder={t("filters.person")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_VALUE}>{t("filters.allPeople")}</SelectItem>
+                  {people.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col gap-3">
+              <Label>{t("filters.period")}</Label>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="filter-date-from" className="text-xs font-normal text-muted-foreground">
+                  {t("filters.periodFrom")}
+                </Label>
+                <Input
+                  id="filter-date-from"
+                  type="date"
+                  value={draft.dateFrom ?? ""}
+                  onChange={(e) =>
+                    setDraft({ ...draft, dateFrom: e.target.value || undefined })
+                  }
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="filter-date-to" className="text-xs font-normal text-muted-foreground">
+                  {t("filters.periodTo")}
+                </Label>
+                <Input
+                  id="filter-date-to"
+                  type="date"
+                  value={draft.dateTo ?? ""}
+                  onChange={(e) =>
+                    setDraft({ ...draft, dateTo: e.target.value || undefined })
+                  }
+                />
+              </div>
             </div>
 
             <Separator />

@@ -22,12 +22,20 @@ export type PersonOption = TransactionFormOptions["people"][number];
 // CreditTransactionForm's card picker.
 export type CardOption = AccountOption["cards"][number];
 
-// The subset of TransactionFilters that FiltersSheet itself edits.
-// `search` and the period range (`from`/`to`) live outside the sheet now
-// — the action bar's own search input and the header's period stepper
-// (transactions-view.tsx) own those respectively, each merging its piece
-// into the full TransactionFilters passed to listTransactions. Keeping
-// this as a named Pick (rather than each file redeclaring its own
-// ad-hoc shape) is what keeps the sheet's props and the parent's state
-// from drifting apart.
-export type SheetFilters = Pick<TransactionFilters, "accountId" | "categoryId" | "type">;
+// The subset of TransactionFilters that FiltersSheet itself edits, plus
+// `dateFrom`/`dateTo` — an optional custom range that, when set,
+// overrides the header period stepper's own from/to on whichever side
+// is set (transactions-view.tsx's own `filters` useMemo does the
+// override). `search` lives outside the sheet — the action bar's own
+// search input owns that, merging its piece into the full
+// TransactionFilters passed to listTransactions. Keeping this as a
+// named type (rather than each file redeclaring its own ad-hoc shape)
+// is what keeps the sheet's props and the parent's state from drifting
+// apart.
+export type SheetFilters = Pick<
+  TransactionFilters,
+  "accountId" | "categoryId" | "personId" | "type"
+> & {
+  dateFrom?: string;
+  dateTo?: string;
+};
