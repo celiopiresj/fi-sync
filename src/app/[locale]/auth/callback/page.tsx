@@ -13,6 +13,12 @@ export default async function AuthCallbackPage() {
   const locale = await getLocale();
   const { data: session } = await auth.getSession();
 
+  // TEMP DEBUG — remove once Google sign-in is confirmed fixed on Vercel.
+  console.log("[DEBUG callback page] session", {
+    hasSession: !!session,
+    userId: session?.user?.id,
+  });
+
   let isNewUser = false;
   if (session?.user?.id) {
     ({ isNewUser } = await ensureUserSynced(session.user.id));
