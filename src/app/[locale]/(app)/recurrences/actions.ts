@@ -35,33 +35,16 @@ async function requireUserId() {
   return session.user.id;
 }
 
-// Best guess for who a new recurrence should default to — identical
-// heuristic (and duplicated for the same _schema/actions-per-route
+// A new recurrence always defaults to the self ("Eu") Person — same
+// simplification (and duplicated for the same _schema/actions-per-route
 // reasoning) as transactions/actions.ts's own computeDefaultPersonId,
-// reading real Transaction history rather than RecurrenceSplit: a user
-// has far more transactions than recurrences, so transaction history is
-// the stronger "who do I usually attribute money to" signal either way.
-async function computeDefaultPersonId(
-  userId: string,
-  people: { id: string }[],
-) {
-  if (people.length === 0) return null;
-
-  const lastSplit = await prisma.transactionSplit.findFirst({
-    where: { transaction: { userId } },
-    orderBy: { transaction: { date: "desc" } },
-    select: { personId: true },
+// since every user has exactly one, created at sign-up and permanent.
+async function computeDefaultPersonId(userId: string) {
+  const self = await prisma.person.findFirst({
+    where: { userId, isSelf: true },
+    select: { id: true },
   });
-  if (lastSplit) return lastSplit.personId;
-
-  const mostFrequent = await prisma.person.findFirst({
-    where: { userId },
-    orderBy: { splits: { _count: "desc" } },
-    select: { id: true, _count: { select: { splits: true } } },
-  });
-  if (mostFrequent && mostFrequent._count.splits > 0) return mostFrequent.id;
-
-  return people[0].id;
+  return self?.id ?? null;
 }
 
 // Generates at most this many months of occurrences at a time — enough
@@ -215,7 +198,7 @@ export async function getRecurrenceFormOptions() {
     }),
   ]);
 
-  const defaultPersonId = await computeDefaultPersonId(userId, people);
+  const defaultPersonId = await computeDefaultPersonId(userId);
 
   return { accounts, categories, people, defaultPersonId };
 }

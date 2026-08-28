@@ -176,8 +176,7 @@
     "newPerson": "Register new person",
     "newPersonPlaceholder": "Person's name",
     "remove": "Remove person",
-    "mismatch": "The split total must match the transaction amount",
-    "empty": "No people registered yet"
+    "mismatch": "The split total must match the transaction amount"
   },
 
   "moreOptions": {
@@ -219,8 +218,6 @@
     "missingField": "Fill in: {field}",
     "creditCardNotAllowed": "Credit card accounts aren't supported in batch entry — use the single-transaction form for card charges.",
     "creditCardRequired": "Select a valid credit card for this row",
-    "noPeopleTitle": "No people registered yet",
-    "noPeopleDescription": "Add a person to start batch entry",
     "columns": {
       "date": "Date",
       "category": "Category",

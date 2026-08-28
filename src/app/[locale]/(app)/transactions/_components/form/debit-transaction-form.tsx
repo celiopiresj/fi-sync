@@ -503,33 +503,36 @@ export function DebitTransactionForm({
           )}
         </form.AppField>
 
-        <form.AppField name="personId">
-          {(field) => (
-            <field.PickerRowField
-              label={t("fields.person.label")}
-              placeholder={t("fields.choosePlaceholder")}
-              options={people.map((person) => ({
-                value: person.id,
-                label: person.name,
-              }))}
-              formatDisplay={formatPersonName}
-              footer={
-                <div className="flex flex-col gap-1.5 border-t border-border p-1.5 pt-2">
-                  {people.length === 0 ? (
-                    <p className="px-1 text-xs text-muted-foreground">
-                      {t("splits.empty")}
-                    </p>
-                  ) : null}
-                  <CreatePersonInline
-                    label={t("splits.newPerson")}
-                    triggerClassName="px-1.5"
-                    onCreated={(person) => field.handleChange(person.id)}
-                  />
-                </div>
-              }
-            />
-          )}
-        </form.AppField>
+        {/* Only worth asking "who's this for" once there's more than
+            just you — with a single self Person, every transaction is
+            implicitly yours (the form's own personId default is already
+            the self Person's id, see getTransactionFormOptions), so
+            showing a picker with nothing real to pick from would just be
+            noise. Reappears the moment a second Person exists. */}
+        {people.length > 1 && (
+          <form.AppField name="personId">
+            {(field) => (
+              <field.PickerRowField
+                label={t("fields.person.label")}
+                placeholder={t("fields.choosePlaceholder")}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.name,
+                }))}
+                formatDisplay={formatPersonName}
+                footer={
+                  <div className="flex flex-col gap-1.5 border-t border-border p-1.5 pt-2">
+                    <CreatePersonInline
+                      label={t("splits.newPerson")}
+                      triggerClassName="px-1.5"
+                      onCreated={(person) => field.handleChange(person.id)}
+                    />
+                  </div>
+                }
+              />
+            )}
+          </form.AppField>
+        )}
       </ItemGroup>
 
       <Accordion type="single" collapsible>
@@ -582,6 +585,10 @@ export function DebitTransactionForm({
         </AccordionItem>
       </Accordion>
 
+      {/* Splitting inherently needs someone else to split WITH — hidden
+          for the same "only you exist" reason the personId field above
+          is. */}
+      {people.length > 1 && (
       <div className="flex flex-col gap-3 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -693,6 +700,7 @@ export function DebitTransactionForm({
           </div>
         )}
       </div>
+      )}
 
       <FormError title={t("toast.error")} description={serverError} />
 

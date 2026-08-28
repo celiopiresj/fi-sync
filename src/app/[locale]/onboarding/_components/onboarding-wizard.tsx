@@ -10,7 +10,7 @@ import { createAccount } from "@/app/[locale]/(app)/accounts/actions";
 import { createCreditCardAccount } from "@/app/[locale]/(app)/cards/actions";
 import { createCategory } from "@/app/[locale]/(app)/categories/actions";
 import { createPerson } from "@/app/[locale]/(app)/people/actions";
-import { createBudget } from "@/app/[locale]/(app)/budgets/actions";
+import { createBudget, createBudgetGroup } from "@/app/[locale]/(app)/budgets/actions";
 import type { CategoryRow } from "@/app/[locale]/(app)/categories/_types/types";
 import { ONBOARDING_STEPS } from "../_constants/steps";
 import { OnboardingSidebar } from "./onboarding-sidebar";
@@ -38,7 +38,7 @@ const EMPTY_DRAFT: Draft = {
   cards: [],
   categories: [],
   people: [],
-  budget: { expectedIncome: "", items: [] },
+  budget: { expectedIncome: "", items: [], groups: [] },
 };
 
 type OnboardingWizardProps = {
@@ -90,15 +90,17 @@ export function OnboardingWizard({ seededCategories, monthKey }: OnboardingWizar
           idRemap.set(category.id, newId);
           return { ...category, id: newId };
         });
-        const budget = idRemap.size === 0
-          ? parsed.budget
-          : {
-              ...parsed.budget,
-              items: parsed.budget.items.map((item) => ({
-                ...item,
-                categoryId: idRemap.get(item.categoryId) ?? item.categoryId,
-              })),
-            };
+        // Also backfills a draft saved before OnboardingBudget grew its
+        // own `groups` field / OnboardingBudgetItem grew `groupId`.
+        const budget = {
+          ...parsed.budget,
+          groups: parsed.budget.groups ?? [],
+          items: parsed.budget.items.map((item) => ({
+            ...item,
+            groupId: item.groupId ?? "",
+            categoryId: idRemap.get(item.categoryId) ?? item.categoryId,
+          })),
+        };
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft({ ...parsed, categories, budget });
       }
@@ -160,6 +162,17 @@ export function OnboardingWizard({ seededCategories, monthKey }: OnboardingWizar
         });
         if (result.error) throw new Error(result.error);
       }
+      // Same temp-id-to-real-id remap as categories above, for any group
+      // the user created in the budget step's own mini "Grupos" manager
+      // — a BudgetGroup only really exists once createBudgetGroup runs
+      // here at final submit.
+      const groupIdMap = new Map<string, string>();
+      for (const group of budget.groups) {
+        const result = await createBudgetGroup({ name: group.name });
+        if (result.error) throw new Error(result.error);
+        if (result.id) groupIdMap.set(group.id, result.id);
+      }
+
       // A budget item can still reference a draft category the user
       // removed from the categories step after giving it a limit here
       // (BudgetStep itself just stops rendering that row, but the stale
@@ -181,6 +194,11 @@ export function OnboardingWizard({ seededCategories, monthKey }: OnboardingWizar
         .map((item) => ({
           ...item,
           categoryId: categoryIdMap.get(item.categoryId) ?? item.categoryId,
+          // Same "silently drop rather than fail" treatment as an
+          // orphaned categoryId — a group removed from the draft after
+          // an item pointed at it just ungroups that item instead of
+          // blocking the whole submit.
+          groupId: item.groupId ? groupIdMap.get(item.groupId) : undefined,
         }))
         .filter((item) => validCategoryIds.has(item.categoryId));
 

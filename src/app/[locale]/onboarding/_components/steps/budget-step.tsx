@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import { computeBudgetAllocation } from "@/app/[locale]/(app)/budgets/_lib/budget-allocation";
 import type { CategoryRow } from "@/app/[locale]/(app)/categories/_types/types";
 import type { OnboardingCategory } from "./categories-step";
 import { AmountInput } from "@/components/form/amount-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
@@ -23,10 +26,23 @@ import {
 } from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
 
-export type OnboardingBudgetItem = { categoryId: string; limit: string };
+// A client-generated (crypto.randomUUID()) group, same "temp id, remapped
+// at final submit" pattern OnboardingCategory's own id uses — a budget
+// group created during onboarding doesn't exist in the database (as a
+// real BudgetGroup row) until onboarding-wizard.tsx's final submit calls
+// createBudgetGroup for each one.
+export type OnboardingBudgetGroup = { id: string; name: string };
+// Empty string = ungrouped, same "no value" convention categoryId/
+// personId use elsewhere in this app rather than `.optional()`.
+export type OnboardingBudgetItem = {
+  categoryId: string;
+  groupId: string;
+  limit: string;
+};
 export type OnboardingBudget = {
   expectedIncome: string;
   items: OnboardingBudgetItem[];
+  groups: OnboardingBudgetGroup[];
 };
 
 type BudgetStepProps = {
@@ -63,6 +79,10 @@ type SelectableCategory = {
 // one chip is skipped, not an error.
 const QUICK_ADD_CATEGORY_NAMES = ["Alimentação", "Moradia", "Transporte", "Lazer"];
 
+// Same "Radix SelectItem can't take an empty-string value" sentinel the
+// real Budgets screen's own BudgetForm uses for its group picker.
+const NO_GROUP = "none";
+
 type FinancialHealth = "excellent" | "good" | "attention";
 
 function financialHealthOf(percentage: number, isOverBudget: boolean): FinancialHealth {
@@ -90,12 +110,27 @@ const PROGRESS_BAR_CLASS: Record<FinancialHealth, string> = {
 export function BudgetStep({
   categories,
   draftCategories,
-  value,
+  value: rawValue,
   onChange,
 }: BudgetStepProps) {
   const t = useTranslations("scrn-onboarding");
   const tBudgets = useTranslations("scrn-budgets");
   const format = useFormatter();
+  const [newGroupName, setNewGroupName] = useState("");
+
+  // Defensive against a stale in-memory draft — dev Fast Refresh can
+  // preserve old component state across a hot-reload that added new
+  // OnboardingBudget fields (`groups`/`items[].groupId`), and this was a
+  // real, verified crash: "Cannot read properties of undefined (reading
+  // 'map')" on `value.groups` whenever that happened. The wizard's own
+  // localStorage hydration (onboarding-wizard.tsx) already backfills
+  // both on load, but that only covers the read-from-storage path, not
+  // an already-live draft sitting in React state across a hot-reload.
+  const value: OnboardingBudget = {
+    ...rawValue,
+    items: rawValue.items ?? [],
+    groups: rawValue.groups ?? [],
+  };
 
   const allocation = computeBudgetAllocation(
     value.expectedIncome,
@@ -122,7 +157,10 @@ export function BudgetStep({
   );
 
   function addItem(categoryId: string) {
-    onChange({ ...value, items: [...value.items, { categoryId, limit: "" }] });
+    onChange({
+      ...value,
+      items: [...value.items, { categoryId, groupId: "", limit: "" }],
+    });
   }
 
   function removeItem(index: number) {
@@ -134,6 +172,38 @@ export function BudgetStep({
       ...value,
       items: value.items.map((item, i) =>
         i === index ? { ...item, limit } : item,
+      ),
+    });
+  }
+
+  function updateGroup(index: number, groupId: string) {
+    onChange({
+      ...value,
+      items: value.items.map((item, i) =>
+        i === index ? { ...item, groupId } : item,
+      ),
+    });
+  }
+
+  function addGroup() {
+    const trimmed = newGroupName.trim();
+    if (!trimmed) return;
+    onChange({
+      ...value,
+      groups: [...value.groups, { id: crypto.randomUUID(), name: trimmed }],
+    });
+    setNewGroupName("");
+  }
+
+  // Un-assigns the group from every item that had it, same "no orphan
+  // reference lingering in a draft item" care categories-step.tsx's own
+  // onRemove callers take.
+  function removeGroup(groupId: string) {
+    onChange({
+      ...value,
+      groups: value.groups.filter((group) => group.id !== groupId),
+      items: value.items.map((item) =>
+        item.groupId === groupId ? { ...item, groupId: "" } : item,
       ),
     });
   }
@@ -198,6 +268,53 @@ export function BudgetStep({
             </div>
           )}
 
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("steps.budget.groups.title")}
+            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              {value.groups.map((group) => (
+                <span
+                  key={group.id}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 py-1 pl-2.5 pr-1 text-xs font-medium">
+                  {group.name}
+                  <button
+                    type="button"
+                    onClick={() => removeGroup(group.id)}
+                    className="flex size-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                    <XIcon className="size-3" />
+                    <span className="sr-only">{t("buttons.remove")}</span>
+                  </button>
+                </span>
+              ))}
+              <div className="flex items-center gap-1.5">
+                <Input
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addGroup();
+                    }
+                  }}
+                  placeholder={tBudgets("fields.groupName.placeholder")}
+                  className="h-7 w-36 text-xs"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon-sm"
+                  disabled={!newGroupName.trim()}
+                  onClick={addGroup}>
+                  <PlusIcon className="size-3.5" />
+                  <span className="sr-only">
+                    {t("steps.budget.groups.add")}
+                  </span>
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             {value.items.length === 0 && (
               <p className="py-2 text-sm text-muted-foreground">
@@ -222,11 +339,35 @@ export function BudgetStep({
                       )}>
                       <CategoryIcon className="size-4" />
                     </span>
-                    <div>
-                      <p className="text-sm font-semibold">{category.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("steps.budget.limits.monthlyLimit")}
-                      </p>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{category.name}</p>
+                      {value.groups.length > 0 ? (
+                        <Select
+                          value={item.groupId || NO_GROUP}
+                          onValueChange={(groupId) =>
+                            updateGroup(index, groupId === NO_GROUP ? "" : groupId)
+                          }>
+                          <SelectTrigger
+                            aria-label={tBudgets("fields.group.label")}
+                            className="h-5 w-fit gap-1 border-none bg-transparent px-0 text-[10px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3">
+                            <SelectValue placeholder={tBudgets("fields.group.none")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_GROUP}>
+                              {tBudgets("fields.group.none")}
+                            </SelectItem>
+                            {value.groups.map((group) => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          {t("steps.budget.limits.monthlyLimit")}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">

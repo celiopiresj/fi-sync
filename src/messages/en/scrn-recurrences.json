@@ -170,8 +170,7 @@
     "newPerson": "Register new person",
     "newPersonPlaceholder": "Person's name",
     "remove": "Remove person",
-    "mismatch": "The split total must match the recurrence amount",
-    "empty": "No people registered yet"
+    "mismatch": "The split total must match the recurrence amount"
   },
   "scheduleSummary": "Repeats {frequency}, starting {start}. Frequency and start date can't be changed after creation — delete and create a new one to change the schedule.",
   "toast": {

@@ -86,7 +86,6 @@
 
   "menu": {
     "edit": "Editar",
-    "setSelf": "Marcar como eu",
     "delete": "Excluir"
   },
 
@@ -119,13 +118,13 @@
     "created": "Pessoa criada com sucesso",
     "updated": "Pessoa atualizada",
     "deleted": "Pessoa excluída",
-    "selfUpdated": "{name} marcado(a) como você",
     "error": "Não foi possível concluir a ação"
   },
 
   "errors": {
     "hasSplits": "{count, plural, one {Esta pessoa está vinculada a # transação. Remova essa divisão antes de excluir.} other {Esta pessoa está vinculada a # transações. Remova essas divisões antes de excluir.}}",
-    "invalidPhone": "Informe um telefone válido, incluindo o código do país"
+    "invalidPhone": "Informe um telefone válido, incluindo o código do país",
+    "cannotDeleteSelf": "Não é possível excluir a pessoa principal (\"Eu\")"
   },
 
   "aria": {

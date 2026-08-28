@@ -39,6 +39,11 @@ type BudgetSheetProps = {
   // copyBudgetFromPreviousMonth so the sheet only closes on success.
   onCopyFromPrevious: () => Promise<{ error?: string }>;
   isCopyPending: boolean;
+  // Lets the item-row group picker's "novo grupo" prompt create one
+  // without leaving this sheet — same mutation the standalone "Manage
+  // Groups" dialog on the main screen uses (budgets-view.tsx's own
+  // handleCreateGroup), just reused here too.
+  onCreateGroup: (name: string) => Promise<{ id?: string; error?: string }>;
 };
 
 export function BudgetSheet({
@@ -54,6 +59,7 @@ export function BudgetSheet({
   isPending,
   onCopyFromPrevious,
   isCopyPending,
+  onCreateGroup,
 }: BudgetSheetProps) {
   const t = useTranslations("scrn-budgets");
 
@@ -123,6 +129,7 @@ export function BudgetSheet({
             submitLabel={t(
               mode === "create" ? "buttons.create" : "buttons.edit",
             )}
+            onCreateGroup={onCreateGroup}
           />
         </div>
       </SheetContent>

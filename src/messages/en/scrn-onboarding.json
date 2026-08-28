@@ -74,6 +74,10 @@
         "quickAdd": "Quick add:",
         "monthlyLimit": "Monthly limit"
       },
+      "groups": {
+        "title": "Groups (optional)",
+        "add": "Add group"
+      },
       "overview": {
         "title": "Budget overview",
         "commitment": "Income committed",

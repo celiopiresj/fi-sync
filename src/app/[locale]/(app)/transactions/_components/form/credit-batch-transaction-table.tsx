@@ -3,14 +3,6 @@
 import { AmountInput } from "@/components/form/amount-field";
 import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseLocalCalendarDate, todayCalendarDate } from "@/lib/date";
@@ -19,7 +11,7 @@ import {
   evaluateExpression,
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
-import { PencilSimpleIcon, SpinnerIcon, TrashIcon, UsersIcon } from "@phosphor-icons/react";
+import { PencilSimpleIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
@@ -240,23 +232,6 @@ export function CreditBatchTransactionTable({
         <p className="text-xs text-muted-foreground">{t("batch.description")}</p>
       </div>
 
-      {people.length === 0 ? (
-        <Empty className="rounded-lg border border-dashed border-border">
-          <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <UsersIcon />
-            </EmptyMedia>
-            <EmptyTitle>{t("batch.noPeopleTitle")}</EmptyTitle>
-            <EmptyDescription>{t("batch.noPeopleDescription")}</EmptyDescription>
-          </EmptyHeader>
-          <EmptyContent>
-            <CreatePersonInline
-              label={t("splits.newPerson")}
-              onCreated={(person) => patchDraft({ personId: person.id })}
-            />
-          </EmptyContent>
-        </Empty>
-      ) : (
         <div className="flex flex-col gap-3 rounded-lg border border-primary/40 p-3">
           {editingIndex !== null && (
             <p className="text-xs font-medium text-primary">{t("batch.editingRow")}</p>
@@ -342,26 +317,28 @@ export function CreditBatchTransactionTable({
               }))}
               sheetTitle={t("batch.columns.installments")}
             />
-            <ChipSelect
-              label={t("batch.columns.person")}
-              value={draft.personId}
-              onChange={(value) => patchDraft({ personId: value })}
-              options={people.map((person) => ({
-                value: person.id,
-                label: person.name,
-              }))}
-              formatDisplay={formatPersonName}
-              sheetTitle={t("batch.columns.person")}
-              footer={
-                <div className="border-t border-border p-1.5 pt-2">
-                  <CreatePersonInline
-                    label={t("splits.newPerson")}
-                    triggerClassName="px-1.5"
-                    onCreated={(person) => patchDraft({ personId: person.id })}
-                  />
-                </div>
-              }
-            />
+            {people.length > 1 && (
+              <ChipSelect
+                label={t("batch.columns.person")}
+                value={draft.personId}
+                onChange={(value) => patchDraft({ personId: value })}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.name,
+                }))}
+                formatDisplay={formatPersonName}
+                sheetTitle={t("batch.columns.person")}
+                footer={
+                  <div className="border-t border-border p-1.5 pt-2">
+                    <CreatePersonInline
+                      label={t("splits.newPerson")}
+                      triggerClassName="px-1.5"
+                      onCreated={(person) => patchDraft({ personId: person.id })}
+                    />
+                  </div>
+                }
+              />
+            )}
           </div>
 
           {draftError && (
@@ -379,7 +356,6 @@ export function CreditBatchTransactionTable({
             )}
           </div>
         </div>
-      )}
 
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium text-muted-foreground">

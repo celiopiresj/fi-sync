@@ -130,7 +130,8 @@
     },
     "group": {
       "label": "Group",
-      "none": "No group"
+      "none": "No group",
+      "createNew": "New group"
     }
   },
   "groups": {

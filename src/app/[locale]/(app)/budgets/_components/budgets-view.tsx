@@ -225,7 +225,11 @@ export function BudgetsView({
     return result;
   }
 
-  // Group CRUD handlers
+  // Group CRUD handlers. handleCreateGroup returns the result (not just
+  // void) so BudgetForm's own inline "new group" prompt — reached from
+  // the per-item group picker, not just this screen's "Manage Groups"
+  // dialog — can select the freshly created group for whichever item
+  // triggered it.
   async function handleCreateGroup(name: string) {
     const result = await mutations.createGroup({ name });
     if (!result.error) {
@@ -237,6 +241,7 @@ export function BudgetsView({
         ]);
       }
     }
+    return result;
   }
 
   async function handleUpdateGroup(groupId: string, name: string) {
@@ -419,6 +424,7 @@ export function BudgetsView({
           sheetState.mode === "create" ? handleCreateBudget : handleUpdateBudget
         }
         isPending={mutations.isPending}
+        onCreateGroup={handleCreateGroup}
       />
 
       {/* Group manager dialog */}
@@ -426,7 +432,9 @@ export function BudgetsView({
         open={groupDialogOpen}
         onOpenChange={setGroupDialogOpen}
         groups={groups}
-        onCreateGroup={handleCreateGroup}
+        onCreateGroup={async (name) => {
+          await handleCreateGroup(name);
+        }}
         onUpdateGroup={handleUpdateGroup}
         onDeleteGroup={handleDeleteGroup}
         isPending={mutations.isGroupPending}

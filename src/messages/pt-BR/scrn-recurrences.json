@@ -170,8 +170,7 @@
     "newPerson": "Cadastrar nova pessoa",
     "newPersonPlaceholder": "Nome da pessoa",
     "remove": "Remover pessoa",
-    "mismatch": "A soma da divisão precisa bater com o valor da recorrência",
-    "empty": "Nenhuma pessoa cadastrada ainda"
+    "mismatch": "A soma da divisão precisa bater com o valor da recorrência"
   },
   "scheduleSummary": "Repete {frequency}, a partir de {start}. Frequência e data de início não podem ser alteradas depois de criada — exclua e crie uma nova para mudar o agendamento.",
   "toast": {

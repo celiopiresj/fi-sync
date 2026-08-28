@@ -445,9 +445,8 @@ export async function payInvoice(id: string, data: PayInvoiceFormValues) {
     // whatever a PRIOR partial payment already settled for that person,
     // so a second automatic payment can't double-count someone who was
     // already paid off. A purchase with no splits of its own counts
-    // toward whichever Person is marked isSelf (people/actions.ts's
-    // setSelfPerson); if no such Person exists, that slice just doesn't
-    // get a split (same as before).
+    // toward whichever Person is marked isSelf — every user has exactly
+    // one, created at sign-up (see sync-user.ts).
     const alreadyPaidByPerson = new Map<string, number>();
     for (const payment of existing.payments) {
       for (const split of payment.transaction.splits) {

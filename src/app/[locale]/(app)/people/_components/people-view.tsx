@@ -49,7 +49,7 @@ import { ViewModeToggle, type ViewMode } from "@/components/screen/view-mode-tog
 import { PersonSheet } from "./form/person-sheet";
 import { DeleteDialog } from "./delete-dialog";
 import type { PersonFormValues } from "../_schema/schema";
-import { createPerson, deletePerson, setSelfPerson, updatePerson } from "../actions";
+import { createPerson, deletePerson, updatePerson } from "../actions";
 import { joinPersonPhone } from "../_lib/phone";
 import { getPersonColorClasses, getPersonInitial } from "../_lib/person-avatar";
 import { currentStatementPeriod } from "../_lib/cash-cycle";
@@ -140,16 +140,6 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
     return result;
   }
 
-  async function handleSetSelf(person: PersonRow) {
-    const result = await setSelfPerson(person.id);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      invalidatePeople();
-      toast.success(t("toast.selfUpdated", { name: person.name }));
-    }
-  }
-
   async function handleDeleteConfirm() {
     if (!deletingPerson) return;
     setIsDeleting(true);
@@ -214,7 +204,6 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
           menu: {
             edit: t("menu.edit"),
             delete: t("menu.delete"),
-            setSelf: t("menu.setSelf"),
             openMenu: t("table.menu.openMenu"),
           },
         },
@@ -223,7 +212,6 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
           onViewStatement: (row) => router.push(`/people/${row.id}`),
           onEdit: (row) => setDialogState({ mode: "edit", row }),
           onDelete: (row) => setDeletingPerson(row),
-          onSetSelf: handleSetSelf,
         },
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -423,16 +411,13 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                               {t("menu.edit")}
                             </DropdownMenuItem>
                             {!person.isSelf && (
-                              <DropdownMenuItem onSelect={() => handleSetSelf(person)}>
-                                {t("menu.setSelf")}
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onSelect={() => setDeletingPerson(person)}
+                              >
+                                {t("menu.delete")}
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onSelect={() => setDeletingPerson(person)}
-                            >
-                              {t("menu.delete")}
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </CardAction>

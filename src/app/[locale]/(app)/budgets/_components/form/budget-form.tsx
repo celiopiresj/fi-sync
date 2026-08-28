@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { useStore } from "@tanstack/react-form";
 import { PlusIcon, SpinnerIcon, XIcon } from "@phosphor-icons/react";
@@ -9,11 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -29,11 +37,14 @@ import { computeBudgetAllocation } from "../../_lib/budget-allocation";
 import { BAR_CLASSES } from "../budget-progress-bar";
 import type { CategoryOption, GroupOption } from "../../_types/types";
 
-// UI-only sentinel for "no group" — Radix `SelectItem` can't take an
-// empty-string `value`, so this stands in for it in the form/select
-// layer and is converted to `undefined` right before onSubmit, same
-// spot budgetItemSchema's `groupId` (z.string().optional()) expects.
+// UI-only sentinels — Radix `SelectItem` can't take an empty-string
+// `value`. NO_GROUP stands in for "ungrouped" and is converted to
+// `undefined` right before onSubmit, same spot budgetItemSchema's
+// `groupId` (z.string().optional()) expects. CREATE_GROUP never reaches
+// a field's real value — picking it just opens the inline create-group
+// prompt below instead (see the Select's onValueChange).
 const NO_GROUP = "none";
+const CREATE_GROUP = "__create__";
 
 type BudgetFormProps = {
   categories: CategoryOption[];
@@ -43,6 +54,11 @@ type BudgetFormProps = {
   onCancel: () => void;
   isPending: boolean;
   submitLabel: string;
+  // Lets the "Novo grupo" option in each item's group picker create one
+  // on the spot instead of forcing a trip to the separate "Gerenciar
+  // Grupos" dialog first — same createBudgetGroup mutation that dialog
+  // uses (see budgets-view.tsx's own handleCreateGroup).
+  onCreateGroup: (name: string) => Promise<{ id?: string; error?: string }>;
 };
 
 export function BudgetForm({
@@ -53,10 +69,16 @@ export function BudgetForm({
   onCancel,
   isPending,
   submitLabel,
+  onCreateGroup,
 }: BudgetFormProps) {
   const t = useTranslations("scrn-budgets");
   const tCommon = useTranslations("common");
   const format = useFormatter();
+  const [creatingGroupIndex, setCreatingGroupIndex] = useState<number | null>(
+    null,
+  );
+  const [newGroupName, setNewGroupName] = useState("");
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
 
   function money(value: number) {
     return format.number(value, { style: "currency", currency: "BRL" });
@@ -101,6 +123,21 @@ export function BudgetForm({
 
   function categoryName(categoryId: string): string {
     return categories.find((c) => c.id === categoryId)?.name ?? "";
+  }
+
+  async function handleCreateGroupInline() {
+    if (creatingGroupIndex === null) return;
+    const trimmed = newGroupName.trim();
+    if (!trimmed) return;
+
+    setIsCreatingGroup(true);
+    const result = await onCreateGroup(trimmed);
+    setIsCreatingGroup(false);
+
+    if (result.error || !result.id) return;
+    form.setFieldValue(`items[${creatingGroupIndex}].groupId`, result.id);
+    setCreatingGroupIndex(null);
+    setNewGroupName("");
   }
 
   return (
@@ -234,33 +271,41 @@ export function BudgetForm({
                     <p className="truncate text-xs font-semibold">
                       {categoryName(item.categoryId)}
                     </p>
-                    {groups.length > 0 && (
-                      <form.AppField name={`items[${index}].groupId`}>
-                        {(field) => (
-                          <Select
-                            value={field.state.value}
-                            onValueChange={field.handleChange}
+                    <form.AppField name={`items[${index}].groupId`}>
+                      {(field) => (
+                        <Select
+                          value={field.state.value}
+                          onValueChange={(value) => {
+                            if (value === CREATE_GROUP) {
+                              setCreatingGroupIndex(index);
+                              return;
+                            }
+                            field.handleChange(value);
+                          }}
+                        >
+                          <SelectTrigger
+                            aria-label={t("fields.group.label")}
+                            className="h-5 w-fit gap-1 border-none bg-transparent px-0 text-[10px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3"
                           >
-                            <SelectTrigger
-                              aria-label={t("fields.group.label")}
-                              className="h-5 w-fit gap-1 border-none bg-transparent px-0 text-[10px] font-medium text-muted-foreground shadow-none hover:text-foreground data-[state=open]:text-foreground [&_svg]:size-3"
-                            >
-                              <SelectValue placeholder={t("fields.group.none")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={NO_GROUP}>
-                                {t("fields.group.none")}
+                            <SelectValue placeholder={t("fields.group.none")} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={NO_GROUP}>
+                              {t("fields.group.none")}
+                            </SelectItem>
+                            {groups.map((group) => (
+                              <SelectItem key={group.id} value={group.id}>
+                                {group.name}
                               </SelectItem>
-                              {groups.map((group) => (
-                                <SelectItem key={group.id} value={group.id}>
-                                  {group.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </form.AppField>
-                    )}
+                            ))}
+                            <SelectItem value={CREATE_GROUP} className="text-primary">
+                              <PlusIcon className="size-3" />
+                              {t("fields.group.createNew")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </form.AppField>
                   </div>
                 </div>
 
@@ -328,6 +373,54 @@ export function BudgetForm({
           {submitLabel}
         </Button>
       </div>
+
+      <Dialog
+        open={creatingGroupIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreatingGroupIndex(null);
+            setNewGroupName("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("fields.group.createNew")}</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleCreateGroupInline();
+              }
+            }}
+            placeholder={t("fields.groupName.placeholder")}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setCreatingGroupIndex(null);
+                setNewGroupName("");
+              }}
+            >
+              {tCommon("buttons.cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCreateGroupInline}
+              disabled={isCreatingGroup || !newGroupName.trim()}
+            >
+              {isCreatingGroup && <SpinnerIcon className="animate-spin" />}
+              {tCommon("buttons.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }

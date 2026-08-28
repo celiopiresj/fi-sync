@@ -17,7 +17,7 @@ export function FieldErrors({ errors }: FieldErrorsProps) {
         .filter(Boolean)
         .map((err) =>
           typeof err === "string" && err.startsWith("validation.")
-            ? tCommon(err as any)
+            ? tCommon(err as Parameters<typeof tCommon>[0])
             : err
         )
         .join(", ")}

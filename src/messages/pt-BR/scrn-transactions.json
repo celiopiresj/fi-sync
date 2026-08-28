@@ -176,8 +176,7 @@
     "newPerson": "Cadastrar nova pessoa",
     "newPersonPlaceholder": "Nome da pessoa",
     "remove": "Remover pessoa",
-    "mismatch": "A soma da divisão precisa bater com o valor da transação",
-    "empty": "Nenhuma pessoa cadastrada ainda"
+    "mismatch": "A soma da divisão precisa bater com o valor da transação"
   },
 
   "moreOptions": {
@@ -219,8 +218,6 @@
     "missingField": "Preencha: {field}",
     "creditCardNotAllowed": "Contas de cartão de crédito não são aceitas no lote — use o formulário único para lançamentos de cartão.",
     "creditCardRequired": "Selecione um cartão de crédito válido para essa linha",
-    "noPeopleTitle": "Nenhuma pessoa cadastrada",
-    "noPeopleDescription": "Cadastre uma pessoa para começar a lançar em lote",
     "columns": {
       "date": "Data",
       "category": "Categoria",

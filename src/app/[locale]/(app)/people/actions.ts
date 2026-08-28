@@ -111,33 +111,6 @@ export async function listPeople() {
   }));
 }
 
-// Marks `id` as the Person representing the user themselves, and unsets
-// it on every other Person for this user in the same transaction — at
-// most one isSelf per user, enforced here since Prisma's schema DSL has
-// no partial/conditional unique index for it (see the field's own
-// comment in schema.prisma). The projections screen (tasks/016) reads
-// this to sum only the user's own share of a split transaction.
-export async function setSelfPerson(id: string) {
-  const userId = await requireUserId();
-
-  const person = await prisma.person.findUnique({ where: { id, userId } });
-  if (!person) {
-    return { error: "Not found" };
-  }
-
-  await prisma.$transaction([
-    prisma.person.updateMany({
-      where: { userId, isSelf: true },
-      data: { isSelf: false },
-    }),
-    prisma.person.update({ where: { id }, data: { isSelf: true } }),
-  ]);
-
-  revalidatePath("/people");
-  revalidatePath("/projections");
-  return { error: null };
-}
-
 async function validatePerson(data: PersonFormValues) {
   const t = await getTranslations("scrn-people");
   const schema = personSchema.superRefine((value, ctx) =>
@@ -220,6 +193,13 @@ export async function deletePerson(id: string) {
   });
   if (!person) {
     return { error: "Not found" };
+  }
+
+  // The self ("Eu") Person is permanent (see sync-user.ts's own comment)
+  // — every person-attribution default in the app relies on exactly one
+  // always existing, so deleting it here would break that guarantee.
+  if (person.isSelf) {
+    return { error: t("errors.cannotDeleteSelf") };
   }
 
   if (person._count.splits > 0) {

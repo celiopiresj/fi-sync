@@ -74,6 +74,10 @@
         "quickAdd": "Adição rápida:",
         "monthlyLimit": "Limite mensal"
       },
+      "groups": {
+        "title": "Grupos (opcional)",
+        "add": "Adicionar grupo"
+      },
       "overview": {
         "title": "Visão do orçamento",
         "commitment": "Comprometimento da renda",

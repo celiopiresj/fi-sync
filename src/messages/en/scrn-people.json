@@ -86,7 +86,6 @@
 
   "menu": {
     "edit": "Edit",
-    "setSelf": "Mark as me",
     "delete": "Delete"
   },
 
@@ -119,13 +118,13 @@
     "created": "Person created successfully",
     "updated": "Person updated",
     "deleted": "Person deleted",
-    "selfUpdated": "{name} marked as you",
     "error": "Couldn't complete the action"
   },
 
   "errors": {
     "hasSplits": "{count, plural, one {This person is linked to # transaction. Remove that split before deleting.} other {This person is linked to # transactions. Remove those splits before deleting.}}",
-    "invalidPhone": "Enter a valid phone number, including the country code"
+    "invalidPhone": "Enter a valid phone number, including the country code",
+    "cannotDeleteSelf": "You can't delete the main person (\"Eu\")"
   },
 
   "aria": {

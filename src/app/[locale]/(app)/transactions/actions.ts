@@ -43,39 +43,18 @@ async function requireUserId() {
   return session.user.id;
 }
 
-// Best guess for who a new transaction/batch row should default to, so
-// the Pessoa field isn't just empty every time — tried in order:
-//  1. Whoever was attributed most recently. Transaction has no
-//     createdAt/updatedAt (only the user-editable business `date`), so
-//     `date desc` is the best available proxy for "last used."
-//  2. Whoever appears in the most splits overall (no recent activity,
-//     but a clear favorite).
-//  3. First person alphabetically — `people` is already ordered by name.
-//     Person has no self/owner linkage in the schema, so there's no
-//     "o próprio usuário" row to prefer here; this is just the plainest
-//     deterministic fallback.
-// Returns null only when the user has no People at all.
-async function computeDefaultPersonId(
-  userId: string,
-  people: { id: string }[],
-) {
-  if (people.length === 0) return null;
-
-  const lastSplit = await prisma.transactionSplit.findFirst({
-    where: { transaction: { userId } },
-    orderBy: { transaction: { date: "desc" } },
-    select: { personId: true },
+// A new transaction/batch row always defaults to the self ("Eu") Person
+// — every user has exactly one, created at sign-up and permanent
+// (sync-user.ts, people/actions.ts), so this is never "guessed" from
+// usage history anymore. Returns null only in the till-first-login
+// window before that seed has run (shouldn't be reachable from an
+// authenticated route, but kept graceful rather than assumed).
+async function computeDefaultPersonId(userId: string) {
+  const self = await prisma.person.findFirst({
+    where: { userId, isSelf: true },
+    select: { id: true },
   });
-  if (lastSplit) return lastSplit.personId;
-
-  const mostFrequent = await prisma.person.findFirst({
-    where: { userId },
-    orderBy: { splits: { _count: "desc" } },
-    select: { id: true, _count: { select: { splits: true } } },
-  });
-  if (mostFrequent && mostFrequent._count.splits > 0) return mostFrequent.id;
-
-  return people[0].id;
+  return self?.id ?? null;
 }
 
 // Data every instance of the create/edit dialogs needs for their
@@ -102,7 +81,7 @@ export async function getTransactionFormOptions() {
     }),
   ]);
 
-  const defaultPersonId = await computeDefaultPersonId(userId, people);
+  const defaultPersonId = await computeDefaultPersonId(userId);
 
   return { accounts, categories, people, defaultPersonId };
 }
