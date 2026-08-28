@@ -157,7 +157,7 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                 {t(`fields.type.${group.type.toLowerCase()}`)}
               </h2>
               {group.accounts.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.accounts.map((account) => {
                     const color = getAccountColorClasses(account.id);
                     const balance = format.number(account.balance, {
@@ -168,11 +168,10 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                     return (
                       <Card
                         key={account.id}
-                        className={
-                          account.status === "INACTIVE"
-                            ? "opacity-60"
-                            : undefined
-                        }
+                        className={cn(
+                          "max-w-85",
+                          account.status === "INACTIVE" && "opacity-60",
+                        )}
                       >
                         <CardHeader>
                           <CardTitle className="flex items-center gap-3 text-base">
@@ -236,6 +235,15 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                           >
                             {balance}
                           </span>
+                          {account.initialBalance !== null && (
+                            <span className="text-xs text-muted-foreground">
+                              {t("fields.initialBalance.cardLabel")}:{" "}
+                              {format.number(account.initialBalance, {
+                                style: "currency",
+                                currency: "BRL",
+                              })}
+                            </span>
+                          )}
                           <Badge
                             variant={
                               account.status === "ACTIVE"

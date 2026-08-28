@@ -56,6 +56,9 @@
     "phone": {
       "label": "Telefone",
       "placeholder": "Ex: +55 11 91234-5678"
+    },
+    "color": {
+      "label": "Cor"
     }
   },
 

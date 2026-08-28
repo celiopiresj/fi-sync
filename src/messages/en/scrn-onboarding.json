@@ -1,20 +1,109 @@
 {
-  "title": "Welcome to Fi-sync",
-  "description": "Create your first account to start recording your transactions. You can change its type or add more accounts later in Accounts.",
+  "stepIndicator": "Step {current} of {total}",
 
-  "fields": {
-    "name": { "label": "Account name", "placeholder": "E.g. Checking account" }
+  "sidebar": {
+    "progress": "Progress",
+    "completed": "{percent}% complete"
+  },
+
+  "steps": {
+    "account": {
+      "label": "Accounts",
+      "shortDescription": "Your first account",
+      "title": "Welcome to Fi-sync",
+      "description": "Create your first account to start recording your transactions. You can change its type or add more accounts later in Accounts.",
+      "empty": "No account added yet",
+      "errors": {
+        "duplicated": "You already added an account with that name"
+      }
+    },
+    "cards": {
+      "label": "Cards",
+      "shortDescription": "Credit cards",
+      "title": "Have a credit card?",
+      "description": "Add your cards now, or skip and add them later in Cards.",
+      "previewPlaceholder": "Card name",
+      "previewLimit": "Limit",
+      "previewClosingDay": "Closing",
+      "previewDueDay": "Due",
+      "physicalCardsCount": "{count, plural, one {# card} other {# cards}}",
+      "otherCardsTitle": "Other cards",
+      "errors": {
+        "day": "Enter a day between 1 and 31 for closing and due dates",
+        "cardName": "Give each card a name",
+        "lastFourDigits": "The last 4 digits, when provided, must be exactly 4 numbers",
+        "duplicated": "You already added a card with that name"
+      }
+    },
+    "categories": {
+      "label": "Categories",
+      "shortDescription": "Organize your spending",
+      "title": "Your categories are ready",
+      "description": "You already have 31 expense, income, and investment categories. Want to add a custom one?",
+      "seededTitle": "Already-available categories",
+      "addCustomTitle": "Add a custom category",
+      "emptyCustom": "No custom category added yet",
+      "errors": {
+        "duplicated": "A category with that name already exists"
+      }
+    },
+    "people": {
+      "label": "People",
+      "shortDescription": "Split expenses",
+      "title": "Split expenses with anyone?",
+      "description": "Add the people you usually split bills with, or skip and add them later in People.",
+      "empty": "No person added yet",
+      "errors": {
+        "duplicated": "You already added a person with that name"
+      }
+    },
+    "budget": {
+      "label": "Budget",
+      "shortDescription": "Plan your month",
+      "title": "Want to set up your first budget? 🎯",
+      "description": "Set your expected income and monthly limits per category. You can adjust or create new limits at any time.",
+      "empty": "No category limit added yet",
+      "addCategory": "Add category",
+      "income": {
+        "label": "Expected monthly income",
+        "helper": "Basis for the calculation"
+      },
+      "limits": {
+        "title": "Limits by category",
+        "helper": "Edit the amounts or add more",
+        "quickAdd": "Quick add:",
+        "monthlyLimit": "Monthly limit"
+      },
+      "overview": {
+        "title": "Budget overview",
+        "commitment": "Income committed",
+        "allocatedHelper": "Limits summed",
+        "remainingHelper": "Uncommitted balance",
+        "empty": "Enter the expected income to see the budget summary",
+        "health": {
+          "excellent": "Financial Health: Excellent",
+          "good": "Financial Health: Good",
+          "attention": "Financial Health: Attention"
+        }
+      },
+      "tip": {
+        "title": "Expert Tip (the 50/30/20 Rule)",
+        "description": "Try putting up to 50% toward needs (housing, groceries), 30% toward lifestyle, and save 20% for investments."
+      }
+    }
   },
 
   "buttons": {
-    "submit": "Create account and continue",
-    "submitting": "Creating…"
+    "add": "Add",
+    "remove": "Remove",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish"
   },
 
   "errors": {
-    "generic": {
-      "title": "Couldn't create the account",
-      "description": "Please try again in a moment"
+    "submit": {
+      "title": "Couldn't finish setup. Please try again."
     }
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useStore } from "@tanstack/react-form";
 import { toast } from "sonner";
@@ -98,6 +98,17 @@ export function CreditCardForm({
   });
 
   const cards = useStore(form.store, (state) => state.values.cards);
+  const accountName = useStore(form.store, (state) => state.values.name);
+
+  // The first physical card is always the account's own card — no reason
+  // to type the same name twice, so its name field is hidden (below) and
+  // kept in sync with the account name here instead. Cards beyond the
+  // first (additional/adicional) still get their own name.
+  useEffect(() => {
+    if (cards.length > 0 && cards[0].name !== accountName) {
+      form.setFieldValue("cards[0].name", accountName);
+    }
+  }, [accountName, cards, form]);
 
   async function handleToggleCard(cardId: string) {
     setTogglingCardId(cardId);
@@ -199,89 +210,137 @@ export function CreditCardForm({
         </div>
       )}
 
+      {/* The account's own (primary) card — cards[0], name already tied
+          to the account name above — gets its last-4-digits/color as
+          plain top-level fields instead of nesting them in the "other
+          cards" list below, since there's nothing else left to ask for
+          it. */}
+      <form.AppField name="cards[0].lastFourDigits">
+        {(field) => (
+          <field.TextField
+            label={t("fields.card.lastFourDigits.label")}
+            placeholder={t("fields.card.lastFourDigits.placeholder")}
+          />
+        )}
+      </form.AppField>
+
+      <form.Field name="cards[0].colorStyle">
+        {(field) => (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium">
+              {t("fields.card.color.label")}
+            </label>
+            <ColorPicker value={field.state.value} onChange={(val) => field.handleChange(val)} />
+          </div>
+        )}
+      </form.Field>
+
+      {(() => {
+        const primaryMeta = initialValues?.cards.find(
+          (card) => card.id === cards[0]?.id && card.id !== "",
+        );
+        if (!primaryMeta?.hasTransactions) return null;
+        const isActive = primaryMeta.status === "ACTIVE";
+        const isToggling = togglingCardId === cards[0]?.id;
+
+        return (
+          <button
+            type="button"
+            onClick={() => handleToggleCard(cards[0].id)}
+            disabled={isToggling}
+            className="w-fit text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+          >
+            {t(isActive ? "cards.disable" : "cards.enable")}
+          </button>
+        );
+      })()}
+
       <div className="flex flex-col gap-3 rounded-md border border-border p-3">
-        <p className="text-sm font-medium">{t("cards.title")}</p>
+        <p className="text-sm font-medium">{t("cards.otherTitle")}</p>
 
-        <div className="flex flex-col gap-2">
-          {cards.map((cardValue, index) => {
-            // Enable/disable and "can this be removed" both depend on
-            // whether the card has transaction history — data the form's
-            // own zod-driven state doesn't carry (only id/name/
-            // lastFourDigits), so it's read back from the row this
-            // screen was opened with, matched by id.
-            const meta = initialValues?.cards.find(
-              (card) => card.id === cardValue.id && card.id !== "",
-            );
-            const hasTransactions = meta?.hasTransactions ?? false;
-            const isActive = (meta?.status ?? "ACTIVE") === "ACTIVE";
-            const isToggling = togglingCardId === cardValue.id;
+        {cards.length > 1 && (
+          <div className="flex flex-col gap-2">
+            {cards.slice(1).map((cardValue, i) => {
+              const index = i + 1;
+              // Enable/disable and "can this be removed" both depend on
+              // whether the card has transaction history — data the
+              // form's own zod-driven state doesn't carry (only id/name/
+              // lastFourDigits), so it's read back from the row this
+              // screen was opened with, matched by id.
+              const meta = initialValues?.cards.find(
+                (card) => card.id === cardValue.id && card.id !== "",
+              );
+              const hasTransactions = meta?.hasTransactions ?? false;
+              const isActive = (meta?.status ?? "ACTIVE") === "ACTIVE";
+              const isToggling = togglingCardId === cardValue.id;
 
-            return (
-              <div
-                key={index}
-                className="flex flex-col gap-2 rounded-md border border-border/60 p-2"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {t("cards.rowLabel", { index: index + 1 })}
-                  </span>
-                  {hasTransactions ? (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleCard(cardValue.id)}
-                      disabled={isToggling}
-                      className="text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
-                    >
-                      {t(isActive ? "cards.disable" : "cards.enable")}
-                    </button>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => form.removeFieldValue("cards", index)}
-                    >
-                      <TrashIcon />
-                      <span className="sr-only">{t("cards.remove")}</span>
-                    </Button>
-                  )}
-                </div>
+              return (
+                <div
+                  key={index}
+                  className="flex flex-col gap-2 rounded-md border border-border/60 p-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {t("cards.rowLabel", { index: index + 1 })}
+                    </span>
+                    {hasTransactions ? (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleCard(cardValue.id)}
+                        disabled={isToggling}
+                        className="text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+                      >
+                        {t(isActive ? "cards.disable" : "cards.enable")}
+                      </button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => form.removeFieldValue("cards", index)}
+                      >
+                        <TrashIcon />
+                        <span className="sr-only">{t("cards.remove")}</span>
+                      </Button>
+                    )}
+                  </div>
 
-                <form.AppField name={`cards[${index}].name`}>
-                  {(field) => (
-                    <field.TextField
-                      label={t("fields.card.name.label")}
-                      placeholder={t("fields.card.name.placeholder")}
-                    />
-                  )}
-                </form.AppField>
-
-                <form.AppField name={`cards[${index}].lastFourDigits`}>
-                  {(field) => (
-                    <field.TextField
-                      label={t("fields.card.lastFourDigits.label")}
-                      placeholder={t("fields.card.lastFourDigits.placeholder")}
-                    />
-                  )}
-                </form.AppField>
-
-                <form.Field name={`cards[${index}].colorStyle`}>
-                  {(field) => (
-                    <div className="space-y-2 pt-2">
-                      <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        {t("fields.card.color.label")}
-                      </label>
-                      <ColorPicker
-                        value={field.state.value}
-                        onChange={(val) => field.handleChange(val)}
+                  <form.AppField name={`cards[${index}].name`}>
+                    {(field) => (
+                      <field.TextField
+                        label={t("fields.card.name.label")}
+                        placeholder={t("fields.card.name.placeholder")}
                       />
-                    </div>
-                  )}
-                </form.Field>
-              </div>
-            );
-          })}
-        </div>
+                    )}
+                  </form.AppField>
+
+                  <form.AppField name={`cards[${index}].lastFourDigits`}>
+                    {(field) => (
+                      <field.TextField
+                        label={t("fields.card.lastFourDigits.label")}
+                        placeholder={t("fields.card.lastFourDigits.placeholder")}
+                      />
+                    )}
+                  </form.AppField>
+
+                  <form.Field name={`cards[${index}].colorStyle`}>
+                    {(field) => (
+                      <div className="space-y-2 pt-2">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          {t("fields.card.color.label")}
+                        </label>
+                        <ColorPicker
+                          value={field.state.value}
+                          onChange={(val) => field.handleChange(val)}
+                        />
+                      </div>
+                    )}
+                  </form.Field>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         <button
           type="button"

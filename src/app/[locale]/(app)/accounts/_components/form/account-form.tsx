@@ -27,6 +27,8 @@ function toFormValues(
   return {
     name: row.name,
     type: row.type as AccountFormValues["type"],
+    initialBalance:
+      row.initialBalance == null ? "" : row.initialBalance.toFixed(2).replace(".", ","),
   };
 }
 
@@ -77,7 +79,7 @@ export function AccountForm({
         e.stopPropagation();
         form.handleSubmit();
       }}
-      className="flex flex-col gap-4"
+      className="flex max-w-85 flex-col gap-4"
     >
       <form.AppField name="name">
         {(field) => (
@@ -97,6 +99,20 @@ export function AccountForm({
               value: type,
               label: t(`fields.type.${type.toLowerCase()}`),
             }))}
+          />
+        )}
+      </form.AppField>
+
+      <form.AppField name="initialBalance">
+        {(field) => (
+          <field.AmountField
+            label={t("fields.initialBalance.label")}
+            placeholder={t("fields.initialBalance.placeholder")}
+            footer={
+              <p className="text-xs text-muted-foreground">
+                {t(isEditing ? "fields.initialBalance.hintEdit" : "fields.initialBalance.hint")}
+              </p>
+            }
           />
         )}
       </form.AppField>

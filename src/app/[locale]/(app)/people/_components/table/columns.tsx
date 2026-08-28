@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { DotsThreeIcon } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,11 +73,11 @@ export function getPeopleColumns(
       header: messages.columns.person,
       cell: ({ row }) => {
         const person = row.original;
-        const color = getPersonColorClasses(person.name);
+        const color = getPersonColorClasses(person.name, person.colorStyle);
         return (
           <div className="flex items-center gap-2.5">
             <Avatar size="sm">
-              <AvatarFallback className={cn(color.bg, color.text)}>
+              <AvatarFallback className={color}>
                 {getPersonInitial(person.name)}
               </AvatarFallback>
             </Avatar>

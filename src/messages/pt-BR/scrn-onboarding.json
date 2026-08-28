@@ -1,20 +1,109 @@
 {
-  "title": "Bem-vindo(a) ao Fi-sync",
-  "description": "Crie sua primeira conta para começar a registrar suas transações. Você pode ajustar o tipo ou adicionar mais contas depois em Contas.",
+  "stepIndicator": "Passo {current} de {total}",
 
-  "fields": {
-    "name": { "label": "Nome da conta", "placeholder": "Ex: Conta corrente Itaú" }
+  "sidebar": {
+    "progress": "Progresso",
+    "completed": "{percent}% concluído"
+  },
+
+  "steps": {
+    "account": {
+      "label": "Contas",
+      "shortDescription": "Sua primeira conta",
+      "title": "Bem-vindo(a) ao Fi-sync",
+      "description": "Crie sua primeira conta para começar a registrar suas transações. Você pode ajustar o tipo ou adicionar mais contas depois em Contas.",
+      "empty": "Nenhuma conta adicionada ainda",
+      "errors": {
+        "duplicated": "Você já adicionou uma conta com esse nome"
+      }
+    },
+    "cards": {
+      "label": "Cartões",
+      "shortDescription": "Cartões de crédito",
+      "title": "Tem algum cartão de crédito?",
+      "description": "Cadastre seus cartões agora, ou pule e adicione depois em Cartões.",
+      "previewPlaceholder": "Nome do cartão",
+      "previewLimit": "Limite",
+      "previewClosingDay": "Fechamento",
+      "previewDueDay": "Vencimento",
+      "physicalCardsCount": "{count, plural, one {# cartão} other {# cartões}}",
+      "otherCardsTitle": "Outros cartões",
+      "errors": {
+        "day": "Informe um dia entre 1 e 31 para fechamento e vencimento",
+        "cardName": "Dê um nome para cada cartão",
+        "lastFourDigits": "Os últimos 4 dígitos, quando informados, devem ter exatamente 4 números",
+        "duplicated": "Você já adicionou um cartão com esse nome"
+      }
+    },
+    "categories": {
+      "label": "Categorias",
+      "shortDescription": "Organize seus gastos",
+      "title": "Suas categorias já estão prontas",
+      "description": "Você já tem 31 categorias de despesa, receita e investimento. Quer adicionar alguma personalizada?",
+      "seededTitle": "Categorias já disponíveis",
+      "addCustomTitle": "Adicionar categoria personalizada",
+      "emptyCustom": "Nenhuma categoria personalizada adicionada ainda",
+      "errors": {
+        "duplicated": "Já existe uma categoria com esse nome"
+      }
+    },
+    "people": {
+      "label": "Pessoas",
+      "shortDescription": "Divida despesas",
+      "title": "Divide despesas com alguém?",
+      "description": "Adicione as pessoas com quem você costuma dividir contas, ou pule e cadastre depois em Pessoas.",
+      "empty": "Nenhuma pessoa adicionada ainda",
+      "errors": {
+        "duplicated": "Você já adicionou uma pessoa com esse nome"
+      }
+    },
+    "budget": {
+      "label": "Orçamento",
+      "shortDescription": "Planeje seu mês",
+      "title": "Quer montar seu primeiro orçamento? 🎯",
+      "description": "Defina sua renda esperada e os limites mensais por categoria. Você pode ajustar ou criar novos limites a qualquer momento.",
+      "empty": "Nenhum limite de categoria adicionado ainda",
+      "addCategory": "Adicionar categoria",
+      "income": {
+        "label": "Renda mensal esperada",
+        "helper": "Base para o cálculo"
+      },
+      "limits": {
+        "title": "Limites por categoria",
+        "helper": "Edite os valores ou adicione mais",
+        "quickAdd": "Adição rápida:",
+        "monthlyLimit": "Limite mensal"
+      },
+      "overview": {
+        "title": "Visão do orçamento",
+        "commitment": "Comprometimento da renda",
+        "allocatedHelper": "Limites somados",
+        "remainingHelper": "Saldo não comprometido",
+        "empty": "Informe a renda esperada para ver o resumo do orçamento",
+        "health": {
+          "excellent": "Saúde Financeira: Excelente",
+          "good": "Saúde Financeira: Boa",
+          "attention": "Saúde Financeira: Atenção"
+        }
+      },
+      "tip": {
+        "title": "Dica de Especialista (Regra 50/30/20)",
+        "description": "Tente destinar até 50% para necessidades (moradia, mercado), 30% para estilo de vida e guarde 20% para investimentos."
+      }
+    }
   },
 
   "buttons": {
-    "submit": "Criar conta e continuar",
-    "submitting": "Criando…"
+    "add": "Adicionar",
+    "remove": "Remover",
+    "back": "Voltar",
+    "next": "Próxima",
+    "finish": "Concluir"
   },
 
   "errors": {
-    "generic": {
-      "title": "Não foi possível criar a conta",
-      "description": "Tente novamente em instantes"
+    "submit": {
+      "title": "Não foi possível concluir a configuração. Tente novamente."
     }
   }
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
@@ -40,7 +41,7 @@ export async function listAccounts() {
   const userId = await requireUserId();
   const todayDate = parseCalendarDate(todayCalendarDate());
 
-  const [accounts, sums] = await Promise.all([
+  const [accounts, sums, openingBalances] = await Promise.all([
     prisma.account.findMany({
       where: { userId, type: { in: [...accountTypeValues] } },
       orderBy: { name: "asc" },
@@ -50,20 +51,79 @@ export async function listAccounts() {
       where: { userId, date: { lte: todayDate } },
       _sum: { amount: true },
     }),
+    // At most one per account — see Transaction.isInitialBalance's own
+    // comment in schema.prisma. Surfaced separately from `balance` so the
+    // account card can show "what you started with" alongside "what it is
+    // now" without the two being confused for each other.
+    prisma.transaction.findMany({
+      where: { userId, isInitialBalance: true },
+      select: { accountId: true, amount: true },
+    }),
   ]);
 
   const balanceByAccountId = new Map(
     sums.map((sum) => [sum.accountId, sum._sum.amount?.toNumber() ?? 0]),
   );
+  const initialBalanceByAccountId = new Map(
+    openingBalances.map((row) => [row.accountId, row.amount.toNumber()]),
+  );
 
   return accounts.map((account) => ({
     ...account,
     balance: balanceByAccountId.get(account.id) ?? 0,
+    initialBalance: initialBalanceByAccountId.get(account.id) ?? null,
   }));
 }
 
 async function validateAccount(data: AccountFormValues) {
   return accountSchema.safeParse(data);
+}
+
+// Creates/updates/removes the account's single isInitialBalance
+// Transaction to match `initialBalance` (null = no opening transaction).
+// Shared by createAccount and updateAccount so editing an account later
+// can adjust or clear the same figure instead of only setting it once at
+// creation.
+async function syncInitialBalanceTransaction(
+  userId: string,
+  accountId: string,
+  initialBalance: number | null,
+) {
+  const existing = await prisma.transaction.findFirst({
+    where: { userId, accountId, isInitialBalance: true },
+  });
+
+  if (initialBalance === null) {
+    if (existing) {
+      await prisma.transaction.delete({ where: { id: existing.id } });
+      revalidatePath("/transactions");
+    }
+    return;
+  }
+
+  if (existing) {
+    if (existing.amount.toNumber() !== initialBalance) {
+      await prisma.transaction.update({
+        where: { id: existing.id },
+        data: { amount: initialBalance },
+      });
+      revalidatePath("/transactions");
+    }
+    return;
+  }
+
+  const t = await getTranslations("scrn-accounts");
+  await prisma.transaction.create({
+    data: {
+      userId,
+      accountId,
+      description: t("fields.initialBalance.transactionDescription"),
+      amount: initialBalance,
+      date: parseCalendarDate(todayCalendarDate()),
+      isInitialBalance: true,
+    },
+  });
+  revalidatePath("/transactions");
 }
 
 export async function createAccount(data: AccountFormValues) {
@@ -76,13 +136,15 @@ export async function createAccount(data: AccountFormValues) {
 
   const value = result.data;
 
-  await prisma.account.create({
+  const account = await prisma.account.create({
     data: {
       userId,
       name: value.name,
       type: value.type,
     },
   });
+
+  await syncInitialBalanceTransaction(userId, account.id, value.initialBalance);
 
   revalidatePath("/accounts");
   return { error: null };
@@ -110,6 +172,8 @@ export async function updateAccount(id: string, data: AccountFormValues) {
       type: value.type,
     },
   });
+
+  await syncInitialBalanceTransaction(userId, id, value.initialBalance);
 
   revalidatePath("/accounts");
   return { error: null };

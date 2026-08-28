@@ -100,7 +100,7 @@ export function PersonDetailView({
     statement.person.phoneCountryCode,
     statement.person.phone,
   );
-  const color = getPersonColorClasses(statement.person.name);
+  const color = getPersonColorClasses(statement.person.name, statement.person.colorStyle);
   const whatsappLink = buildWhatsAppLink(
     statement.person.phoneCountryCode,
     statement.person.phone,
@@ -128,7 +128,7 @@ export function PersonDetailView({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Avatar size="lg">
-            <AvatarFallback className={cn(color.bg, color.text)}>
+            <AvatarFallback className={color}>
               {getPersonInitial(statement.person.name)}
             </AvatarFallback>
           </Avatar>

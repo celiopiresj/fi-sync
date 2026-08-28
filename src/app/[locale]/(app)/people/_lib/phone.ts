@@ -21,6 +21,19 @@ export function isValidPersonPhone(raw: string): boolean {
   return parseCombined(raw)?.isValid() ?? false;
 }
 
+// Formats a single combined phone value (the shape the onboarding
+// wizard's people step holds locally, before it's ever split into the
+// two stored columns) for display — same libphonenumber-js
+// formatInternational() joinPersonPhone below uses once
+// phoneCountryCode/phone exist as separate columns, exposed here for the
+// one place that still only has the combined string.
+export function formatCombinedPersonPhone(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const parsed = parseCombined(trimmed);
+  return parsed?.isValid() ? parsed.formatInternational() : trimmed;
+}
+
 // DB write boundary: split the one combined field into the two stored
 // columns. Falls back to saving the raw text in `phone` with no country
 // code when it doesn't parse, rather than rejecting or dropping it —

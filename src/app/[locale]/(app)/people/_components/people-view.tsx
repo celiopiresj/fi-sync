@@ -360,7 +360,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                   person.phoneCountryCode,
                   person.phone,
                 );
-                const color = getPersonColorClasses(person.name);
+                const color = getPersonColorClasses(person.name, person.colorStyle);
                 const balanceStatus = balanceStatusOf(person.balance);
                 const balanceBadgeVariant =
                   balanceStatus === "toReceive"
@@ -387,7 +387,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-3 text-base">
                         <Avatar>
-                          <AvatarFallback className={cn(color.bg, color.text)}>
+                          <AvatarFallback className={color}>
                             {getPersonInitial(person.name)}
                           </AvatarFallback>
                         </Avatar>

@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
-import { AsYouType, type CountryCode } from "libphonenumber-js";
+import { useEffect, useLayoutEffect, useRef, type ComponentProps } from "react";
+import {
+  AsYouType,
+  validatePhoneNumberLength,
+  type CountryCode,
+} from "libphonenumber-js";
 import { useFieldContext } from "@/lib/form/form-context";
 import { Input } from "@/components/ui/input";
 
@@ -14,14 +18,13 @@ import { Input } from "@/components/ui/input";
 const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-// Registered as `PhoneField` on `useAppForm` (src/lib/form/use-app-form.ts).
-// Same shape as `TextField`, but formats the value as the user types using
-// libphonenumber-js's `AsYouType` (e.g. typing "5511912345678" renders as
-// "+55 11 91234-5678"). A fresh `AsYouType` re-derives the format from the
-// full current value on every keystroke rather than formatting
-// incrementally — the pattern libphonenumber-js itself recommends for
-// controlled inputs, and what makes backspace/paste reformat correctly
-// instead of fighting the cursor.
+// Formats the value as the user types using libphonenumber-js's
+// `AsYouType` (e.g. typing "5511912345678" renders as "+55 11
+// 91234-5678"). A fresh `AsYouType` re-derives the format from the full
+// current value on every keystroke rather than formatting incrementally —
+// the pattern libphonenumber-js itself recommends for controlled inputs,
+// and what makes backspace/paste reformat correctly instead of fighting
+// the cursor.
 //
 // `defaultCountry` only matters for input typed WITHOUT a leading "+" —
 // without it, `AsYouType` has no numbering plan to apply and mostly just
@@ -65,18 +68,32 @@ function indexAfterSignificantChars(value: string, count: number): number {
   return value.length;
 }
 
-type PhoneFieldProps = {
-  label: string;
+type PhoneInputProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   defaultCountry?: CountryCode;
-};
+} & Omit<
+  ComponentProps<"input">,
+  "value" | "onChange" | "onBlur" | "type" | "placeholder"
+>;
 
-export function PhoneField({
-  label,
+// Registered as `PhoneField` on `useAppForm` below wraps this — same
+// TanStack-bound/plain split as `AmountField`/`AmountInput`
+// (src/components/form/amount-field.tsx), so a screen with local state
+// instead of a TanStack Form (e.g. the onboarding wizard's hand-rolled
+// steps) still gets live AsYouType formatting without needing a form
+// context.
+export function PhoneInput({
+  value,
+  onChange,
+  onBlur,
   placeholder,
   defaultCountry,
-}: PhoneFieldProps) {
-  const field = useFieldContext<string>();
+  ref,
+  ...props
+}: PhoneInputProps) {
   const pendingCaret = useRef<{ node: HTMLInputElement; position: number } | null>(
     null,
   );
@@ -90,34 +107,82 @@ export function PhoneField({
     if (!pending) return;
     pending.node.setSelectionRange(pending.position, pending.position);
     pendingCaret.current = null;
-  }, [field.state.value]);
+  }, [value]);
+
+  return (
+    <Input
+      ref={ref}
+      type="tel"
+      value={value}
+      onBlur={onBlur}
+      onChange={(e) => {
+        const node = e.target;
+        const raw = node.value;
+        const caret = node.selectionStart ?? raw.length;
+        const significantBefore = significantCharsBefore(raw, caret);
+
+        const formatted = new AsYouType(defaultCountry).input(raw);
+
+        // Once the number is already at its maximum possible length for
+        // the numbering plan in play, reject any keystroke that would
+        // add more digits — the field snaps back to its previous value
+        // (React resets the DOM to the unchanged `value` prop on the
+        // next render, since this is a controlled input and `onChange`
+        // is never called below), so it's not just "invalid," it's
+        // literally impossible to type past a valid number. Checked via
+        // digit COUNT rather than string length so a reformat that just
+        // adds/removes punctuation isn't mistaken for growth, and only
+        // ever blocks growth — deleting/editing mid-number is untouched.
+        const digitsBefore = (value.match(/\d/g) ?? []).length;
+        const digitsAfter = (formatted.match(/\d/g) ?? []).length;
+        if (
+          digitsAfter > digitsBefore &&
+          validatePhoneNumberLength(formatted, defaultCountry) === "TOO_LONG"
+        ) {
+          return;
+        }
+
+        pendingCaret.current = {
+          node,
+          position: indexAfterSignificantChars(formatted, significantBefore),
+        };
+        onChange(formatted);
+      }}
+      placeholder={placeholder}
+      {...props}
+    />
+  );
+}
+
+// Registered as `PhoneField` on `useAppForm` (src/lib/form/use-app-form.ts).
+// Same shape as `TextField`, but delegates the actual formatting to
+// `PhoneInput` above.
+type PhoneFieldProps = {
+  label: string;
+  placeholder?: string;
+  defaultCountry?: CountryCode;
+};
+
+export function PhoneField({
+  label,
+  placeholder,
+  defaultCountry,
+}: PhoneFieldProps) {
+  const field = useFieldContext<string>();
 
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={field.name} className="text-sm font-medium">
         {label}
       </label>
-      <Input
+      <PhoneInput
         id={field.name}
         name={field.name}
-        type="tel"
         value={field.state.value}
         onBlur={field.handleBlur}
-        onChange={(e) => {
-          const node = e.target;
-          const raw = node.value;
-          const caret = node.selectionStart ?? raw.length;
-          const significantBefore = significantCharsBefore(raw, caret);
-
-          const formatted = new AsYouType(defaultCountry).input(raw);
-
-          pendingCaret.current = {
-            node,
-            position: indexAfterSignificantChars(formatted, significantBefore),
-          };
-          field.handleChange(formatted);
-        }}
+        onChange={field.handleChange}
         placeholder={placeholder}
+        defaultCountry={defaultCountry}
       />
       {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
         <p className="text-xs text-red-600 dark:text-red-400">

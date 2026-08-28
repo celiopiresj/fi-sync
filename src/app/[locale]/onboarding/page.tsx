@@ -1,13 +1,14 @@
-import { getTranslations } from "next-intl/server";
-import { AuthShell } from "@/components/auth/auth-shell";
-import { OnboardingForm } from "./_components/onboarding-form";
+import { listCategories } from "@/app/[locale]/(app)/categories/actions";
+import {
+  currentPeriod,
+  periodRange,
+} from "@/app/[locale]/(app)/transactions/_lib/period";
+import { OnboardingWizard } from "./_components/onboarding-wizard";
 
 export default async function OnboardingPage() {
-  const t = await getTranslations("scrn-onboarding");
+  const categories = await listCategories();
+  const seededCategories = categories.filter((category) => category.userId === null);
+  const monthKey = periodRange(currentPeriod()).from.slice(0, 7);
 
-  return (
-    <AuthShell title={t("title")} description={t("description")}>
-      <OnboardingForm />
-    </AuthShell>
-  );
+  return <OnboardingWizard seededCategories={seededCategories} monthKey={monthKey} />;
 }

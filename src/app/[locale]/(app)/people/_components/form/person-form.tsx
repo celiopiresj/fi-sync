@@ -12,6 +12,7 @@ import {
   type PersonFormValues,
 } from "../../_schema/schema";
 import { joinPersonPhone } from "../../_lib/phone";
+import { ColorPicker, AVAILABLE_COLORS } from "@/components/form/color-picker";
 import type { PersonRow } from "../../_types/types";
 
 function toFormValues(row: PersonRow | null): PersonFormValues {
@@ -19,6 +20,7 @@ function toFormValues(row: PersonRow | null): PersonFormValues {
   return {
     name: row.name,
     phone: joinPersonPhone(row.phoneCountryCode, row.phone) ?? "",
+    colorStyle: row.colorStyle ?? AVAILABLE_COLORS[0].class,
   };
 }
 
@@ -94,6 +96,20 @@ export function PersonForm({
           />
         )}
       </form.AppField>
+
+      <form.Field name="colorStyle">
+        {(field) => (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium">
+              {t("fields.color.label")}
+            </label>
+            <ColorPicker
+              value={field.state.value}
+              onChange={(val) => field.handleChange(val)}
+            />
+          </div>
+        )}
+      </form.Field>
 
       <FormError title={t("toast.error")} description={serverError} />
 

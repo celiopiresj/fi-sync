@@ -286,6 +286,10 @@ model Person {
   name             String
   phoneCountryCode String?
   phone            String?
+  // Same AVAILABLE_COLORS palette (src/components/form/color-picker.tsx)
+  // as Category/Card's own colorStyle — a light Tailwind bg/text pair
+  // applied to this person's avatar/badge wherever they're shown.
+  colorStyle       String?
   createdAt        DateTime @default(now()) @db.Timestamptz(3)
   // Marks which Person row represents the user themselves — at most one
   // true per userId, enforced in application code (setSelfPerson,
@@ -376,6 +380,12 @@ model Transaction {
   status                  TransactionStatus       @default(COMPLETED)
   paymentMethod           PaymentMethod?
   investmentMovementKind  InvestmentMovementKind?
+  // Marks the one Transaction (if any) representing a CHECKING/SAVINGS/CASH
+  // account's opening balance, set at creation or later via the account's
+  // own edit form (accounts/actions.ts) — same "tag the Transaction rather
+  // than add a stored balance column" approach investmentMovementKind uses
+  // for investment accounts. At most one true row per accountId.
+  isInitialBalance        Boolean                 @default(false)
 
   // Set on both legs of a transfer (outgoing + incoming); null otherwise.
   transferGroupId String?

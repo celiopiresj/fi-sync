@@ -1,6 +1,6 @@
 {
   "title": "Credit cards",
-  "description": "Manage your credit cards, limit, and physical cards",
+  "description": "Manage your credit cards, limit, and cards",
 
   "header": {
     "activeCount": "{count, plural, one {# active card} other {# active cards}}",
@@ -101,7 +101,7 @@
     },
     "card": {
       "name": {
-        "label": "Physical card name",
+        "label": "Card name",
         "placeholder": "e.g. Primary, Additional"
       },
       "lastFourDigits": {
@@ -115,14 +115,14 @@
   },
 
   "cards": {
-    "title": "Physical cards",
+    "otherTitle": "Other cards",
     "rowLabel": "Card {index}",
     "add": "Add card",
     "remove": "Remove card",
     "disable": "Disable",
     "enable": "Enable",
     "cycleSummary": "Closes on day {closingDay} · due on day {dueDay}",
-    "count": "{count, plural, =0 {No physical cards} one {# physical card} other {# physical cards}}"
+    "count": "{count, plural, =0 {No cards} one {# card} other {# cards}}"
   },
 
   "empty": {
@@ -141,7 +141,7 @@
   "dialog": {
     "create": {
       "title": "New credit card",
-      "description": "Fill in the card's details and register at least one physical card",
+      "description": "Fill in the card's details and register at least one card",
       "confirm": "Create"
     },
     "edit": {
@@ -167,7 +167,7 @@
   },
 
   "errors": {
-    "cardHasTransactions": "Can't remove a physical card with linked transactions — disable it instead of removing it",
+    "cardHasTransactions": "Can't remove a card with linked transactions — disable it instead of removing it",
     "accountHasTransactions": "Can't delete a card with linked transactions — archive it instead of deleting it"
   },
 

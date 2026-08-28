@@ -20,6 +20,14 @@
     },
     "balance": {
       "label": "Balance"
+    },
+    "initialBalance": {
+      "label": "Initial balance (optional)",
+      "placeholder": "0.00",
+      "hint": "Posts an initial balance transaction dated today.",
+      "hintEdit": "Updates this account's initial balance transaction. Leave blank to remove it.",
+      "transactionDescription": "Initial balance",
+      "cardLabel": "Initial balance"
     }
   },
 

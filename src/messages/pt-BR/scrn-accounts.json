@@ -20,6 +20,14 @@
     },
     "balance": {
       "label": "Saldo"
+    },
+    "initialBalance": {
+      "label": "Saldo inicial (opcional)",
+      "placeholder": "0,00",
+      "hint": "Lança uma transação de saldo inicial na data de hoje.",
+      "hintEdit": "Atualiza a transação de saldo inicial desta conta. Deixe em branco para remover.",
+      "transactionDescription": "Saldo inicial",
+      "cardLabel": "Saldo inicial"
     }
   },
 

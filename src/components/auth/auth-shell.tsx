@@ -11,10 +11,11 @@ type AuthShellProps = {
   footer?: ReactNode;
 };
 
-// Shared page chrome for sign-in, sign-up, forgot-password,
-// reset-password, and onboarding: logo lockup + heading + white card.
-// Pulled out once several screens needed the identical wrapper instead of
-// copy-pasting it per route.
+// Shared page chrome for sign-in, sign-up, forgot-password, and
+// reset-password: logo lockup + heading + white card. Pulled out once
+// several screens needed the identical wrapper instead of copy-pasting
+// it per route. (Onboarding no longer uses this — it has its own
+// sidebar-driven wizard layout.)
 export function AuthShell({ title, description, footer, children }: AuthShellProps) {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-surface-1 px-4 py-10">

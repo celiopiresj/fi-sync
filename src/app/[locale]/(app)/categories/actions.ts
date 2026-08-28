@@ -39,7 +39,7 @@ export async function createCategory(data: CategoryFormValues) {
 
   const value = result.data;
 
-  await prisma.category.create({
+  const category = await prisma.category.create({
     data: {
       userId,
       name: value.name,
@@ -50,7 +50,12 @@ export async function createCategory(data: CategoryFormValues) {
   });
 
   revalidatePath("/categories");
-  return { error: null };
+  // Callers that create a category inline from another flow (the
+  // onboarding wizard's budget step needs the real id to reference a
+  // just-created custom category in its own budget items) use this to
+  // remap a draft reference to the real row instead of refetching the
+  // whole list, same pattern createPerson (people/actions.ts) follows.
+  return { error: null, category: { id: category.id, name: category.name } };
 }
 
 export async function updateCategory(id: string, data: CategoryFormValues) {

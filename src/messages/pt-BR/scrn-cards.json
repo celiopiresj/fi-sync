@@ -1,6 +1,6 @@
 {
   "title": "Cartões de crédito",
-  "description": "Gerencie seus cartões de crédito, limite e cartões físicos",
+  "description": "Gerencie seus cartões de crédito, limite e cartões",
 
   "header": {
     "activeCount": "{count, plural, one {# cartão ativo} other {# cartões ativos}}",
@@ -101,7 +101,7 @@
     },
     "card": {
       "name": {
-        "label": "Nome do cartão físico",
+        "label": "Nome do cartão",
         "placeholder": "Ex: Titular, Adicional"
       },
       "lastFourDigits": {
@@ -115,14 +115,14 @@
   },
 
   "cards": {
-    "title": "Cartões físicos",
+    "otherTitle": "Outros cartões",
     "rowLabel": "Cartão {index}",
     "add": "Adicionar cartão",
     "remove": "Remover cartão",
     "disable": "Desabilitar",
     "enable": "Habilitar",
     "cycleSummary": "Fecha dia {closingDay} · vence dia {dueDay}",
-    "count": "{count, plural, =0 {Nenhum cartão físico} one {# cartão físico} other {# cartões físicos}}"
+    "count": "{count, plural, =0 {Nenhum cartão} one {# cartão} other {# cartões}}"
   },
 
   "empty": {
@@ -141,7 +141,7 @@
   "dialog": {
     "create": {
       "title": "Novo cartão de crédito",
-      "description": "Preencha os dados do cartão e cadastre pelo menos um cartão físico",
+      "description": "Preencha os dados do cartão e cadastre pelo menos um cartão",
       "confirm": "Criar"
     },
     "edit": {
@@ -167,7 +167,7 @@
   },
 
   "errors": {
-    "cardHasTransactions": "Não é possível remover um cartão físico com transações vinculadas — desabilite-o em vez de remover",
+    "cardHasTransactions": "Não é possível remover um cartão com transações vinculadas — desabilite-o em vez de remover",
     "accountHasTransactions": "Não é possível excluir um cartão com transações vinculadas — arquive-o em vez de excluir"
   },
 

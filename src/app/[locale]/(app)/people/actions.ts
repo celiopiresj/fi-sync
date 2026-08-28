@@ -104,6 +104,7 @@ export async function listPeople() {
     name: person.name,
     phoneCountryCode: person.phoneCountryCode,
     phone: person.phone,
+    colorStyle: person.colorStyle,
     isSelf: person.isSelf,
     splitsCount: person._count.splits,
     balance: balanceByPersonId.get(person.id) ?? 0,
@@ -163,6 +164,7 @@ export async function createPerson(data: PersonFormValues) {
       name: formatPersonName(result.data.name),
       phoneCountryCode: phone.phoneCountryCode ?? undefined,
       phone: phone.phone ?? undefined,
+      colorStyle: result.data.colorStyle,
     },
   });
 
@@ -195,6 +197,7 @@ export async function updatePerson(id: string, data: PersonFormValues) {
       name: formatPersonName(result.data.name),
       phoneCountryCode: phone.phoneCountryCode,
       phone: phone.phone,
+      colorStyle: result.data.colorStyle,
     },
   });
 
@@ -409,6 +412,7 @@ export async function getPersonStatement(personId: string, period: StatementPeri
       name: person.name,
       phoneCountryCode: person.phoneCountryCode,
       phone: person.phone,
+      colorStyle: person.colorStyle,
     },
     period,
     cashCycle,

@@ -62,6 +62,7 @@ export const DEFAULT_CATEGORIES: {
   { name: "Assinaturas", type: "EXPENSE", icon: "Television", colorStyle: INDIGO },
   { name: "Presentes", type: "EXPENSE", icon: "Gift", colorStyle: ROSE },
   { name: "Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: BLUE },
+  { name: "Tributos e Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: BLUE },
   { name: "Seguros", type: "EXPENSE", icon: "Umbrella", colorStyle: INDIGO },
   { name: "Serviços", type: "EXPENSE", icon: "Wrench", colorStyle: ORANGE },
   { name: "Tecnologia", type: "EXPENSE", icon: "DeviceMobile", colorStyle: BLUE },
