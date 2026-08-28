@@ -453,11 +453,12 @@ export function TransactionsView({
 
   async function handleSubmitCredit(
     values: Parameters<typeof createCreditTransaction>[0],
+    options?: Parameters<typeof createCreditTransaction>[1],
   ) {
     const isEditing = dialogState?.mode === "edit";
     const result = isEditing
       ? await updateCreditTransaction(dialogState.row.id, values)
-      : await createCreditTransaction(values);
+      : await createCreditTransaction(values, options);
 
     if (!result.error) {
       invalidate();

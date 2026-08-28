@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/accordion";
 import { PlusIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import { CreatePersonInline } from "./create-person-inline";
+import { PastInstallmentsDialog } from "./past-installments-dialog";
 import {
   creditTransactionSchema,
   refineCreditTransaction,
@@ -29,7 +30,7 @@ import {
   emptyCreditTransactionFormValues,
   type CreditTransactionFormValues,
 } from "../../_schema/schema";
-import { previewInvoiceCycle } from "../../actions";
+import { previewInvoiceCycle, previewInstallmentCycles } from "../../actions";
 import {
   evaluateExpression,
   isCompoundExpression,
@@ -106,6 +107,7 @@ type CreditTransactionFormProps = {
   defaultPersonId: string | null;
   onSubmit: (
     values: CreditTransactionFormValues,
+    options?: { skipPastInstallments?: boolean },
   ) => Promise<{ error: string | null }>;
   onSuccess: () => void;
 };
@@ -153,30 +155,53 @@ export function CreditTransactionForm({
     [t],
   );
 
+  const [pastInstallmentsValue, setPastInstallmentsValue] =
+    useState<CreditTransactionFormValues | null>(null);
+
+  async function performSubmit(
+    value: CreditTransactionFormValues,
+    options?: { skipPastInstallments?: boolean },
+  ) {
+    setServerError(null);
+    try {
+      const result = await onSubmit(value, options);
+      if (result?.error) {
+        setServerError(result.error);
+        return;
+      }
+      if (submitAction === "createAndNew") {
+        toast.success(t("toast.created"));
+        form.setFieldValue("description", "");
+        form.setFieldValue("amount", "");
+        form.setFieldValue("splits", []);
+        setIsDividing(false);
+        descriptionInputRef.current?.focus();
+      } else {
+        onSuccess();
+      }
+    } catch (err) {
+      if (isNextRedirectError(err)) throw err;
+      setServerError(tCommon("errorGeneric"));
+    }
+  }
+
   const form = useZodForm(schema, {
     defaultValues: toFormValues(initialValues, defaultPersonId),
     onSubmit: async ({ value }) => {
-      setServerError(null);
-      try {
-        const result = await onSubmit(value);
-        if (result?.error) {
-          setServerError(result.error);
-          return;
-        }
-        if (submitAction === "createAndNew") {
-          toast.success(t("toast.created"));
-          form.setFieldValue("description", "");
-          form.setFieldValue("amount", "");
-          form.setFieldValue("splits", []);
-          setIsDividing(false);
-          descriptionInputRef.current?.focus();
-        } else {
-          onSuccess();
-        }
-      } catch (err) {
-        if (isNextRedirectError(err)) throw err;
-        setServerError(tCommon("errorGeneric"));
+      // Editing never regenerates installments (v1 limitation,
+      // createCreditTransaction/updateCreditTransaction), so the
+      // past-due prompt only applies to a brand-new installment purchase.
+      const submittedInstallmentCount = Number(value.installments || "1");
+      if (
+        !isEditing &&
+        submittedInstallmentCount > 1 &&
+        firstInstallmentCycle &&
+        new Date(firstInstallmentCycle.dueDate) < new Date(todayCalendarDate())
+      ) {
+        setPastInstallmentsValue(value);
+        return;
       }
+      await performSubmit(value);
     },
   });
 
@@ -306,6 +331,23 @@ export function CreditTransactionForm({
     queryFn: () => previewInvoiceCycle(accountId, date),
     enabled: Boolean(accountId) && Boolean(date),
   });
+
+  // Feeds the past-due-installments check in useZodForm's onSubmit above
+  // (referenced there via closure — declared here, after accountId/date/
+  // installmentCount exist, rather than before useZodForm, but that's
+  // fine: onSubmit only actually runs on a later submit event, by which
+  // point this render has already finished and the query variable below
+  // is fully initialized).
+  const installmentCyclesQuery = useQuery({
+    queryKey: ["credit-transaction-installment-cycles", accountId, date, installmentCount],
+    queryFn: () => previewInstallmentCycles(accountId, date, installmentCount),
+    enabled: !isEditing && Boolean(accountId) && Boolean(date) && installmentCount > 1,
+  });
+  const firstInstallmentCycle = installmentCyclesQuery.data?.[0];
+  const upcomingInstallmentsCount =
+    installmentCyclesQuery.data?.filter(
+      (cycle) => new Date(cycle.dueDate) >= new Date(todayCalendarDate()),
+    ).length ?? 0;
 
   const missingFieldLabel = !accountId
     ? t("fields.account.label")
@@ -742,6 +784,27 @@ export function CreditTransactionForm({
           )}
         </div>
       </div>
+
+      {pastInstallmentsValue && firstInstallmentCycle && (
+        <PastInstallmentsDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPastInstallmentsValue(null);
+          }}
+          firstDueDate={new Date(firstInstallmentCycle.dueDate)}
+          totalInstallments={Number(pastInstallmentsValue.installments || "1")}
+          upcomingInstallments={upcomingInstallmentsCount}
+          isSubmitting={isSubmitting}
+          onAddAll={async () => {
+            await performSubmit(pastInstallmentsValue, { skipPastInstallments: false });
+            setPastInstallmentsValue(null);
+          }}
+          onAddUpcoming={async () => {
+            await performSubmit(pastInstallmentsValue, { skipPastInstallments: true });
+            setPastInstallmentsValue(null);
+          }}
+        />
+      )}
     </form>
   );
 }

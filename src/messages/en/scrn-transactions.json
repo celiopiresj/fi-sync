@@ -136,7 +136,8 @@
     "installments": {
       "label": "Installments",
       "placeholder": "Number of installments",
-      "optionLabel": "{count}x"
+      "optionLabel": "{count}x",
+      "noneUpcoming": "Every installment is already due — there are no upcoming ones to add."
     },
     "installmentAmountMode": {
       "label": "The amount entered is",
@@ -336,6 +337,13 @@
       "title": "Edit card expense",
       "description": "Update the purchase's details",
       "confirm": "Save",
+      "cancel": "Cancel"
+    },
+    "pastInstallments": {
+      "title": "Installments already due",
+      "description": "The first installment would be due on {dueDate}, which has already passed. Do you want to add all {total} installments (including the already-due ones) or only the {upcoming} still-upcoming ones?",
+      "addAll": "Add all",
+      "addUpcoming": "Only the upcoming ones",
       "cancel": "Cancel"
     }
   },

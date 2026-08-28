@@ -136,7 +136,8 @@
     "installments": {
       "label": "Parcelas",
       "placeholder": "Número de parcelas",
-      "optionLabel": "{count}x"
+      "optionLabel": "{count}x",
+      "noneUpcoming": "Todas as parcelas já venceram — nenhuma parcela futura para adicionar."
     },
     "installmentAmountMode": {
       "label": "O valor digitado é",
@@ -336,6 +337,13 @@
       "title": "Editar despesa no cartão",
       "description": "Atualize os dados da compra",
       "confirm": "Salvar",
+      "cancel": "Cancelar"
+    },
+    "pastInstallments": {
+      "title": "Parcelas já vencidas",
+      "description": "A primeira parcela venceria em {dueDate}, que já passou. Deseja adicionar as {total} parcelas (incluindo as já vencidas) ou apenas as {upcoming} parcelas futuras?",
+      "addAll": "Adicionar todas",
+      "addUpcoming": "Apenas as próximas",
       "cancel": "Cancelar"
     }
   },

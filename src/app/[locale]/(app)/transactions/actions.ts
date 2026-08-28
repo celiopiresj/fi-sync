@@ -6,7 +6,12 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth/server";
-import { parseCalendarDate, toAppZoned, fromAppZoned } from "@/lib/date";
+import {
+  parseCalendarDate,
+  toAppZoned,
+  fromAppZoned,
+  todayCalendarDate,
+} from "@/lib/date";
 import { computeInvoiceCycle, resolveInvoiceForDate } from "@/lib/invoice-resolution";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import {
@@ -366,6 +371,44 @@ export async function previewInvoiceCycle(accountId: string, dateStr: string) {
   return { closingDate, dueDate, existing: false };
 }
 
+// Read-only preview of every installment's invoice cycle for a would-be
+// purchase — walks the same cursor-advance sequence createCreditTransaction's
+// installment loop uses (each installment lands one billing cycle after
+// the previous one), but never creates an Invoice row, same spirit as
+// previewInvoiceCycle above. Used by the credit form to detect "the
+// first installment's due date has already passed" and offer adding
+// only the still-upcoming installments instead.
+export async function previewInstallmentCycles(
+  accountId: string,
+  dateStr: string,
+  installmentCount: number,
+) {
+  const userId = await requireUserId();
+  if (!accountId || !dateStr || installmentCount < 1) return null;
+
+  const account = await prisma.account.findUnique({
+    where: { id: accountId, userId },
+    include: { creditCardDetails: true },
+  });
+  if (!account?.creditCardDetails) return null;
+  const creditCardDetails = account.creditCardDetails;
+
+  let cursorDate = parseCalendarDate(dateStr);
+  const cycles: { closingDate: Date; dueDate: Date }[] = [];
+
+  for (let index = 0; index < installmentCount; index++) {
+    const existing = await prisma.invoice.findFirst({
+      where: { accountId, closingDate: { gte: cursorDate } },
+      orderBy: { closingDate: "asc" },
+    });
+    const cycle = existing ?? computeInvoiceCycle(cursorDate, creditCardDetails);
+    cycles.push({ closingDate: cycle.closingDate, dueDate: cycle.dueDate });
+    cursorDate = fromAppZoned(addMonths(toAppZoned(cycle.closingDate), 1));
+  }
+
+  return cycles;
+}
+
 function stepDate(date: Date, frequency: RecurrenceFrequencyOption) {
   if (frequency === "none") return date;
   // Do the arithmetic on the App-timezone wall-clock digits, not the
@@ -703,7 +746,15 @@ async function createCreditTransactionRow(params: {
   return { transaction, nextCursorDate };
 }
 
-export async function createCreditTransaction(data: CreditTransactionFormValues) {
+export async function createCreditTransaction(
+  data: CreditTransactionFormValues,
+  // Only meaningful when the purchase is installment-based (installments
+  // > 1) and its first due date is already in the past — the credit
+  // form asks the user in that case (see previewInstallmentCycles above)
+  // whether to still create every installment or only the ones still
+  // ahead. Ignored otherwise.
+  options?: { skipPastInstallments?: boolean },
+) {
   const userId = await requireUserId();
   const result = await validateCredit(data);
 
@@ -765,15 +816,38 @@ export async function createCreditTransaction(data: CreditTransactionFormValues)
   const installmentGroupId = installmentCount > 1 ? crypto.randomUUID() : undefined;
   // "total": the typed amount is the whole purchase, split evenly across
   // installments. "perInstallment": the typed amount is already what
-  // each installment charges — used as-is.
+  // each installment charges — used as-is. Always divided/priced across
+  // the FULL installmentCount, regardless of skipPastInstallments below
+  // — "only the upcoming ones" changes which rows get persisted, not
+  // what each installment is worth or its 1-based installmentNumber.
   const installmentAmount =
     value.installmentAmountMode === "perInstallment"
       ? signedAmount
       : signedAmount / installmentCount;
 
+  const skipPastInstallments = options?.skipPastInstallments ?? false;
+  const todayDate = parseCalendarDate(todayCalendarDate());
+  let createdCount = 0;
   let cursorDate = parseCalendarDate(value.date);
 
   for (let index = 0; index < installmentCount; index++) {
+    // Pure, DB-free peek at this installment's cycle (mirrors
+    // previewInstallmentCycles' own best-effort calculation) — only used
+    // to decide whether to skip it and to advance the cursor for a
+    // skipped one, so a later, still-upcoming installment still lands in
+    // the right invoice even though nothing was persisted for the ones
+    // before it. createCreditTransactionRow below still resolves (and
+    // may create) the *real* Invoice row for every installment that's
+    // actually persisted — a skipped installment's period is never
+    // touched at all, so no empty/orphan Invoice gets created for it.
+    const peekCycle = computeInvoiceCycle(cursorDate, creditCardDetails);
+
+    if (skipPastInstallments && peekCycle.dueDate < todayDate) {
+      cursorDate = fromAppZoned(addMonths(toAppZoned(peekCycle.closingDate), 1));
+      continue;
+    }
+
+    createdCount++;
     const { nextCursorDate } = await createCreditTransactionRow({
       userId,
       value,
@@ -786,6 +860,16 @@ export async function createCreditTransaction(data: CreditTransactionFormValues)
       cursorDate,
     });
     cursorDate = nextCursorDate;
+  }
+
+  // Only reachable if every one of installmentCount installments' due
+  // dates was already in the past — shouldn't normally happen, since the
+  // credit form only offers "apenas as próximas" when at least one
+  // installment is still upcoming, but guarded here too rather than
+  // silently creating nothing.
+  if (skipPastInstallments && createdCount === 0) {
+    const t = await getTranslations("scrn-transactions");
+    return { error: t("installments.noneUpcoming") };
   }
 
   revalidateCreditTransactions();
