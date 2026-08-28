@@ -30,22 +30,8 @@ export default async function proxy(request: NextRequest) {
   const isPublic = PUBLIC_PATH.test(request.nextUrl.pathname);
   let authResult: Awaited<ReturnType<typeof authMiddleware>> | undefined;
 
-  // TEMP DEBUG — remove once Google sign-in is confirmed fixed on Vercel.
-  console.log("[DEBUG proxy]", {
-    pathname: request.nextUrl.pathname,
-    search: request.nextUrl.search,
-    isPublic,
-    cookieNames: request.cookies.getAll().map((c) => c.name),
-  });
-
   if (!isPublic) {
     authResult = await authMiddleware(request);
-    // TEMP DEBUG — remove once Google sign-in is confirmed fixed on Vercel.
-    console.log("[DEBUG proxy] authResult", {
-      status: authResult?.status,
-      location: authResult?.headers.get("location"),
-      setCookies: authResult?.cookies.getAll().map((c) => c.name),
-    });
     if (authResult && authResult.status >= 300 && authResult.status < 400) {
       return authResult;
     }
