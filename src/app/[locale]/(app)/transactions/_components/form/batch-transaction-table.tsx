@@ -80,9 +80,15 @@ export function BatchTransactionTable({
   // `createTransaction` actually runs (see actions.ts,
   // `resolveInvoiceForDate`). Leaving cards out of this list is what
   // keeps that constraint honest instead of silently creating a
-  // transaction with no invoice link.
+  // transaction with no invoice link. Investment/pocket accounts are
+  // excluded too — aporte/resgate against them only ever goes through
+  // the dedicated Investments screen now (investments/actions.ts's own
+  // createInvestmentMovement posts both transfer legs), never here.
   const debitAccounts = accounts.filter(
-    (account) => account.type !== "CREDIT_CARD",
+    (account) =>
+      account.type === "CHECKING" ||
+      account.type === "SAVINGS" ||
+      account.type === "CASH",
   );
 
   const [draft, setDraft] = useState<BatchRowFormValues>(() =>
@@ -98,8 +104,27 @@ export function BatchTransactionTable({
   const [errorRowIndex, setErrorRowIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Only categories matching the draft row's own type — same rule the
+  // single-transaction forms' pickers follow.
+  const categoryType = draft.type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
   function patchDraft(patch: Partial<BatchRowFormValues>) {
-    setDraft((current) => ({ ...current, ...patch }));
+    setDraft((current) => {
+      const next = { ...current, ...patch };
+      // The category picker is scoped to the row's own type (see
+      // filteredCategories below) — switching type drops a categoryId
+      // that no longer matches, same "dependent field reset" the credit
+      // batch table already does for cardId when accountId changes.
+      if (patch.type !== undefined && patch.type !== current.type) {
+        const nextCategoryType = patch.type === "income" ? "INCOME" : "EXPENSE";
+        const category = categories.find((c) => c.id === current.categoryId);
+        if (category && category.type !== nextCategoryType) next.categoryId = "";
+      }
+      return next;
+    });
   }
 
   function handleAddOrSave() {
@@ -304,7 +329,7 @@ export function BatchTransactionTable({
               label={t("batch.columns.category")}
               value={draft.categoryId}
               onChange={(value) => patchDraft({ categoryId: value })}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}

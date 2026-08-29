@@ -141,7 +141,8 @@
     },
     "card": {
       "label": "Cartão",
-      "placeholder": "Selecione o cartão"
+      "placeholder": "Selecione o cartão",
+      "holderLabel": "Portador"
     },
     "person": {
       "label": "Pessoa",

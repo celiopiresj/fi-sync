@@ -58,7 +58,7 @@ import {
 } from "../actions";
 import { useInvestmentsData } from "../_hooks/use-investments-data";
 import { getAccountColorClasses } from "../_lib/account-color";
-import type { InvestmentAccountRow } from "../_types/types";
+import type { InvestmentAccountRow, TransferAccountOption } from "../_types/types";
 
 type DialogState =
   | { mode: "create"; type?: InvestmentAccountTypeOption }
@@ -74,9 +74,13 @@ const SECTION_ICON: Record<InvestmentAccountTypeOption, typeof ChartLineUpIcon> 
 
 type InvestmentsViewProps = {
   initialAccounts: InvestmentAccountRow[];
+  transferAccounts: TransferAccountOption[];
 };
 
-export function InvestmentsView({ initialAccounts }: InvestmentsViewProps) {
+export function InvestmentsView({
+  initialAccounts,
+  transferAccounts,
+}: InvestmentsViewProps) {
   const t = useTranslations("scrn-investments");
   const tCommon = useTranslations("common");
   const format = useFormatter();
@@ -383,6 +387,7 @@ export function InvestmentsView({ initialAccounts }: InvestmentsViewProps) {
         }}
         accountId={movementState?.account.id ?? ""}
         accountBalance={movementState?.account.balance ?? 0}
+        transferAccounts={transferAccounts}
         initialKind={movementState?.kind ?? "CONTRIBUTION"}
         onSubmit={handleMovementSubmit}
       />

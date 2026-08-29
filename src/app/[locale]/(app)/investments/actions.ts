@@ -9,9 +9,17 @@ import {
   investmentAccountSchema,
   investmentAccountTypeValues,
   investmentMovementSchema,
+  refineInvestmentMovement,
   type InvestmentAccountFormValues,
   type InvestmentMovementFormValues,
 } from "./_schema/schema";
+
+// Checking/savings/cash — the only account types that make sense as the
+// "other side" of an aporte/resgate transfer (never a credit card or
+// another investment/pocket account). Same values as accounts/
+// actions.ts's own accountTypeValues, duplicated per this route's
+// self-containment convention rather than importing cross-route.
+const TRANSFERABLE_ACCOUNT_TYPES = ["CHECKING", "SAVINGS", "CASH"] as const;
 
 async function requireUserId() {
   const { data: session } = await auth.getSession();
@@ -55,6 +63,19 @@ export async function listInvestmentAccounts() {
     ...account,
     balance: balanceByAccountId.get(account.id) ?? 0,
   }));
+}
+
+// Populates the movement form's "which account did this come from/go
+// back to" picker (movement-form.tsx) — every checking/savings/cash
+// account for the user, same restricted set accounts/actions.ts's own
+// listAccounts returns.
+export async function listTransferAccounts() {
+  const userId = await requireUserId();
+  return prisma.account.findMany({
+    where: { userId, type: { in: [...TRANSFERABLE_ACCOUNT_TYPES] } },
+    select: { id: true, name: true, type: true },
+    orderBy: { name: "asc" },
+  });
 }
 
 async function validateInvestmentAccount(data: InvestmentAccountFormValues) {
@@ -144,20 +165,39 @@ export async function toggleInvestmentAccountStatus(id: string) {
   return { error: null };
 }
 
-// Aporte/rendimento (positive) or resgate (negative) against one
-// investment/pocket account — a plain Transaction, no splits/payment
-// method/category (none of those apply to a personal investment
-// movement). `kind` decides the sign, the default description when the
-// user leaves that field blank, AND is persisted onto the Transaction's
-// own `investmentMovementKind` — that's what lets
-// getInvestmentAccountDetail below sum/list rendimentos reliably,
-// instead of guessing from description text.
+async function validateMovement(data: InvestmentMovementFormValues) {
+  const t = await getTranslations("scrn-investments");
+  const schema = investmentMovementSchema.superRefine((value, ctx) =>
+    refineInvestmentMovement(value, ctx, {
+      messages: { transferAccountRequired: t("movement.errors.transferAccountRequired") },
+    }),
+  );
+  return schema.safeParse(data);
+}
+
+// Aporte/resgate (CONTRIBUTION/WITHDRAWAL) against one investment/pocket
+// account is really a transfer, not money appearing from or vanishing
+// into nowhere — it comes out of (or goes back into) a real checking/
+// savings/cash account, so both legs get posted as linked Transaction
+// rows sharing `transferGroupId` (see prisma/schema.prisma's own
+// documented transfer convention: one negative leg, one positive leg).
+// Rendimento (YIELD) is the one kind that stays single-leg — it's the
+// account genuinely growing on its own, not money moved from anywhere.
+// No splits/payment method/category on either leg — none of those apply
+// to a personal investment movement. `kind` decides the sign, the
+// default description when the user leaves that field blank, AND is
+// persisted onto the investment leg's own `investmentMovementKind` —
+// that's what lets getInvestmentAccountDetail below sum/list rendimentos
+// reliably, instead of guessing from description text. The transfer
+// leg (on the OTHER account) is deliberately left untagged — it's a
+// normal transfer from that account's own point of view, not "an
+// investment movement" of its own.
 export async function createInvestmentMovement(
   accountId: string,
   data: InvestmentMovementFormValues,
 ) {
   const userId = await requireUserId();
-  const result = investmentMovementSchema.safeParse(data);
+  const result = await validateMovement(data);
 
   if (!result.success) {
     return { error: result.error.issues[0]?.message ?? "Invalid data" };
@@ -176,8 +216,8 @@ export async function createInvestmentMovement(
   const description =
     value.description.trim() ||
     t(`movement.defaultDescription.${value.kind.toLowerCase()}`);
+  const date = parseCalendarDate(value.date);
 
-  let amount: number;
   if (value.kind === "YIELD") {
     // For YIELD, `value.amount` isn't the yield itself — it's the
     // account's current total value, as read off the user's own
@@ -193,32 +233,86 @@ export async function createInvestmentMovement(
       _sum: { amount: true },
     });
     const currentBalance = sum._sum.amount?.toNumber() ?? 0;
-    amount = Math.round((value.amount - currentBalance) * 100) / 100;
+    const amount = Math.round((value.amount - currentBalance) * 100) / 100;
 
     if (Math.abs(amount) < 0.01) {
       return { error: t("movement.errors.noChange") };
     }
-  } else {
-    amount = value.kind === "WITHDRAWAL" ? -value.amount : value.amount;
+
+    await prisma.transaction.create({
+      data: {
+        userId,
+        accountId,
+        description,
+        amount,
+        date,
+        investmentMovementKind: value.kind,
+      },
+    });
+
+    revalidatePath("/investments");
+    revalidatePath(`/investments/${accountId}`);
+    revalidatePath("/transactions");
+    return { error: null };
   }
 
-  await prisma.transaction.create({
-    data: {
+  // refineInvestmentMovement already guarantees transferAccountId is
+  // non-empty here — re-validated (not just trusted) server-side, same
+  // "the picker only ever offers valid options, but the server re-checks
+  // anyway" pattern the rest of this app's forms follow.
+  const transferAccount = await prisma.account.findFirst({
+    where: {
+      id: value.transferAccountId,
       userId,
-      accountId,
-      description,
-      amount,
-      date: parseCalendarDate(value.date),
-      investmentMovementKind: value.kind,
+      type: { in: [...TRANSFERABLE_ACCOUNT_TYPES] },
     },
   });
+  if (!transferAccount) {
+    return { error: "Invalid account" };
+  }
+
+  const investmentAmount = value.kind === "WITHDRAWAL" ? -value.amount : value.amount;
+  const transferGroupId = crypto.randomUUID();
+  const transferDescription = t(
+    `movement.transferDescription.${value.kind.toLowerCase()}`,
+    { accountName: account.name },
+  );
+
+  await prisma.$transaction([
+    prisma.transaction.create({
+      data: {
+        userId,
+        accountId,
+        description,
+        amount: investmentAmount,
+        date,
+        investmentMovementKind: value.kind,
+        transferGroupId,
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        userId,
+        accountId: transferAccount.id,
+        description: transferDescription,
+        // Opposite sign, same magnitude as the investment leg — money
+        // leaving one account and landing in the other.
+        amount: -investmentAmount,
+        date,
+        transferGroupId,
+      },
+    }),
+  ]);
 
   revalidatePath("/investments");
   revalidatePath(`/investments/${accountId}`);
   // The movement is also a plain Transaction row, so it shows up there
   // too — same "revalidate /transactions on any new transaction" rule
-  // transactions/actions.ts's own revalidateTransactions() follows.
+  // transactions/actions.ts's own revalidateTransactions() follows. The
+  // transfer leg lands on a checking/savings/cash account, so that
+  // account's own balance card needs to refresh too.
   revalidatePath("/transactions");
+  revalidatePath("/accounts");
   return { error: null };
 }
 

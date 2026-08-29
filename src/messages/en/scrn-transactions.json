@@ -131,7 +131,8 @@
     },
     "card": {
       "label": "Card",
-      "placeholder": "Select the card"
+      "placeholder": "Select the card",
+      "holderLabel": "Cardholder"
     },
     "installments": {
       "label": "Installments",
@@ -217,6 +218,7 @@
     "paymentMethodRequired": "Select a payment method for this row",
     "missingField": "Fill in: {field}",
     "creditCardNotAllowed": "Credit card accounts aren't supported in batch entry — use the single-transaction form for card charges.",
+    "investmentAccountNotAllowed": "Investment/pocket accounts aren't supported here — use the Investments screen for contributions and withdrawals.",
     "creditCardRequired": "Select a valid credit card for this row",
     "columns": {
       "date": "Date",
@@ -258,7 +260,8 @@
       "changeStatus": "Change status",
       "clear": "Clear selection",
       "selectRow": "Select transaction",
-      "selectAll": "Select all transactions"
+      "selectAll": "Select all transactions",
+      "mixedTypesHint": "Select only income or only expenses to categorize"
     }
   },
 

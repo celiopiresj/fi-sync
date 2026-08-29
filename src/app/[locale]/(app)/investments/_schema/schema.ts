@@ -66,6 +66,15 @@ export const investmentMovementSchema = z.object({
   // when left blank, same "not hardcoded, just deferred to the server's
   // own translations" spirit as the rest of the app's forms.
   description: z.string(),
+  // The other side of the aporte/resgate transfer — money doesn't
+  // materialize in (or vanish from) the investment account on its own,
+  // it moves out of/back into a real checking/savings/cash account, so
+  // createInvestmentMovement posts BOTH legs (see its own comment).
+  // Empty string ("no value" convention, same as categoryId/personId
+  // elsewhere) for YIELD, which never touches another account — refined
+  // as required for CONTRIBUTION/WITHDRAWAL by refineInvestmentMovement
+  // below rather than a conditional shape here.
+  transferAccountId: z.string(),
 });
 
 export type InvestmentMovementFormValues = z.input<typeof investmentMovementSchema>;
@@ -76,4 +85,23 @@ export const emptyInvestmentMovementFormValues: InvestmentMovementFormValues = {
   amount: "",
   date: "",
   description: "",
+  transferAccountId: "",
 };
+
+// Shared between the form's own live validation (movement-form.tsx) and
+// createInvestmentMovement's server-side check (investments/actions.ts),
+// same "one refine function, both places" split refineDebitTransaction/
+// refineCreditTransaction/refinePerson already use.
+export function refineInvestmentMovement(
+  data: InvestmentMovementValues,
+  ctx: z.RefinementCtx,
+  options: { messages: { transferAccountRequired: string } },
+) {
+  if (data.kind !== "YIELD" && !data.transferAccountId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["transferAccountId"],
+      message: options.messages.transferAccountRequired,
+    });
+  }
+}

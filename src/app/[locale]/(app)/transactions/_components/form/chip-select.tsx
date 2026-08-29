@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ComponentProps, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { parseLocalCalendarDate, formatLocalCalendarDate } from "@/lib/date";
@@ -17,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
+import { PickerSearchInput } from "@/components/form/picker-search-input";
 
 // The batch entry form's compact chip pattern — a small pill (unselected:
 // dashed border, accent text, shows the field's own label; selected:
@@ -83,8 +85,16 @@ export function ChipSelect<T extends string = string>({
   isInvalid,
   sheetTitle,
 }: ChipSelectProps<T>) {
+  const t = useTranslations("common");
   const isMobile = useIsMobile();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const [query, setQuery] = useState("");
+
+  function setOpen(next: boolean) {
+    if (!next) setQuery("");
+    setOpenState(next);
+  }
+  const open = openState;
 
   const selected = options.find((option) => option.value === value);
   const displayLabel = selected
@@ -99,10 +109,28 @@ export function ChipSelect<T extends string = string>({
     </ChipTrigger>
   );
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = normalizedQuery
+    ? options.filter((option) => {
+        const optionLabel = formatDisplay
+          ? formatDisplay(option.label)
+          : option.label;
+        return optionLabel.toLowerCase().includes(normalizedQuery);
+      })
+    : options;
+
   const content = (
     <>
+      {options.length > 0 ? (
+        <PickerSearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder={t("picker.searchPlaceholder")}
+          clearLabel={t("picker.searchClear")}
+        />
+      ) : null}
       <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
-        {options.map((option) => (
+        {filteredOptions.map((option) => (
           <button
             key={option.value}
             type="button"
@@ -118,6 +146,11 @@ export function ChipSelect<T extends string = string>({
             {formatDisplay ? formatDisplay(option.label) : option.label}
           </button>
         ))}
+        {normalizedQuery && filteredOptions.length === 0 ? (
+          <p className="px-2.5 py-2 text-xs text-muted-foreground">
+            {t("picker.noResults")}
+          </p>
+        ) : null}
       </div>
       {footer}
     </>
@@ -222,7 +255,10 @@ export function DateChipSelect({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent align="start" className="p-1.5">
+      {/* w-auto: the Calendar shrink-wraps to its own w-fit sizing —
+          PopoverContent's default w-72 left a blank strip on the right
+          otherwise (same fix as picker-row-field.tsx's DatePickerRowField). */}
+      <PopoverContent align="start" className="w-auto p-1.5">
         {content}
       </PopoverContent>
     </Popover>

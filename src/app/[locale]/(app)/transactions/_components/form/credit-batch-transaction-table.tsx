@@ -92,6 +92,13 @@ export function CreditBatchTransactionTable({
     (card) => card.status === "ACTIVE" || card.id === draft.cardId,
   );
 
+  // Only categories matching the draft row's own type — same rule the
+  // single-transaction forms' pickers follow.
+  const categoryType = draft.type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
   function patchDraft(patch: Partial<CreditBatchRowFormValues>) {
     setDraft((current) => {
       const next = { ...current, ...patch };
@@ -101,6 +108,14 @@ export function CreditBatchTransactionTable({
       // selectedAccount-scoped card list.
       if (patch.accountId !== undefined && patch.accountId !== current.accountId) {
         next.cardId = "";
+      }
+      // The category picker is scoped to the row's own type (see
+      // filteredCategories above) — switching type drops a categoryId
+      // that no longer matches.
+      if (patch.type !== undefined && patch.type !== current.type) {
+        const nextCategoryType = patch.type === "income" ? "INCOME" : "EXPENSE";
+        const category = categories.find((c) => c.id === current.categoryId);
+        if (category && category.type !== nextCategoryType) next.categoryId = "";
       }
       return next;
     });
@@ -301,7 +316,7 @@ export function CreditBatchTransactionTable({
               label={t("batch.columns.category")}
               value={draft.categoryId}
               onChange={(value) => patchDraft({ categoryId: value })}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}

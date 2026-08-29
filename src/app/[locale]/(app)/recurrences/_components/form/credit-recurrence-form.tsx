@@ -134,6 +134,7 @@ export function CreditRecurrenceCreateForm({
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
   const cardId = useStore(form.store, (state) => state.values.cardId);
 
   const evaluatedAmount = isCompoundExpression(amount)
@@ -154,6 +155,38 @@ export function CreditRecurrenceCreateForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the recurrence's own type make sense to
+  // pick from — same rule the transaction forms' pickers follow.
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
+
+  // Same "titular defaults in" behavior as
+  // transactions/credit-transaction-form.tsx's own effect — see its
+  // comment for the reasoning.
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (cardId && selectedAccount.cards.some((card) => card.id === cardId)) return;
+    const primaryCard = selectedAccount.cards[0];
+    if (primaryCard) {
+      form.setFieldValue("cardId", primaryCard.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId]);
 
   useEffect(() => {
     if (isDividing) {
@@ -295,7 +328,7 @@ export function CreditRecurrenceCreateForm({
         <form.AppField name="accountId">
           {(field) => (
             <field.PickerRowField
-              label={t("fields.account.label")}
+              label={t("fields.card.label")}
               placeholder={t("fields.choosePlaceholder")}
               options={selectableAccounts(accounts, accountId).map((account) => ({
                 value: account.id,
@@ -310,7 +343,7 @@ export function CreditRecurrenceCreateForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}
@@ -319,29 +352,27 @@ export function CreditRecurrenceCreateForm({
         </form.AppField>
       </ItemGroup>
 
-      {selectedAccount && (
-        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
-          <form.AppField name="cardId">
-            {(field) => (
-              <field.SelectField
-                label={t("fields.card.label")}
-                placeholder={t("fields.card.placeholder")}
-                options={selectedAccount.cards
-                  // Same allowance as selectableAccounts above: a
-                  // disabled card (tasks/013.md) drops out of NEW
-                  // selections but stays pickable if it's already the
-                  // one selected on this recurrence.
-                  .filter((card) => card.status === "ACTIVE" || card.id === cardId)
-                  .map((card) => ({
-                    value: card.id,
-                    label: card.lastFourDigits
-                      ? `${card.name} •••• ${card.lastFourDigits}`
-                      : card.name,
-                  }))}
-              />
-            )}
-          </form.AppField>
-        </div>
+      {selectedAccount && selectedAccount.cards.length > 1 && (
+        <form.AppField name="cardId">
+          {(field) => (
+            <field.SelectField
+              label={t("fields.card.holderLabel")}
+              placeholder={t("fields.card.placeholder")}
+              options={selectedAccount.cards
+                // Same allowance as selectableAccounts above: a
+                // disabled card (tasks/013.md) drops out of NEW
+                // selections but stays pickable if it's already the
+                // one selected on this recurrence.
+                .filter((card) => card.status === "ACTIVE" || card.id === cardId)
+                .map((card) => ({
+                  value: card.id,
+                  label: card.lastFourDigits
+                    ? `${card.name} •••• ${card.lastFourDigits}`
+                    : card.name,
+                }))}
+            />
+          )}
+        </form.AppField>
       )}
 
       <ItemGroup className="gap-0 divide-y rounded-md border border-border">
@@ -632,6 +663,7 @@ export function CreditRecurrenceEditForm({
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
   const cardId = useStore(form.store, (state) => state.values.cardId);
 
   const evaluatedAmount = isCompoundExpression(amount)
@@ -652,6 +684,38 @@ export function CreditRecurrenceEditForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the recurrence's own type make sense to
+  // pick from — same rule the transaction forms' pickers follow.
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
+
+  // Same "titular defaults in" behavior as
+  // transactions/credit-transaction-form.tsx's own effect — see its
+  // comment for the reasoning.
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (cardId && selectedAccount.cards.some((card) => card.id === cardId)) return;
+    const primaryCard = selectedAccount.cards[0];
+    if (primaryCard) {
+      form.setFieldValue("cardId", primaryCard.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId]);
 
   useEffect(() => {
     if (isDividing) {
@@ -794,7 +858,7 @@ export function CreditRecurrenceEditForm({
         <form.AppField name="accountId">
           {(field) => (
             <field.PickerRowField
-              label={t("fields.account.label")}
+              label={t("fields.card.label")}
               placeholder={t("fields.choosePlaceholder")}
               options={selectableAccounts(accounts, accountId).map((account) => ({
                 value: account.id,
@@ -809,7 +873,7 @@ export function CreditRecurrenceEditForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}
@@ -818,25 +882,23 @@ export function CreditRecurrenceEditForm({
         </form.AppField>
       </ItemGroup>
 
-      {selectedAccount && (
-        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
-          <form.AppField name="cardId">
-            {(field) => (
-              <field.SelectField
-                label={t("fields.card.label")}
-                placeholder={t("fields.card.placeholder")}
-                options={selectedAccount.cards
-                  .filter((card) => card.status === "ACTIVE" || card.id === cardId)
-                  .map((card) => ({
-                    value: card.id,
-                    label: card.lastFourDigits
-                      ? `${card.name} •••• ${card.lastFourDigits}`
-                      : card.name,
-                  }))}
-              />
-            )}
-          </form.AppField>
-        </div>
+      {selectedAccount && selectedAccount.cards.length > 1 && (
+        <form.AppField name="cardId">
+          {(field) => (
+            <field.SelectField
+              label={t("fields.card.holderLabel")}
+              placeholder={t("fields.card.placeholder")}
+              options={selectedAccount.cards
+                .filter((card) => card.status === "ACTIVE" || card.id === cardId)
+                .map((card) => ({
+                  value: card.id,
+                  label: card.lastFourDigits
+                    ? `${card.name} •••• ${card.lastFourDigits}`
+                    : card.name,
+                }))}
+            />
+          )}
+        </form.AppField>
       )}
 
       {/* Read-only — frequency/startDate can't be edited after creation.

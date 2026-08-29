@@ -10,10 +10,12 @@ import { todayCalendarDate } from "@/lib/date";
 import {
   investmentMovementSchema,
   investmentMovementKindValues,
+  refineInvestmentMovement,
   emptyInvestmentMovementFormValues,
   type InvestmentMovementFormValues,
   type InvestmentMovementKind,
 } from "../../_schema/schema";
+import type { TransferAccountOption } from "../../_types/types";
 
 type MovementFormProps = {
   initialKind: InvestmentMovementKind;
@@ -22,6 +24,10 @@ type MovementFormProps = {
   // createInvestmentMovement, investments/actions.ts) — same light-touch
   // validation spirit the rest of this app's forms use.
   accountBalance: number;
+  // Checking/savings/cash accounts eligible as the "other side" of the
+  // transfer (see the transferAccountId field below) — CONTRIBUTION and
+  // WITHDRAWAL need one, YIELD never shows the picker at all.
+  transferAccounts: TransferAccountOption[];
   onSubmit: (
     values: InvestmentMovementFormValues,
   ) => Promise<{ error: string | null }>;
@@ -31,6 +37,7 @@ type MovementFormProps = {
 export function MovementForm({
   initialKind,
   accountBalance,
+  transferAccounts,
   onSubmit,
   onSuccess,
 }: MovementFormProps) {
@@ -41,6 +48,9 @@ export function MovementForm({
   const schema = useMemo(
     () =>
       investmentMovementSchema.superRefine((value, ctx) => {
+        refineInvestmentMovement(value, ctx, {
+          messages: { transferAccountRequired: t("movement.errors.transferAccountRequired") },
+        });
         if (value.kind === "WITHDRAWAL" && value.amount > accountBalance) {
           ctx.addIssue({
             code: "custom",
@@ -151,6 +161,25 @@ export function MovementForm({
         <p className="-mt-2 text-xs text-muted-foreground">
           {t("movement.fields.currentValue.hint")}
         </p>
+      )}
+
+      {!isYield && (
+        <form.AppField name="transferAccountId">
+          {(field) => (
+            <field.SelectField
+              label={t(
+                kindValue === "WITHDRAWAL"
+                  ? "movement.fields.transferAccount.labelWithdrawal"
+                  : "movement.fields.transferAccount.labelContribution",
+              )}
+              placeholder={t("movement.fields.transferAccount.placeholder")}
+              options={transferAccounts.map((account) => ({
+                value: account.id,
+                label: account.name,
+              }))}
+            />
+          )}
+        </form.AppField>
       )}
 
       <form.AppField name="date">

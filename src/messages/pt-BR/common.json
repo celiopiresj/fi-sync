@@ -61,5 +61,10 @@
   "form": {
     "showPassword": "Mostrar senha",
     "hidePassword": "Ocultar senha"
+  },
+  "picker": {
+    "searchPlaceholder": "Buscar…",
+    "searchClear": "Limpar busca",
+    "noResults": "Nenhum resultado encontrado"
   }
 }

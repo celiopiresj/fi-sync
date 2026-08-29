@@ -22,6 +22,10 @@ import type { CategoryOption } from "../../_types/types";
 type BulkActionsBarProps = {
   selectedCount: number;
   categories: CategoryOption[];
+  // Already reflected in `categories` being empty (transactions-view.tsx
+  // sends none for a mixed selection) — kept as its own flag so the
+  // dropdown can explain WHY it's empty instead of looking broken.
+  isMixedSelection: boolean;
   isPending: boolean;
   onCategorize: (categoryId: string | null) => void;
   onChangeStatus: (status: BulkStatus) => void;
@@ -32,6 +36,7 @@ type BulkActionsBarProps = {
 export function BulkActionsBar({
   selectedCount,
   categories,
+  isMixedSelection,
   isPending,
   onCategorize,
   onChangeStatus,
@@ -73,14 +78,20 @@ export function BulkActionsBar({
             <DropdownMenuItem onSelect={() => onCategorize(null)}>
               {t("chart.byCategory.uncategorized")}
             </DropdownMenuItem>
-            {categories.map((category) => (
-              <DropdownMenuItem
-                key={category.id}
-                onSelect={() => onCategorize(category.id)}
-              >
-                {category.name}
-              </DropdownMenuItem>
-            ))}
+            {isMixedSelection ? (
+              <p className="px-2 py-1.5 text-xs text-muted-foreground">
+                {t("table.bulk.mixedTypesHint")}
+              </p>
+            ) : (
+              categories.map((category) => (
+                <DropdownMenuItem
+                  key={category.id}
+                  onSelect={() => onCategorize(category.id)}
+                >
+                  {category.name}
+                </DropdownMenuItem>
+              ))
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

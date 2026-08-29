@@ -105,15 +105,25 @@
       },
       "description": {
         "label": "Descrição (opcional)"
+      },
+      "transferAccount": {
+        "labelContribution": "De qual conta saiu",
+        "labelWithdrawal": "Para qual conta volta",
+        "placeholder": "Selecione a conta"
       }
     },
     "errors": {
-      "noChange": "O valor atual informado é igual ao saldo — nada para lançar"
+      "noChange": "O valor atual informado é igual ao saldo — nada para lançar",
+      "transferAccountRequired": "Selecione a conta de origem/destino"
     },
     "defaultDescription": {
       "contribution": "Aporte",
       "yield": "Rendimento",
       "withdrawal": "Resgate"
+    },
+    "transferDescription": {
+      "contribution": "Aporte em {accountName}",
+      "withdrawal": "Resgate de {accountName}"
     },
     "toast": {
       "contribution": "Aporte registrado",

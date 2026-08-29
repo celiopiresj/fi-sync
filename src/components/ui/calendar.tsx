@@ -7,10 +7,23 @@ import {
   type DayButton,
   type Locale,
 } from "react-day-picker"
+import { useLocale } from "next-intl"
+import { format, type Locale as DateFnsLocale } from "date-fns"
+import { ptBR, enUS } from "date-fns/locale"
 
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { CaretLeftIcon, CaretRightIcon, CaretDownIcon } from "@phosphor-icons/react"
+
+// react-day-picker defaults to English (enUS) unless a date-fns `locale`
+// is passed in — falls back to the app's own current locale (see
+// src/i18n/routing.ts) here so every caller gets a localized calendar
+// (weekday/month names, first day of week) for free instead of having to
+// pass `locale` at each of DatePickerRowField/DateChipSelect's call sites.
+const DATE_FNS_LOCALES: Record<string, Locale> = {
+  "pt-BR": ptBR,
+  en: enUS,
+}
 
 function Calendar({
   className,
@@ -26,6 +39,8 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
   const defaultClassNames = getDefaultClassNames()
+  const appLocale = useLocale()
+  const resolvedLocale = locale ?? DATE_FNS_LOCALES[appLocale]
 
   return (
     <DayPicker
@@ -37,10 +52,18 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
-      locale={locale}
+      locale={resolvedLocale}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString(locale?.code, { month: "short" }),
+          date.toLocaleString(resolvedLocale?.code, { month: "short" }),
+        // react-day-picker's own default weekday header ("cccccc", the
+        // short standalone form) is a fixed-width cell's worth in en-US
+        // ("Su", "Mo", 2 chars) but not in pt-BR ("dom", "seg", 3 chars —
+        // date-fns has no 2-char short form for Portuguese weekdays),
+        // which overflowed the header row. The narrow form ("ccccc") is
+        // a single letter in both locales, so it always fits.
+        formatWeekdayName: (weekday) =>
+          format(weekday, "ccccc", { locale: resolvedLocale as DateFnsLocale }),
         ...formatters,
       }}
       classNames={{
@@ -88,12 +111,12 @@ function Calendar({
           defaultClassNames.caption_label
         ),
         month_grid: cn("w-full border-collapse", defaultClassNames.month_grid),
-        weekdays: cn("flex", defaultClassNames.weekdays),
+        weekdays: cn("flex gap-1", defaultClassNames.weekdays),
         weekday: cn(
           "flex-1 rounded-(--cell-radius) text-[0.8rem] font-normal text-muted-foreground select-none",
           defaultClassNames.weekday
         ),
-        week: cn("mt-2 flex w-full", defaultClassNames.week),
+        week: cn("mt-2 flex w-full gap-1", defaultClassNames.week),
         week_number_header: cn(
           "w-(--cell-size) select-none",
           defaultClassNames.week_number_header
@@ -162,7 +185,7 @@ function Calendar({
           )
         },
         DayButton: ({ ...props }) => (
-          <CalendarDayButton locale={locale} {...props} />
+          <CalendarDayButton locale={resolvedLocale} {...props} />
         ),
         WeekNumber: ({ children, ...props }) => {
           return (

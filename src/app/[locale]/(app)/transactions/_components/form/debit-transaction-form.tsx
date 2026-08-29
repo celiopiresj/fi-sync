@@ -222,6 +222,7 @@ export function DebitTransactionForm({
   const date = useStore(form.store, (state) => state.values.date);
   const paymentMethod = useStore(form.store, (state) => state.values.paymentMethod);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
   const recurrence = useStore(form.store, (state) => state.values.recurrence);
   const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
   const isTouched = useStore(form.store, (state) => state.isTouched);
@@ -251,6 +252,32 @@ export function DebitTransactionForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the transaction's own type make sense to
+  // pick from — a "Salário" (income) category on an expense row, or
+  // vice-versa, was never a real option, just noise in the list.
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  // Switching the type toggle can leave a selected category that no
+  // longer matches — cleared rather than left silently invalid, so the
+  // field never submits a category of the wrong type. Skips the very
+  // first run (mount/prefill) so opening an existing row whose category
+  // predates this filter — nothing stopped that combination before —
+  // doesn't silently blank a category the user never touched.
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
 
   // Turning "Dividir com outras pessoas" on/off is what actually gates
   // whether `splits` is populated at all — off means the top Pessoa
@@ -482,7 +509,7 @@ export function DebitTransactionForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}

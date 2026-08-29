@@ -131,7 +131,8 @@
     },
     "card": {
       "label": "Cartão",
-      "placeholder": "Selecione o cartão"
+      "placeholder": "Selecione o cartão",
+      "holderLabel": "Portador"
     },
     "installments": {
       "label": "Parcelas",
@@ -217,6 +218,7 @@
     "paymentMethodRequired": "Selecione um método de pagamento para essa linha",
     "missingField": "Preencha: {field}",
     "creditCardNotAllowed": "Contas de cartão de crédito não são aceitas no lote — use o formulário único para lançamentos de cartão.",
+    "investmentAccountNotAllowed": "Contas de investimento/caixinha não são aceitas aqui — use a tela de Investimentos para aportes e resgates.",
     "creditCardRequired": "Selecione um cartão de crédito válido para essa linha",
     "columns": {
       "date": "Data",
@@ -258,7 +260,8 @@
       "changeStatus": "Mudar status",
       "clear": "Cancelar seleção",
       "selectRow": "Selecionar transação",
-      "selectAll": "Selecionar todas as transações"
+      "selectAll": "Selecionar todas as transações",
+      "mixedTypesHint": "Selecione apenas receitas ou apenas despesas para categorizar"
     }
   },
 

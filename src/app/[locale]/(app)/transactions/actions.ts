@@ -333,9 +333,13 @@ export async function previewInvoiceCycle(accountId: string, dateStr: string) {
   });
   if (!account?.creditCardDetails) return null;
 
-  const existing = await prisma.invoice.findFirst({
-    where: { accountId, closingDate: { gte: fromDate } },
-    orderBy: { closingDate: "asc" },
+  // Exact match on the deterministic cycle for fromDate — not "the
+  // nearest invoice that exists on or after fromDate" (see the identical
+  // fix + comment on resolveInvoiceForDate, src/lib/invoice-resolution.ts,
+  // for why a ">=" search silently skips over gap months).
+  const { closingDate, dueDate } = computeInvoiceCycle(fromDate, account.creditCardDetails);
+  const existing = await prisma.invoice.findUnique({
+    where: { accountId_closingDate: { accountId, closingDate } },
   });
 
   if (existing) {
@@ -346,7 +350,6 @@ export async function previewInvoiceCycle(accountId: string, dateStr: string) {
     };
   }
 
-  const { closingDate, dueDate } = computeInvoiceCycle(fromDate, account.creditCardDetails);
   return { closingDate, dueDate, existing: false };
 }
 
@@ -376,16 +379,35 @@ export async function previewInstallmentCycles(
   const cycles: { closingDate: Date; dueDate: Date }[] = [];
 
   for (let index = 0; index < installmentCount; index++) {
-    const existing = await prisma.invoice.findFirst({
-      where: { accountId, closingDate: { gte: cursorDate } },
-      orderBy: { closingDate: "asc" },
+    // Exact match on the deterministic cycle for cursorDate — see the
+    // identical fix + comment on resolveInvoiceForDate
+    // (src/lib/invoice-resolution.ts) for why a ">=" search across gap
+    // months (an account can easily have an invoice for an old month and
+    // for the current one but nothing in between) used to make this loop
+    // silently skip several installments' worth of months at once.
+    const computed = computeInvoiceCycle(cursorDate, creditCardDetails);
+    const existing = await prisma.invoice.findUnique({
+      where: { accountId_closingDate: { accountId, closingDate: computed.closingDate } },
     });
-    const cycle = existing ?? computeInvoiceCycle(cursorDate, creditCardDetails);
+    const cycle = existing ?? computed;
     cycles.push({ closingDate: cycle.closingDate, dueDate: cycle.dueDate });
-    cursorDate = fromAppZoned(addMonths(toAppZoned(cycle.closingDate), 1));
+    cursorDate = fromAppZoned(addMonths(toAppZoned(computed.closingDate), 1));
   }
 
   return cycles;
+}
+
+// Installment N's own transaction date: the purchase's original date
+// advanced by N months, with the day-of-month clamped by addMonths to
+// whatever the target month actually has (day 31 in a 30-day month
+// becomes 30; in Fev becomes 28/29) — same wall-clock-digits-only
+// reasoning as stepDate above. Always computed from the ORIGINAL date,
+// never cumulatively from the previous installment's (possibly already
+// clamped) date, so an earlier clamp can't compound into a wrong later
+// date (Jan 31 → +1 = Feb 28, +2 = Mar 31, not Mar 28 from re-adding a
+// month to the already-clamped Feb 28).
+function installmentDate(originalDate: Date, monthsAhead: number): Date {
+  return fromAppZoned(addMonths(toAppZoned(originalDate), monthsAhead));
 }
 
 function stepDate(date: Date, frequency: RecurrenceFrequencyOption) {
@@ -806,8 +828,9 @@ export async function createCreditTransaction(
 
   const skipPastInstallments = options?.skipPastInstallments ?? false;
   const todayDate = parseCalendarDate(todayCalendarDate());
+  const originalDate = parseCalendarDate(value.date);
   let createdCount = 0;
-  let cursorDate = parseCalendarDate(value.date);
+  let cursorDate = originalDate;
 
   for (let index = 0; index < installmentCount; index++) {
     // Pure, DB-free peek at this installment's cycle (mirrors
@@ -831,7 +854,7 @@ export async function createCreditTransaction(
       userId,
       value,
       amount: installmentAmount,
-      date: parseCalendarDate(value.date),
+      date: installmentDate(originalDate, index),
       creditCardDetails,
       installmentGroupId,
       installmentNumber: installmentGroupId ? index + 1 : undefined,
@@ -848,19 +871,28 @@ export async function createCreditTransaction(
   // silently creating nothing.
   if (skipPastInstallments && createdCount === 0) {
     const t = await getTranslations("scrn-transactions");
-    return { error: t("installments.noneUpcoming") };
+    return { error: t("fields.installments.noneUpcoming") };
   }
 
   revalidateCreditTransactions();
   return { error: null };
 }
 
-// v1 limitation: editing doesn't let you change installment count — only
-// the base fields, category, card, and splits. Re-doing installments/
-// invoices on edit is future work.
+// v1 limitation: editing an already-installment purchase's installment
+// count (or turning it back into a single à-vista charge) isn't
+// supported — only the base fields, category, card, and splits. The one
+// conversion this DOES handle is à vista → parcelada: turning a purchase
+// that wasn't part of an installment group into one, by generating the
+// remaining installments now (mirrors createCreditTransaction's own
+// installment loop, starting the cursor from this transaction's own
+// invoice instead of a freshly resolved one) — including the same
+// skipPastInstallments choice createCreditTransaction offers, since
+// converting an old purchase can put several of the new installments'
+// due dates already in the past.
 export async function updateCreditTransaction(
   id: string,
   data: CreditTransactionFormValues,
+  options?: { skipPastInstallments?: boolean },
 ) {
   const userId = await requireUserId();
   const result = await validateCredit(data);
@@ -877,8 +909,23 @@ export async function updateCreditTransaction(
     return { error: "Not found" };
   }
 
+  const installmentCount = value.installments;
+  const isConvertingToInstallments =
+    installmentCount > 1 && !existing.installmentGroupId;
+  const installmentGroupId = isConvertingToInstallments
+    ? crypto.randomUUID()
+    : undefined;
+  // Once converting, this transaction becomes installment 1/N — its own
+  // amount has to shrink from "the whole purchase" to "one installment's
+  // share" the same way createCreditTransaction's loop prices every row.
+  const amount = isConvertingToInstallments
+    ? value.installmentAmountMode === "perInstallment"
+      ? signedAmount
+      : signedAmount / installmentCount
+    : signedAmount;
+
   await prisma.transactionSplit.deleteMany({ where: { transactionId: id } });
-  const splitsCreateInput = resolveSplitsCreateInput(value, signedAmount);
+  const splitsCreateInput = resolveSplitsCreateInput(value, amount);
 
   await prisma.transaction.update({
     where: { id },
@@ -886,10 +933,13 @@ export async function updateCreditTransaction(
       accountId: value.accountId,
       categoryId: value.categoryId || null,
       description: value.description,
-      amount: signedAmount,
+      amount,
       date: parseCalendarDate(value.date),
       status: value.status,
       splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
+      ...(isConvertingToInstallments
+        ? { installmentGroupId, installmentNumber: 1, installmentCount }
+        : {}),
     },
   });
 
@@ -898,6 +948,61 @@ export async function updateCreditTransaction(
     update: { cardId: value.cardId },
     create: { transactionId: id, cardId: value.cardId },
   });
+
+  if (isConvertingToInstallments) {
+    const account = await prisma.account.findUnique({
+      where: { id: value.accountId, userId },
+      include: { creditCardDetails: true },
+    });
+    if (!account || account.type !== "CREDIT_CARD" || !account.creditCardDetails) {
+      return { error: "Invalid account" };
+    }
+    const creditCardDetails = account.creditCardDetails;
+
+    const firstDate = parseCalendarDate(value.date);
+    const firstInvoice = await resolveInvoiceForDate(
+      value.accountId,
+      firstDate,
+      creditCardDetails,
+    );
+    const skipPastInstallments = options?.skipPastInstallments ?? false;
+    const todayDate = parseCalendarDate(todayCalendarDate());
+    let cursorDate = fromAppZoned(addMonths(toAppZoned(firstInvoice.closingDate), 1));
+    let createdCount = 0;
+
+    for (let index = 1; index < installmentCount; index++) {
+      const peekCycle = computeInvoiceCycle(cursorDate, creditCardDetails);
+
+      if (skipPastInstallments && peekCycle.dueDate < todayDate) {
+        cursorDate = fromAppZoned(addMonths(toAppZoned(peekCycle.closingDate), 1));
+        continue;
+      }
+
+      createdCount++;
+      const { nextCursorDate } = await createCreditTransactionRow({
+        userId,
+        value,
+        amount,
+        date: installmentDate(firstDate, index),
+        creditCardDetails,
+        installmentGroupId,
+        installmentNumber: index + 1,
+        installmentCount,
+        cursorDate,
+      });
+      cursorDate = nextCursorDate;
+    }
+
+    // Only reachable if every one of the NEW installments' (2..N) due
+    // dates was already in the past — shouldn't normally happen, since
+    // the form only offers "apenas as próximas" when at least one is
+    // still upcoming, but guarded here too rather than silently leaving
+    // this transaction claiming N installments while only 1 exists.
+    if (skipPastInstallments && createdCount === 0) {
+      const t = await getTranslations("scrn-transactions");
+      return { error: t("fields.installments.noneUpcoming") };
+    }
+  }
 
   revalidateCreditTransactions();
   return { error: null };
@@ -975,7 +1080,8 @@ export async function createCreditTransactionsBatch(
     // creditBatchRowSchema (no installmentAmountMode here).
     const installmentAmount = signedAmount / installmentCount;
 
-    let cursorDate = parseCalendarDate(value.date);
+    const originalDate = parseCalendarDate(value.date);
+    let cursorDate = originalDate;
 
     for (let index = 0; index < installmentCount; index++) {
       const { nextCursorDate } = await createCreditTransactionRow({
@@ -991,7 +1097,7 @@ export async function createCreditTransactionsBatch(
           type: value.type,
         },
         amount: installmentAmount,
-        date: parseCalendarDate(value.date),
+        date: installmentDate(originalDate, index),
         creditCardDetails,
         installmentGroupId,
         installmentNumber: installmentGroupId ? index + 1 : undefined,
@@ -1067,12 +1173,19 @@ export async function deleteTransactionsBulk(ids: string[]) {
   const userId = await requireUserId();
   if (ids.length === 0) return { error: null, count: 0 };
 
-  const result = await prisma.$transaction(async (tx) => {
-    const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, ids);
-    const deleteResult = await tx.transaction.deleteMany({ where: { id: { in: ids }, userId } });
-    await recomputeAffectedInvoices(tx, affectedInvoiceIds);
-    return deleteResult;
-  });
+  const result = await prisma.$transaction(
+    async (tx) => {
+      const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, ids);
+      const deleteResult = await tx.transaction.deleteMany({ where: { id: { in: ids }, userId } });
+      await recomputeAffectedInvoices(tx, affectedInvoiceIds);
+      return deleteResult;
+    },
+    // Same "unbounded work scaling with how many rows the user selected"
+    // risk createTransactionsBatch's own $transaction call has, past
+    // Prisma's 5000ms interactive-transaction default — see that call's
+    // own comment for the real timeout failure this mirrors.
+    { timeout: 30000 },
+  );
 
   revalidateCreditTransactions();
   return { error: null, count: result.count };
@@ -1100,11 +1213,14 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
   }
 
   // Batch entry is debit-only — BatchTransactionTable already hides
-  // credit-card accounts from the picker, so this is the server-side
-  // backstop for a stale client submitting one anyway. Without it the
-  // row would create a real Transaction with no TransactionCard/
-  // TransactionInvoice link, since none of that logic runs here the way
-  // it does in createCreditTransaction.
+  // credit-card AND investment/pocket accounts from the picker, so this
+  // is the server-side backstop for a stale client submitting one
+  // anyway. A credit-card row would create a real Transaction with no
+  // TransactionCard/TransactionInvoice link, since none of that logic
+  // runs here the way it does in createCreditTransaction; an investment/
+  // pocket row would bypass createInvestmentMovement's transfer-pair
+  // logic entirely, posting a single-leg Transaction that never touches
+  // any other account.
   const accountIds = [
     ...new Set(parsedRows.map(({ value }) => value.accountId)),
   ];
@@ -1129,8 +1245,12 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
     if (!value.paymentMethod) {
       return { error: t("batch.paymentMethodRequired"), rowIndex: index };
     }
-    if (accountTypeById.get(value.accountId) === "CREDIT_CARD") {
+    const rowAccountType = accountTypeById.get(value.accountId);
+    if (rowAccountType === "CREDIT_CARD") {
       return { error: t("batch.creditCardNotAllowed"), rowIndex: index };
+    }
+    if (rowAccountType === "INVESTMENT" || rowAccountType === "POCKET") {
+      return { error: t("batch.investmentAccountNotAllowed"), rowIndex: index };
     }
   }
 
@@ -1153,6 +1273,14 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
         },
       });
     }),
+    // Prisma's own interactive-transaction default (5000ms) was never
+    // meant for a batch whose size scales with however many rows the
+    // user queued up — over Neon's serverless driver, each row is a real
+    // network round-trip, so a batch of even a few dozen rows can
+    // legitimately take longer than that. This was a real, verified
+    // failure ("Transaction API error: A rollback cannot be executed on
+    // an expired transaction... 24441 ms passed"), not a hypothetical.
+    { timeout: 30000 },
   );
 
   revalidateTransactions();

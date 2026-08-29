@@ -61,5 +61,10 @@
   "form": {
     "showPassword": "Show password",
     "hidePassword": "Hide password"
+  },
+  "picker": {
+    "searchPlaceholder": "Search…",
+    "searchClear": "Clear search",
+    "noResults": "No results found"
   }
 }

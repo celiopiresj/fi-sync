@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { useFieldContext } from "@/lib/form/form-context";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -10,6 +11,7 @@ import {
   formatLocalCalendarDate,
 } from "@/lib/date";
 import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
+import { PickerSearchInput } from "@/components/form/picker-search-input";
 import {
   Popover,
   PopoverContent,
@@ -48,6 +50,7 @@ function PickerRow({
   open,
   onOpenChange,
   sheetTitle,
+  popoverClassName,
   children,
 }: {
   label: string;
@@ -58,6 +61,12 @@ function PickerRow({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sheetTitle: string;
+  // Overrides PopoverContent's own default `w-72` — the flat option list
+  // (PickerRowField) wants that fixed width for readable rows, but the
+  // Calendar (DatePickerRowField) is meant to shrink-wrap to its own
+  // `w-fit` sizing instead, which left a blank strip on the popover's
+  // right side when stuck inside the wider default.
+  popoverClassName?: string;
   children: ReactNode;
 }) {
   // Same 768px cutoff as the drawer's own md breakpoint (see
@@ -112,7 +121,7 @@ function PickerRow({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      <PopoverContent align="start" className="p-1.5">
+      <PopoverContent align="start" className={cn("p-1.5", popoverClassName)}>
         {children}
       </PopoverContent>
     </Popover>
@@ -190,10 +199,16 @@ export function PickerRowField({
   open: openProp,
   onOpenChange: onOpenChangeProp,
 }: PickerRowFieldProps) {
+  const t = useTranslations("common");
   const field = useFieldContext<string>();
   const [openState, setOpenState] = useState(false);
+  const [query, setQuery] = useState("");
   const open = openProp ?? openState;
-  const onOpenChange = onOpenChangeProp ?? setOpenState;
+
+  function handleOpenChange(next: boolean) {
+    if (!next) setQuery("");
+    (onOpenChangeProp ?? setOpenState)(next);
+  }
 
   const selectedOption = options.find(
     (option) => option.value === field.state.value,
@@ -205,9 +220,17 @@ export function PickerRowField({
     : emptyOption?.label;
   const isFilled = displayLabel !== undefined;
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = normalizedQuery
+    ? options.filter((option) => {
+        const label = formatDisplay ? formatDisplay(option.label) : option.label;
+        return label.toLowerCase().includes(normalizedQuery);
+      })
+    : options;
+
   function choose(value: string) {
     field.handleChange(value);
-    onOpenChange(false);
+    handleOpenChange(false);
   }
 
   return (
@@ -219,9 +242,17 @@ export function PickerRowField({
         isFilled={isFilled}
         disabled={disabled}
         open={open}
-        onOpenChange={onOpenChange}
+        onOpenChange={handleOpenChange}
         sheetTitle={sheetTitle ?? label}
       >
+        {options.length > 0 ? (
+          <PickerSearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder={t("picker.searchPlaceholder")}
+            clearLabel={t("picker.searchClear")}
+          />
+        ) : null}
         <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
           {emptyOption ? (
             <PickerOption
@@ -230,7 +261,7 @@ export function PickerRowField({
               onClick={() => choose("")}
             />
           ) : null}
-          {options.map((option) => (
+          {filteredOptions.map((option) => (
             <PickerOption
               key={option.value}
               label={formatDisplay ? formatDisplay(option.label) : option.label}
@@ -238,6 +269,11 @@ export function PickerRowField({
               onClick={() => choose(option.value)}
             />
           ))}
+          {normalizedQuery && filteredOptions.length === 0 ? (
+            <p className="px-2.5 py-2 text-xs text-muted-foreground">
+              {t("picker.noResults")}
+            </p>
+          ) : null}
         </div>
         {footer}
       </PickerRow>
@@ -299,6 +335,7 @@ export function DatePickerRowField({
         open={open}
         onOpenChange={setOpen}
         sheetTitle={sheetTitle ?? label}
+        popoverClassName="w-auto"
       >
         <Calendar
           mode="single"

@@ -188,15 +188,17 @@ export function CreditTransactionForm({
   const form = useZodForm(schema, {
     defaultValues: toFormValues(initialValues, defaultPersonId),
     onSubmit: async ({ value }) => {
-      // Editing never regenerates installments (v1 limitation,
-      // createCreditTransaction/updateCreditTransaction), so the
-      // past-due prompt only applies to a brand-new installment purchase.
+      // Editing an existing à-vista purchase into installments only
+      // ever CREATES installments 2..N (installment 1 is this same
+      // transaction, already dated whenever it was) — so the past-due
+      // check has to look at the first of those NEW installments'
+      // cycles, not installment 1's own (firstNewInstallmentCycle below
+      // already accounts for that offset).
       const submittedInstallmentCount = Number(value.installments || "1");
       if (
-        !isEditing &&
         submittedInstallmentCount > 1 &&
-        firstInstallmentCycle &&
-        new Date(firstInstallmentCycle.dueDate) < new Date(todayCalendarDate())
+        firstNewInstallmentCycle &&
+        new Date(firstNewInstallmentCycle.dueDate) < new Date(todayCalendarDate())
       ) {
         setPastInstallmentsValue(value);
         return;
@@ -214,6 +216,7 @@ export function CreditTransactionForm({
   const date = useStore(form.store, (state) => state.values.date);
   const cardId = useStore(form.store, (state) => state.values.cardId);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
   const installments = useStore(form.store, (state) => state.values.installments);
   const recurrence = useStore(form.store, (state) => state.values.recurrence);
   const installmentAmountMode = useStore(
@@ -248,6 +251,45 @@ export function CreditTransactionForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the transaction's own type make sense to
+  // pick from — same rule debit-transaction-form.tsx's own picker
+  // follows. "income" here covers "Estorno" too — same underlying
+  // schema value, just relabeled on this form (see the type field's own
+  // comment below).
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
+
+  // The account's own primary card (cards[0], "Titular" — see
+  // credit-card-form.tsx's own comment on that ordering convention)
+  // defaults into cardId as soon as its account is picked, instead of
+  // forcing a second manual selection for the common case of a single
+  // cardholder. Only kicks in when the current cardId doesn't already
+  // belong to the newly selected account (covers both a fresh pick and
+  // switching accounts) — an edit's already-correct cardId is left alone.
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (cardId && selectedAccount.cards.some((card) => card.id === cardId)) return;
+    const primaryCard = selectedAccount.cards[0];
+    if (primaryCard) {
+      form.setFieldValue("cardId", primaryCard.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId]);
 
   useEffect(() => {
     if (isDividing) {
@@ -341,16 +383,23 @@ export function CreditTransactionForm({
   const installmentCyclesQuery = useQuery({
     queryKey: ["credit-transaction-installment-cycles", accountId, date, installmentCount],
     queryFn: () => previewInstallmentCycles(accountId, date, installmentCount),
-    enabled: !isEditing && Boolean(accountId) && Boolean(date) && installmentCount > 1,
+    enabled: Boolean(accountId) && Boolean(date) && installmentCount > 1,
   });
-  const firstInstallmentCycle = installmentCyclesQuery.data?.[0];
+  // When editing, cycles[0] belongs to installment 1 — this same
+  // transaction, already existing regardless of any of this — so only
+  // cycles[1..] (the ones a submit would actually CREATE) matter for the
+  // past-due check and the "add all vs only upcoming" counts below.
+  const newInstallmentCycles = isEditing
+    ? installmentCyclesQuery.data?.slice(1)
+    : installmentCyclesQuery.data;
+  const firstNewInstallmentCycle = newInstallmentCycles?.[0];
   const upcomingInstallmentsCount =
-    installmentCyclesQuery.data?.filter(
+    newInstallmentCycles?.filter(
       (cycle) => new Date(cycle.dueDate) >= new Date(todayCalendarDate()),
     ).length ?? 0;
 
   const missingFieldLabel = !accountId
-    ? t("fields.account.label")
+    ? t("fields.card.label")
     : !description
       ? t("fields.description.label")
       : !amount
@@ -358,7 +407,7 @@ export function CreditTransactionForm({
         : !date
           ? t("fields.date.label")
           : !cardId
-            ? t("fields.card.label")
+            ? t("fields.card.holderLabel")
             : null;
 
   return (
@@ -452,7 +501,7 @@ export function CreditTransactionForm({
         <form.AppField name="accountId">
           {(field) => (
             <field.PickerRowField
-              label={t("fields.account.label")}
+              label={t("fields.card.label")}
               placeholder={t("fields.choosePlaceholder")}
               options={accounts.map((account) => ({
                 value: account.id,
@@ -467,7 +516,7 @@ export function CreditTransactionForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}
@@ -520,26 +569,32 @@ export function CreditTransactionForm({
       )}
 
       {selectedAccount && (
-        <div className="flex flex-col gap-4 rounded-md border border-border p-3">
-          <form.AppField name="cardId">
-            {(field) => (
-              <field.SelectField
-                label={t("fields.card.label")}
-                placeholder={t("fields.card.placeholder")}
-                options={selectedAccount.cards
-                  // A disabled card (tasks/013.md) drops out of NEW
-                  // selections but stays pickable here if it's already
-                  // the one selected.
-                  .filter((card) => card.status === "ACTIVE" || card.id === cardId)
-                  .map((card) => ({
-                    value: card.id,
-                    label: card.lastFourDigits
-                      ? `${card.name} •••• ${card.lastFourDigits}`
-                      : card.name,
-                  }))}
-              />
-            )}
-          </form.AppField>
+        <>
+          {/* Only worth asking "which card" once there's more than the
+              titular's own — same rule the person picker follows
+              elsewhere in this form. The default-cardId effect above
+              already keeps the titular selected either way. */}
+          {selectedAccount.cards.length > 1 && (
+            <form.AppField name="cardId">
+              {(field) => (
+                <field.SelectField
+                  label={t("fields.card.holderLabel")}
+                  placeholder={t("fields.card.placeholder")}
+                  options={selectedAccount.cards
+                    // A disabled card (tasks/013.md) drops out of NEW
+                    // selections but stays pickable here if it's already
+                    // the one selected.
+                    .filter((card) => card.status === "ACTIVE" || card.id === cardId)
+                    .map((card) => ({
+                      value: card.id,
+                      label: card.lastFourDigits
+                        ? `${card.name} •••• ${card.lastFourDigits}`
+                        : card.name,
+                    }))}
+                />
+              )}
+            </form.AppField>
+          )}
 
           {showInstallments && (
             <form.AppField name="installments">
@@ -578,7 +633,7 @@ export function CreditTransactionForm({
               )}
             </div>
           )}
-        </div>
+        </>
       )}
 
       <Accordion type="single" collapsible>
@@ -790,13 +845,13 @@ export function CreditTransactionForm({
         </div>
       </div>
 
-      {pastInstallmentsValue && firstInstallmentCycle && (
+      {pastInstallmentsValue && firstNewInstallmentCycle && (
         <PastInstallmentsDialog
           open
           onOpenChange={(open) => {
             if (!open) setPastInstallmentsValue(null);
           }}
-          firstDueDate={new Date(firstInstallmentCycle.dueDate)}
+          firstDueDate={new Date(firstNewInstallmentCycle.dueDate)}
           totalInstallments={Number(pastInstallmentsValue.installments || "1")}
           upcomingInstallments={upcomingInstallmentsCount}
           isSubmitting={isSubmitting}

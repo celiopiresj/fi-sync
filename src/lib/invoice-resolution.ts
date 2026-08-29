@@ -72,14 +72,25 @@ export async function resolveInvoiceForDate(
   cardDetails: { closingDay: number; dueDay: number },
   client: Prisma.TransactionClient | typeof prisma = prisma,
 ) {
-  const existing = await client.invoice.findFirst({
-    where: { accountId, closingDate: { gte: fromDate } },
-    orderBy: { closingDate: "asc" },
+  // computeInvoiceCycle is a pure, deterministic function of fromDate —
+  // there's exactly one correct cycle for it, so the lookup below has to
+  // be an EXACT match on that cycle's closingDate, not "the nearest
+  // invoice that happens to exist on or after fromDate" (the old
+  // `findFirst(... gte: fromDate ...)` query). Invoices are created
+  // lazily, one per cycle a transaction actually lands in, so an account
+  // can easily have gaps — e.g. April's invoice exists (an old purchase)
+  // and August's does too (today's), but May/June/July never got one.
+  // A ">=" search over that gap would jump straight from April to
+  // August, silently attaching several installments' worth of months to
+  // the wrong invoice. The `@@unique([accountId, closingDate])` index
+  // makes an exact match just as cheap.
+  const { closingDate, dueDate } = computeInvoiceCycle(fromDate, cardDetails);
+
+  const existing = await client.invoice.findUnique({
+    where: { accountId_closingDate: { accountId, closingDate } },
   });
 
   if (existing) return existing;
-
-  const { closingDate, dueDate } = computeInvoiceCycle(fromDate, cardDetails);
 
   try {
     return await client.invoice.create({
@@ -92,9 +103,8 @@ export async function resolveInvoiceForDate(
       "code" in error &&
       error.code === "P2002"
     ) {
-      const created = await client.invoice.findFirst({
-        where: { accountId, closingDate: { gte: fromDate } },
-        orderBy: { closingDate: "asc" },
+      const created = await client.invoice.findUnique({
+        where: { accountId_closingDate: { accountId, closingDate } },
       });
       if (created) return created;
     }

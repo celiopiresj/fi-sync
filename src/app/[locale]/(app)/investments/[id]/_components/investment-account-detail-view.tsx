@@ -24,6 +24,7 @@ import { getAccountColorClasses } from "../../_lib/account-color";
 import type {
   InvestmentAccountDetail,
   InvestmentMovementRow,
+  TransferAccountOption,
 } from "../../_types/types";
 import type {
   InvestmentMovementFormValues,
@@ -34,10 +35,12 @@ type MovementDialogState = { kind: InvestmentMovementKind } | null;
 
 type InvestmentAccountDetailViewProps = {
   account: InvestmentAccountDetail;
+  transferAccounts: TransferAccountOption[];
 };
 
 export function InvestmentAccountDetailView({
   account,
+  transferAccounts,
 }: InvestmentAccountDetailViewProps) {
   const t = useTranslations("scrn-investments");
   const tCommon = useTranslations("common");
@@ -166,6 +169,7 @@ export function InvestmentAccountDetailView({
         }}
         accountId={account.id}
         accountBalance={account.balance}
+        transferAccounts={transferAccounts}
         initialKind={movementDialog?.kind ?? "CONTRIBUTION"}
         onSubmit={handleMovementSubmit}
       />

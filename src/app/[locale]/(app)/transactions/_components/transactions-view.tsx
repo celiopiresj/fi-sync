@@ -304,12 +304,18 @@ export function TransactionsView({
   // transaction *list* by an old, now-inactive account is still useful.
   // Split by account type (tasks/015.md: debit and credit are separate
   // forms with separate account pickers) rather than one combined list.
+  // Investment/pocket accounts are excluded too — aporte/resgate against
+  // them only ever goes through the dedicated Investments screen now
+  // (investments/actions.ts's own createInvestmentMovement posts both
+  // transfer legs), never this general debit form.
   const selectableDebitAccounts = useMemo(() => {
     const editingAccountId =
       dialogState?.mode === "edit" ? dialogState.row.accountId : undefined;
     return accounts.filter(
       (account) =>
-        account.type !== "CREDIT_CARD" &&
+        (account.type === "CHECKING" ||
+          account.type === "SAVINGS" ||
+          account.type === "CASH") &&
         (account.status === "ACTIVE" || account.id === editingAccountId),
     );
   }, [accounts, dialogState]);
@@ -457,7 +463,7 @@ export function TransactionsView({
   ) {
     const isEditing = dialogState?.mode === "edit";
     const result = isEditing
-      ? await updateCreditTransaction(dialogState.row.id, values)
+      ? await updateCreditTransaction(dialogState.row.id, values, options)
       : await createCreditTransaction(values, options);
 
     if (!result.error) {
@@ -702,20 +708,39 @@ export function TransactionsView({
       onSelectedIdsChange: setSelectedIds,
       selectAllLabel: t("table.bulk.selectAll"),
       selectRowLabel: t("table.bulk.selectRow"),
-      renderBulkActions: (ids: Set<string>) => (
-        <BulkActionsBar
-          selectedCount={ids.size}
-          categories={categories}
-          isPending={isBulkActionPending}
-          onCategorize={handleBulkCategorize}
-          onChangeStatus={handleBulkStatusChange}
-          onDeleteRequest={() => setIsBulkDeleteOpen(true)}
-          onClear={() => setSelectedIds(new Set())}
-        />
-      ),
+      renderBulkActions: (ids: Set<string>) => {
+        // Same "only categories matching the transaction's own type"
+        // rule the create/edit forms' pickers follow — a bulk selection
+        // spanning both income and expense rows has no single type to
+        // filter by, so it offers no categories at all rather than a
+        // list that would be wrong for half the selection.
+        const selectedTypes = new Set<string>(
+          transactions
+            .filter((transaction) => ids.has(transaction.id))
+            .map((transaction) => (transaction.amount < 0 ? "EXPENSE" : "INCOME")),
+        );
+        const isMixedSelection = selectedTypes.size > 1;
+        const bulkCategories = isMixedSelection
+          ? []
+          : categories.filter((category) => selectedTypes.has(category.type));
+
+        return (
+          <BulkActionsBar
+            selectedCount={ids.size}
+            categories={bulkCategories}
+            isMixedSelection={isMixedSelection}
+            isPending={isBulkActionPending}
+            onCategorize={handleBulkCategorize}
+            onChangeStatus={handleBulkStatusChange}
+            onDeleteRequest={() => setIsBulkDeleteOpen(true)}
+            onClear={() => setSelectedIds(new Set())}
+          />
+        );
+      },
     }),
     [
       selectedIds,
+      transactions,
       categories,
       isBulkActionPending,
       t,

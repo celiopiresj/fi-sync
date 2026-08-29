@@ -1,8 +1,13 @@
-import { listInvestmentAccounts } from "./actions";
+import { listInvestmentAccounts, listTransferAccounts } from "./actions";
 import { InvestmentsView } from "./_components/investments-view";
 
 export default async function InvestmentsPage() {
-  const accounts = await listInvestmentAccounts();
+  const [accounts, transferAccounts] = await Promise.all([
+    listInvestmentAccounts(),
+    listTransferAccounts(),
+  ]);
 
-  return <InvestmentsView initialAccounts={accounts} />;
+  return (
+    <InvestmentsView initialAccounts={accounts} transferAccounts={transferAccounts} />
+  );
 }

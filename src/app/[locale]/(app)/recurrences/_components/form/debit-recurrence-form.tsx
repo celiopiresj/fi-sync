@@ -157,6 +157,7 @@ export function DebitRecurrenceCreateForm({
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
 
   const evaluatedAmount = isCompoundExpression(amount)
     ? evaluateExpression(amount)
@@ -182,6 +183,25 @@ export function DebitRecurrenceCreateForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the recurrence's own type make sense to
+  // pick from — same rule the transaction forms' pickers follow.
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
 
   useEffect(() => {
     if (isDividing) {
@@ -334,7 +354,7 @@ export function DebitRecurrenceCreateForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}
@@ -660,6 +680,7 @@ export function DebitRecurrenceEditForm({
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
   const type = useStore(form.store, (state) => state.values.type);
+  const categoryId = useStore(form.store, (state) => state.values.categoryId);
 
   const evaluatedAmount = isCompoundExpression(amount)
     ? evaluateExpression(amount)
@@ -679,6 +700,25 @@ export function DebitRecurrenceEditForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Only categories matching the recurrence's own type make sense to
+  // pick from — same rule the transaction forms' pickers follow.
+  const categoryType = type === "income" ? "INCOME" : "EXPENSE";
+  const filteredCategories = categories.filter(
+    (category) => category.type === categoryType,
+  );
+
+  const isFirstCategoryTypeRender = useRef(true);
+  useEffect(() => {
+    if (isFirstCategoryTypeRender.current) {
+      isFirstCategoryTypeRender.current = false;
+      return;
+    }
+    if (categoryId && !filteredCategories.some((c) => c.id === categoryId)) {
+      form.setFieldValue("categoryId", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryType]);
 
   useEffect(() => {
     if (isDividing) {
@@ -839,7 +879,7 @@ export function DebitRecurrenceEditForm({
             <field.PickerRowField
               label={t("fields.category.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={categories.map((category) => ({
+              options={filteredCategories.map((category) => ({
                 value: category.id,
                 label: category.name,
               }))}

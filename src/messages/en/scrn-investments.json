@@ -105,15 +105,25 @@
       },
       "description": {
         "label": "Description (optional)"
+      },
+      "transferAccount": {
+        "labelContribution": "Which account it came from",
+        "labelWithdrawal": "Which account it goes back to",
+        "placeholder": "Select the account"
       }
     },
     "errors": {
-      "noChange": "The current value entered matches the balance — nothing to record"
+      "noChange": "The current value entered matches the balance — nothing to record",
+      "transferAccountRequired": "Select the source/destination account"
     },
     "defaultDescription": {
       "contribution": "Contribution",
       "yield": "Yield",
       "withdrawal": "Withdrawal"
+    },
+    "transferDescription": {
+      "contribution": "Contribution to {accountName}",
+      "withdrawal": "Withdrawal from {accountName}"
     },
     "toast": {
       "contribution": "Contribution recorded",

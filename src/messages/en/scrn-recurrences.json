@@ -141,7 +141,8 @@
     },
     "card": {
       "label": "Card",
-      "placeholder": "Select the card"
+      "placeholder": "Select the card",
+      "holderLabel": "Cardholder"
     },
     "person": {
       "label": "Person",
