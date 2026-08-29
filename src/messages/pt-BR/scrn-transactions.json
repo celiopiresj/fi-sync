@@ -147,7 +147,8 @@
       "totalPreview": "Total: {value}"
     },
     "invoicePreview": {
-      "label": "Cai na fatura que fecha em {closingDate} e vence em {dueDate}"
+      "label": "Cai na fatura que fecha em {closingDate} e vence em {dueDate}",
+      "currentInstallment": "Na fatura atual, seria a parcela {number} de {total}."
     },
     "date": {
       "label": "Data"

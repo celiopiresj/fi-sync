@@ -147,7 +147,8 @@
       "totalPreview": "Total: {value}"
     },
     "invoicePreview": {
-      "label": "Falls in the invoice that closes on {closingDate} and is due on {dueDate}"
+      "label": "Falls in the invoice that closes on {closingDate} and is due on {dueDate}",
+      "currentInstallment": "In the current invoice, this would be installment {number} of {total}."
     },
     "date": {
       "label": "Date"

@@ -398,6 +398,31 @@ export function CreditTransactionForm({
       (cycle) => new Date(cycle.dueDate) >= new Date(todayCalendarDate()),
     ).length ?? 0;
 
+  // Which of the N installments (1-based) the invoice CURRENTLY open for
+  // this account corresponds to — matched by closingDate against
+  // installmentCyclesQuery's own cycles (installment 1..N, unaffected by
+  // the edit-mode slice above: installmentNumber always starts at 1
+  // regardless of create vs. à-vista→parcelada conversion). Purely
+  // informational context for a backdated/postdated purchase — "where
+  // does 'now' fall in this installment sequence" — so it stays null
+  // (nothing rendered) whenever the sequence doesn't reach the current
+  // invoice at all (every installment already past, or every one still
+  // ahead of it).
+  const { data: currentInvoiceCycle } = useQuery({
+    queryKey: ["credit-transaction-current-invoice-cycle", accountId],
+    queryFn: () => previewInvoiceCycle(accountId, todayCalendarDate()),
+    enabled: Boolean(accountId) && installmentCount > 1,
+  });
+  const currentInstallmentIndex = currentInvoiceCycle
+    ? (installmentCyclesQuery.data?.findIndex(
+        (cycle) =>
+          new Date(cycle.closingDate).getTime() ===
+          new Date(currentInvoiceCycle.closingDate).getTime(),
+      ) ?? -1)
+    : -1;
+  const currentInstallmentNumber =
+    currentInstallmentIndex >= 0 ? currentInstallmentIndex + 1 : null;
+
   const missingFieldLabel = !accountId
     ? t("fields.card.label")
     : !description
@@ -565,6 +590,15 @@ export function CreditTransactionForm({
               DATE_ONLY_FORMAT_OPTIONS,
             ),
           })}
+          {currentInstallmentNumber && (
+            <>
+              {" "}
+              {t("fields.invoicePreview.currentInstallment", {
+                number: currentInstallmentNumber,
+                total: installmentCount,
+              })}
+            </>
+          )}
         </p>
       )}
 
