@@ -20,6 +20,7 @@ import {
 import { PlusIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import { CreatePersonInline } from "./create-person-inline";
 import { PastInstallmentsDialog } from "./past-installments-dialog";
+import { EditInstallmentScopeDialog } from "./edit-installment-scope-dialog";
 import {
   creditTransactionSchema,
   refineCreditTransaction,
@@ -111,7 +112,10 @@ type CreditTransactionFormProps = {
   defaultPersonId: string | null;
   onSubmit: (
     values: CreditTransactionFormValues,
-    options?: { skipPastInstallments?: boolean },
+    options?: {
+      skipPastInstallments?: boolean;
+      editScope?: "this" | "all" | "future";
+    },
   ) => Promise<{ error: string | null }>;
   onSuccess: () => void;
 };
@@ -161,10 +165,19 @@ export function CreditTransactionForm({
 
   const [pastInstallmentsValue, setPastInstallmentsValue] =
     useState<CreditTransactionFormValues | null>(null);
+  const [pendingEditScopeValue, setPendingEditScopeValue] =
+    useState<CreditTransactionFormValues | null>(null);
+
+  // Editing a row that's already part of an installment group always
+  // asks how far the change should reach (EditInstallmentScopeDialog
+  // below) — a brand-new à-vista→parcelada conversion (handled by the
+  // past-due check above instead) never has this, since installmentGroupId
+  // is only set once a purchase is already an installment purchase.
+  const isInstallmentGroupEdit = isEditing && Boolean(initialValues?.installmentGroupId);
 
   async function performSubmit(
     value: CreditTransactionFormValues,
-    options?: { skipPastInstallments?: boolean },
+    options?: { skipPastInstallments?: boolean; editScope?: "this" | "all" | "future" },
   ) {
     setServerError(null);
     try {
@@ -205,6 +218,10 @@ export function CreditTransactionForm({
         new Date(firstNewInstallmentCycle.dueDate) < new Date(todayCalendarDate())
       ) {
         setPastInstallmentsValue(value);
+        return;
+      }
+      if (isInstallmentGroupEdit) {
+        setPendingEditScopeValue(value);
         return;
       }
       await performSubmit(value);
@@ -255,6 +272,15 @@ export function CreditTransactionForm({
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
+
+  // Whether the pending edit actually changed the amount — decides
+  // whether EditInstallmentScopeDialog offers "esta e as próximas"
+  // alongside "esta"/"todas" (see the dialog's own isAmountChange doc).
+  const isPendingAmountChange =
+    pendingEditScopeValue !== null &&
+    initialValues !== null &&
+    Number(pendingEditScopeValue.amount.replace(",", ".")) !==
+      Math.abs(initialValues.amount);
 
   // Only categories matching the transaction's own type make sense to
   // pick from — same rule debit-transaction-form.tsx's own picker
@@ -900,6 +926,23 @@ export function CreditTransactionForm({
           onAddUpcoming={async () => {
             await performSubmit(pastInstallmentsValue, { skipPastInstallments: true });
             setPastInstallmentsValue(null);
+          }}
+        />
+      )}
+
+      {pendingEditScopeValue && initialValues && (
+        <EditInstallmentScopeDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPendingEditScopeValue(null);
+          }}
+          installmentNumber={initialValues.installmentNumber ?? 1}
+          installmentCount={initialValues.installmentCount ?? 1}
+          isAmountChange={isPendingAmountChange}
+          isSubmitting={isSubmitting}
+          onChooseScope={async (scope) => {
+            await performSubmit(pendingEditScopeValue, { editScope: scope });
+            setPendingEditScopeValue(null);
           }}
         />
       )}

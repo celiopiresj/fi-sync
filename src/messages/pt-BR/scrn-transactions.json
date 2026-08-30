@@ -349,6 +349,13 @@
       "addAll": "Adicionar todas",
       "addUpcoming": "Apenas as próximas",
       "cancel": "Cancelar"
+    },
+    "editInstallmentScope": {
+      "title": "Editar parcela {number} de {total}",
+      "description": "Como você quer aplicar essa alteração?",
+      "this": "Apenas esta parcela",
+      "future": "Esta e as próximas parcelas",
+      "all": "Todas as parcelas"
     }
   },
 

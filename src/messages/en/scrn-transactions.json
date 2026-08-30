@@ -349,6 +349,13 @@
       "addAll": "Add all",
       "addUpcoming": "Only the upcoming ones",
       "cancel": "Cancel"
+    },
+    "editInstallmentScope": {
+      "title": "Edit installment {number} of {total}",
+      "description": "How do you want to apply this change?",
+      "this": "Only this installment",
+      "future": "This and future installments",
+      "all": "All installments"
     }
   },
 

@@ -463,7 +463,7 @@ export function TransactionsView({
 
   async function handleSubmitCredit(
     values: Parameters<typeof createCreditTransaction>[0],
-    options?: Parameters<typeof createCreditTransaction>[1],
+    options?: Parameters<typeof updateCreditTransaction>[2],
   ) {
     const isEditing = dialogState?.mode === "edit";
     const result = isEditing

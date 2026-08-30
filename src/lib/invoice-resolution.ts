@@ -1,7 +1,20 @@
-import { addMonths, setDate } from "date-fns";
+import { addMonths, getDaysInMonth, setDate } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { toAppZoned, fromAppZoned } from "@/lib/date";
 import type { Prisma } from "@/generated/prisma/client";
+
+// Plain `setDate(date, day)` OVERFLOWS into the next month when `day`
+// doesn't exist in `date`'s own month (e.g. day 29 in a non-leap
+// February) — unlike `addMonths`, which CLAMPS to that month's last day
+// instead. That inconsistency meant a card with closingDay 29/30/31
+// computed a wrong closing date (rolled into the following month) for
+// any purchase dated in a February — confirmed against real data: every
+// transaction dated in Feb 2027 resolved to a March 1st "closing date"
+// instead of Feb 28th. Clamping the day here first keeps both functions'
+// month-boundary behavior consistent.
+function setDateClamped(date: Date, day: number): Date {
+  return setDate(date, Math.min(day, getDaysInMonth(date)));
+}
 
 // Pure calculation of one credit-card billing cycle from the account's
 // expected closingDay/dueDay — no Prisma, no side effects. Shared by
@@ -31,14 +44,19 @@ export function computeInvoiceCycle(
   // The closing day itself is already the NEXT invoice's opening day —
   // not the last day still accepted by the one closing that day — so a
   // purchase dated exactly on the closing day (`<=`, not `<`) has to push
-  // forward a month too, not just one strictly after it.
-  let closingDate = setDate(zonedFrom, cardDetails.closingDay);
+  // forward a month too, not just one strictly after it. Pushing
+  // re-derives the day from `zonedFrom` (not from the already-clamped
+  // `closingDate`) — advancing a CLAMPED date (e.g. Feb 28, standing in
+  // for a nonexistent day 29) with `addMonths` would just carry that
+  // clamped 28 forward into March too, instead of resolving back to the
+  // 29th once the target month actually has one.
+  let closingDate = setDateClamped(zonedFrom, cardDetails.closingDay);
   if (closingDate <= zonedFrom) {
-    closingDate = addMonths(closingDate, 1);
+    closingDate = setDateClamped(addMonths(zonedFrom, 1), cardDetails.closingDay);
   }
-  let dueDate = setDate(closingDate, cardDetails.dueDay);
+  let dueDate = setDateClamped(closingDate, cardDetails.dueDay);
   if (dueDate < closingDate) {
-    dueDate = addMonths(dueDate, 1);
+    dueDate = setDateClamped(addMonths(closingDate, 1), cardDetails.dueDay);
   }
 
   return {
@@ -66,13 +84,13 @@ export function computeCurrentInvoiceCycle(
   // correctly still counts that same day as "just closed" (today's own
   // cycle), not "closed last month" — the two must never both treat the
   // boundary day as belonging to themselves, or as belonging to neither.
-  let closingDate = setDate(zonedFrom, cardDetails.closingDay);
+  let closingDate = setDateClamped(zonedFrom, cardDetails.closingDay);
   if (closingDate > zonedFrom) {
-    closingDate = addMonths(closingDate, -1);
+    closingDate = setDateClamped(addMonths(zonedFrom, -1), cardDetails.closingDay);
   }
-  let dueDate = setDate(closingDate, cardDetails.dueDay);
+  let dueDate = setDateClamped(closingDate, cardDetails.dueDay);
   if (dueDate < closingDate) {
-    dueDate = addMonths(dueDate, 1);
+    dueDate = setDateClamped(addMonths(closingDate, 1), cardDetails.dueDay);
   }
 
   return {

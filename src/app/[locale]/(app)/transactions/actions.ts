@@ -186,6 +186,41 @@ export async function listTransactions(filters: TransactionFilters = {}) {
   }));
 }
 
+// Single-row counterpart of listTransactions above — same `include`/
+// Decimal-to-number mapping, returning the exact `TransactionRow` shape
+// CreditTransactionForm's toFormValues (and DebitTransactionForm's own)
+// expect as `prefill`. Exported (rather than kept route-local) so the
+// invoices route's own purchase-editing flow can open the same edit
+// sheet this route uses — duplicating updateCreditTransaction's
+// installment-conversion logic there wasn't worth the self-containment
+// convention's usual per-route duplication, unlike the small pure
+// queries/helpers that convention is meant for.
+export async function getTransactionById(id: string) {
+  const userId = await requireUserId();
+
+  const transaction = await prisma.transaction.findUnique({
+    where: { id, userId },
+    include: {
+      account: { select: { id: true, name: true, type: true } },
+      category: { select: { id: true, name: true, icon: true } },
+      splits: { include: { person: { select: { id: true, name: true } } } },
+      transactionCard: {
+        include: { card: { select: { id: true, name: true, lastFourDigits: true } } },
+      },
+    },
+  });
+  if (!transaction) return null;
+
+  return {
+    ...transaction,
+    amount: transaction.amount.toNumber(),
+    splits: transaction.splits.map((split) => ({
+      ...split,
+      amount: split.amount.toNumber(),
+    })),
+  };
+}
+
 export type MonthlyBalance = { month: string; monthLabel: string; balance: number };
 
 // The 6 months before `anchorPeriod` plus `anchorPeriod` itself, oldest
@@ -453,7 +488,15 @@ export async function previewInstallmentCycles(
     });
     const cycle = existing ?? computed;
     cycles.push({ closingDate: cycle.closingDate, dueDate: cycle.dueDate });
-    cursorDate = fromAppZoned(addMonths(toAppZoned(computed.closingDate), 1));
+    // +1 DAY, not +1 month — see computeCurrentInvoiceCycle's own note
+    // in src/lib/invoice-resolution.ts: computeInvoiceCycle now treats
+    // landing exactly ON a closing day as already belonging to the NEXT
+    // cycle (the "dia de fechamento é o dia de abertura da próxima
+    // fatura" rule), so feeding it the previous closing date itself
+    // would double-advance — one real cycle skipped every iteration.
+    // Nudging 1 day past it lands unambiguously inside the next cycle's
+    // own window instead.
+    cursorDate = fromAppZoned(addDays(toAppZoned(computed.closingDate), 1));
   }
 
   return cycles;
@@ -797,7 +840,24 @@ async function createCreditTransactionRow(params: {
   });
 
   const invoice = await resolveInvoiceForDate(value.accountId, cursorDate, creditCardDetails);
-  const nextCursorDate = fromAppZoned(addMonths(toAppZoned(invoice.closingDate), 1));
+  // Advances from the pure, freshly-computed closingDate — never
+  // `invoice.closingDate` itself. That field can come back from Prisma
+  // as the DB's own UTC-midnight `@db.Date` representation (see
+  // src/lib/date.ts's file-level comment on reading one of these
+  // columns back), which isn't the same zoning `toAppZoned`/`fromAppZoned`
+  // produce for a value headed into more date-fns math — piping a
+  // DB-read value through that pipeline a second time drifted the
+  // closing day by however many hours APP_TIME_ZONE's own offset is,
+  // silently landing later installments on the wrong day (verified: an
+  // account with closingDay 29 started minting day-30 invoices a few
+  // installments into a purchase). +1 DAY, not +1 month, for the same
+  // reason previewInstallmentCycles' own identical cursor advance uses
+  // addDays now — see computeCurrentInvoiceCycle's comment in
+  // src/lib/invoice-resolution.ts on why landing a cursor exactly ON a
+  // closing day would otherwise double-advance a full cycle.
+  const nextCursorDate = fromAppZoned(
+    addDays(toAppZoned(computeInvoiceCycle(cursorDate, creditCardDetails).closingDate), 1),
+  );
 
   await prisma.transactionInvoice.create({
     data: { transactionId: transaction.id, invoiceId: invoice.id },
@@ -907,7 +967,8 @@ export async function createCreditTransaction(
     const peekCycle = computeInvoiceCycle(cursorDate, creditCardDetails);
 
     if (skipPastInstallments && peekCycle.dueDate < todayDate) {
-      cursorDate = fromAppZoned(addMonths(toAppZoned(peekCycle.closingDate), 1));
+      // +1 day, not +1 month — see computeCurrentInvoiceCycle's own note.
+      cursorDate = fromAppZoned(addDays(toAppZoned(peekCycle.closingDate), 1));
       continue;
     }
 
@@ -951,10 +1012,23 @@ export async function createCreditTransaction(
 // skipPastInstallments choice createCreditTransaction offers, since
 // converting an old purchase can put several of the new installments'
 // due dates already in the past.
+//
+// `editScope` covers the other direction: editing a row that's already
+// PART of an installment group. "this" (default) only ever touches the
+// one row, same as always. "all"/"future" additionally propagate
+// description/categoryId/status/splits (and amount, only if it actually
+// changed) to every sibling installment, or just installmentNumber >=
+// this one's for "future" — never accountId/cardId/date, since those are
+// genuinely per-installment (retargeting a whole group's card would mean
+// re-resolving every affected row's invoice, a bigger change than this
+// covers). Splits are reapplied via the same literal amounts typed here
+// against each target row, not rescaled to that row's own total — fine
+// when every affected row ends up the same amount (the common case for
+// "all"/"future"), a known simplification otherwise.
 export async function updateCreditTransaction(
   id: string,
   data: CreditTransactionFormValues,
-  options?: { skipPastInstallments?: boolean },
+  options?: { skipPastInstallments?: boolean; editScope?: "this" | "all" | "future" },
 ) {
   const userId = await requireUserId();
   const result = await validateCredit(data);
@@ -1022,21 +1096,27 @@ export async function updateCreditTransaction(
     const creditCardDetails = account.creditCardDetails;
 
     const firstDate = parseCalendarDate(value.date);
-    const firstInvoice = await resolveInvoiceForDate(
-      value.accountId,
-      firstDate,
-      creditCardDetails,
-    );
+    // Result unused — this call's only job here is to ensure the first
+    // installment's invoice exists; the cycles below are pure
+    // recomputations (see the comment above), not reads of this return.
+    await resolveInvoiceForDate(value.accountId, firstDate, creditCardDetails);
     const skipPastInstallments = options?.skipPastInstallments ?? false;
     const todayDate = parseCalendarDate(todayCalendarDate());
-    let cursorDate = fromAppZoned(addMonths(toAppZoned(firstInvoice.closingDate), 1));
+    // Pure recomputation, not firstInvoice.closingDate directly — see
+    // createCreditTransactionRow's own identical comment on why a
+    // DB-read closingDate can't safely re-enter the toAppZoned/addDays/
+    // fromAppZoned pipeline a second time. +1 day, not +1 month — see
+    // computeCurrentInvoiceCycle's own note in invoice-resolution.ts.
+    let cursorDate = fromAppZoned(
+      addDays(toAppZoned(computeInvoiceCycle(firstDate, creditCardDetails).closingDate), 1),
+    );
     let createdCount = 0;
 
     for (let index = 1; index < installmentCount; index++) {
       const peekCycle = computeInvoiceCycle(cursorDate, creditCardDetails);
 
       if (skipPastInstallments && peekCycle.dueDate < todayDate) {
-        cursorDate = fromAppZoned(addMonths(toAppZoned(peekCycle.closingDate), 1));
+        cursorDate = fromAppZoned(addDays(toAppZoned(peekCycle.closingDate), 1));
         continue;
       }
 
@@ -1063,6 +1143,43 @@ export async function updateCreditTransaction(
     if (skipPastInstallments && createdCount === 0) {
       const t = await getTranslations("scrn-transactions");
       return { error: t("fields.installments.noneUpcoming") };
+    }
+  }
+
+  const editScope = options?.editScope ?? "this";
+  if (existing.installmentGroupId && editScope !== "this") {
+    const amountChanged = Math.abs(existing.amount.toNumber() - amount) > 0.001;
+
+    const siblings = await prisma.transaction.findMany({
+      where: {
+        userId,
+        installmentGroupId: existing.installmentGroupId,
+        id: { not: id },
+        ...(editScope === "future" && existing.installmentNumber != null
+          ? { installmentNumber: { gte: existing.installmentNumber } }
+          : {}),
+      },
+    });
+
+    // Sequential, not Promise.all — same "one row at a time" discipline
+    // every other multi-row loop in this file follows against Neon's
+    // serverless driver.
+    for (const sibling of siblings) {
+      const siblingAmount = amountChanged ? amount : sibling.amount.toNumber();
+      await prisma.transactionSplit.deleteMany({ where: { transactionId: sibling.id } });
+      const siblingSplitsCreateInput = resolveSplitsCreateInput(value, siblingAmount);
+      await prisma.transaction.update({
+        where: { id: sibling.id },
+        data: {
+          categoryId: value.categoryId || null,
+          description: value.description,
+          status: value.status,
+          ...(amountChanged ? { amount: siblingAmount } : {}),
+          splits: siblingSplitsCreateInput
+            ? { create: siblingSplitsCreateInput }
+            : undefined,
+        },
+      });
     }
   }
 
