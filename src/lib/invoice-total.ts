@@ -4,13 +4,23 @@ import type { Prisma } from "@/generated/prisma/client";
 // duplicated in invoices/actions.ts (listInvoices, getInvoiceDetail) and
 // cards/actions.ts (listCreditCardAccounts) — an Invoice has no stored
 // total, it's always derived from its TransactionInvoice join rows.
+//
+// Nets the SIGNED amounts first, then takes the magnitude of that net —
+// not the sum of each row's own magnitude. Those two only agree when
+// every linked transaction has the same sign; a refund/reversal
+// (positive) mixed in with the invoice's expenses (negative) is supposed
+// to REDUCE the total, but summing per-row absolute values adds its
+// magnitude instead, overstating the invoice by 2x that refund. Verified
+// against a real invoice: two refunds totaling R$50.46 inflated the
+// displayed total by R$100.92 (2x) versus the real bank statement.
 export function sumInvoiceTransactionsTotal(
   transactionInvoices: { transaction: { amount: { toNumber(): number } } }[],
 ): number {
-  return transactionInvoices.reduce(
-    (sum, ti) => sum + Math.abs(ti.transaction.amount.toNumber()),
+  const netAmount = transactionInvoices.reduce(
+    (sum, ti) => sum + ti.transaction.amount.toNumber(),
     0,
   );
+  return Math.abs(netAmount);
 }
 
 // Single source of truth for deriving an Invoice's cached
