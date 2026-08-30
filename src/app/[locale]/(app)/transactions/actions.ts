@@ -515,6 +515,14 @@ function installmentDate(originalDate: Date, monthsAhead: number): Date {
   return fromAppZoned(addMonths(toAppZoned(originalDate), monthsAhead));
 }
 
+// Mirrors recurrences/actions.ts's own GENERATION_WINDOW_MONTHS — a
+// recurrence started from this screen must behave identically to one
+// created from /recurrences (same rolling-window generation, so it
+// shows up as "active" in listRecurrences and supports the same
+// extendRecurrenceGeneration flow) rather than a separate "repeat N
+// times and then silently stop" shortcut.
+const RECURRENCE_GENERATION_WINDOW_MONTHS = 12;
+
 function stepDate(date: Date, frequency: RecurrenceFrequencyOption) {
   if (frequency === "none") return date;
   // Do the arithmetic on the App-timezone wall-clock digits, not the
@@ -693,21 +701,31 @@ export async function createDebitTransaction(data: DebitTransactionFormValues) {
   }
 
   if (value.recurrence !== "none") {
+    const startDate = parseCalendarDate(value.date);
+    const windowEnd = fromAppZoned(
+      addMonths(toAppZoned(startDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
+    );
+    // personId is required on this form (unlike the batch rows' own
+    // plain-string version) so this never comes back null — the ternary
+    // below just satisfies resolveSplitsCreateInput's wider return type.
+    const splitsCreateInput = resolveSplitsCreateInput(value, signedAmount);
+
     const recurrence = await prisma.recurrence.create({
       data: {
         userId,
         accountId: value.accountId,
         categoryId: value.categoryId || undefined,
+        paymentMethod: value.paymentMethod === "" ? undefined : value.paymentMethod,
         description: value.description,
         amount: signedAmount,
         frequency: value.recurrence.toUpperCase() as "DAILY" | "WEEKLY" | "MONTHLY",
-        startDate: parseCalendarDate(value.date),
+        startDate,
+        splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
       },
     });
 
-    let occurrenceDate = parseCalendarDate(value.date);
-
-    for (let index = 0; index < value.recurrenceCount; index++) {
+    let occurrenceDate = startDate;
+    while (occurrenceDate <= windowEnd) {
       await createDebitTransactionRow({
         userId,
         value,
@@ -757,6 +775,35 @@ export async function updateDebitTransaction(
   await prisma.transactionSplit.deleteMany({ where: { transactionId: id } });
 
   const splitsCreateInput = resolveSplitsCreateInput(value, signedAmount);
+  const editedDate = parseCalendarDate(value.date);
+
+  // Turning "Repetir" on while editing an until-now one-off transaction
+  // converts it into the first occurrence of a brand new recurrence —
+  // same shape as this screen's own create path (see
+  // RECURRENCE_GENERATION_WINDOW_MONTHS above), just starting from this
+  // row instead of a fresh one. A transaction that's already part of a
+  // recurrence (existing.recurrenceId set) ignores this field instead of
+  // starting a second, conflicting chain — editing an existing rule's own
+  // frequency/occurrences is /recurrences' own job, not this form's.
+  const isConvertingToRecurrence =
+    value.recurrence !== "none" && existing.recurrenceId === null;
+  const newRecurrenceId = isConvertingToRecurrence
+    ? (
+        await prisma.recurrence.create({
+          data: {
+            userId,
+            accountId: value.accountId,
+            categoryId: value.categoryId || undefined,
+            paymentMethod: value.paymentMethod === "" ? undefined : value.paymentMethod,
+            description: value.description,
+            amount: signedAmount,
+            frequency: value.recurrence.toUpperCase() as "DAILY" | "WEEKLY" | "MONTHLY",
+            startDate: editedDate,
+            splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
+          },
+        })
+      ).id
+    : undefined;
 
   await prisma.transaction.update({
     where: { id },
@@ -765,12 +812,30 @@ export async function updateDebitTransaction(
       categoryId: value.categoryId || null,
       description: value.description,
       amount: signedAmount,
-      date: parseCalendarDate(value.date),
+      date: editedDate,
       status: value.status,
       paymentMethod: value.paymentMethod === "" ? null : value.paymentMethod,
+      recurrenceId: newRecurrenceId,
       splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
     },
   });
+
+  if (isConvertingToRecurrence && newRecurrenceId) {
+    const windowEnd = fromAppZoned(
+      addMonths(toAppZoned(editedDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
+    );
+    let occurrenceDate = stepDate(editedDate, value.recurrence);
+    while (occurrenceDate <= windowEnd) {
+      await createDebitTransactionRow({
+        userId,
+        value,
+        amount: signedAmount,
+        date: occurrenceDate,
+        recurrenceId: newRecurrenceId,
+      });
+      occurrenceDate = stepDate(occurrenceDate, value.recurrence);
+    }
+  }
 
   revalidateTransactions();
   return { error: null };
@@ -898,27 +963,37 @@ export async function createCreditTransaction(
   const creditCardDetails = account.creditCardDetails;
 
   // Recorrência and installments are mutually exclusive (enforced in
-  // refineCreditTransaction) — recurrence generates N independent
-  // transactions, one per date, sharing a lightweight `Recurrence` rule
-  // row (same "recorrência rápida" shortcut the debit form offers — no
-  // RecurrenceSplit template, since every generated occurrence closes
-  // over this same `value` directly instead).
+  // refineCreditTransaction) — recurrence generates transactions across a
+  // rolling window, same as a rule created directly on /recurrences (see
+  // RECURRENCE_GENERATION_WINDOW_MONTHS), sharing one `Recurrence` row
+  // (with its own RecurrenceSplit template) so it shows up there too and
+  // can be extended/edited from that screen going forward.
   if (value.recurrence !== "none") {
+    const startDate = parseCalendarDate(value.date);
+    const windowEnd = fromAppZoned(
+      addMonths(toAppZoned(startDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
+    );
+    // personId is required on this form (unlike the batch rows' own
+    // plain-string version) so this never comes back null — the ternary
+    // below just satisfies resolveSplitsCreateInput's wider return type.
+    const splitsCreateInput = resolveSplitsCreateInput(value, signedAmount);
+
     const recurrence = await prisma.recurrence.create({
       data: {
         userId,
         accountId: value.accountId,
+        cardId: value.cardId,
         categoryId: value.categoryId || undefined,
         description: value.description,
         amount: signedAmount,
         frequency: value.recurrence.toUpperCase() as "DAILY" | "WEEKLY" | "MONTHLY",
-        startDate: parseCalendarDate(value.date),
+        startDate,
+        splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
       },
     });
 
-    let occurrenceDate = parseCalendarDate(value.date);
-
-    for (let index = 0; index < value.recurrenceCount; index++) {
+    let occurrenceDate = startDate;
+    while (occurrenceDate <= windowEnd) {
       await createCreditTransactionRow({
         userId,
         value,
@@ -1060,8 +1135,41 @@ export async function updateCreditTransaction(
       : signedAmount / installmentCount
     : signedAmount;
 
+  const editedDate = parseCalendarDate(value.date);
+
+  // Same "turning Repetir on converts this row into the first occurrence
+  // of a new recurrence" conversion as updateDebitTransaction's own — see
+  // its comment. `installmentGroupId === null` guards a case
+  // refineCreditTransaction can't: it blocks recurrence+installments on a
+  // single submission, but editing ONE existing installment of an
+  // already-established group (installmentCount here can still be 1,
+  // this row's own share) is a separate condition — this row must not
+  // become both an installment AND the start of a recurrence at once.
+  const isConvertingToRecurrence =
+    value.recurrence !== "none" &&
+    existing.recurrenceId === null &&
+    existing.installmentGroupId === null;
+
   await prisma.transactionSplit.deleteMany({ where: { transactionId: id } });
   const splitsCreateInput = resolveSplitsCreateInput(value, amount);
+
+  const newRecurrenceId = isConvertingToRecurrence
+    ? (
+        await prisma.recurrence.create({
+          data: {
+            userId,
+            accountId: value.accountId,
+            cardId: value.cardId,
+            categoryId: value.categoryId || undefined,
+            description: value.description,
+            amount: signedAmount,
+            frequency: value.recurrence.toUpperCase() as "DAILY" | "WEEKLY" | "MONTHLY",
+            startDate: editedDate,
+            splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
+          },
+        })
+      ).id
+    : undefined;
 
   await prisma.transaction.update({
     where: { id },
@@ -1070,8 +1178,9 @@ export async function updateCreditTransaction(
       categoryId: value.categoryId || null,
       description: value.description,
       amount,
-      date: parseCalendarDate(value.date),
+      date: editedDate,
       status: value.status,
+      recurrenceId: newRecurrenceId,
       splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
       ...(isConvertingToInstallments
         ? { installmentGroupId, installmentNumber: 1, installmentCount }
@@ -1085,6 +1194,33 @@ export async function updateCreditTransaction(
     create: { transactionId: id, cardId: value.cardId },
   });
 
+  if (isConvertingToRecurrence && newRecurrenceId) {
+    const account = await prisma.account.findUnique({
+      where: { id: value.accountId, userId },
+      include: { creditCardDetails: true },
+    });
+    if (!account || account.type !== "CREDIT_CARD" || !account.creditCardDetails) {
+      return { error: "Invalid account" };
+    }
+    const creditCardDetails = account.creditCardDetails;
+    const windowEnd = fromAppZoned(
+      addMonths(toAppZoned(editedDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
+    );
+    let occurrenceDate = stepDate(editedDate, value.recurrence);
+    while (occurrenceDate <= windowEnd) {
+      await createCreditTransactionRow({
+        userId,
+        value,
+        amount: signedAmount,
+        date: occurrenceDate,
+        creditCardDetails,
+        recurrenceId: newRecurrenceId,
+        cursorDate: occurrenceDate,
+      });
+      occurrenceDate = stepDate(occurrenceDate, value.recurrence);
+    }
+  }
+
   if (isConvertingToInstallments) {
     const account = await prisma.account.findUnique({
       where: { id: value.accountId, userId },
@@ -1095,7 +1231,7 @@ export async function updateCreditTransaction(
     }
     const creditCardDetails = account.creditCardDetails;
 
-    const firstDate = parseCalendarDate(value.date);
+    const firstDate = editedDate;
     // Result unused — this call's only job here is to ensure the first
     // installment's invoice exists; the cycles below are pure
     // recomputations (see the comment above), not reads of this return.

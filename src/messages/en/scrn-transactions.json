@@ -161,9 +161,7 @@
       "none": "Don't repeat",
       "daily": "Daily",
       "weekly": "Weekly",
-      "monthly": "Monthly",
-      "countLabel": "How many times",
-      "countPlaceholder": "Number of repetitions"
+      "monthly": "Monthly"
     },
     "choosePlaceholder": "Choose"
   },

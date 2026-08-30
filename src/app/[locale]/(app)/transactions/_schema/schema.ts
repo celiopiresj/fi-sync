@@ -114,11 +114,12 @@ export const debitTransactionSchema = z.object({
   date: z.string().min(1),
   status: z.enum(transactionStatusValues),
   paymentMethod: z.enum(["", ...paymentMethodValues]),
+  // Generates a rolling window of occurrences sharing one Recurrence
+  // rule row, same as /recurrences' own creation — see
+  // RECURRENCE_GENERATION_WINDOW_MONTHS in actions.ts. No count field:
+  // unlike installments, a recurrence has no fixed number of repeats to
+  // ask for up front.
   recurrence: z.enum(recurrenceFrequencyValues),
-  recurrenceCount: z
-    .string()
-    .transform((value) => (value ? Number(value) : 1))
-    .pipe(z.number().int().min(1)),
   // Who the transaction is attributed to when NOT divided between people
   // — same "no value" convention as categoryId (plain empty string, not
   // `.optional()`), since form state always reads a `string`
@@ -153,7 +154,6 @@ export const emptyDebitTransactionFormValues: DebitTransactionFormValues = {
   status: "COMPLETED",
   paymentMethod: "",
   recurrence: "none",
-  recurrenceCount: "1",
   personId: "",
   // Empty until "Dividir com outras pessoas" is turned on — the form
   // seeds splits[0] (the "Pagou" row) from `personId` at that point. See
@@ -227,11 +227,9 @@ export const creditTransactionSchema = z.object({
     .transform((value) => (value ? Number(value) : 1))
     .pipe(z.number().int().min(1)),
   installmentAmountMode: z.enum(installmentAmountModeValues),
+  // Same rolling-window generation as debitTransactionSchema's own — see
+  // its comment above.
   recurrence: z.enum(recurrenceFrequencyValues),
-  recurrenceCount: z
-    .string()
-    .transform((value) => (value ? Number(value) : 1))
-    .pipe(z.number().int().min(1)),
   // Who the purchase is attributed to when NOT divided between people —
   // same personId/splits convention as debitTransactionSchema above.
   personId: z.string().min(1),
@@ -253,7 +251,6 @@ export const emptyCreditTransactionFormValues: CreditTransactionFormValues = {
   installments: "1",
   installmentAmountMode: "total",
   recurrence: "none",
-  recurrenceCount: "1",
   personId: "",
   splits: [],
 };

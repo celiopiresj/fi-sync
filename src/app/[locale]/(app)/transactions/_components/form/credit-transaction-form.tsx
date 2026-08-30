@@ -91,7 +91,6 @@ function toFormValues(
     installments: "1",
     installmentAmountMode: "total",
     recurrence: "none",
-    recurrenceCount: "1",
     personId: row.splits[0]?.personId ?? "",
     splits:
       row.splits.length > 1
@@ -708,31 +707,18 @@ export function CreditTransactionForm({
           <AccordionContent className="px-0.5">
             <div className="flex flex-col gap-4 pt-2">
               {showRecurrence && (
-                <div className="flex flex-col gap-4">
-                  <form.AppField name="recurrence">
-                    {(field) => (
-                      <field.SelectField
-                        label={t("fields.recurrence.label")}
-                        placeholder={t("fields.recurrence.label")}
-                        options={recurrenceFrequencyValues.map((frequency) => ({
-                          value: frequency,
-                          label: t(`fields.recurrence.${frequency}`),
-                        }))}
-                      />
-                    )}
-                  </form.AppField>
-
-                  {recurrence !== "none" && (
-                    <form.AppField name="recurrenceCount">
-                      {(field) => (
-                        <field.TextField
-                          label={t("fields.recurrence.countLabel")}
-                          placeholder={t("fields.recurrence.countPlaceholder")}
-                        />
-                      )}
-                    </form.AppField>
+                <form.AppField name="recurrence">
+                  {(field) => (
+                    <field.SelectField
+                      label={t("fields.recurrence.label")}
+                      placeholder={t("fields.recurrence.label")}
+                      options={recurrenceFrequencyValues.map((frequency) => ({
+                        value: frequency,
+                        label: t(`fields.recurrence.${frequency}`),
+                      }))}
+                    />
                   )}
-                </div>
+                </form.AppField>
               )}
 
               <form.AppField name="status">

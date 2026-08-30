@@ -95,7 +95,6 @@ function toFormValues(
     status: row.status,
     paymentMethod: row.paymentMethod ?? "",
     recurrence: "none",
-    recurrenceCount: "1",
     // The Pessoa field binds to this, not splits[0] — see the
     // personId/splits comments on debitTransactionSchema in
     // _schema/schema.ts.
@@ -223,7 +222,6 @@ export function DebitTransactionForm({
   const paymentMethod = useStore(form.store, (state) => state.values.paymentMethod);
   const type = useStore(form.store, (state) => state.values.type);
   const categoryId = useStore(form.store, (state) => state.values.categoryId);
-  const recurrence = useStore(form.store, (state) => state.values.recurrence);
   const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
   const isTouched = useStore(form.store, (state) => state.isTouched);
 
@@ -569,31 +567,18 @@ export function DebitTransactionForm({
           </AccordionTrigger>
           <AccordionContent className="px-0.5">
             <div className="flex flex-col gap-4 pt-2">
-              <div className="flex flex-col gap-4">
-                <form.AppField name="recurrence">
-                  {(field) => (
-                    <field.SelectField
-                      label={t("fields.recurrence.label")}
-                      placeholder={t("fields.recurrence.label")}
-                      options={recurrenceFrequencyValues.map((frequency) => ({
-                        value: frequency,
-                        label: t(`fields.recurrence.${frequency}`),
-                      }))}
-                    />
-                  )}
-                </form.AppField>
-
-                {recurrence !== "none" && (
-                  <form.AppField name="recurrenceCount">
-                    {(field) => (
-                      <field.TextField
-                        label={t("fields.recurrence.countLabel")}
-                        placeholder={t("fields.recurrence.countPlaceholder")}
-                      />
-                    )}
-                  </form.AppField>
+              <form.AppField name="recurrence">
+                {(field) => (
+                  <field.SelectField
+                    label={t("fields.recurrence.label")}
+                    placeholder={t("fields.recurrence.label")}
+                    options={recurrenceFrequencyValues.map((frequency) => ({
+                      value: frequency,
+                      label: t(`fields.recurrence.${frequency}`),
+                    }))}
+                  />
                 )}
-              </div>
+              </form.AppField>
 
               <form.AppField name="status">
                 {(field) => (
