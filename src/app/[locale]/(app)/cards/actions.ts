@@ -5,6 +5,8 @@ import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
+import { computeInvoiceCycle } from "@/lib/invoice-resolution";
+import { parseCalendarDate, todayCalendarDate, dateOnlyKey } from "@/lib/date";
 import { daysUntilDue } from "./_lib/next-due-date";
 import {
   creditCardAccountSchema,
@@ -45,6 +47,20 @@ async function validateCreditCardAccount(data: CreditCardAccountFormValues) {
 // rule), so filtering `status: { not: "PAID" }` here already covers
 // every invoice that still counts against the limit (this also already
 // includes PARTIALLY_PAID, which is exactly what should still count).
+//
+// Also bounded to the currently-open cycle and earlier — a cycle that
+// hasn't opened yet doesn't reduce today's available limit just because
+// it already exists as an Invoice row. That row can exist well ahead of
+// its own closing date: a recurrence (see recurrences/actions.ts and
+// transactions/actions.ts's own recurrence path) pre-generates up to 12
+// months of future, still-PENDING occurrences and their invoices in one
+// go, same as a multi-installment purchase would for its own later
+// installments — those future cycles are real future commitments, but
+// (unlike an installment, whose full amount really is already owed the
+// moment the purchase is made) nothing has actually been charged on them
+// yet. Verified against real data: an account with two monthly
+// recurrences showed a negative available limit purely from ~12 months
+// of not-yet-open future invoices being summed in.
 export async function listCreditCardAccounts() {
   const userId = await requireUserId();
 
@@ -72,20 +88,36 @@ export async function listCreditCardAccounts() {
   });
 
   const now = new Date();
+  const todayDate = parseCalendarDate(todayCalendarDate());
 
   return accounts.map((account) => {
-    const outstanding = account.invoices.reduce((sum, invoice) => {
-      const invoiceTotal = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
-      const paidAmount = invoice.payments.reduce(
-        (paidSum, payment) => paidSum + payment.amount.toNumber(),
-        0,
-      );
-      const creditApplied = invoice.creditsReceived.reduce(
-        (creditSum, credit) => creditSum + credit.amount.toNumber(),
-        0,
-      );
-      return sum + Math.max(0, invoiceTotal - paidAmount - creditApplied);
-    }, 0);
+    // The still-open, currently-accruing cycle's own closing date — any
+    // invoice closing later than this hasn't opened yet. Compared as
+    // calendar-day strings (not raw Date <=) since `invoice.closingDate`
+    // comes back from Prisma as a `@db.Date` UTC-midnight read while this
+    // is a freshly zoned computation — see src/lib/date.ts's file-level
+    // comment on why those two representations can't be compared as
+    // instants directly.
+    const currentCycleClosingKey = account.creditCardDetails
+      ? dateOnlyKey(computeInvoiceCycle(todayDate, account.creditCardDetails).closingDate)
+      : null;
+    const outstanding = account.invoices
+      .filter(
+        (invoice) =>
+          !currentCycleClosingKey || dateOnlyKey(invoice.closingDate) <= currentCycleClosingKey,
+      )
+      .reduce((sum, invoice) => {
+        const invoiceTotal = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
+        const paidAmount = invoice.payments.reduce(
+          (paidSum, payment) => paidSum + payment.amount.toNumber(),
+          0,
+        );
+        const creditApplied = invoice.creditsReceived.reduce(
+          (creditSum, credit) => creditSum + credit.amount.toNumber(),
+          0,
+        );
+        return sum + Math.max(0, invoiceTotal - paidAmount - creditApplied);
+      }, 0);
     const limit = account.creditCardDetails?.limit.toNumber() ?? 0;
     const dueDay = account.creditCardDetails?.dueDay ?? null;
 

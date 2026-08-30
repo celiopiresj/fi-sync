@@ -159,9 +159,14 @@ export async function getHomeOverview() {
   // figure the way it landing in another checking account would.
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
-  const invoicesDue = invoices
-    .filter((invoice) => invoice.displayStatus !== "PAID")
-    .reduce((sum, invoice) => sum + invoice.remainingDue, 0);
+  // Derived from cardAccounts' own `spent` (listCreditCardAccounts'
+  // outstanding, already bounded to the currently-open cycle and
+  // earlier — see its own comment) rather than summing `invoices`
+  // directly: that list is fetched unscoped (listInvoices() with no
+  // period filter) and would otherwise pull in future, not-yet-open
+  // cycles a recurrence has already pre-generated invoices for, wildly
+  // overstating what's actually due right now.
+  const invoicesDue = cardAccounts.reduce((sum, account) => sum + account.spent, 0);
 
   const closedInvoices = invoices.filter(
     (invoice) => invoice.displayStatus === "CLOSED" || invoice.displayStatus === "PARTIALLY_PAID",
