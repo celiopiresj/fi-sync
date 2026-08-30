@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { capitalizeFirst } from "@/lib/capitalize-first";
 import { monthKeyToDate } from "../_lib/projection-month";
 import type { ProjectionEntry } from "../_types/types";
 
@@ -31,10 +32,12 @@ export function ProjectionTrendChart({ entries }: ProjectionTrendChartProps) {
 
   const data = entries.map((entry) => ({
     ...entry,
-    monthLabel: format.dateTime(monthKeyToDate(entry.monthKey), {
-      month: "short",
-      year: "numeric",
-    }),
+    monthLabel: capitalizeFirst(
+      format.dateTime(monthKeyToDate(entry.monthKey), {
+        month: "short",
+        year: "numeric",
+      }),
+    ),
   }));
 
   function axisMoney(value: number) {
@@ -75,7 +78,6 @@ export function ProjectionTrendChart({ entries }: ProjectionTrendChartProps) {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 10 }}
-            className="capitalize"
           />
           <YAxis
             tickLine={false}

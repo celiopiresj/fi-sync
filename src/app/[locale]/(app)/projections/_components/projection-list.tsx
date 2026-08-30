@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { capitalizeFirst } from "@/lib/capitalize-first";
 import { monthKeyToDate } from "../_lib/projection-month";
 import { RISK_BADGE_CLASS } from "../_lib/risk-status-style";
 import type { ProjectionEntry } from "../_types/types";
@@ -53,12 +54,14 @@ export function ProjectionList({ entries }: ProjectionListProps) {
               <TableCell>
                 <Link
                   href={`/projections/${entry.monthKey}`}
-                  className="font-medium capitalize hover:underline"
+                  className="font-medium hover:underline"
                 >
-                  {format.dateTime(monthKeyToDate(entry.monthKey), {
-                    month: "short",
-                    year: "2-digit",
-                  })}
+                  {capitalizeFirst(
+                    format.dateTime(monthKeyToDate(entry.monthKey), {
+                      month: "short",
+                      year: "2-digit",
+                    }),
+                  )}
                 </Link>
               </TableCell>
               <TableCell className="text-right tabular-nums text-positive">

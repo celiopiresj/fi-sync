@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
+import { capitalizeFirst } from "@/lib/capitalize-first";
 import { monthKeyToDate } from "../_lib/projection-month";
 import { RISK_BADGE_CLASS, RISK_TEXT_CLASS } from "../_lib/risk-status-style";
 import type { ProjectionDetail } from "../_types/types";
@@ -38,10 +39,12 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
     return format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS);
   }
 
-  const monthLabel = format.dateTime(monthKeyToDate(detail.monthKey), {
-    month: "long",
-    year: "numeric",
-  });
+  const monthLabel = capitalizeFirst(
+    format.dateTime(monthKeyToDate(detail.monthKey), {
+      month: "long",
+      year: "numeric",
+    }),
+  );
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
@@ -53,7 +56,7 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
         </Button>
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold capitalize">
+            <h1 className="text-xl font-semibold">
               {t("detail.title", { month: monthLabel })}
             </h1>
             <Badge

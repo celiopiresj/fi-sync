@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { capitalizeFirst } from "@/lib/capitalize-first";
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 
 // Shared "screen title row" — title/subtitle on the left, an optional
@@ -74,8 +75,11 @@ export function PeriodStepper({
       >
         <CaretLeftIcon />
       </Button>
-      <span className="min-w-32 text-center text-sm font-medium capitalize">
-        {label}
+      {/* capitalizeFirst, not Tailwind's `capitalize` class — that's a
+          per-WORD text-transform, which would also capitalize "de" in a
+          pt-BR label like "setembro de 2026" ("Setembro De 2026"). */}
+      <span className="min-w-32 text-center text-sm font-medium">
+        {capitalizeFirst(label)}
       </span>
       <Button
         variant="ghost"

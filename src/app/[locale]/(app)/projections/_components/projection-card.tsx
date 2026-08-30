@@ -5,6 +5,7 @@ import { ArrowRightIcon, CheckCircleIcon, WarningCircleIcon } from "@phosphor-ic
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { capitalizeFirst } from "@/lib/capitalize-first";
 import { monthKeyToDate } from "../_lib/projection-month";
 import { RISK_BADGE_CLASS, RISK_TEXT_CLASS } from "../_lib/risk-status-style";
 import type { ProjectionEntry } from "../_types/types";
@@ -21,15 +22,17 @@ export function ProjectionCard({ entry }: ProjectionCardProps) {
     return format.number(value, { style: "currency", currency: "BRL" });
   }
 
-  const monthLabel = format.dateTime(monthKeyToDate(entry.monthKey), {
-    month: "short",
-    year: "2-digit",
-  });
+  const monthLabel = capitalizeFirst(
+    format.dateTime(monthKeyToDate(entry.monthKey), {
+      month: "short",
+      year: "2-digit",
+    }),
+  );
 
   return (
     <div className="flex w-full flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold capitalize">{monthLabel}</span>
+        <span className="text-sm font-semibold">{monthLabel}</span>
         {entry.isCurrentMonth && (
           <Badge variant="secondary">{t("card.currentMonthBadge")}</Badge>
         )}
