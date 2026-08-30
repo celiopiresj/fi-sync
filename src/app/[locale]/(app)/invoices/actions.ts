@@ -145,9 +145,17 @@ export async function getInvoiceDetail(id: string) {
       account: { select: { id: true, name: true } },
       transactionInvoices: {
         include: {
+          // Full transactions/actions.ts:listTransactions shape (account/
+          // category/splits/transactionCard) — deliberately widened past
+          // what this screen's own summary needs so `transactions` below
+          // is a genuine TransactionRow[], reusable as-is by the same
+          // DataTable/columns/search the /transactions screen uses (see
+          // invoice-detail-view.tsx's own comment on that dependency).
           transaction: {
             include: {
+              account: { select: { id: true, name: true, type: true } },
               category: { select: { id: true, name: true, icon: true } },
+              splits: { include: { person: { select: { id: true, name: true } } } },
               transactionCard: {
                 include: {
                   card: { select: { id: true, name: true, lastFourDigits: true } },
@@ -192,13 +200,17 @@ export async function getInvoiceDetail(id: string) {
       paidAt: payment.paidAt,
       accountId: payment.transaction.accountId,
     })),
+    // Decimal→number, same conversion listTransactions itself does at
+    // this same Server Action boundary — this IS that function's own
+    // TransactionRow shape (see the include above), not a narrower
+    // invoice-specific projection.
     transactions: invoice.transactionInvoices.map((ti) => ({
-      id: ti.transaction.id,
-      description: ti.transaction.description,
+      ...ti.transaction,
       amount: ti.transaction.amount.toNumber(),
-      date: ti.transaction.date,
-      category: ti.transaction.category,
-      card: ti.transaction.transactionCard?.card ?? null,
+      splits: ti.transaction.splits.map((split) => ({
+        ...split,
+        amount: split.amount.toNumber(),
+      })),
     })),
   };
 }

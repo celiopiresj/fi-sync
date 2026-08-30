@@ -36,7 +36,10 @@ type CreditTransactionSheetProps = {
   defaultPersonId: string | null;
   onSubmit: (
     values: CreditTransactionFormValues,
-    options?: { skipPastInstallments?: boolean },
+    options?: {
+      skipPastInstallments?: boolean;
+      editScope?: "this" | "all" | "future";
+    },
   ) => Promise<{ error: string | null }>;
   onSubmitBatch: (
     rows: CreditBatchRowFormValues[],

@@ -81,9 +81,23 @@
     },
     "transactions": {
       "title": "Transações",
-      "categoryCardJoin": "{category} · {card}",
-      "subtitleJoin": "{date} · {detail}",
-      "empty": "Nenhuma transação nesta fatura ainda"
+      "empty": "Nenhuma transação nesta fatura ainda",
+      "searchPlaceholder": "Buscar por descrição…",
+      "searchClear": "Limpar busca",
+      "filters": {
+        "title": "Filtros",
+        "description": "Refine as transações desta fatura",
+        "category": "Categoria",
+        "allCategories": "Todas as categorias",
+        "person": "Pessoa",
+        "allPeople": "Todas as pessoas",
+        "type": "Tipo",
+        "allTypes": "Todas",
+        "income": "Receitas",
+        "expenses": "Despesas",
+        "clear": "Limpar",
+        "apply": "Aplicar"
+      }
     },
     "payments": {
       "title": "Pagamentos",
@@ -122,6 +136,8 @@
   },
   "toast": {
     "paymentRegistered": "Pagamento registrado",
+    "transactionUpdated": "Compra atualizada",
+    "transactionCreated": "Compra criada",
     "error": "Não foi possível concluir a ação"
   },
   "aria": {

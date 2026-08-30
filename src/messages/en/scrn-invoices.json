@@ -81,9 +81,23 @@
     },
     "transactions": {
       "title": "Transactions",
-      "categoryCardJoin": "{category} · {card}",
-      "subtitleJoin": "{date} · {detail}",
-      "empty": "No transactions on this invoice yet"
+      "empty": "No transactions on this invoice yet",
+      "searchPlaceholder": "Search by description…",
+      "searchClear": "Clear search",
+      "filters": {
+        "title": "Filters",
+        "description": "Refine this invoice's transactions",
+        "category": "Category",
+        "allCategories": "All categories",
+        "person": "Person",
+        "allPeople": "All people",
+        "type": "Type",
+        "allTypes": "All",
+        "income": "Income",
+        "expenses": "Expenses",
+        "clear": "Clear",
+        "apply": "Apply"
+      }
     },
     "payments": {
       "title": "Payments",
@@ -122,6 +136,8 @@
   },
   "toast": {
     "paymentRegistered": "Payment recorded",
+    "transactionUpdated": "Purchase updated",
+    "transactionCreated": "Purchase created",
     "error": "Couldn't complete the action"
   },
   "aria": {
