@@ -262,7 +262,7 @@ export function TransactionsView({
     searchText === "" &&
     periodsEqual(period, initialPeriod);
 
-  const { transactions, previousTransactions, invalidate } =
+  const { transactions, previousTransactions, invalidate, isFetching } =
     useTransactionsData(
       filters,
       previousFilters,
@@ -802,6 +802,7 @@ export function TransactionsView({
               onChange={setSearchText}
               placeholder={t("search.placeholder")}
               clearLabel={t("search.clear")}
+              isLoading={isFetching}
             />
             <FiltersSheet
               filters={sheetFilters}

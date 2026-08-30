@@ -22,7 +22,7 @@ export function useTransactionsData(
   const queryClient = useQueryClient();
 
   const queryKey = useMemo(() => ["transactions", filters] as const, [filters]);
-  const { data: transactions = initialTransactions } = useQuery({
+  const { data: transactions = initialTransactions, isFetching } = useQuery({
     queryKey,
     queryFn: () => listTransactions(filters),
     initialData: useInitialData ? initialTransactions : undefined,
@@ -60,5 +60,5 @@ export function useTransactionsData(
     queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
   }, [queryClient]);
 
-  return { transactions, previousTransactions, invalidate };
+  return { transactions, previousTransactions, invalidate, isFetching };
 }
