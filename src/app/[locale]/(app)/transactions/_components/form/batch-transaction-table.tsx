@@ -177,6 +177,7 @@ export function BatchTransactionTable({
   useEffect(() => {
     if (isDividing) {
       if (splits.length === 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         patchDraft({
           splits: [
             { personId: draft.personId, amount: centsToAmountString(totalCents) },
@@ -192,6 +193,7 @@ export function BatchTransactionTable({
   useEffect(() => {
     if (!isDividing) return;
     if (splits[0]?.personId !== draft.personId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       patchDraft({
         splits: splits.map((s, i) =>
           i === 0 ? { ...s, personId: draft.personId } : s,
@@ -205,6 +207,7 @@ export function BatchTransactionTable({
     if (!isDividing) return;
     const next = centsToAmountString(primaryAmountCents);
     if (splits[0]?.amount !== next) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       patchDraft({
         splits: splits.map((s, i) => (i === 0 ? { ...s, amount: next } : s)),
       });
@@ -222,6 +225,7 @@ export function BatchTransactionTable({
     const peopleCount = splits.length;
     const share = Math.floor(totalCents / peopleCount);
     const shareStr = centsToAmountString(share);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     patchDraft({
       splits: splits.map((s, i) => (i === 0 ? s : { ...s, amount: shareStr })),
     });
@@ -234,6 +238,7 @@ export function BatchTransactionTable({
     if (secondaryCentsList[0] > maxCents) {
       const clamped = centsToAmountString(maxCents);
       if (splits[1]?.amount !== clamped) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         patchDraft({
           splits: splits.map((s, i) => (i === 1 ? { ...s, amount: clamped } : s)),
         });

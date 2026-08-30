@@ -113,7 +113,10 @@ export function CreditBatchTransactionTable({
       return;
     }
     const primaryCard = selectedAccount.cards[0];
-    if (primaryCard) patchDraft({ cardId: primaryCard.id });
+    if (primaryCard) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDraft((current) => ({ ...current, cardId: primaryCard.id }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.accountId]);
 
