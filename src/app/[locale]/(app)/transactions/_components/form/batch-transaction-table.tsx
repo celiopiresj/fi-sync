@@ -4,6 +4,7 @@ import { AmountInput } from "@/components/form/amount-field";
 import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseLocalCalendarDate, todayCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
@@ -11,9 +12,14 @@ import {
   evaluateExpression,
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
-import { PencilSimpleIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
+import {
+  PencilSimpleIcon,
+  PlusIcon,
+  SpinnerIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   emptyBatchRow,
   paymentMethodFormValues,
@@ -51,6 +57,24 @@ function resolveAmount(raw: string): number | null {
   const evaluated = isCompoundExpression(raw) ? evaluateExpression(raw) : null;
   const parsed = evaluated ?? (raw ? Number(raw.replace(",", ".")) : NaN);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+// Split amounts are tracked in integer cents — same reasoning (and same
+// helpers, duplicated per this route's own self-containment convention)
+// as debit-transaction-form.tsx's own "Dividir com outras pessoas" math.
+function toCents(value: number | null): number {
+  if (value === null || !Number.isFinite(value)) return 0;
+  return Math.round(value * 100);
+}
+
+function parseAmountLoose(value: string): number | null {
+  if (!value) return null;
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function centsToAmountString(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",");
 }
 
 type BatchTransactionTableProps = {
@@ -99,6 +123,12 @@ export function BatchTransactionTable({
   // null means the draft form is building a brand-new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [queue, setQueue] = useState<BatchRowFormValues[]>([]);
+  // Splitting a specific amount with specific people doesn't carry over
+  // to the next queued row the way account/category/person do — starts
+  // false for every new entry (handleAddOrSave/handleCancelEdit reset it),
+  // re-derived from the row's own splits when editing one back in
+  // (handleEdit).
+  const [isDividing, setIsDividing] = useState(false);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [errorRowIndex, setErrorRowIndex] = useState<number | null>(null);
@@ -127,6 +157,118 @@ export function BatchTransactionTable({
     });
   }
 
+  // --- Person split math (identical to debit-transaction-form.tsx's own,
+  // adapted from TanStack Form field ops to plain draft/setDraft state) --
+  const splits = draft.splits;
+  const secondaries = splits.slice(1);
+  const totalCents = toCents(resolveAmount(draft.amount));
+  const secondaryCentsList = secondaries.map((split) =>
+    toCents(parseAmountLoose(split.amount)),
+  );
+  const secondaryCentsSum = secondaryCentsList.reduce((sum, c) => sum + c, 0);
+  const primaryAmountCents = totalCents - secondaryCentsSum;
+  const primaryAmountDisplay = centsToAmountString(
+    Math.max(primaryAmountCents, 0),
+  );
+  const isOverAllocated = primaryAmountCents < 0;
+  const primaryPerson = people.find((person) => person.id === draft.personId);
+  const sign = draft.type === "expense" ? -1 : 1;
+
+  useEffect(() => {
+    if (isDividing) {
+      if (splits.length === 0) {
+        patchDraft({
+          splits: [
+            { personId: draft.personId, amount: centsToAmountString(totalCents) },
+          ],
+        });
+      }
+    } else if (splits.length > 0) {
+      patchDraft({ splits: [] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDividing]);
+
+  useEffect(() => {
+    if (!isDividing) return;
+    if (splits[0]?.personId !== draft.personId) {
+      patchDraft({
+        splits: splits.map((s, i) =>
+          i === 0 ? { ...s, personId: draft.personId } : s,
+        ),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.personId, isDividing]);
+
+  useEffect(() => {
+    if (!isDividing) return;
+    const next = centsToAmountString(primaryAmountCents);
+    if (splits[0]?.amount !== next) {
+      patchDraft({
+        splits: splits.map((s, i) => (i === 0 ? { ...s, amount: next } : s)),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryAmountCents, isDividing]);
+
+  const isFirstTotalRender = useRef(true);
+  useEffect(() => {
+    if (isFirstTotalRender.current) {
+      isFirstTotalRender.current = false;
+      return;
+    }
+    if (splits.length <= 1) return;
+    const peopleCount = splits.length;
+    const share = Math.floor(totalCents / peopleCount);
+    const shareStr = centsToAmountString(share);
+    patchDraft({
+      splits: splits.map((s, i) => (i === 0 ? s : { ...s, amount: shareStr })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalCents]);
+
+  useEffect(() => {
+    if (secondaries.length !== 1) return;
+    const maxCents = Math.max(totalCents - 1, 0);
+    if (secondaryCentsList[0] > maxCents) {
+      const clamped = centsToAmountString(maxCents);
+      if (splits[1]?.amount !== clamped) {
+        patchDraft({
+          splits: splits.map((s, i) => (i === 1 ? { ...s, amount: clamped } : s)),
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [totalCents, secondaryCentsList[0], secondaries.length]);
+
+  // Same "redistribute if pristine, else come in at zero" rule as
+  // debit-transaction-form.tsx's own handleAddSecondaryPerson.
+  function handleAddSecondaryPerson(newPersonId = "") {
+    const peopleCountBefore = splits.length;
+    const shareBefore =
+      peopleCountBefore > 0 ? Math.floor(totalCents / peopleCountBefore) : 0;
+    const isPristine = secondaryCentsList.every((cents) => cents === shareBefore);
+
+    if (isPristine) {
+      const peopleCountAfter = peopleCountBefore + 1;
+      const shareAfter = Math.floor(totalCents / peopleCountAfter);
+      const shareAfterStr = centsToAmountString(shareAfter);
+      const redistributed = splits.map((s, i) =>
+        i === 0 ? s : { ...s, amount: shareAfterStr },
+      );
+      patchDraft({
+        splits: [...redistributed, { personId: newPersonId, amount: shareAfterStr }],
+      });
+    } else {
+      patchDraft({ splits: [...splits, { personId: newPersonId, amount: "0,00" }] });
+    }
+  }
+
+  function handleRemoveSecondary(index: number) {
+    patchDraft({ splits: splits.filter((_, i) => i !== index) });
+  }
+
   function handleAddOrSave() {
     const resolved = resolveAmount(draft.amount);
     const missingLabel = !draft.description.trim()
@@ -152,6 +294,17 @@ export function BatchTransactionTable({
       setDraftError(t("batch.missingField", { field: missingLabel ?? "" }));
       return;
     }
+
+    if (isDividing) {
+      const splitsTotal = draft.splits.reduce(
+        (sum, split) => sum + (parseAmountLoose(split.amount) ?? 0),
+        0,
+      );
+      if (Math.abs(splitsTotal - resolved) > 0.01) {
+        setDraftError(t("splits.mismatch"));
+        return;
+      }
+    }
     setDraftError(null);
 
     // The queue stores a resolved, fixed snapshot — editing the draft's
@@ -173,19 +326,32 @@ export function BatchTransactionTable({
 
     // Chips "remember" their last value for the next entry — only
     // description/amount reset, matching the spec's replacement for the
-    // old "mesma conta/tipo/pessoa para todas" global toggles.
-    setDraft({ ...snapshot, description: "", amount: "" });
+    // old "mesma conta/tipo/pessoa para todas" global toggles. Splits
+    // don't carry over (see isDividing's own comment above) — always back
+    // to "not divided" for whatever gets added/built next.
+    setDraft({ ...snapshot, description: "", amount: "", splits: [] });
+    setIsDividing(false);
   }
 
   function handleEdit(index: number) {
     setDraft(queue[index]);
     setEditingIndex(index);
     setDraftError(null);
+    setIsDividing(queue[index].splits.length > 0);
+    // Loading a row's own amount into the draft changes totalCents, which
+    // would otherwise trip the "redistribute secondaries" effect right as
+    // this row's already-custom split loads in — unlike the single-
+    // transaction form (a fresh component instance per edit, so its own
+    // isFirstRender ref only ever needs to guard one mount), this table
+    // stays mounted across edits of many different rows, so the guard has
+    // to be re-armed on every entry into edit mode, not just once ever.
+    isFirstTotalRender.current = true;
   }
 
   function handleCancelEdit() {
     setEditingIndex(null);
-    setDraft((current) => ({ ...current, description: "", amount: "" }));
+    setIsDividing(false);
+    setDraft((current) => ({ ...current, description: "", amount: "", splits: [] }));
     setDraftError(null);
   }
 
@@ -246,6 +412,9 @@ export function BatchTransactionTable({
         const person = people.find((p) => p.id === row.personId);
         return person ? formatPersonName(person.name) : null;
       })(),
+      row.splits.length > 1
+        ? t("table.splitPill", { count: row.splits.length })
+        : null,
     ];
     return parts.filter(Boolean).join(" · ");
   }
@@ -361,6 +530,126 @@ export function BatchTransactionTable({
               />
             )}
           </div>
+
+          {/* Compact counterpart of debit-transaction-form.tsx's own
+              "Dividir com outras pessoas" card — same toggle/payer/owes
+              shape, sized down (ChipSelect + a narrow AmountInput per row
+              instead of full SelectField/AmountField blocks) to fit this
+              already-dense draft card. Same "only worth it with someone
+              else to split with" gating as the Pessoa chip above. */}
+          {people.length > 1 && (
+            <div className="flex flex-col gap-2 rounded-md border border-border/60 p-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium">{t("splits.toggleLabel")}</p>
+                  {!draft.personId && (
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("splits.needsPersonFirst")}
+                    </p>
+                  )}
+                </div>
+                <Switch
+                  checked={isDividing}
+                  onCheckedChange={setIsDividing}
+                  disabled={!draft.personId}
+                />
+              </div>
+
+              {isDividing && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("splits.payerLabel")}
+                      </span>
+                      <span className="text-xs font-medium">
+                        {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
+                      </span>
+                    </div>
+                    <span className="text-xs font-medium tabular-nums">
+                      {format.number(
+                        sign * Number(primaryAmountDisplay.replace(",", ".")),
+                        { style: "currency", currency: "BRL" },
+                      )}
+                    </span>
+                  </div>
+
+                  {isOverAllocated && (
+                    <p className="text-[11px] text-red-600 dark:text-red-400">
+                      {t("splits.exceeds", {
+                        value: format.number(Math.abs(primaryAmountCents) / 100, {
+                          style: "currency",
+                          currency: "BRL",
+                        }),
+                      })}
+                    </p>
+                  )}
+
+                  {secondaries.map((split, i) => {
+                    const index = i + 1;
+                    return (
+                      <div key={index} className="flex items-center gap-1.5">
+                        <ChipSelect
+                          label={t("fields.person.label")}
+                          value={split.personId}
+                          onChange={(value) =>
+                            patchDraft({
+                              splits: splits.map((s, si) =>
+                                si === index ? { ...s, personId: value } : s,
+                              ),
+                            })
+                          }
+                          options={people.map((person) => ({
+                            value: person.id,
+                            label: person.name,
+                          }))}
+                          formatDisplay={formatPersonName}
+                          sheetTitle={t("fields.person.label")}
+                        />
+                        <AmountInput
+                          className="w-24"
+                          value={split.amount}
+                          onChange={(value) =>
+                            patchDraft({
+                              splits: splits.map((s, si) =>
+                                si === index ? { ...s, amount: value } : s,
+                              ),
+                            })
+                          }
+                          placeholder={t("fields.amount.placeholder")}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleRemoveSecondary(index)}
+                        >
+                          <TrashIcon />
+                          <span className="sr-only">{t("splits.remove")}</span>
+                        </Button>
+                      </div>
+                    );
+                  })}
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
+                    <button
+                      type="button"
+                      onClick={() => handleAddSecondaryPerson()}
+                      className="flex items-center gap-1.5 text-left text-[11px] text-primary transition-colors hover:underline"
+                    >
+                      <PlusIcon className="size-3.5" />
+                      {t("splits.addPerson")}
+                    </button>
+                    <CreatePersonInline
+                      label={t("splits.newPerson")}
+                      triggerClassName="px-1.5"
+                      onCreated={(person) => handleAddSecondaryPerson(person.id)}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {draftError && (
             <p className="text-xs text-red-600 dark:text-red-400">

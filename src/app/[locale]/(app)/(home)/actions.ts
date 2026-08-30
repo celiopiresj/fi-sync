@@ -5,7 +5,6 @@ import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import { listAccounts } from "../accounts/actions";
-import { listInvestmentAccounts } from "../investments/actions";
 import { listCreditCardAccounts } from "../cards/actions";
 import { listInvoices } from "../invoices/actions";
 import { getBudgetWithSpending } from "../budgets/actions";
@@ -63,7 +62,6 @@ export async function getHomeOverview() {
 
   const [
     accounts,
-    investmentAccounts,
     cardAccounts,
     invoices,
     budget,
@@ -73,7 +71,6 @@ export async function getHomeOverview() {
     recentTransactions,
   ] = await Promise.all([
     listAccounts(),
-    listInvestmentAccounts(),
     listCreditCardAccounts(),
     listInvoices(),
     getBudgetWithSpending(currentMonthKey),
@@ -153,9 +150,14 @@ export async function getHomeOverview() {
   const expensesVsBudgetPercent =
     budgetTotalLimit > 0 ? ((monthExpenses - budgetTotalLimit) / budgetTotalLimit) * 100 : null;
 
-  const totalBalance =
-    accounts.reduce((sum, account) => sum + account.balance, 0) +
-    investmentAccounts.reduce((sum, account) => sum + account.balance, 0);
+  // Checking/savings/cash only. Credit card spend deliberately stays out
+  // (it's settled by its own invoice/payment flow, invoices/actions.ts)
+  // — and so does investment/pocket balance: an aporte is a transfer, its
+  // outgoing leg on a checking/savings/cash account already pulls this
+  // total down, but the money it lands in is "saldo guardado" (put away
+  // in a pocket) and shouldn't add itself back into the everyday-balance
+  // figure the way it landing in another checking account would.
+  const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
   const invoicesDue = invoices
     .filter((invoice) => invoice.displayStatus !== "PAID")

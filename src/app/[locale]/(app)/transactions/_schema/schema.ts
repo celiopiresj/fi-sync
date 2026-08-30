@@ -293,16 +293,21 @@ export function refineCreditTransaction(
 }
 
 // One row of the debit "modo em lote" table (tasks/006-transacoes-
-// recursos-avancados.md) — a plain debit transaction, no splits (single
-// required person instead of a divided list), no card/installments/
-// recurrence. Each row picks its own type, unlike the single-transaction
-// form. `personId`/`paymentMethod` deliberately stay plain (unrefined)
-// strings here instead of `.min(1)`/non-empty-enum — they're enforced in
-// `createTransactionsBatch` instead, with a translated per-row message,
-// since this schema is `safeParse`d there without a custom error map
-// (unlike the two single-form schemas above, which always go through
-// `makeErrorMap` client-side). Adding `.min(1)` here would short-circuit
-// parsing and surface Zod's untranslated default message instead.
+// recursos-avancados.md) — a plain debit transaction, no card/
+// installments/recurrence. Each row picks its own type, unlike the
+// single-transaction form. `personId`/`paymentMethod` deliberately stay
+// plain (unrefined) strings here instead of `.min(1)`/non-empty-enum —
+// they're enforced in `createTransactionsBatch` instead, with a
+// translated per-row message, since this schema is `safeParse`d there
+// without a custom error map (unlike the two single-form schemas above,
+// which always go through `makeErrorMap` client-side). Adding `.min(1)`
+// here would short-circuit parsing and surface Zod's untranslated
+// default message instead. `splits` follows the exact same personId/
+// splits convention as debitTransactionSchema above (empty = not
+// divided, personId alone carries the attribution) — its own sum-matches-
+// amount check lives in BatchTransactionTable (client, before a row can
+// join the queue) and createTransactionsBatch (server), same
+// unrefined-here-checked-there reasoning as personId/paymentMethod.
 export const batchRowSchema = z.object({
   accountId: z.string().min(1),
   categoryId: z.string(),
@@ -312,6 +317,7 @@ export const batchRowSchema = z.object({
   type: z.enum(transactionTypeValues),
   date: z.string().min(1),
   amount: amountString,
+  splits: z.array(splitSchema),
 });
 
 export type BatchRowFormValues = z.input<typeof batchRowSchema>;
@@ -326,16 +332,16 @@ export const emptyBatchRow: BatchRowFormValues = {
   type: "expense",
   date: "",
   amount: "",
+  splits: [],
 };
 
 // Credit-card counterpart of batchRowSchema above — a row is always a
 // one-off purchase (no recurrence, same reasoning as the debit batch),
 // but unlike the debit row it DOES carry installments, since splitting a
-// purchase into N charges is core to how a card is used day-to-day. No
-// `installmentAmountMode`: a batch row's typed amount is always the
-// purchase total, split evenly across installments — the "valor de cada
-// parcela" mode is a single-form-only nicety, not worth another chip in
-// an already-dense batch row. `personId` stays a plain string for the
+// purchase into N charges is core to how a card is used day-to-day.
+// `installmentAmountMode` mirrors creditTransactionSchema's own: "total"
+// splits the typed amount evenly across installments, "perInstallment"
+// uses it as-is per installment. `personId` stays a plain string for the
 // same reason `batchRowSchema`'s own does — enforced with a translated
 // message in `createCreditTransactionsBatch` instead of `.min(1)` here.
 export const creditBatchRowSchema = z.object({
@@ -351,6 +357,7 @@ export const creditBatchRowSchema = z.object({
     .string()
     .transform((value) => (value ? Number(value) : 1))
     .pipe(z.number().int().min(1)),
+  installmentAmountMode: z.enum(installmentAmountModeValues),
 });
 
 export type CreditBatchRowFormValues = z.input<typeof creditBatchRowSchema>;
@@ -366,4 +373,5 @@ export const emptyCreditBatchRow: CreditBatchRowFormValues = {
   date: "",
   amount: "",
   installments: "1",
+  installmentAmountMode: "total",
 };

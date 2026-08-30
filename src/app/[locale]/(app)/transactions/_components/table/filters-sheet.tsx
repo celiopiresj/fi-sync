@@ -30,6 +30,10 @@ import type {
   PersonOption,
   SheetFilters,
 } from "../../_types/types";
+import {
+  ALL_CARDS_ACCOUNT_FILTER,
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+} from "../../_constants/constants";
 
 type FiltersSheetProps = {
   filters: SheetFilters;
@@ -77,6 +81,13 @@ export function FiltersSheet({
   const hasDraftFilters = countActiveFilters(draft) > 0;
   const hasChanges = JSON.stringify(draft) !== JSON.stringify(filters);
 
+  // Cards and non-card accounts (checking/savings/cash/investment/pocket)
+  // get their own separate "Conta"/"Cartão" selects below (not one flat
+  // list) — both still write into the same `accountId` value, since a
+  // transaction only ever belongs to one account either way.
+  const cardAccounts = accounts.filter((account) => account.type === "CREDIT_CARD");
+  const nonCardAccounts = accounts.filter((account) => account.type !== "CREDIT_CARD");
+
   function handleOpenChange(next: boolean) {
     if (next) setDraft(filters);
     setOpen(next);
@@ -112,20 +123,55 @@ export function FiltersSheet({
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="filter-account">{t("filters.account")}</Label>
               <Select
-                value={draft.accountId ?? ALL_VALUE}
-                onValueChange={(value) =>
-                  setDraft({
-                    ...draft,
-                    accountId: value === ALL_VALUE ? undefined : value,
-                  })
+                // Cards and non-card accounts are two separate selects
+                // (not one grouped list) sharing the same underlying
+                // `accountId` value — each only shows itself as "selected"
+                // when that value actually belongs to its own domain, so
+                // picking a card here falls back to this select's own
+                // placeholder while the Cartão select below shows it.
+                value={
+                  draft.accountId === ALL_NON_CARD_ACCOUNTS_FILTER ||
+                  nonCardAccounts.some((account) => account.id === draft.accountId)
+                    ? draft.accountId
+                    : ""
                 }
+                onValueChange={(value) => setDraft({ ...draft, accountId: value })}
               >
                 <SelectTrigger id="filter-account" className="w-full">
                   <SelectValue placeholder={t("filters.account")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL_VALUE}>{t("filters.allAccounts")}</SelectItem>
-                  {accounts.map((account) => (
+                  <SelectItem value={ALL_NON_CARD_ACCOUNTS_FILTER}>
+                    {t("filters.allNonCardAccounts")}
+                  </SelectItem>
+                  {nonCardAccounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="filter-card">{t("filters.card")}</Label>
+              <Select
+                value={
+                  draft.accountId === ALL_CARDS_ACCOUNT_FILTER ||
+                  cardAccounts.some((account) => account.id === draft.accountId)
+                    ? draft.accountId
+                    : ""
+                }
+                onValueChange={(value) => setDraft({ ...draft, accountId: value })}
+              >
+                <SelectTrigger id="filter-card" className="w-full">
+                  <SelectValue placeholder={t("filters.card")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_CARDS_ACCOUNT_FILTER}>
+                    {t("filters.allCards")}
+                  </SelectItem>
+                  {cardAccounts.map((account) => (
                     <SelectItem key={account.id} value={account.id}>
                       {account.name}
                     </SelectItem>

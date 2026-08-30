@@ -30,7 +30,11 @@ import {
   emptyCreditTransactionFormValues,
   type CreditTransactionFormValues,
 } from "../../_schema/schema";
-import { previewInvoiceCycle, previewInstallmentCycles } from "../../actions";
+import {
+  previewInvoiceCycle,
+  previewCurrentInvoiceCycle,
+  previewInstallmentCycles,
+} from "../../actions";
 import {
   evaluateExpression,
   isCompoundExpression,
@@ -410,7 +414,7 @@ export function CreditTransactionForm({
   // ahead of it).
   const { data: currentInvoiceCycle } = useQuery({
     queryKey: ["credit-transaction-current-invoice-cycle", accountId],
-    queryFn: () => previewInvoiceCycle(accountId, todayCalendarDate()),
+    queryFn: () => previewCurrentInvoiceCycle(accountId),
     enabled: Boolean(accountId) && installmentCount > 1,
   });
   const currentInstallmentIndex = currentInvoiceCycle

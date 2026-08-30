@@ -5,20 +5,31 @@ import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { parseLocalCalendarDate, todayCalendarDate } from "@/lib/date";
+import {
+  DATE_ONLY_FORMAT_OPTIONS,
+  parseLocalCalendarDate,
+  todayCalendarDate,
+} from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
   evaluateExpression,
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
 import { PencilSimpleIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
+import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   emptyCreditBatchRow,
+  installmentAmountModeValues,
   transactionTypeValues,
   type CreditBatchRowFormValues,
 } from "../../_schema/schema";
+import {
+  previewInvoiceCycle,
+  previewCurrentInvoiceCycle,
+  previewInstallmentCycles,
+} from "../../actions";
 import type {
   AccountOption,
   CategoryOption,
@@ -92,12 +103,63 @@ export function CreditBatchTransactionTable({
     (card) => card.status === "ACTIVE" || card.id === draft.cardId,
   );
 
+  // Same "titular defaults in" behavior as credit-transaction-form.tsx's
+  // own effect (see its comment) — the Portador chip below only shows up
+  // once there's more than the titular's own card, so this is what keeps
+  // cardId populated for the common single-card case.
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (draft.cardId && selectedAccount.cards.some((card) => card.id === draft.cardId)) {
+      return;
+    }
+    const primaryCard = selectedAccount.cards[0];
+    if (primaryCard) patchDraft({ cardId: primaryCard.id });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft.accountId]);
+
   // Only categories matching the draft row's own type — same rule the
   // single-transaction forms' pickers follow.
   const categoryType = draft.type === "income" ? "INCOME" : "EXPENSE";
   const filteredCategories = categories.filter(
     (category) => category.type === categoryType,
   );
+
+  // Same "cai na fatura que fecha em X" (+ "na fatura atual seria a
+  // parcela N de M") preview as credit-transaction-form.tsx's own — a
+  // batch row backdating an installment purchase needs the same context
+  // for where it actually lands, not just the typed installment count.
+  const installmentCount = Number(draft.installments || "1");
+  const { data: invoicePreview } = useQuery({
+    queryKey: ["credit-batch-invoice-preview", draft.accountId, draft.date],
+    queryFn: () => previewInvoiceCycle(draft.accountId, draft.date),
+    enabled: Boolean(draft.accountId) && Boolean(draft.date),
+  });
+  const installmentCyclesQuery = useQuery({
+    queryKey: [
+      "credit-batch-installment-cycles",
+      draft.accountId,
+      draft.date,
+      installmentCount,
+    ],
+    queryFn: () =>
+      previewInstallmentCycles(draft.accountId, draft.date, installmentCount),
+    enabled:
+      Boolean(draft.accountId) && Boolean(draft.date) && installmentCount > 1,
+  });
+  const { data: currentInvoiceCycle } = useQuery({
+    queryKey: ["credit-batch-current-invoice-cycle", draft.accountId],
+    queryFn: () => previewCurrentInvoiceCycle(draft.accountId),
+    enabled: Boolean(draft.accountId) && installmentCount > 1,
+  });
+  const currentInstallmentIndex = currentInvoiceCycle
+    ? (installmentCyclesQuery.data?.findIndex(
+        (cycle) =>
+          new Date(cycle.closingDate).getTime() ===
+          new Date(currentInvoiceCycle.closingDate).getTime(),
+      ) ?? -1)
+    : -1;
+  const currentInstallmentNumber =
+    currentInstallmentIndex >= 0 ? currentInstallmentIndex + 1 : null;
 
   function patchDraft(patch: Partial<CreditBatchRowFormValues>) {
     setDraft((current) => {
@@ -130,9 +192,9 @@ export function CreditBatchTransactionTable({
         : !draft.date
           ? t("fields.date.label")
           : !draft.accountId
-            ? t("fields.account.label")
+            ? t("fields.card.label")
             : !draft.cardId
-              ? t("fields.card.label")
+              ? t("fields.card.holderLabel")
               : !draft.personId
                 ? t("fields.person.label")
                 : null;
@@ -220,14 +282,17 @@ export function CreditBatchTransactionTable({
 
   function subtitleFor(row: CreditBatchRowFormValues): string {
     const parsedDate = parseLocalCalendarDate(row.date);
-    const card = accounts
-      .find((a) => a.id === row.accountId)
-      ?.cards.find((c) => c.id === row.cardId);
+    const account = accounts.find((a) => a.id === row.accountId);
+    const card = account?.cards.find((c) => c.id === row.cardId);
     const installmentCount = Number(row.installments || "1");
     const parts = [
       parsedDate ? format.dateTime(parsedDate, { dateStyle: "short" }) : null,
-      accounts.find((a) => a.id === row.accountId)?.name,
-      card?.name,
+      account?.name,
+      // Only worth naming the specific card when the account actually has
+      // more than one — same gating as the Portador chip above, so a
+      // single-card account's card name (which mirrors the account's own
+      // name) doesn't show up twice.
+      (account?.cards.length ?? 0) > 1 ? card?.name : null,
       categories.find((c) => c.id === row.categoryId)?.name,
       installmentCount > 1
         ? t("fields.installments.optionLabel", { count: installmentCount })
@@ -291,27 +356,34 @@ export function CreditBatchTransactionTable({
               sheetTitle={t("batch.columns.date")}
             />
             <ChipSelect
-              label={t("fields.account.label")}
+              label={t("fields.card.label")}
               value={draft.accountId}
               onChange={(value) => patchDraft({ accountId: value })}
               options={accounts.map((account) => ({
                 value: account.id,
                 label: account.name,
               }))}
-              sheetTitle={t("fields.account.label")}
-            />
-            <ChipSelect
-              label={t("fields.card.label")}
-              value={draft.cardId}
-              onChange={(value) => patchDraft({ cardId: value })}
-              options={activeCards.map((card) => ({
-                value: card.id,
-                label: card.lastFourDigits
-                  ? `${card.name} •••• ${card.lastFourDigits}`
-                  : card.name,
-              }))}
               sheetTitle={t("fields.card.label")}
             />
+            {/* Only worth asking "which card" once there's more than the
+                titular's own — same rule the single credit form's own
+                Portador chip follows (see its comment there). The
+                default-cardId effect above already keeps the titular
+                selected either way. */}
+            {activeCards.length > 1 && (
+              <ChipSelect
+                label={t("fields.card.holderLabel")}
+                value={draft.cardId}
+                onChange={(value) => patchDraft({ cardId: value })}
+                options={activeCards.map((card) => ({
+                  value: card.id,
+                  label: card.lastFourDigits
+                    ? `${card.name} •••• ${card.lastFourDigits}`
+                    : card.name,
+                }))}
+                sheetTitle={t("fields.card.holderLabel")}
+              />
+            )}
             <ChipSelect
               label={t("batch.columns.category")}
               value={draft.categoryId}
@@ -355,6 +427,73 @@ export function CreditBatchTransactionTable({
               />
             )}
           </div>
+
+          {/* Compact counterpart of the single credit form's own
+              installmentAmountMode ToggleGroupField — same "total vs.
+              per-installment" choice, just a plain ToggleGroup here since
+              the draft isn't backed by a TanStack Form instance. */}
+          {installmentCount > 1 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t("fields.installmentAmountMode.label")}
+              </span>
+              <ToggleGroup
+                type="single"
+                variant="tabs"
+                value={draft.installmentAmountMode}
+                onValueChange={(value) => {
+                  if (value) {
+                    patchDraft({
+                      installmentAmountMode:
+                        value as CreditBatchRowFormValues["installmentAmountMode"],
+                    });
+                  }
+                }}
+                className="w-full"
+              >
+                {installmentAmountModeValues.map((mode) => (
+                  <ToggleGroupItem key={mode} value={mode} className="flex-1 text-xs">
+                    {t(`fields.installmentAmountMode.${mode}`)}
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+              {draft.installmentAmountMode === "perInstallment" &&
+                resolveAmount(draft.amount) !== null && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("fields.installmentAmountMode.totalPreview", {
+                      value: format.number(
+                        resolveAmount(draft.amount)! * installmentCount,
+                        { style: "currency", currency: "BRL" },
+                      ),
+                    })}
+                  </p>
+                )}
+            </div>
+          )}
+
+          {invoicePreview && (
+            <p className="text-[11px] text-muted-foreground">
+              {t("fields.invoicePreview.label", {
+                closingDate: format.dateTime(
+                  new Date(invoicePreview.closingDate),
+                  DATE_ONLY_FORMAT_OPTIONS,
+                ),
+                dueDate: format.dateTime(
+                  new Date(invoicePreview.dueDate),
+                  DATE_ONLY_FORMAT_OPTIONS,
+                ),
+              })}
+              {currentInstallmentNumber && (
+                <>
+                  {" "}
+                  {t("fields.invoicePreview.currentInstallment", {
+                    number: currentInstallmentNumber,
+                    total: installmentCount,
+                  })}
+                </>
+              )}
+            </p>
+          )}
 
           {draftError && (
             <p className="text-xs text-red-600 dark:text-red-400">{draftError}</p>

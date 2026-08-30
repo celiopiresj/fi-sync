@@ -28,9 +28,47 @@ export function computeInvoiceCycle(
 ) {
   const zonedFrom = toAppZoned(fromDate);
 
+  // The closing day itself is already the NEXT invoice's opening day —
+  // not the last day still accepted by the one closing that day — so a
+  // purchase dated exactly on the closing day (`<=`, not `<`) has to push
+  // forward a month too, not just one strictly after it.
   let closingDate = setDate(zonedFrom, cardDetails.closingDay);
-  if (closingDate < zonedFrom) {
+  if (closingDate <= zonedFrom) {
     closingDate = addMonths(closingDate, 1);
+  }
+  let dueDate = setDate(closingDate, cardDetails.dueDay);
+  if (dueDate < closingDate) {
+    dueDate = addMonths(dueDate, 1);
+  }
+
+  return {
+    closingDate: fromAppZoned(closingDate),
+    dueDate: fromAppZoned(dueDate),
+  };
+}
+
+// The inverse of computeInvoiceCycle above: "fatura atual" colloquially
+// means the most recently CLOSED statement (the one due soon, that
+// you'd currently be paying off) — not the still-open one accumulating
+// new purchases, which is what computeInvoiceCycle(today, ...) returns.
+// Used by previewCurrentInvoiceCycle (transactions/actions.ts) to tell a
+// backdated/postdated installment purchase which of its installments
+// lands on today's actual current statement.
+export function computeCurrentInvoiceCycle(
+  fromDate: Date,
+  cardDetails: { closingDay: number; dueDay: number },
+) {
+  const zonedFrom = toAppZoned(fromDate);
+
+  // Stays `>` (not `>=`) — this is the exact logical complement of
+  // computeInvoiceCycle's own `<=`: that function treats `zonedFrom`
+  // landing ON the closing day as already-next-cycle, so this one
+  // correctly still counts that same day as "just closed" (today's own
+  // cycle), not "closed last month" — the two must never both treat the
+  // boundary day as belonging to themselves, or as belonging to neither.
+  let closingDate = setDate(zonedFrom, cardDetails.closingDay);
+  if (closingDate > zonedFrom) {
+    closingDate = addMonths(closingDate, -1);
   }
   let dueDate = setDate(closingDate, cardDetails.dueDay);
   if (dueDate < closingDate) {

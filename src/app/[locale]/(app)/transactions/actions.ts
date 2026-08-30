@@ -12,7 +12,11 @@ import {
   fromAppZoned,
   todayCalendarDate,
 } from "@/lib/date";
-import { computeInvoiceCycle, resolveInvoiceForDate } from "@/lib/invoice-resolution";
+import {
+  computeInvoiceCycle,
+  computeCurrentInvoiceCycle,
+  resolveInvoiceForDate,
+} from "@/lib/invoice-resolution";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import {
   debitTransactionSchema,
@@ -34,6 +38,29 @@ import {
 } from "./_schema/schema";
 import { periodRange, shiftPeriod, type Period } from "./_lib/period";
 import { formatMonthAbbreviationPtBr } from "./_lib/format-month-label";
+import {
+  ALL_CARDS_ACCOUNT_FILTER,
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+} from "./_constants/constants";
+
+// Resolves the "Conta" filter's value — a real account id, or one of the
+// two group sentinels from _constants/constants.ts (every card / every
+// non-card account) — to the Prisma where-clause fragment it should
+// apply. Shared by every list/aggregate query filtered by this same
+// value (listTransactions, getCategoryExpenseBreakdown,
+// getMonthlyBalances) so the three don't drift on how they interpret it.
+function accountFilterWhere(accountId: string | undefined): Record<string, unknown> {
+  if (accountId === ALL_CARDS_ACCOUNT_FILTER) {
+    return { account: { type: "CREDIT_CARD" } };
+  }
+  if (accountId === ALL_NON_CARD_ACCOUNTS_FILTER) {
+    return { account: { type: { not: "CREDIT_CARD" } } };
+  }
+  if (accountId) {
+    return { accountId };
+  }
+  return {};
+}
 
 async function requireUserId() {
   const { data: session } = await auth.getSession();
@@ -99,8 +126,7 @@ export type TransactionFilters = {
 export async function listTransactions(filters: TransactionFilters = {}) {
   const userId = await requireUserId();
 
-  const where: Record<string, unknown> = { userId };
-  if (filters.accountId) where.accountId = filters.accountId;
+  const where: Record<string, unknown> = { userId, ...accountFilterWhere(filters.accountId) };
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.personId) {
     // An unattributed transaction (no splits at all) is implicitly the
@@ -193,7 +219,7 @@ export async function getMonthlyBalances(
       return prisma.transaction.aggregate({
         where: {
           userId,
-          ...(accountId ? { accountId } : {}),
+          ...accountFilterWhere(accountId),
           date: { gte: parseCalendarDate(from), lte: parseCalendarDate(to) },
         },
         _sum: { amount: true },
@@ -244,8 +270,11 @@ export async function getCategoryExpenseBreakdown(
 ): Promise<CategoryBreakdown> {
   const userId = await requireUserId();
 
-  const where: Record<string, unknown> = { userId, amount: { lt: 0 } };
-  if (filters.accountId) where.accountId = filters.accountId;
+  const where: Record<string, unknown> = {
+    userId,
+    amount: { lt: 0 },
+    ...accountFilterWhere(filters.accountId),
+  };
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.search) {
     where.description = { contains: filters.search, mode: "insensitive" };
@@ -351,6 +380,39 @@ export async function previewInvoiceCycle(accountId: string, dateStr: string) {
   }
 
   return { closingDate, dueDate, existing: false };
+}
+
+// Read-only "which invoice is the CURRENT one" for the credit form's
+// installment-position hint (see fields.invoicePreview.currentInstallment)
+// — the most recently CLOSED statement, or one closing today, matching
+// how "fatura atual" is used colloquially (the one due soon, that you'd
+// currently be paying off) rather than the still-open one accumulating
+// new purchases (computeInvoiceCycle/previewInvoiceCycle above answer
+// THAT question instead — "where would a new purchase land").
+export async function previewCurrentInvoiceCycle(accountId: string) {
+  const userId = await requireUserId();
+  if (!accountId) return null;
+
+  const account = await prisma.account.findUnique({
+    where: { id: accountId, userId },
+    include: { creditCardDetails: true },
+  });
+  if (!account?.creditCardDetails) return null;
+
+  const todayDate = parseCalendarDate(todayCalendarDate());
+  const { closingDate, dueDate } = computeCurrentInvoiceCycle(
+    todayDate,
+    account.creditCardDetails,
+  );
+  const existing = await prisma.invoice.findUnique({
+    where: { accountId_closingDate: { accountId, closingDate } },
+  });
+
+  if (existing) {
+    return { closingDate: existing.closingDate, dueDate: existing.dueDate };
+  }
+
+  return { closingDate, dueDate };
 }
 
 // Read-only preview of every installment's invoice cycle for a would-be
@@ -1075,10 +1137,14 @@ export async function createCreditTransactionsBatch(
 
     const installmentCount = value.installments;
     const installmentGroupId = installmentCount > 1 ? crypto.randomUUID() : undefined;
-    // A batch row's typed amount is always the purchase total, split
-    // evenly across installments — see the comment on
-    // creditBatchRowSchema (no installmentAmountMode here).
-    const installmentAmount = signedAmount / installmentCount;
+    // Same "total" vs "perInstallment" convention as createCreditTransaction
+    // above (see its own comment) — "total": the typed amount is the whole
+    // purchase, split evenly. "perInstallment": it's already what each
+    // installment charges, used as-is.
+    const installmentAmount =
+      value.installmentAmountMode === "perInstallment"
+        ? signedAmount
+        : signedAmount / installmentCount;
 
     const originalDate = parseCalendarDate(value.date);
     let cursorDate = originalDate;
@@ -1183,8 +1249,9 @@ export async function deleteTransactionsBulk(ids: string[]) {
     // Same "unbounded work scaling with how many rows the user selected"
     // risk createTransactionsBatch's own $transaction call has, past
     // Prisma's 5000ms interactive-transaction default — see that call's
-    // own comment for the real timeout failure this mirrors.
-    { timeout: 30000 },
+    // own comment for the real timeout failure this mirrors. Bumped
+    // alongside it, 30000 → 60000.
+    { timeout: 60000 },
   );
 
   revalidateCreditTransactions();
@@ -1245,6 +1312,15 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
     if (!value.paymentMethod) {
       return { error: t("batch.paymentMethodRequired"), rowIndex: index };
     }
+    // Mirrors refineDebitTransaction's own splits-sum-matches-amount rule
+    // — same unrefined-in-the-schema, checked-here reasoning as
+    // personId/paymentMethod above (see batchRowSchema's own comment).
+    if (value.splits.length > 0) {
+      const splitsTotal = value.splits.reduce((sum, split) => sum + split.amount, 0);
+      if (Math.abs(splitsTotal - value.amount) > 0.01) {
+        return { error: t("splits.mismatch"), rowIndex: index };
+      }
+    }
     const rowAccountType = accountTypeById.get(value.accountId);
     if (rowAccountType === "CREDIT_CARD") {
       return { error: t("batch.creditCardNotAllowed"), rowIndex: index };
@@ -1257,6 +1333,7 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
   await prisma.$transaction(
     parsedRows.map(({ value }) => {
       const signedAmount = value.type === "expense" ? -value.amount : value.amount;
+      const splitsCreateInput = resolveSplitsCreateInput(value, signedAmount);
       return prisma.transaction.create({
         data: {
           userId,
@@ -1267,9 +1344,7 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
           date: parseCalendarDate(value.date),
           status: "COMPLETED",
           paymentMethod: value.paymentMethod || undefined,
-          splits: value.personId
-            ? { create: [{ personId: value.personId, amount: signedAmount }] }
-            : undefined,
+          splits: splitsCreateInput ? { create: splitsCreateInput } : undefined,
         },
       });
     }),
@@ -1280,7 +1355,9 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
     // legitimately take longer than that. This was a real, verified
     // failure ("Transaction API error: A rollback cannot be executed on
     // an expired transaction... 24441 ms passed"), not a hypothetical.
-    { timeout: 30000 },
+    // Bumped from 30000 to 60000 — rows can now also carry splits (extra
+    // inserts per row), pushing bigger batches closer to the old ceiling.
+    { timeout: 60000 },
   );
 
   revalidateTransactions();

@@ -34,6 +34,10 @@ import { useTransactionFormOptions } from "../_hooks/use-transaction-form-option
 import { useTransactionsData } from "../_hooks/use-transactions-data";
 import { formatGroupDateHeader } from "../_lib/format-group-date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
+import {
+  ALL_CARDS_ACCOUNT_FILTER,
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+} from "../_constants/constants";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
   currentPeriod,
@@ -604,12 +608,22 @@ export function TransactionsView({
     timeZone: APP_TIME_ZONE,
   });
 
+  // The account filter's value is either a real account id, or one of the
+  // two "every card"/"every non-card account" sentinels (filters-sheet.tsx)
+  // — resolved here to whatever display name each of those needs, shared
+  // by the header subtitle and the removable filter chip below.
+  function accountFilterName(accountId: string): string {
+    if (accountId === ALL_CARDS_ACCOUNT_FILTER) return t("filters.allCards");
+    if (accountId === ALL_NON_CARD_ACCOUNTS_FILTER) {
+      return t("filters.allNonCardAccounts");
+    }
+    return accounts.find((account) => account.id === accountId)?.name ?? "";
+  }
+
   const selectedAccountName = useMemo(() => {
     if (!sheetFilters.accountId) return null;
-    return (
-      accounts.find((account) => account.id === sheetFilters.accountId)?.name ??
-      null
-    );
+    return accountFilterName(sheetFilters.accountId) || null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, sheetFilters.accountId]);
 
   const headerSubtitle = t("header.subtitle", {
@@ -621,10 +635,9 @@ export function TransactionsView({
 
   function chipLabel(kind: keyof typeof CHIP_FIELD): string | null {
     if (kind === "account" && sheetFilters.accountId) {
-      const name =
-        accounts.find((account) => account.id === sheetFilters.accountId)
-          ?.name ?? "";
-      return t("filters.chips.account", { value: name });
+      return t("filters.chips.account", {
+        value: accountFilterName(sheetFilters.accountId),
+      });
     }
     if (kind === "category" && sheetFilters.categoryId) {
       const name =
