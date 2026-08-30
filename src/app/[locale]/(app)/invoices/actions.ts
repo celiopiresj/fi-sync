@@ -94,7 +94,7 @@ export async function listInvoices(filters: InvoiceFilters = {}) {
       ...(filters.period
         ? (() => {
             const range = invoicePeriodRange(filters.period);
-            return { closingDate: { gte: range.from, lte: range.to } };
+            return { dueDate: { gte: range.from, lte: range.to } };
           })()
         : {}),
     },
@@ -106,7 +106,7 @@ export async function listInvoices(filters: InvoiceFilters = {}) {
       payments: { select: { amount: true } },
       creditsReceived: { select: { amount: true } },
     },
-    orderBy: { closingDate: "desc" },
+    orderBy: { dueDate: "desc" },
   });
 
   const mapped = invoices.map((invoice) => {

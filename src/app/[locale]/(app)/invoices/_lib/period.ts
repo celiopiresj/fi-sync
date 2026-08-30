@@ -7,7 +7,10 @@ function pad2(value: number): string {
 
 // First/last calendar day of `period`'s month as real instants (pinned
 // to APP_TIME_ZONE via parseCalendarDate) — used to scope listInvoices'
-// closingDate filter to the period the header stepper is showing.
+// dueDate filter to the period the header stepper is showing. Scoped by
+// due date, not closing date: an invoice that closes in August but is
+// due in September should show up under "Setembro", since "quando eu
+// preciso pagar" is what the month stepper is meant to answer.
 export function invoicePeriodRange(period: InvoicePeriod): {
   from: Date;
   to: Date;
