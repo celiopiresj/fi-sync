@@ -154,12 +154,19 @@ export async function getInvoiceDetail(id: string) {
           transaction: {
             include: {
               account: { select: { id: true, name: true, type: true } },
-              category: { select: { id: true, name: true, icon: true } },
+              category: { select: { id: true, name: true, icon: true, colorStyle: true } },
               splits: { include: { person: { select: { id: true, name: true } } } },
               transactionCard: {
                 include: {
                   card: { select: { id: true, name: true, lastFourDigits: true } },
                 },
+              },
+              // Structurally required for TransactionRow (see
+              // listTransactions' own identical include) — unused here,
+              // since `effectiveDate` below is derived directly from
+              // this same invoice's own dueDate instead.
+              transactionInvoice: {
+                include: { invoice: { select: { dueDate: true } } },
               },
             },
           },
@@ -203,10 +210,14 @@ export async function getInvoiceDetail(id: string) {
     // Decimal→number, same conversion listTransactions itself does at
     // this same Server Action boundary — this IS that function's own
     // TransactionRow shape (see the include above), not a narrower
-    // invoice-specific projection.
+    // invoice-specific projection. `effectiveDate` mirrors
+    // listTransactions' own field (a credit row's invoice due date) —
+    // every transaction here already belongs to THIS invoice, so it's
+    // just `invoice.dueDate` directly, no extra join needed.
     transactions: invoice.transactionInvoices.map((ti) => ({
       ...ti.transaction,
       amount: ti.transaction.amount.toNumber(),
+      effectiveDate: invoice.dueDate,
       splits: ti.transaction.splits.map((split) => ({
         ...split,
         amount: split.amount.toNumber(),

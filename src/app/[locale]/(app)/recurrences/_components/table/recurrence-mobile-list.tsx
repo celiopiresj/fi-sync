@@ -96,7 +96,9 @@ export function RecurrenceMobileList({
             >
               <div className="flex items-center gap-3">
                 <div className="relative shrink-0">
-                  <CategoryIcon className="size-5 text-muted-foreground" />
+                  <CategoryIcon
+                    className={cn("size-5", recurrence.category?.colorStyle || "text-muted-foreground")}
+                  />
                   {/* Same "is this a card?" signal as the desktop
                       table's account-column icon (columns.tsx) — this
                       list has no separate account column to put it in,

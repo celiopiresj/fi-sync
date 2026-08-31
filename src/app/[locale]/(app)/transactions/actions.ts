@@ -62,6 +62,32 @@ function accountFilterWhere(accountId: string | undefined): Record<string, unkno
   return {};
 }
 
+// Scopes a period ("from"/"to", already "yyyy-MM-dd" strings) to either
+// the transaction's own date (everything except credit-card purchases)
+// or its linked invoice's dueDate (credit-card purchases) — a card
+// purchase belongs to whichever month you'll actually pay for it in, not
+// the month you swiped the card, mirroring /invoices' own
+// closingDate->dueDate switch (see invoices/actions.ts's listInvoices).
+// Shared by every list/aggregate query filtered by period
+// (listTransactions, getTransactionById, getMonthlyBalances,
+// getCategoryExpenseBreakdown) so the four don't drift on this.
+function effectiveDateWhere(from?: string, to?: string): Record<string, unknown> {
+  if (!from && !to) return {};
+  const range = {
+    ...(from ? { gte: parseCalendarDate(from) } : {}),
+    ...(to ? { lte: parseCalendarDate(to) } : {}),
+  };
+  return {
+    OR: [
+      { account: { type: { not: "CREDIT_CARD" } }, date: range },
+      {
+        account: { type: "CREDIT_CARD" },
+        transactionInvoice: { invoice: { dueDate: range } },
+      },
+    ],
+  };
+}
+
 async function requireUserId() {
   const { data: session } = await auth.getSession();
   if (!session?.user?.id) {
@@ -127,6 +153,12 @@ export async function listTransactions(filters: TransactionFilters = {}) {
   const userId = await requireUserId();
 
   const where: Record<string, unknown> = { userId, ...accountFilterWhere(filters.accountId) };
+  // Independent "at least one of these" conditions (personId's own OR,
+  // effectiveDateWhere's own OR) can't both be assigned to `where.OR`
+  // directly — the second would silently clobber the first. Collected
+  // here and AND-ed together at the end instead.
+  const andConditions: Record<string, unknown>[] = [];
+
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.personId) {
     // An unattributed transaction (no splits at all) is implicitly the
@@ -138,30 +170,30 @@ export async function listTransactions(filters: TransactionFilters = {}) {
       where: { id: filters.personId, userId },
       select: { isSelf: true },
     });
-    where.OR = person?.isSelf
-      ? [
-          { splits: { some: { personId: filters.personId } } },
-          { splits: { none: {} } },
-        ]
-      : [{ splits: { some: { personId: filters.personId } } }];
+    andConditions.push({
+      OR: person?.isSelf
+        ? [
+            { splits: { some: { personId: filters.personId } } },
+            { splits: { none: {} } },
+          ]
+        : [{ splits: { some: { personId: filters.personId } } }],
+    });
   }
   if (filters.search) {
     where.description = { contains: filters.search, mode: "insensitive" };
   }
   if (filters.from || filters.to) {
-    where.date = {
-      ...(filters.from ? { gte: parseCalendarDate(filters.from) } : {}),
-      ...(filters.to ? { lte: parseCalendarDate(filters.to) } : {}),
-    };
+    andConditions.push(effectiveDateWhere(filters.from, filters.to));
   }
   if (filters.type === "income") where.amount = { gt: 0 };
   if (filters.type === "expenses") where.amount = { lt: 0 };
+  if (andConditions.length > 0) where.AND = andConditions;
 
   const transactions = await prisma.transaction.findMany({
     where,
     include: {
       account: { select: { id: true, name: true, type: true } },
-      category: { select: { id: true, name: true, icon: true } },
+      category: { select: { id: true, name: true, icon: true, colorStyle: true } },
       splits: { include: { person: { select: { id: true, name: true } } } },
       // Only ever set for a credit-card purchase (tasks/015.md) — used by
       // the table/mobile list to show which physical card was used, and
@@ -169,21 +201,39 @@ export async function listTransactions(filters: TransactionFilters = {}) {
       transactionCard: {
         include: { card: { select: { id: true, name: true, lastFourDigits: true } } },
       },
+      // Only ever set for a credit-card purchase — its invoice's dueDate
+      // is what `effectiveDate` below resolves to for that row.
+      transactionInvoice: {
+        include: { invoice: { select: { dueDate: true } } },
+      },
     },
     orderBy: { date: "desc" },
   });
 
   // Decimal isn't a plain serializable value across the Server
   // Action/Client Component boundary — convert once here instead of at
-  // every call site.
-  return transactions.map((transaction) => ({
-    ...transaction,
-    amount: transaction.amount.toNumber(),
-    splits: transaction.splits.map((split) => ({
-      ...split,
-      amount: split.amount.toNumber(),
-    })),
-  }));
+  // every call site. `effectiveDate` is what the UI actually sorts/
+  // groups/filters-by-period on (see effectiveDateWhere above) — the
+  // transaction's own `date` stays on the row too, shown as the real
+  // purchase date in a credit row's own subtitle. Re-sorted by
+  // `effectiveDate` in JS after mapping, since Prisma can't express "sort
+  // by date, except by a joined table's date for some rows" in a single
+  // `orderBy` — the list is one month's worth of rows at a time, small
+  // enough that this costs nothing measurable.
+  return transactions
+    .map((transaction) => ({
+      ...transaction,
+      amount: transaction.amount.toNumber(),
+      effectiveDate:
+        transaction.account.type === "CREDIT_CARD" && transaction.transactionInvoice
+          ? transaction.transactionInvoice.invoice.dueDate
+          : transaction.date,
+      splits: transaction.splits.map((split) => ({
+        ...split,
+        amount: split.amount.toNumber(),
+      })),
+    }))
+    .sort((a, b) => b.effectiveDate.getTime() - a.effectiveDate.getTime());
 }
 
 // Single-row counterpart of listTransactions above — same `include`/
@@ -202,10 +252,13 @@ export async function getTransactionById(id: string) {
     where: { id, userId },
     include: {
       account: { select: { id: true, name: true, type: true } },
-      category: { select: { id: true, name: true, icon: true } },
+      category: { select: { id: true, name: true, icon: true, colorStyle: true } },
       splits: { include: { person: { select: { id: true, name: true } } } },
       transactionCard: {
         include: { card: { select: { id: true, name: true, lastFourDigits: true } } },
+      },
+      transactionInvoice: {
+        include: { invoice: { select: { dueDate: true } } },
       },
     },
   });
@@ -214,6 +267,14 @@ export async function getTransactionById(id: string) {
   return {
     ...transaction,
     amount: transaction.amount.toNumber(),
+    // Same effectiveDate as listTransactions — kept structurally
+    // consistent with TransactionRow even though this row's own edit
+    // form doesn't render it, since callers type this return as
+    // TransactionRow (see CreditTransactionSheet's prefill prop).
+    effectiveDate:
+      transaction.account.type === "CREDIT_CARD" && transaction.transactionInvoice
+        ? transaction.transactionInvoice.invoice.dueDate
+        : transaction.date,
     splits: transaction.splits.map((split) => ({
       ...split,
       amount: split.amount.toNumber(),
@@ -255,7 +316,7 @@ export async function getMonthlyBalances(
         where: {
           userId,
           ...accountFilterWhere(accountId),
-          date: { gte: parseCalendarDate(from), lte: parseCalendarDate(to) },
+          ...effectiveDateWhere(from, to),
         },
         _sum: { amount: true },
       });
@@ -315,10 +376,7 @@ export async function getCategoryExpenseBreakdown(
     where.description = { contains: filters.search, mode: "insensitive" };
   }
   if (filters.from || filters.to) {
-    where.date = {
-      ...(filters.from ? { gte: parseCalendarDate(filters.from) } : {}),
-      ...(filters.to ? { lte: parseCalendarDate(filters.to) } : {}),
-    };
+    Object.assign(where, effectiveDateWhere(filters.from, filters.to));
   }
 
   // No `: CategoryGroupRow[]` annotation here (unlike the `.map`/`filter`
@@ -549,9 +607,25 @@ function resolveSplitsCreateInput(
   amount: number,
 ) {
   if (value.splits.length > 0) {
+    // The typed splits sum to whatever total the user was actually
+    // looking at when dividing — the full purchase in "total"
+    // installment mode, just this one installment's share in
+    // "perInstallment" mode — but `amount` is what THIS row actually
+    // stores (e.g. one installment's own share, total/N). Scaling every
+    // split by the same ratio keeps each person's proportional share
+    // while making the splits always sum to the row's real amount,
+    // instead of silently storing every installment with the FULL
+    // total's split shares. Verified, real bug: a 5x installment
+    // purchase split 3 ways (mode "total") stored every installment's
+    // splits as the whole purchase's shares — 5x too large in
+    // aggregate, and not matching the row's own (correctly divided)
+    // amount at all. `rawTotal` is always > 0 here (split amounts are
+    // schema-validated positive), so no divide-by-zero guard needed.
+    const rawTotal = value.splits.reduce((sum, split) => sum + split.amount, 0);
+    const scale = Math.abs(amount) / rawTotal;
     return value.splits.map((split) => ({
       personId: split.personId,
-      amount: value.type === "expense" ? -split.amount : split.amount,
+      amount: value.type === "expense" ? -split.amount * scale : split.amount * scale,
     }));
   }
   if (value.personId) {

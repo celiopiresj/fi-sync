@@ -272,6 +272,7 @@ export function InvoiceDetailView({
           paymentMethodLabel: (method) => tTransactions(`fields.paymentMethod.${method}`),
           installmentLabel: (number, count) => tTransactions("table.installment", { number, count }),
           oneTimePaymentLabel: tTransactions("table.oneTimePayment"),
+          formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
           creditCardAccountLabel: tTransactions("table.creditCardAccount"),
           menuAria: tTransactions("aria.menu"),
           menuEdit: tTransactions("menu.edit"),
@@ -289,6 +290,11 @@ export function InvoiceDetailView({
         // an Account column would be redundant (same rule
         // transactions-view.tsx's own showAccountColumn follows when
         // filtered to a single account).
+        false,
+        // Keeps grouping by each row's own real purchase date — every
+        // transaction on this page already belongs to the SAME invoice,
+        // so grouping by due date instead would collapse the whole table
+        // into a single group (see columns.tsx's dateColumn comment).
         false,
       ),
     [tTransactions, tCommon, format],
@@ -622,6 +628,7 @@ export function InvoiceDetailView({
           <TransactionMobileList
             transactions={filteredTransactions}
             formatGroupHeader={formatGroupHeaderParts}
+            getDateKey={(row) => dateOnlyKey(row.date)}
             formatAmount={(amount) =>
               formatSignedAmount(amount, (value) => format.number(value, { style: "currency", currency: "BRL" }))
             }
@@ -633,6 +640,7 @@ export function InvoiceDetailView({
               selfLabel: tTransactions("table.self"),
               installmentLabel: (number, count) => tTransactions("table.installment", { number, count }),
               oneTimePaymentLabel: tTransactions("table.oneTimePayment"),
+              formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
               creditCardAccountLabel: tTransactions("table.creditCardAccount"),
               menuAria: tTransactions("aria.menu"),
               menuEdit: tTransactions("menu.edit"),

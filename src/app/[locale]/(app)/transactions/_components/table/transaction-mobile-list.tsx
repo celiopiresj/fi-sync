@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
-import { dateOnlyKey } from "@/lib/date";
 import type { TransactionRow } from "../../_types/types";
 import { formatPersonName } from "@/lib/format-person-name";
 import { creditCardDetail } from "../../_lib/credit-card-detail";
@@ -48,6 +47,8 @@ type Messages = {
   // same creditCardDetail helper, same messages.
   installmentLabel: (number: number, count: number) => string;
   oneTimePaymentLabel: string;
+  // See the matching field on ColumnMessages in table/columns.tsx.
+  formatPurchaseDate: (date: Date) => string;
   creditCardAccountLabel: string;
   menuAria: string;
   menuEdit: string;
@@ -77,6 +78,13 @@ type TransactionMobileListProps = {
   // translated — see _lib/format-group-date.ts, shared with the desktop
   // table's renderGroupHeader so the two can't drift.
   formatGroupHeader: (dateKey: string) => { label: string; summary: string };
+  // Which date a row groups/sorts under — /transactions groups a
+  // credit-card row by its invoice's due date (`row.effectiveDate`),
+  // /invoices' own detail view keeps grouping by the real purchase date
+  // (`row.date`), same split as columns.tsx's own `groupByEffectiveDate`
+  // param and for the same reason (every row in one invoice already
+  // shares one due date).
+  getDateKey: (row: TransactionRow) => string;
   formatAmount: (amount: number) => string;
   messages: Messages;
   actions: Actions;
@@ -86,6 +94,7 @@ type TransactionMobileListProps = {
 export function TransactionMobileList({
   transactions,
   formatGroupHeader,
+  getDateKey,
   formatAmount,
   messages,
   actions,
@@ -95,13 +104,14 @@ export function TransactionMobileList({
     return <div className="rounded-md border border-border">{emptyState}</div>;
   }
 
-  // `transactions` arrives already ordered (see listTransactions:
-  // orderBy date desc), so bucketing while inserting preserves that
-  // order — no extra sort needed, and groups stay newest-first same as
-  // the desktop table.
+  // `transactions` arrives already ordered by whichever date basis the
+  // caller's own query sorted by (see listTransactions's effectiveDate
+  // resort), so bucketing while inserting preserves that order — no
+  // extra sort needed, and groups stay newest-first same as the desktop
+  // table.
   const groups = new Map<string, TransactionRow[]>();
   for (const transaction of transactions) {
-    const key = dateOnlyKey(transaction.date);
+    const key = getDateKey(transaction);
     const bucket = groups.get(key);
     if (bucket) {
       bucket.push(transaction);
@@ -141,10 +151,14 @@ export function TransactionMobileList({
                 // fallback as the desktop table's own columns.tsx.
                 const detail = row.paymentMethod
                   ? messages.paymentMethodLabel(row.paymentMethod)
-                  : creditCardDetail(row, {
-                      installmentLabel: messages.installmentLabel,
-                      oneTimePaymentLabel: messages.oneTimePaymentLabel,
-                    });
+                  : creditCardDetail(
+                      row,
+                      {
+                        installmentLabel: messages.installmentLabel,
+                        oneTimePaymentLabel: messages.oneTimePaymentLabel,
+                      },
+                      messages.formatPurchaseDate(row.date),
+                    );
                 const subtitleParts = [
                   row.category?.name ?? null,
                   detail,
@@ -162,7 +176,9 @@ export function TransactionMobileList({
                 return (
                   <div key={row.id} className="flex items-center gap-3 px-3 py-2.5">
                     <div className="relative shrink-0">
-                      <CategoryIcon className="size-5 text-muted-foreground" />
+                      <CategoryIcon
+                        className={cn("size-5", row.category?.colorStyle || "text-muted-foreground")}
+                      />
                       {/* Same "is this a card?" signal as the desktop
                           table's account-column icon (columns.tsx) — this
                           list has no separate account column to put it

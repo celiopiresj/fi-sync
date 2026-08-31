@@ -19,7 +19,12 @@ import {
 } from "@/components/ui/empty";
 import { PageHeader, PeriodStepper } from "@/components/screen/page-header";
 import { SearchInput } from "@/components/screen/search-input";
-import { APP_TIME_ZONE, dateOnlyKey, parseCalendarDate } from "@/lib/date";
+import {
+  APP_TIME_ZONE,
+  DATE_ONLY_FORMAT_OPTIONS,
+  dateOnlyKey,
+  parseCalendarDate,
+} from "@/lib/date";
 import {
   CaretDownIcon,
   ReceiptIcon,
@@ -284,7 +289,7 @@ export function TransactionsView({
   const { dailyTotalByDateKey, accumulatedByDateKey } = useMemo(() => {
     const dailyTotalByDateKey = new Map<string, number>();
     for (const transaction of transactions) {
-      const key = dateOnlyKey(transaction.date);
+      const key = dateOnlyKey(transaction.effectiveDate);
       dailyTotalByDateKey.set(
         key,
         (dailyTotalByDateKey.get(key) ?? 0) + transaction.amount,
@@ -410,6 +415,7 @@ export function TransactionsView({
           paymentMethodLabel: (method) => t(`fields.paymentMethod.${method}`),
           installmentLabel: (number, count) => t("table.installment", { number, count }),
           oneTimePaymentLabel: t("table.oneTimePayment"),
+          formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
           creditCardAccountLabel: t("table.creditCardAccount"),
           menuAria: t("aria.menu"),
           menuEdit: t("menu.edit"),
@@ -434,6 +440,9 @@ export function TransactionsView({
         // Filtering to one account makes an Account column redundant —
         // see tasks/xxx section 4.
         !sheetFilters.accountId,
+        // Group by each credit-card row's invoice due date, not its own
+        // purchase date — see columns.tsx's dateColumn comment.
+        true,
       ),
     [t, tCommon, format, sheetFilters.accountId],
   );
@@ -893,6 +902,7 @@ export function TransactionsView({
           <TransactionMobileList
             transactions={transactions}
             formatGroupHeader={formatGroupHeaderParts}
+            getDateKey={(row) => dateOnlyKey(row.effectiveDate)}
             formatAmount={(amount) =>
               formatSignedAmount(amount, (value) =>
                 format.number(value, { style: "currency", currency: "BRL" }),
@@ -908,6 +918,7 @@ export function TransactionsView({
               selfLabel: t("table.self"),
               installmentLabel: (number, count) => t("table.installment", { number, count }),
               oneTimePaymentLabel: t("table.oneTimePayment"),
+              formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
               creditCardAccountLabel: t("table.creditCardAccount"),
               menuAria: t("aria.menu"),
               menuEdit: t("menu.edit"),

@@ -84,7 +84,9 @@ export function getRecurrenceColumns(
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex min-w-0 items-center gap-2.5">
               <Avatar className="size-6.5">
-                <AvatarFallback>
+                <AvatarFallback
+                  className={row.original.category?.colorStyle || "bg-muted text-muted-foreground"}
+                >
                   <CategoryIcon className="size-3.5" />
                 </AvatarFallback>
               </Avatar>

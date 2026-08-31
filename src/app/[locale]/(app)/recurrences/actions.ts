@@ -109,7 +109,7 @@ export async function listRecurrences(filters: RecurrenceFilters = {}) {
     },
     include: {
       account: { select: { id: true, name: true, type: true } },
-      category: { select: { id: true, name: true, icon: true } },
+      category: { select: { id: true, name: true, icon: true, colorStyle: true } },
       card: { select: { id: true, name: true, lastFourDigits: true } },
       splits: { include: { person: { select: { id: true, name: true } } } },
       // Latest linked occurrence, if any — one row per recurrence in a

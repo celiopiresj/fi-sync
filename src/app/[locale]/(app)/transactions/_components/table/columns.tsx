@@ -62,6 +62,11 @@ type ColumnMessages = {
   // Shown instead of installmentLabel for a credit-card purchase that
   // wasn't split into installments — "À vista".
   oneTimePaymentLabel: string;
+  // Formats a credit row's real purchase date for its subtitle (see
+  // creditCardDetail's own comment on why it's shown there instead of
+  // the row's primary date) — callers pass e.g.
+  // `(date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS)`.
+  formatPurchaseDate: (date: Date) => string;
   // aria-label for the small credit-card icon next to the account name
   // (accountColumn below) — the icon itself has no visible text.
   creditCardAccountLabel: string;
@@ -95,6 +100,9 @@ export function getTransactionColumns(
   // transactions screen redesign section 4. Callers decide this from
   // whichever account filter they're currently applying.
   showAccountColumn: boolean,
+  // See dateColumn's own comment below — /transactions passes true,
+  // /invoices' detail view passes false.
+  groupByEffectiveDate: boolean,
 ): ColumnDef<TransactionRow, unknown>[] {
   const accountColumn: ColumnDef<TransactionRow, unknown> = {
     id: "account",
@@ -127,9 +135,16 @@ export function getTransactionColumns(
   // (any column whose id matches `groupBy`), so it never actually shows.
   // Must produce the exact same "yyyy-MM-dd" string the day/accumulated
   // totals are keyed by in transactions-view.tsx — not a Date object.
+  // Groups by `effectiveDate` (a credit-card row's invoice due date,
+  // everything else its own date — see actions.ts) when
+  // `groupByEffectiveDate` is set, else by the row's own real date.
+  // /transactions wants the former; /invoices' own detail view reuses
+  // this exact same column set and keeps the latter — every row in a
+  // single invoice already shares one due date, so grouping by it there
+  // would collapse the whole table into one group instead of one per day.
   const dateColumn: ColumnDef<TransactionRow, unknown> = {
     id: "date",
-    accessorFn: (row) => dateOnlyKey(row.date),
+    accessorFn: (row) => dateOnlyKey(groupByEffectiveDate ? row.effectiveDate : row.date),
     enableSorting: false,
   };
 
@@ -147,10 +162,14 @@ export function getTransactionColumns(
         const detail =
           row.original.paymentMethod
             ? messages.paymentMethodLabel(row.original.paymentMethod)
-            : creditCardDetail(row.original, {
-                installmentLabel: messages.installmentLabel,
-                oneTimePaymentLabel: messages.oneTimePaymentLabel,
-              });
+            : creditCardDetail(
+                row.original,
+                {
+                  installmentLabel: messages.installmentLabel,
+                  oneTimePaymentLabel: messages.oneTimePaymentLabel,
+                },
+                messages.formatPurchaseDate(row.original.date),
+              );
         const subtitleParts = [row.original.category?.name, detail].filter(
           (part): part is string => Boolean(part),
         );
@@ -158,7 +177,9 @@ export function getTransactionColumns(
         return (
           <div className="flex min-w-0 max-w-85 items-center gap-2.5">
             <Avatar className="size-6.5">
-              <AvatarFallback>
+              <AvatarFallback
+                className={row.original.category?.colorStyle || "bg-muted text-muted-foreground"}
+              >
                 <CategoryIcon className="size-3.5" />
               </AvatarFallback>
             </Avatar>
@@ -233,7 +254,7 @@ export function getTransactionColumns(
         // by DataTable's renderSubRows) into one indented row per person
         // below, each showing their own split amount.
         return (
-          <div className="w-40 shrink-0">
+          <div className="w-fit min-w-40 shrink-0">
             <button
               type="button"
               onClick={(e) => {
@@ -241,10 +262,10 @@ export function getTransactionColumns(
                 row.toggleExpanded();
               }}
               aria-expanded={row.getIsExpanded()}
-              className="inline-flex max-w-full items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning transition-colors hover:bg-warning/25"
+              className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning transition-colors hover:bg-warning/25"
             >
               <ShuffleIcon className="size-3 shrink-0" />
-              <span className="min-w-0 truncate">
+              <span className="whitespace-nowrap">
                 {messages.splitPillLabel(splits.length)}
               </span>
               {row.getIsExpanded() ? (
