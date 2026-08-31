@@ -3,7 +3,7 @@
 import { getTranslations } from "next-intl/server";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
-import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
+import { parseCalendarDate, todayCalendarDate, dateOnlyKey } from "@/lib/date";
 import { listAccounts } from "../accounts/actions";
 import { listCreditCardAccounts } from "../cards/actions";
 import { listInvoices } from "../invoices/actions";
@@ -159,14 +159,19 @@ export async function getHomeOverview() {
   // figure the way it landing in another checking account would.
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
 
-  // Derived from cardAccounts' own `spent` (listCreditCardAccounts'
-  // outstanding, already bounded to the currently-open cycle and
-  // earlier — see its own comment) rather than summing `invoices`
-  // directly: that list is fetched unscoped (listInvoices() with no
-  // period filter) and would otherwise pull in future, not-yet-open
-  // cycles a recurrence has already pre-generated invoices for, wildly
-  // overstating what's actually due right now.
-  const invoicesDue = cardAccounts.reduce((sum, account) => sum + account.spent, 0);
+  // Only invoices actually due THIS calendar month — cardAccounts' own
+  // `spent`/outstanding (used for available limit) is deliberately
+  // broader (bounded to "currently-open cycle and earlier," so an old
+  // overdue invoice from further back still counts against the limit),
+  // but this KPI is meant to answer "what do I owe this month," not
+  // "what do I owe total." `invoices` itself is fetched unscoped
+  // (listInvoices() with no period filter) so the "Atenção necessária"
+  // section below can still surface an overdue invoice from any month —
+  // only this sum narrows to the current one.
+  const invoicesDue = invoices
+    .filter((invoice) => invoice.displayStatus !== "PAID")
+    .filter((invoice) => dateOnlyKey(invoice.dueDate).slice(0, 7) === currentMonthKey)
+    .reduce((sum, invoice) => sum + invoice.remainingDue, 0);
 
   const closedInvoices = invoices.filter(
     (invoice) => invoice.displayStatus === "CLOSED" || invoice.displayStatus === "PARTIALLY_PAID",
