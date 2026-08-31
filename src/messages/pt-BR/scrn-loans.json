@@ -35,7 +35,8 @@
     },
     "installments": {
       "label": "Número de parcelas",
-      "placeholder": "1"
+      "placeholder": "1",
+      "noneUpcoming": "Todas as parcelas já venceram — nenhuma parcela futura para adicionar."
     },
     "installmentAmount": {
       "label": "Valor da parcela"
@@ -97,6 +98,13 @@
       "description": "Essa ação não pode ser desfeita. O empréstimo e suas parcelas serão removidos.",
       "cancel": "Cancelar",
       "confirm": "Excluir"
+    },
+    "pastInstallments": {
+      "title": "Parcelas já vencidas",
+      "description": "A primeira parcela venceria em {dueDate}, que já passou. Deseja adicionar as {total} parcelas (incluindo as já vencidas) ou apenas as {upcoming} parcelas futuras?",
+      "addAll": "Adicionar todas",
+      "addUpcoming": "Apenas as próximas",
+      "cancel": "Cancelar"
     }
   },
   "errors": {

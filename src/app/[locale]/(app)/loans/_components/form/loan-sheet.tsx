@@ -23,7 +23,10 @@ type LoanSheetProps = {
   prefill: LoanFormPrefill | null;
   people: LoanPersonOption[];
   accounts: LoanAccountOption[];
-  onSubmit: (values: LoanFormValues) => Promise<{ error: string | null }>;
+  onSubmit: (
+    values: LoanFormValues,
+    options?: { skipPastInstallments?: boolean },
+  ) => Promise<{ error: string | null }>;
 };
 
 export function LoanSheet({

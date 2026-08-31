@@ -100,11 +100,14 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
     );
   }, [loans, searchText]);
 
-  async function handleSubmit(values: LoanFormValues) {
+  async function handleSubmit(
+    values: LoanFormValues,
+    options?: { skipPastInstallments?: boolean },
+  ) {
     const isEditing = dialogState?.mode === "edit";
     const result = isEditing
-      ? await updateLoan(dialogState.row.id, values)
-      : await createLoan(values);
+      ? await updateLoan(dialogState.row.id, values, options)
+      : await createLoan(values, options);
 
     if (!result.error) {
       invalidate();

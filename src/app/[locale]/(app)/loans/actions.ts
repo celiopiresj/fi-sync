@@ -157,7 +157,14 @@ async function validateLoan(data: LoanFormValues, accountRequiredMessage: string
     .safeParse(data);
 }
 
-export async function createLoan(data: LoanFormValues) {
+export async function createLoan(
+  data: LoanFormValues,
+  // Only meaningful when the schedule's first due date is already in
+  // the past — the create form asks the user in that case (see
+  // PastInstallmentsDialog) whether to still create every installment
+  // or only the ones still ahead. Ignored otherwise.
+  options?: { skipPastInstallments?: boolean },
+) {
   const userId = await requireUserId();
   const t = await getTranslations("scrn-loans");
   const result = await validateLoan(data, t("errors.receivedAccountRequired"));
@@ -186,6 +193,22 @@ export async function createLoan(data: LoanFormValues) {
   const firstDueDate = parseCalendarDate(value.dueDate);
   const dueDates = computeLoanInstallmentDates(firstDueDate, value.installments);
 
+  // Pure date math, no invoice-cycle cursor to advance (unlike
+  // createCreditTransaction's own skip loop) — every installment's
+  // dueDate was already computed upfront above, so skipping is just a
+  // filter. Original 1-based installmentNumber is kept even for a
+  // skipped schedule (e.g. installments 4..6 of 6 stay numbered that
+  // way), same as the credit-card equivalent.
+  const skipPastInstallments = options?.skipPastInstallments ?? false;
+  const todayDate = parseCalendarDate(todayCalendarDate());
+  const installmentsToCreate = dueDates
+    .map((dueDate, index) => ({ dueDate, installmentNumber: index + 1 }))
+    .filter(({ dueDate }) => !skipPastInstallments || dueDate >= todayDate);
+
+  if (skipPastInstallments && installmentsToCreate.length === 0) {
+    return { error: t("fields.installments.noneUpcoming") };
+  }
+
   await prisma.$transaction(async (tx) => {
     await tx.loan.create({
       data: {
@@ -194,8 +217,8 @@ export async function createLoan(data: LoanFormValues) {
         description: value.description,
         dueDate: firstDueDate,
         installments: {
-          create: dueDates.map((dueDate, index) => ({
-            installmentNumber: index + 1,
+          create: installmentsToCreate.map(({ dueDate, installmentNumber }) => ({
+            installmentNumber,
             installmentCount: value.installments,
             dueDate,
             amount: value.installmentAmount,
@@ -247,7 +270,11 @@ export async function createLoan(data: LoanFormValues) {
 // recebido" transaction createLoan may have posted — that's a
 // create-only action, not part of the recurring schedule being edited
 // here.
-export async function updateLoan(id: string, data: LoanFormValues) {
+export async function updateLoan(
+  id: string,
+  data: LoanFormValues,
+  options?: { skipPastInstallments?: boolean },
+) {
   const userId = await requireUserId();
   const t = await getTranslations("scrn-loans");
   const result = await validateLoan(data, t("errors.receivedAccountRequired"));
@@ -278,6 +305,16 @@ export async function updateLoan(id: string, data: LoanFormValues) {
   const firstDueDate = parseCalendarDate(value.dueDate);
   const dueDates = computeLoanInstallmentDates(firstDueDate, value.installments);
 
+  const skipPastInstallments = options?.skipPastInstallments ?? false;
+  const todayDate = parseCalendarDate(todayCalendarDate());
+  const installmentsToCreate = dueDates
+    .map((dueDate, index) => ({ dueDate, installmentNumber: index + 1 }))
+    .filter(({ dueDate }) => !skipPastInstallments || dueDate >= todayDate);
+
+  if (skipPastInstallments && installmentsToCreate.length === 0) {
+    return { error: t("fields.installments.noneUpcoming") };
+  }
+
   await prisma.$transaction([
     prisma.loanInstallment.deleteMany({ where: { loanId: id } }),
     prisma.loan.update({
@@ -287,8 +324,8 @@ export async function updateLoan(id: string, data: LoanFormValues) {
         description: value.description,
         dueDate: firstDueDate,
         installments: {
-          create: dueDates.map((dueDate, index) => ({
-            installmentNumber: index + 1,
+          create: installmentsToCreate.map(({ dueDate, installmentNumber }) => ({
+            installmentNumber,
             installmentCount: value.installments,
             dueDate,
             amount: value.installmentAmount,

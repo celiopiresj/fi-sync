@@ -6,8 +6,9 @@ import { useStore } from "@tanstack/react-form";
 import { useZodForm } from "@/lib/form/use-zod-form";
 import { FormError } from "@/components/form/form-error";
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
-import { dateOnlyKey } from "@/lib/date";
+import { dateOnlyKey, parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import { ItemGroup } from "@/components/ui/item";
+import { computeLoanInstallmentDates } from "../../_lib/installment-dates";
 import {
   loanSchema,
   refineLoanReceived,
@@ -20,6 +21,7 @@ import type {
   LoanFormPrefill,
   LoanPersonOption,
 } from "../../_types/types";
+import { PastInstallmentsDialog } from "./past-installments-dialog";
 
 function toFormValues(loan: LoanFormPrefill | null): LoanFormValues {
   if (!loan) return emptyLoanFormValues;
@@ -40,7 +42,10 @@ type LoanFormProps = {
   initialValues: LoanFormPrefill | null;
   people: LoanPersonOption[];
   accounts: LoanAccountOption[];
-  onSubmit: (values: LoanFormValues) => Promise<{ error: string | null }>;
+  onSubmit: (
+    values: LoanFormValues,
+    options?: { skipPastInstallments?: boolean },
+  ) => Promise<{ error: string | null }>;
   onSuccess: () => void;
 };
 
@@ -57,6 +62,8 @@ export function LoanForm({
   const tValidation = useTranslations("common.validation");
   const format = useFormatter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [pastInstallmentsValue, setPastInstallmentsValue] =
+    useState<LoanFormValues | null>(null);
 
   const schema = loanSchema.superRefine((value: LoanValues, ctx) =>
     refineLoanReceived(value, ctx, {
@@ -64,21 +71,37 @@ export function LoanForm({
     }),
   );
 
+  async function performSubmit(
+    value: LoanFormValues,
+    options?: { skipPastInstallments?: boolean },
+  ) {
+    setServerError(null);
+    try {
+      const result = await onSubmit(value, options);
+      if (result?.error) {
+        setServerError(result.error);
+        return;
+      }
+      onSuccess();
+    } catch (err) {
+      if (isNextRedirectError(err)) throw err;
+      setServerError(tCommon("errorGeneric"));
+    }
+  }
+
   const form = useZodForm(schema, {
     defaultValues: toFormValues(initialValues),
     onSubmit: async ({ value }) => {
-      setServerError(null);
-      try {
-        const result = await onSubmit(value);
-        if (result?.error) {
-          setServerError(result.error);
-        } else {
-          onSuccess();
+      const installmentCount = Number(value.installments || "1");
+      const dueDate = value.dueDate ? parseCalendarDate(value.dueDate) : null;
+      if (dueDate && installmentCount > 0) {
+        const [firstDueDate] = computeLoanInstallmentDates(dueDate, 1);
+        if (firstDueDate < parseCalendarDate(todayCalendarDate())) {
+          setPastInstallmentsValue(value);
+          return;
         }
-      } catch (err) {
-        if (isNextRedirectError(err)) throw err;
-        setServerError(tCommon("errorGeneric"));
       }
+      await performSubmit(value);
     },
   });
 
@@ -86,6 +109,24 @@ export function LoanForm({
     form.store,
     (state) => state.values.receivedAmount,
   );
+  const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
+
+  // Only computed once the past-installments dialog is actually open —
+  // recomputed off `pastInstallmentsValue` (the exact values that were
+  // submitted), not the live form state, so the dialog's own counts
+  // can't drift from what onAddAll/onAddUpcoming below actually submit.
+  const pastInstallmentsCount = pastInstallmentsValue
+    ? Number(pastInstallmentsValue.installments || "1")
+    : 0;
+  const pastInstallmentsDates = pastInstallmentsValue
+    ? computeLoanInstallmentDates(
+        parseCalendarDate(pastInstallmentsValue.dueDate),
+        pastInstallmentsCount,
+      )
+    : [];
+  const pastInstallmentsUpcomingCount = pastInstallmentsDates.filter(
+    (date) => date >= parseCalendarDate(todayCalendarDate()),
+  ).length;
 
   return (
     <form
@@ -194,6 +235,27 @@ export function LoanForm({
           )}
         />
       </form.AppForm>
+
+      {pastInstallmentsValue && pastInstallmentsDates[0] && (
+        <PastInstallmentsDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPastInstallmentsValue(null);
+          }}
+          firstDueDate={pastInstallmentsDates[0]}
+          totalInstallments={pastInstallmentsCount}
+          upcomingInstallments={pastInstallmentsUpcomingCount}
+          isSubmitting={isSubmitting}
+          onAddAll={async () => {
+            await performSubmit(pastInstallmentsValue, { skipPastInstallments: false });
+            setPastInstallmentsValue(null);
+          }}
+          onAddUpcoming={async () => {
+            await performSubmit(pastInstallmentsValue, { skipPastInstallments: true });
+            setPastInstallmentsValue(null);
+          }}
+        />
+      )}
     </form>
   );
 }

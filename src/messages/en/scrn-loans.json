@@ -35,7 +35,8 @@
     },
     "installments": {
       "label": "Number of installments",
-      "placeholder": "1"
+      "placeholder": "1",
+      "noneUpcoming": "Every installment is already overdue — no upcoming installment to add."
     },
     "installmentAmount": {
       "label": "Installment amount"
@@ -97,6 +98,13 @@
       "description": "This can't be undone. The loan and its installments will be removed.",
       "cancel": "Cancel",
       "confirm": "Delete"
+    },
+    "pastInstallments": {
+      "title": "Installments already due",
+      "description": "The first installment would be due {dueDate}, which has already passed. Add all {total} installments (including the overdue ones) or just the {upcoming} upcoming ones?",
+      "addAll": "Add all",
+      "addUpcoming": "Just the upcoming ones",
+      "cancel": "Cancel"
     }
   },
   "errors": {
