@@ -84,6 +84,7 @@ model User {
   recurrences  Recurrence[]
   budgetGroups BudgetGroup[]
   budgets      Budget[]
+  loans        Loan[]
 }
 
 enum AccountType {
@@ -303,6 +304,7 @@ model Person {
 
   splits           TransactionSplit[]
   recurrenceSplits RecurrenceSplit[]
+  loans            Loan[]
 
   @@index([userId])
 }
@@ -418,6 +420,9 @@ model Transaction {
   // per settlement Transaction, enforced by InvoicePayment.transactionId's
   // own @unique.
   invoicePayment InvoicePayment?
+  // The reverse of LoanInstallment.transaction — set only when this
+  // Transaction *is* the settlement for one specific loan installment.
+  loanInstallment LoanInstallment?
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -614,4 +619,72 @@ model BudgetItem {
   @@index([budgetId])
   @@index([categoryId])
   @@index([groupId])
+}
+
+// -----------------------------------------------------------------------
+// Loans (tasks/017): a personal loan the user is paying off in fixed
+// installments — always tied to a Person, always settled as a plain
+// expense (no LENT/receivable side; a loan the user made TO someone
+// isn't tracked here). Same installmentNumber/Count-per-row shape as a
+// credit card purchase, not an arbitrary-amount-against-a-total shape
+// like Invoice. Interest is out of scope for v1. The loan's initial
+// disbursement is optionally recorded as a one-time income Transaction
+// at creation (see createLoan's receivedAmount/receivedAccountId) —
+// not stored on Loan itself, since the Transaction it creates is
+// already the durable record of it.
+// -----------------------------------------------------------------------
+
+model Loan {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Same Cascade-at-the-DB-level-but-app-blocks-first convention as
+  // TransactionSplit.personId — deletePerson (people/actions.ts) checks
+  // for real history before allowing a delete, this is just the safety
+  // net.
+  personId String
+  person   Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  description String
+  // The first installment's due date — every following installment is
+  // one month later, clamped to whatever that month actually has (see
+  // computeLoanInstallmentDates/setDateClamped in actions.ts). No
+  // separate "start date" — unlike a credit card cycle, a loan payment
+  // has no closing/due split to anchor against.
+  dueDate     DateTime @db.Date
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  installments LoanInstallment[]
+
+  @@index([userId])
+  @@index([personId])
+}
+
+// One expected payment in a Loan's schedule. Paid/pending is derived
+// from whether transactionId is set, not a separate stored status field
+// — nothing to keep in sync when that Transaction is deleted, since
+// transactionId's own onDelete: SetNull already reverts this row to
+// "pending" for free at that point.
+model LoanInstallment {
+  id     String @id @default(cuid())
+  loanId String
+  loan   Loan   @relation(fields: [loanId], references: [id], onDelete: Cascade)
+
+  installmentNumber Int
+  installmentCount  Int
+  dueDate           DateTime @db.Date
+  amount            Decimal  @db.Decimal(12, 2)
+
+  // The real Transaction created when this installment was marked
+  // paid — null until then. SetNull (not Cascade, unlike
+  // InvoicePayment.transactionId): deleting the settlement Transaction
+  // from /transactions should un-pay this installment, not delete the
+  // installment itself — the schedule slot is still real, just unpaid
+  // again.
+  transactionId String?      @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  @@unique([loanId, installmentNumber])
+  @@index([loanId])
 }

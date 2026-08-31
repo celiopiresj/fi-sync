@@ -189,7 +189,7 @@ export async function deletePerson(id: string) {
 
   const person = await prisma.person.findUnique({
     where: { id, userId },
-    include: { _count: { select: { splits: true } } },
+    include: { _count: { select: { splits: true, loans: true } } },
   });
   if (!person) {
     return { error: "Not found" };
@@ -204,6 +204,13 @@ export async function deletePerson(id: string) {
 
   if (person._count.splits > 0) {
     return { error: t("errors.hasSplits", { count: person._count.splits }) };
+  }
+
+  // Loan.personId is also `onDelete: Cascade` (prisma/schema.prisma) —
+  // same reasoning as the splits check above, so a person's loan history
+  // isn't silently wiped out either.
+  if (person._count.loans > 0) {
+    return { error: t("errors.hasLoans", { count: person._count.loans }) };
   }
 
   await prisma.person.delete({ where: { id } });

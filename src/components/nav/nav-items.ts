@@ -8,6 +8,7 @@ import {
   ArrowsClockwiseIcon,
   CreditCardIcon,
   ChartPieSliceIcon,
+  HandCoinsIcon,
   PiggyBankIcon,
   TagIcon,
   TrendUpIcon,
@@ -31,6 +32,7 @@ export type NavItem = {
     | "investments"
     | "recurrences"
     | "cards"
+    | "loans"
     | "categories"
     | "budgets"
     | "projections";
@@ -76,6 +78,7 @@ export const navSections: NavSection[] = [
       { href: "/investments", labelKey: "investments", icon: PiggyBankIcon },
       { href: "/cards", labelKey: "cards", icon: CreditCardIcon },
       { href: "/invoices", labelKey: "invoices", icon: ReceiptIcon },
+      { href: "/loans", labelKey: "loans", icon: HandCoinsIcon },
     ],
   },
   {

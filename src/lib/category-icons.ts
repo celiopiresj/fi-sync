@@ -4,7 +4,7 @@ import {
   MoneyIcon, PiggyBankIcon, WalletIcon, BankIcon, CoinIcon, CoinsIcon,
   CreditCardIcon, ReceiptIcon, ChartBarIcon, ChartLineIcon, CurrencyDollarIcon,
   CurrencyEurIcon, CurrencyBtcIcon, VaultIcon, ShoppingCartIcon, ShoppingBagIcon,
-  StorefrontIcon, HandbagIcon, BarcodeIcon, QrCodeIcon,
+  StorefrontIcon, HandbagIcon, BarcodeIcon, QrCodeIcon, HandCoinsIcon,
   // Home & Utilities
   HouseIcon, BuildingsIcon, WrenchIcon, HammerIcon, PaintBrushIcon,
   LightbulbIcon, PlugIcon, WifiHighIcon, TelevisionIcon, CouchIcon,
@@ -47,7 +47,7 @@ export const CATEGORY_ICONS: Record<string, ComponentType<IconProps>> = {
   ChartBar: ChartBarIcon, ChartLine: ChartLineIcon, CurrencyDollar: CurrencyDollarIcon,
   CurrencyEur: CurrencyEurIcon, CurrencyBtc: CurrencyBtcIcon, Vault: VaultIcon,
   ShoppingCart: ShoppingCartIcon, ShoppingBag: ShoppingBagIcon, Storefront: StorefrontIcon,
-  Handbag: HandbagIcon, Barcode: BarcodeIcon, QrCode: QrCodeIcon,
+  Handbag: HandbagIcon, Barcode: BarcodeIcon, QrCode: QrCodeIcon, HandCoins: HandCoinsIcon,
   // Home & Utilities
   House: HouseIcon, Buildings: BuildingsIcon, Wrench: WrenchIcon, Hammer: HammerIcon,
   PaintBrush: PaintBrushIcon, Lightbulb: LightbulbIcon, Plug: PlugIcon, WifiHigh: WifiHighIcon,

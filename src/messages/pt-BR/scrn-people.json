@@ -123,6 +123,7 @@
 
   "errors": {
     "hasSplits": "{count, plural, one {Esta pessoa está vinculada a # transação. Remova essa divisão antes de excluir.} other {Esta pessoa está vinculada a # transações. Remova essas divisões antes de excluir.}}",
+    "hasLoans": "{count, plural, one {Esta pessoa está vinculada a # empréstimo. Remova o empréstimo antes de excluir.} other {Esta pessoa está vinculada a # empréstimos. Remova os empréstimos antes de excluir.}}",
     "invalidPhone": "Informe um telefone válido, incluindo o código do país",
     "cannotDeleteSelf": "Não é possível excluir a pessoa principal (\"Eu\")"
   },

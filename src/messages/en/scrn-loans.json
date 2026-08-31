@@ -1,0 +1,145 @@
+{
+  "title": "Loans",
+  "description": "Track loans you're paying off, with installments and due dates.",
+  "buttons": {
+    "add": "New loan"
+  },
+  "kpis": {
+    "totalRemaining": "Total outstanding",
+    "overdue": "Overdue",
+    "overdueLegend": "loans with an overdue installment",
+    "settled": "Settled",
+    "settledLegend": "fully paid off loans"
+  },
+  "empty": {
+    "title": "No loans yet",
+    "description": "Register a loan to track its installments.",
+    "button": "New loan"
+  },
+  "search": {
+    "placeholder": "Search by person or description",
+    "clear": "Clear search",
+    "empty": {
+      "title": "No results",
+      "description": "Try adjusting the search or filters."
+    }
+  },
+  "filters": {
+    "person": "Person",
+    "allPeople": "All people"
+  },
+  "fields": {
+    "description": {
+      "label": "Name",
+      "placeholder": "e.g. Loan for renovation"
+    },
+    "installments": {
+      "label": "Number of installments",
+      "placeholder": "1"
+    },
+    "installmentAmount": {
+      "label": "Installment amount"
+    },
+    "dueDate": {
+      "label": "Due date"
+    },
+    "person": {
+      "label": "Person"
+    },
+    "receivedAmount": {
+      "label": "Amount received",
+      "hint": "Optional. If you received this amount now, enter it here and we'll post the deposit to the chosen account."
+    },
+    "receivedAccountId": {
+      "label": "Account",
+      "placeholder": "Choose account"
+    },
+    "choosePlaceholder": "Choose"
+  },
+  "card": {
+    "progress": "{paid} of {total} installments paid",
+    "remaining": "Amount remaining",
+    "nextDueDate": "Next due: {date}",
+    "viewDetails": "View details"
+  },
+  "status": {
+    "onTrack": "On track",
+    "overdue": "Overdue",
+    "settled": "Settled"
+  },
+  "aria": {
+    "menu": "Open menu",
+    "close": "Close"
+  },
+  "menu": {
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "toast": {
+    "updated": "Loan updated.",
+    "created": "Loan created.",
+    "deleted": "Loan deleted.",
+    "error": "Couldn't save"
+  },
+  "dialog": {
+    "create": {
+      "title": "New loan",
+      "description": "Register a loan and set its installments.",
+      "confirm": "Create loan"
+    },
+    "edit": {
+      "title": "Edit loan",
+      "description": "Update the loan's details.",
+      "confirm": "Save changes"
+    },
+    "delete": {
+      "title": "Delete loan",
+      "description": "This can't be undone. The loan and its installments will be removed.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
+  "errors": {
+    "cannotEditPaid": "Can't edit a loan that already has paid installments.",
+    "cannotDeletePaid": "Can't delete a loan that already has paid installments.",
+    "receivedAccountRequired": "Choose the account that received the amount."
+  },
+  "received": {
+    "transactionDescription": "{description} · Amount received"
+  },
+  "payment": {
+    "transactionDescription": "{description} · Installment {number} of {count}",
+    "toast": {
+      "registered": "Payment registered.",
+      "undone": "Payment undone."
+    },
+    "dialog": {
+      "title": "Register payment",
+      "description": "Installment {number} of {count} · {amount}",
+      "accountLabel": "Account",
+      "accountPlaceholder": "Choose account",
+      "dateLabel": "Payment date",
+      "cancel": "Cancel",
+      "confirm": "Register"
+    }
+  },
+  "detail": {
+    "back": "Back to loans",
+    "notFound": {
+      "title": "Loan not found",
+      "description": "This loan may have been deleted.",
+      "button": "Back to loans"
+    },
+    "summary": {
+      "total": "Total amount",
+      "paidSoFar": "Paid so far"
+    },
+    "installments": {
+      "title": "Installments",
+      "row": "Installment {number} of {count}",
+      "paid": "Paid",
+      "undo": "Undo",
+      "registerPayment": "Register payment"
+    }
+  }
+}

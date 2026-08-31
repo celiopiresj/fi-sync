@@ -1,0 +1,145 @@
+{
+  "title": "Empréstimos",
+  "description": "Acompanhe empréstimos que você está pagando, com parcelas e vencimentos.",
+  "buttons": {
+    "add": "Novo empréstimo"
+  },
+  "kpis": {
+    "totalRemaining": "Total em aberto",
+    "overdue": "Em atraso",
+    "overdueLegend": "empréstimos com parcela vencida",
+    "settled": "Quitados",
+    "settledLegend": "empréstimos totalmente pagos"
+  },
+  "empty": {
+    "title": "Nenhum empréstimo cadastrado",
+    "description": "Registre um empréstimo para acompanhar as parcelas.",
+    "button": "Novo empréstimo"
+  },
+  "search": {
+    "placeholder": "Buscar por pessoa ou descrição",
+    "clear": "Limpar busca",
+    "empty": {
+      "title": "Nenhum resultado",
+      "description": "Tente ajustar a busca ou os filtros."
+    }
+  },
+  "filters": {
+    "person": "Pessoa",
+    "allPeople": "Todas as pessoas"
+  },
+  "fields": {
+    "description": {
+      "label": "Nome",
+      "placeholder": "Ex.: Empréstimo para reforma"
+    },
+    "installments": {
+      "label": "Número de parcelas",
+      "placeholder": "1"
+    },
+    "installmentAmount": {
+      "label": "Valor da parcela"
+    },
+    "dueDate": {
+      "label": "Data de vencimento"
+    },
+    "person": {
+      "label": "Pessoa"
+    },
+    "receivedAmount": {
+      "label": "Valor recebido",
+      "hint": "Opcional. Se você recebeu esse valor agora, informe aqui e nós lançamos a entrada na conta escolhida."
+    },
+    "receivedAccountId": {
+      "label": "Conta",
+      "placeholder": "Escolher conta"
+    },
+    "choosePlaceholder": "Escolher"
+  },
+  "card": {
+    "progress": "{paid} de {total} parcelas pagas",
+    "remaining": "Valor restante",
+    "nextDueDate": "Próx. vencimento: {date}",
+    "viewDetails": "Ver detalhes"
+  },
+  "status": {
+    "onTrack": "Em dia",
+    "overdue": "Em atraso",
+    "settled": "Quitado"
+  },
+  "aria": {
+    "menu": "Abrir menu",
+    "close": "Fechar"
+  },
+  "menu": {
+    "edit": "Editar",
+    "delete": "Excluir"
+  },
+  "toast": {
+    "updated": "Empréstimo atualizado.",
+    "created": "Empréstimo criado.",
+    "deleted": "Empréstimo excluído.",
+    "error": "Não foi possível salvar"
+  },
+  "dialog": {
+    "create": {
+      "title": "Novo empréstimo",
+      "description": "Registre um empréstimo e defina as parcelas.",
+      "confirm": "Criar empréstimo"
+    },
+    "edit": {
+      "title": "Editar empréstimo",
+      "description": "Atualize os dados do empréstimo.",
+      "confirm": "Salvar alterações"
+    },
+    "delete": {
+      "title": "Excluir empréstimo",
+      "description": "Essa ação não pode ser desfeita. O empréstimo e suas parcelas serão removidos.",
+      "cancel": "Cancelar",
+      "confirm": "Excluir"
+    }
+  },
+  "errors": {
+    "cannotEditPaid": "Não é possível editar um empréstimo com parcelas já pagas.",
+    "cannotDeletePaid": "Não é possível excluir um empréstimo com parcelas já pagas.",
+    "receivedAccountRequired": "Escolha a conta que recebeu o valor."
+  },
+  "received": {
+    "transactionDescription": "{description} · Valor recebido"
+  },
+  "payment": {
+    "transactionDescription": "{description} · Parcela {number} de {count}",
+    "toast": {
+      "registered": "Pagamento registrado.",
+      "undone": "Pagamento desfeito."
+    },
+    "dialog": {
+      "title": "Registrar pagamento",
+      "description": "Parcela {number} de {count} · {amount}",
+      "accountLabel": "Conta",
+      "accountPlaceholder": "Escolher conta",
+      "dateLabel": "Data do pagamento",
+      "cancel": "Cancelar",
+      "confirm": "Registrar"
+    }
+  },
+  "detail": {
+    "back": "Voltar para empréstimos",
+    "notFound": {
+      "title": "Empréstimo não encontrado",
+      "description": "Esse empréstimo pode ter sido excluído.",
+      "button": "Voltar para empréstimos"
+    },
+    "summary": {
+      "total": "Valor total",
+      "paidSoFar": "Pago até agora"
+    },
+    "installments": {
+      "title": "Parcelas",
+      "row": "Parcela {number} de {count}",
+      "paid": "Paga",
+      "undo": "Desfazer",
+      "registerPayment": "Registrar pagamento"
+    }
+  }
+}

@@ -68,6 +68,7 @@ export const DEFAULT_CATEGORIES: {
   { name: "Tecnologia", type: "EXPENSE", icon: "DeviceMobile", colorStyle: BLUE },
   { name: "Academia", type: "EXPENSE", icon: "Barbell", colorStyle: PURPLE },
   { name: "Filhos", type: "EXPENSE", icon: "Baby", colorStyle: SKY },
+  { name: "Empréstimo", type: "EXPENSE", icon: "HandCoins", colorStyle: TEAL },
 
   // Income
   { name: "Salário", type: "INCOME", icon: "Money", colorStyle: EMERALD },
