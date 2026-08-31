@@ -355,6 +355,13 @@ export const creditBatchRowSchema = z.object({
     .transform((value) => (value ? Number(value) : 1))
     .pipe(z.number().int().min(1)),
   installmentAmountMode: z.enum(installmentAmountModeValues),
+  // Same choice creditTransactionSchema's own create path offers via a
+  // separate `options` param (PastInstallmentsDialog) — a batch row has
+  // no separate options slot, since createCreditTransactionsBatch takes
+  // one plain array, so it rides along as a field on the row itself
+  // instead. Ignored unless installments > 1 and the first installment's
+  // due date is already in the past.
+  skipPastInstallments: z.boolean(),
 });
 
 export type CreditBatchRowFormValues = z.input<typeof creditBatchRowSchema>;
@@ -371,4 +378,5 @@ export const emptyCreditBatchRow: CreditBatchRowFormValues = {
   amount: "",
   installments: "1",
   installmentAmountMode: "total",
+  skipPastInstallments: false,
 };

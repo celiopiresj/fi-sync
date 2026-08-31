@@ -37,6 +37,7 @@ import type {
 } from "../../_types/types";
 import { ChipSelect, DateChipSelect } from "./chip-select";
 import { CreatePersonInline } from "./create-person-inline";
+import { PastInstallmentsDialog } from "./past-installments-dialog";
 
 // Same fixed 1–24 range the single-form's own installments field allows
 // in practice (no hard cap there, but no card realistically bills more)
@@ -93,6 +94,11 @@ export function CreditBatchTransactionTable({
   // null means the draft form is building a brand-new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [queue, setQueue] = useState<CreditBatchRowFormValues[]>([]);
+  // Set (instead of committing straight to `queue`) when handleAddOrSave
+  // finds this row's first installment already past due — see
+  // PastInstallmentsDialog's own doc comment.
+  const [pastInstallmentsValue, setPastInstallmentsValue] =
+    useState<CreditBatchRowFormValues | null>(null);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [errorRowIndex, setErrorRowIndex] = useState<number | null>(null);
@@ -164,6 +170,26 @@ export function CreditBatchTransactionTable({
   const currentInstallmentNumber =
     currentInstallmentIndex >= 0 ? currentInstallmentIndex + 1 : null;
 
+  // Feeds the past-due-installments check in handleAddOrSave below — same
+  // "only the ones still ahead count as upcoming" rule as
+  // credit-transaction-form.tsx's own (see its matching comment). A batch
+  // row is always a fresh create (never editing an existing installment
+  // 1), so unlike the single form there's no slice(1) offset needed here.
+  const firstNewInstallmentCycle = installmentCyclesQuery.data?.[0];
+  const upcomingInstallmentsCount =
+    installmentCyclesQuery.data?.filter(
+      (cycle) => new Date(cycle.dueDate) >= new Date(todayCalendarDate()),
+    ).length ?? 0;
+  // handleAddOrSave's past-due check only runs when
+  // firstNewInstallmentCycle is already resolved — clicking "Adicionar"
+  // before this query settles would silently skip straight past that
+  // check instead of waiting for it, committing the row as if it had
+  // none of its installments already due. Disables the button for
+  // exactly that window.
+  const isCalculatingInstallments =
+    installmentCount > 1 &&
+    (installmentCyclesQuery.isFetching || !installmentCyclesQuery.data);
+
   function patchDraft(patch: Partial<CreditBatchRowFormValues>) {
     setDraft((current) => {
       const next = { ...current, ...patch };
@@ -184,6 +210,25 @@ export function CreditBatchTransactionTable({
       }
       return next;
     });
+  }
+
+  // Actually commits a resolved snapshot to the queue — shared by the
+  // normal path below and by PastInstallmentsDialog's own two choices
+  // (each just picks a different `skipPastInstallments` on the snapshot
+  // first).
+  function commitRow(snapshot: CreditBatchRowFormValues) {
+    if (editingIndex !== null) {
+      setQueue((current) =>
+        current.map((row, i) => (i === editingIndex ? snapshot : row)),
+      );
+      setEditingIndex(null);
+    } else {
+      setQueue((current) => [...current, snapshot]);
+    }
+
+    // Chips "remember" their last value for the next entry — only
+    // description/amount reset, same convention as debit's own batch.
+    setDraft({ ...snapshot, description: "", amount: "" });
   }
 
   function handleAddOrSave() {
@@ -216,18 +261,19 @@ export function CreditBatchTransactionTable({
       amount: resolved.toFixed(2).replace(".", ","),
     };
 
-    if (editingIndex !== null) {
-      setQueue((current) =>
-        current.map((row, i) => (i === editingIndex ? snapshot : row)),
-      );
-      setEditingIndex(null);
-    } else {
-      setQueue((current) => [...current, snapshot]);
+    // Same check as credit-transaction-form.tsx's own onSubmit — asks
+    // instead of silently backdating a pile of already-due installments.
+    const installmentCount = Number(snapshot.installments || "1");
+    if (
+      installmentCount > 1 &&
+      firstNewInstallmentCycle &&
+      new Date(firstNewInstallmentCycle.dueDate) < new Date(todayCalendarDate())
+    ) {
+      setPastInstallmentsValue(snapshot);
+      return;
     }
 
-    // Chips "remember" their last value for the next entry — only
-    // description/amount reset, same convention as debit's own batch.
-    setDraft({ ...snapshot, description: "", amount: "" });
+    commitRow(snapshot);
   }
 
   function handleEdit(index: number) {
@@ -503,7 +549,15 @@ export function CreditBatchTransactionTable({
           )}
 
           <div className="flex gap-2">
-            <Button type="button" onClick={handleAddOrSave} className="flex-1">
+            <Button
+              type="button"
+              onClick={handleAddOrSave}
+              disabled={isCalculatingInstallments}
+              className="flex-1"
+            >
+              {isCalculatingInstallments && (
+                <SpinnerIcon className="size-4 animate-spin" />
+              )}
               {editingIndex !== null ? t("batch.saveChange") : t("batch.add")}
             </Button>
             {editingIndex !== null && (
@@ -620,6 +674,27 @@ export function CreditBatchTransactionTable({
         {isSubmitting && <SpinnerIcon className="size-4 animate-spin" />}
         {t("batch.submit")}
       </button>
+
+      {pastInstallmentsValue && firstNewInstallmentCycle && (
+        <PastInstallmentsDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setPastInstallmentsValue(null);
+          }}
+          firstDueDate={new Date(firstNewInstallmentCycle.dueDate)}
+          totalInstallments={Number(pastInstallmentsValue.installments || "1")}
+          upcomingInstallments={upcomingInstallmentsCount}
+          isSubmitting={false}
+          onAddAll={() => {
+            commitRow({ ...pastInstallmentsValue, skipPastInstallments: false });
+            setPastInstallmentsValue(null);
+          }}
+          onAddUpcoming={() => {
+            commitRow({ ...pastInstallmentsValue, skipPastInstallments: true });
+            setPastInstallmentsValue(null);
+          }}
+        />
+      )}
     </form>
   );
 }

@@ -1457,7 +1457,9 @@ export async function createCreditTransactionsBatch(
     }
   }
 
-  for (const { value } of parsedRows) {
+  const todayDate = parseCalendarDate(todayCalendarDate());
+
+  for (const { index: rowIndex, value } of parsedRows) {
     const account = accountById.get(value.accountId)!;
     const creditCardDetails = account.creditCardDetails!;
     const signedAmount = value.type === "expense" ? -value.amount : value.amount;
@@ -1475,8 +1477,21 @@ export async function createCreditTransactionsBatch(
 
     const originalDate = parseCalendarDate(value.date);
     let cursorDate = originalDate;
+    let createdCount = 0;
 
     for (let index = 0; index < installmentCount; index++) {
+      // Same skip-and-advance-the-cursor pattern as createCreditTransaction's
+      // own loop above (see its comment) — a row queued via
+      // PastInstallmentsDialog's "só as próximas" carries
+      // skipPastInstallments on itself, since this function takes one
+      // plain array of rows instead of a separate per-call options param.
+      const peekCycle = computeInvoiceCycle(cursorDate, creditCardDetails);
+      if (value.skipPastInstallments && peekCycle.dueDate < todayDate) {
+        cursorDate = fromAppZoned(addDays(toAppZoned(peekCycle.closingDate), 1));
+        continue;
+      }
+
+      createdCount++;
       const { nextCursorDate } = await createCreditTransactionRow({
         userId,
         value: {
@@ -1498,6 +1513,14 @@ export async function createCreditTransactionsBatch(
         cursorDate,
       });
       cursorDate = nextCursorDate;
+    }
+
+    // Same guard as createCreditTransaction's own — shouldn't normally
+    // happen, since the batch table only offers "só as próximas" when at
+    // least one installment is still upcoming, but this is the
+    // server-side backstop.
+    if (value.skipPastInstallments && createdCount === 0) {
+      return { error: t("fields.installments.noneUpcoming"), rowIndex };
     }
   }
 
