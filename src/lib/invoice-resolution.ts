@@ -93,6 +93,22 @@ export function computeCurrentInvoiceCycle(
     dueDate = setDateClamped(addMonths(closingDate, 1), cardDetails.dueDay);
   }
 
+  // The most-recently-closed cycle can still be stale: if even ITS OWN
+  // due date has already passed (e.g. closed 08/08, due 15/08, but
+  // today is already 30/08), it's not really "current" anymore from the
+  // user's own perspective — nothing about it is still pending. Roll
+  // forward to the next cycle instead, the one actually still awaiting
+  // payment. Derived from the already-computed `closingDate` (never
+  // recomputed from `zonedFrom` again), same anti-compounding-clamp
+  // convention as computeInvoiceCycle's own forward push above.
+  if (dueDate < zonedFrom) {
+    closingDate = setDateClamped(addMonths(closingDate, 1), cardDetails.closingDay);
+    dueDate = setDateClamped(closingDate, cardDetails.dueDay);
+    if (dueDate < closingDate) {
+      dueDate = setDateClamped(addMonths(closingDate, 1), cardDetails.dueDay);
+    }
+  }
+
   return {
     closingDate: fromAppZoned(closingDate),
     dueDate: fromAppZoned(dueDate),
