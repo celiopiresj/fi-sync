@@ -30,7 +30,7 @@ async function requireUserId() {
 // blocks the payment over it.
 async function findLoanCategory(userId: string) {
   return prisma.category.findFirst({
-    where: { name: "Empréstimo", type: "EXPENSE", OR: [{ userId: null }, { userId }] },
+    where: { name: "Empréstimo", type: "LOAN", OR: [{ userId: null }, { userId }] },
   });
 }
 

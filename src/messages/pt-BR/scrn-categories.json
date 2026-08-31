@@ -32,6 +32,7 @@
     "expense": "Despesas",
     "income": "Receitas",
     "investment": "Investimentos",
+    "loan": "Empréstimos",
     "viewMode": {
       "cards": "Modo cards",
       "list": "Modo lista"
@@ -46,7 +47,8 @@
       "label": "Tipo da Categoria",
       "expense": "Despesa",
       "income": "Receita",
-      "investment": "Investimento"
+      "investment": "Investimento",
+      "loan": "Empréstimo"
     },
     "color": {
       "label": "Cor Temática"

@@ -7,10 +7,10 @@ import type { CategoryType } from "@/generated/prisma/client";
 // Also reused by prisma/seed.ts for the demo dataset, so the demo never
 // drifts from what a real user actually gets.
 //
-// Covers all three `CategoryType` values (EXPENSE/INCOME/INVESTMENT) —
+// Covers every `CategoryType` value (EXPENSE/INCOME/INVESTMENT/LOAN) —
 // `type` must be set explicitly per entry since Prisma's column default
-// (`EXPENSE`) would otherwise silently mistype every INCOME/INVESTMENT
-// row here.
+// (`EXPENSE`) would otherwise silently mistype every non-EXPENSE row
+// here.
 //
 // `icon` is a bare Phosphor icon name (no "Icon" suffix) — see
 // src/lib/category-icons.ts, which appends the suffix when resolving the
@@ -68,7 +68,6 @@ export const DEFAULT_CATEGORIES: {
   { name: "Tecnologia", type: "EXPENSE", icon: "DeviceMobile", colorStyle: BLUE },
   { name: "Academia", type: "EXPENSE", icon: "Barbell", colorStyle: PURPLE },
   { name: "Filhos", type: "EXPENSE", icon: "Baby", colorStyle: SKY },
-  { name: "Empréstimo", type: "EXPENSE", icon: "HandCoins", colorStyle: TEAL },
 
   // Income
   { name: "Salário", type: "INCOME", icon: "Money", colorStyle: EMERALD },
@@ -85,4 +84,10 @@ export const DEFAULT_CATEGORIES: {
   { name: "Criptomoedas", type: "INVESTMENT", icon: "CurrencyBtc", colorStyle: PURPLE },
   { name: "Previdência", type: "INVESTMENT", icon: "PiggyBank", colorStyle: TEAL },
   { name: "Reserva de Emergência", type: "INVESTMENT", icon: "Vault", colorStyle: EMERALD },
+
+  // Loan — system-only, not offered in the category create/edit form's
+  // own type picker (see prisma/schema.prisma's CategoryType.LOAN
+  // comment); every loan installment payment is auto-tagged with this
+  // one category (findLoanCategory, loans/actions.ts).
+  { name: "Empréstimo", type: "LOAN", icon: "HandCoins", colorStyle: TEAL },
 ];

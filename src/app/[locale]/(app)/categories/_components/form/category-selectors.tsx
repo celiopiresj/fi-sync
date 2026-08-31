@@ -20,10 +20,16 @@ export { AVAILABLE_COLORS, CategoryColorPicker };
 // AGENTS.md's "Status/money colors" convention (expense = negative,
 // income = positive; investment has no dedicated token, so it reuses
 // "warning" as a third distinct tone rather than inventing a raw color).
+// LOAN reuses "negative" too — every loan installment payment is a
+// plain expense (see prisma/schema.prisma's CategoryType.LOAN comment)
+// — even though it never actually reaches CategoryTypeSelector below
+// (system-only, not user-selectable), the Record still needs every
+// CategoryType key to type-check.
 const TYPE_TEXT: Record<CategoryType, string> = {
   EXPENSE: "text-negative",
   INCOME: "text-positive",
   INVESTMENT: "text-warning",
+  LOAN: "text-negative",
 };
 
 // Written as full literal class strings (not built by string
@@ -37,6 +43,8 @@ const TYPE_SELECTED: Record<CategoryType, string> = {
     "data-[state=on]:border-positive/40 data-[state=on]:bg-positive/10 data-[state=on]:text-positive",
   INVESTMENT:
     "data-[state=on]:border-warning/40 data-[state=on]:bg-warning/10 data-[state=on]:text-warning",
+  LOAN:
+    "data-[state=on]:border-negative/40 data-[state=on]:bg-negative/10 data-[state=on]:text-negative",
 };
 
 export function CategoryPreviewCard({
@@ -94,16 +102,21 @@ export function CategoryPreviewCard({
   );
 }
 
+// LOAN is system-only (see prisma/schema.prisma's CategoryType.LOAN
+// comment) — never one of the choices here, so this selector's own
+// value type excludes it rather than widening to the full CategoryType.
+type SelectableCategoryType = Exclude<CategoryType, "LOAN">;
+
 export function CategoryTypeSelector({
   value,
   onChange,
 }: {
-  value: CategoryType;
-  onChange: (val: CategoryType) => void;
+  value: SelectableCategoryType;
+  onChange: (val: SelectableCategoryType) => void;
 }) {
   const t = useTranslations("scrn-categories");
 
-  const options: { type: CategoryType; icon: ReactNode }[] = [
+  const options: { type: SelectableCategoryType; icon: ReactNode }[] = [
     { type: "EXPENSE", icon: <TrendDownIcon className="size-4" /> },
     { type: "INCOME", icon: <TrendUpIcon className="size-4" /> },
     { type: "INVESTMENT", icon: <PiggyBankIcon className="size-4" /> },
@@ -115,7 +128,7 @@ export function CategoryTypeSelector({
       variant="outline"
       value={value}
       onValueChange={(next) => {
-        if (next) onChange(next as CategoryType);
+        if (next) onChange(next as SelectableCategoryType);
       }}
       className="grid w-full grid-cols-3 gap-2"
     >

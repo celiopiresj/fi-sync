@@ -313,6 +313,13 @@ enum CategoryType {
   EXPENSE
   INCOME
   INVESTMENT
+  // System-only — the one seeded "Empréstimo" category (default-
+  // categories.ts) loan installment payments are auto-tagged with (see
+  // findLoanCategory, loans/actions.ts). Not offered in the category
+  // create/edit form's own type picker (categories/_schema/schema.ts,
+  // category-selectors.tsx's CategoryTypeSelector) — users never create
+  // one of these directly.
+  LOAN
 }
 
 model Category {

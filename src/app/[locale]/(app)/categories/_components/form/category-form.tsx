@@ -24,7 +24,12 @@ function toFormValues(row: CategoryRow | null): CategoryFormValues {
   }
   return {
     name: row.name,
-    type: row.type,
+    // A LOAN category (system-only — see prisma/schema.prisma's
+    // CategoryType.LOAN comment) never actually reaches this form:
+    // categories-view.tsx only opens the edit sheet for `!isSystem`
+    // rows. The cast is just satisfying categorySchema's narrower
+    // 3-value type, not a real runtime possibility.
+    type: row.type as CategoryFormValues["type"],
     colorStyle: row.colorStyle,
     icon: row.icon,
   };

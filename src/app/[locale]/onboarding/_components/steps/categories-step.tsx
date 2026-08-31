@@ -22,7 +22,10 @@ export type OnboardingCategory = {
   // returned by createCategory once the row actually exists.
   id: string;
   name: string;
-  type: CategoryType;
+  // Never LOAN — that type is system-only (see prisma/schema.prisma's
+  // CategoryType.LOAN comment) and CATEGORY_TYPES below (what a user
+  // can actually pick here) excludes it.
+  type: Exclude<CategoryType, "LOAN">;
   colorStyle: string | null;
   icon: string | null;
 };
@@ -35,7 +38,22 @@ type CategoriesStepProps = {
   onRemove: (index: number) => void;
 };
 
-const CATEGORY_TYPES: CategoryType[] = ["EXPENSE", "INCOME", "INVESTMENT"];
+// Custom categories a user creates here are only ever EXPENSE/INCOME/
+// INVESTMENT — LOAN is system-only (see prisma/schema.prisma's
+// CategoryType.LOAN comment), so it's excluded from this list. The
+// seeded-categories preview below uses its own, wider list instead so
+// the seeded "Empréstimo" category still shows up there.
+const CATEGORY_TYPES: OnboardingCategory["type"][] = [
+  "EXPENSE",
+  "INCOME",
+  "INVESTMENT",
+];
+const SEEDED_CATEGORY_TYPES: CategoryType[] = [
+  "EXPENSE",
+  "INCOME",
+  "INVESTMENT",
+  "LOAN",
+];
 // 100 of the shared icon set's 126 — this step's own picker, not the
 // full CategoryIconPicker (which lives in categories' own route-private
 // _components/form/), matching this rewrite's "no reusing the real
@@ -121,7 +139,7 @@ export function CategoriesStep({
           {t("steps.categories.seededTitle")}
         </p>
         <div className="flex flex-col gap-3">
-          {CATEGORY_TYPES.map((categoryType) => {
+          {SEEDED_CATEGORY_TYPES.map((categoryType) => {
             const items = seededCategories.filter(
               (c) => c.type === categoryType,
             );
@@ -211,7 +229,7 @@ export function CategoriesStep({
                     value &&
                     setForm((prev) => ({
                       ...prev,
-                      type: value as CategoryType,
+                      type: value as OnboardingCategory["type"],
                     }))
                   }
                   className="grid w-full grid-cols-3">

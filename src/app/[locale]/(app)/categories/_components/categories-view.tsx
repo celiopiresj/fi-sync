@@ -29,6 +29,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 import {
+  HandCoinsIcon,
   PiggyBankIcon,
   PlusIcon,
   TagIcon,
@@ -47,22 +48,25 @@ type CategoriesViewProps = {
   data: CategoryRow[];
 };
 
-type FilterType = "all" | "EXPENSE" | "INCOME" | "INVESTMENT";
+type FilterType = "all" | "EXPENSE" | "INCOME" | "INVESTMENT" | "LOAN";
 
 // Same tone map as category-selectors.tsx (kept local to each file rather
 // than shared, since neither imports from the other) — expense/income map
 // onto the app's negative/positive money tokens, investment reuses warning
-// as a third distinct tone.
+// as a third distinct tone, loan reuses negative (every loan payment is a
+// plain expense — see prisma/schema.prisma's CategoryType.LOAN comment).
 const TYPE_TEXT: Record<Exclude<FilterType, "all">, string> = {
   EXPENSE: "text-negative",
   INCOME: "text-positive",
   INVESTMENT: "text-warning",
+  LOAN: "text-negative",
 };
 
 const TYPE_ICON: Record<Exclude<FilterType, "all">, ReactNode> = {
   EXPENSE: <TrendDownIcon className="size-3" />,
   INCOME: <TrendUpIcon className="size-3" />,
   INVESTMENT: <PiggyBankIcon className="size-3" />,
+  LOAN: <HandCoinsIcon className="size-3" />,
 };
 
 export function CategoriesView({ data }: CategoriesViewProps) {
@@ -175,6 +179,9 @@ export function CategoriesView({ data }: CategoriesViewProps) {
             </ToggleGroupItem>
             <ToggleGroupItem value="INVESTMENT">
               {t("filters.investment")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="LOAN">
+              {t("filters.loan")}
             </ToggleGroupItem>
           </ToggleGroup>
 

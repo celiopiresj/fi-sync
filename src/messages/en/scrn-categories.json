@@ -32,6 +32,7 @@
     "expense": "Expenses",
     "income": "Incomes",
     "investment": "Investments",
+    "loan": "Loans",
     "viewMode": {
       "cards": "Card view",
       "list": "List view"
@@ -46,7 +47,8 @@
       "label": "Category Type",
       "expense": "Expense",
       "income": "Income",
-      "investment": "Investment"
+      "investment": "Investment",
+      "loan": "Loan"
     },
     "color": {
       "label": "Theme Color"
