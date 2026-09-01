@@ -272,6 +272,43 @@ export function PersonDetailView({
         </div>
       ))}
 
+      {statement.loanItems.length > 0 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-medium">{t("detail.loans.title")}</h2>
+          </div>
+
+          <div className="rounded-md border border-border">
+            <div className="divide-y divide-border">
+              {statement.loanItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 flex-col">
+                    <span className="min-w-0 truncate text-sm font-medium">
+                      {item.description}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {format.dateTime(item.date, DATE_ONLY_FORMAT_OPTIONS)} ·{" "}
+                      {item.installmentCount && item.installmentCount > 1
+                        ? t("detail.invoices.installment", {
+                            number: item.installmentNumber ?? 0,
+                            count: item.installmentCount,
+                          })
+                        : t("detail.invoices.cash")}
+                    </span>
+                  </div>
+                  <span className="shrink-0 text-sm font-medium tabular-nums text-negative">
+                    {money(item.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {whatsappLink ? (
         <WhatsAppPreviewDialog
           open={previewOpen}

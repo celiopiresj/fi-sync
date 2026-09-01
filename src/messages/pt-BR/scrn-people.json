@@ -169,6 +169,10 @@
       "cash": "À vista",
       "total": "Total fatura"
     },
+    "loans": {
+      "title": "Empréstimos",
+      "total": "Total empréstimos"
+    },
     "empty": "Nenhuma movimentação ou fatura nesse período",
     "whatsapp": {
       "messageTitle": "Extrato",

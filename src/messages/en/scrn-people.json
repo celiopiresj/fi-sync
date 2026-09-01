@@ -169,6 +169,10 @@
       "cash": "One-time",
       "total": "Invoice total"
     },
+    "loans": {
+      "title": "Loans",
+      "total": "Total loans"
+    },
     "empty": "No movements or invoices in this period",
     "whatsapp": {
       "messageTitle": "Statement",

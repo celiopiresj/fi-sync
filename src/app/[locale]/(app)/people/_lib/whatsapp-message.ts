@@ -18,6 +18,9 @@ export type BuildStatementMessageInput = {
   invoiceSectionTitle: string;
   invoiceItems: WhatsAppLine[];
   invoiceTotalLine: string | null;
+  loanSectionTitle: string;
+  loanItems: WhatsAppLine[];
+  loanTotalLine: string | null;
   totalLine: string;
 };
 
@@ -39,7 +42,11 @@ export function getGreetingPeriod(date: Date): GreetingPeriod {
 // "Fatura" block/total regardless of how many cards contributed (the
 // on-screen view keeps them in separate sections per card — see
 // getPersonStatement in actions.ts — but the message is meant to read as
-// one flat extract).
+// one flat extract). Pending loan installments get their own separate
+// "Empréstimos" block/total, after the card one — different money
+// direction (see getPersonStatement's own comment), so folding them into
+// the same block/total as card items would silently net two opposite
+// debts together instead of showing each clearly.
 export function buildStatementMessage(input: BuildStatementMessageInput): string {
   const blocks: string[] = [
     `${input.greeting}!`,
@@ -63,6 +70,16 @@ export function buildStatementMessage(input: BuildStatementMessageInput): string
     }
     if (input.invoiceTotalLine) {
       blocks.push("", input.invoiceTotalLine);
+    }
+  }
+
+  if (input.loanItems.length > 0) {
+    blocks.push("", `*${input.loanSectionTitle}*`);
+    for (const item of input.loanItems) {
+      blocks.push("", item.label, item.valueLine);
+    }
+    if (input.loanTotalLine) {
+      blocks.push("", input.loanTotalLine);
     }
   }
 

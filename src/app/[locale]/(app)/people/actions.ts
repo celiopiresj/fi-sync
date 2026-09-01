@@ -219,8 +219,8 @@ export async function deletePerson(id: string) {
   return { error: null };
 }
 
-// The person detail page's (people/[id]) statement for one period. Two
-// very different notions of "settled" feed the same running number:
+// The person detail page's (people/[id]) statement for one period. Three
+// different notions of "settled" feed the same running number:
 // - Cash movements (non credit-card) count toward `balance` the moment
 //   they happen — no gating.
 // - Credit-card purchases only count once this specific person's own
@@ -231,10 +231,18 @@ export async function deletePerson(id: string) {
 //   fronts the card bill to the bank first, and only then is what each
 //   person owes back "real" — see AGENTS.md-adjacent discussion in this
 //   route's task notes.
+// - Loan installments tied to this person (see prisma/schema.prisma's
+//   Loan model) count once registerLoanPayment (loans/actions.ts) links
+//   a real settlement Transaction — until then they show up in
+//   `loanItems` as a pending amount, via `pendingLoanTotal`. Always a
+//   real expense (registerLoanPayment only ever posts a negative
+//   settlement transaction), so a pending installment SUBTRACTS from
+//   totalToSettle below, the same direction any other expense would —
+//   not netted the opposite way pendingCardTotal is.
 // `balance` is all-time (every month ever, not just this period) —
-// `movements`/`cardSections` are what's shown for the selected period,
-// mainly so there's something concrete to review/send before nudging
-// someone via WhatsApp.
+// `movements`/`cardSections`/`loanItems` are what's shown for the
+// selected period, mainly so there's something concrete to review/send
+// before nudging someone via WhatsApp.
 export async function getPersonStatement(personId: string, period: StatementPeriod) {
   const userId = await requireUserId();
 
@@ -251,6 +259,7 @@ export async function getPersonStatement(personId: string, period: StatementPeri
     paidCardBalanceAgg,
     paidThisMonthAgg,
     cardAccounts,
+    pendingLoanInstallments,
   ] = await Promise.all([
     prisma.transaction.findMany({
       where: {
@@ -308,6 +317,24 @@ export async function getPersonStatement(personId: string, period: StatementPeri
       where: { userId, type: "CREDIT_CARD" },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
+    }),
+    // This person's own loan installments still due — same due-date-in-
+    // this-month scoping as cardSections below, so a loan payment lands
+    // in the statement/WhatsApp message for whichever month it's
+    // actually due, not when the loan itself was created. Every loan
+    // installment is a plain expense the user owes this person (see
+    // prisma/schema.prisma's Loan model comment) — unlike a card
+    // purchase, there's no "who fronted it" direction to resolve, so
+    // these feed `loanItems` directly rather than needing their own
+    // per-loan section/isPaid the way cardSections does.
+    prisma.loanInstallment.findMany({
+      where: {
+        loan: { userId, personId },
+        transactionId: null,
+        dueDate: { gte: monthFrom, lte: monthTo },
+      },
+      include: { loan: { select: { description: true } } },
+      orderBy: { dueDate: "asc" },
     }),
   ]);
 
@@ -403,6 +430,28 @@ export async function getPersonStatement(personId: string, period: StatementPeri
     .filter((section) => !section.isPaid)
     .reduce((sum, section) => sum + section.remaining, 0);
 
+  const loanItems = pendingLoanInstallments.map((installment) => ({
+    id: installment.id,
+    description: installment.loan.description,
+    date: installment.dueDate,
+    // Kept as a positive magnitude here, same as cardSections' own
+    // items — display sites (statement-message.ts, person-detail-
+    // view.tsx) style it as an expense (text-negative / no "+"), and
+    // pendingLoanTotal below is SUBTRACTED from totalToSettle rather
+    // than negated per-item here.
+    amount: installment.amount.toNumber(),
+    installmentNumber: installment.installmentNumber,
+    installmentCount: installment.installmentCount,
+  }));
+  // Kept as a positive magnitude here (used as-is for the "Total
+  // empréstimos" line, statement-message.ts/person-detail-view.tsx) but
+  // SUBTRACTED below, not added — a pending loan installment is a real
+  // expense (see registerLoanPayment, loans/actions.ts, which always
+  // posts a negative/expense settlement transaction), so it has to
+  // reduce totalToSettle the same direction an expense reduces any
+  // other balance, not inflate it.
+  const pendingLoanTotal = loanItems.reduce((sum, item) => sum + item.amount, 0);
+
   return {
     person: {
       id: person.id,
@@ -420,9 +469,11 @@ export async function getPersonStatement(personId: string, period: StatementPeri
       amount: transaction.splits[0]!.amount.toNumber(),
     })),
     cardSections,
+    loanItems,
     balance,
     paidThisMonth: paidThisMonthAgg._sum.amount?.toNumber() ?? 0,
     pendingCardTotal,
-    totalToSettle: balance + pendingCardTotal,
+    pendingLoanTotal,
+    totalToSettle: balance + pendingCardTotal - pendingLoanTotal,
   };
 }

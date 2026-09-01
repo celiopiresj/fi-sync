@@ -81,6 +81,24 @@ export function buildPersonStatementMessage(
       pendingCardSections.length > 0
         ? `${t("detail.invoices.total")}: ${money(Math.abs(statement.pendingCardTotal))}`
         : null,
+    loanSectionTitle: t("detail.loans.title"),
+    loanItems: statement.loanItems.map((item) => ({
+      label: item.description,
+      valueLine: [
+        money(item.amount),
+        format.dateTime(item.date, DATE_ONLY_FORMAT_OPTIONS),
+        item.installmentCount && item.installmentCount > 1
+          ? t("detail.invoices.installment", {
+              number: item.installmentNumber ?? 0,
+              count: item.installmentCount,
+            })
+          : t("detail.invoices.cash"),
+      ].join(" - "),
+    })),
+    loanTotalLine:
+      statement.loanItems.length > 0
+        ? `${t("detail.loans.total")}: ${money(statement.pendingLoanTotal)}`
+        : null,
     totalLine: `${t("detail.whatsapp.remainingLabel")}: ${money(Math.abs(statement.totalToSettle))}`,
   });
 }
