@@ -1,6 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getPersonStatement } from "../../actions";
 import type { PersonStatement, StatementPeriod } from "../_types/types";
 
@@ -17,9 +18,21 @@ export function usePersonStatement(
   // `isDefaultFilters` gating as useInvoicesData's own.
   useInitialData: boolean,
 ) {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["person-statement", personId, period] as const,
     queryFn: () => getPersonStatement(personId, period),
     initialData: useInitialData ? initialStatement : undefined,
   });
+
+  // Broad prefix (every period, not just this one) — same convention as
+  // useInvoicesData's own invalidate, so creating/editing a transaction
+  // from this page can't leave a stale figure behind if the user then
+  // steps to a different month.
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["person-statement"] });
+  }, [queryClient]);
+
+  return { ...query, invalidate };
 }

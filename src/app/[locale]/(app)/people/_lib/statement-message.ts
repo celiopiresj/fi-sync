@@ -66,7 +66,11 @@ export function buildPersonStatementMessage(
       section.items.map((item) => ({
         label: item.description,
         valueLine: [
-          money(Math.abs(item.amount)),
+          // Real signed amount, not Math.abs — a refund/reversal on the
+          // card (positive) must read differently from a normal charge
+          // (negative) here too, same fix as person-detail-view.tsx's
+          // own on-screen list.
+          money(item.amount),
           format.dateTime(item.date, DATE_ONLY_FORMAT_OPTIONS),
           item.installmentCount && item.installmentCount > 1
             ? t("detail.invoices.installment", {

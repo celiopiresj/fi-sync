@@ -144,6 +144,15 @@
       "whatsappButton": "Send via WhatsApp",
       "noPhone": "Add a phone number to send via WhatsApp"
     },
+    "buttons": {
+      "addTransaction": "New transaction",
+      "newCardExpense": "New card expense"
+    },
+    "toast": {
+      "transactionCreated": "Transaction created.",
+      "transactionUpdated": "Transaction updated.",
+      "transactionsCreated": "{count, plural, one {# transaction created.} other {# transactions created.}}"
+    },
     "period": {
       "previous": "Previous month",
       "next": "Next month"

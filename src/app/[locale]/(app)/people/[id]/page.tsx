@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { getPersonStatement } from "../actions";
 import { currentStatementPeriod } from "../_lib/cash-cycle";
+import { getTransactionFormOptions } from "../../transactions/actions";
 import { PersonDetailView } from "./_components/person-detail-view";
 
 type PersonDetailPageProps = {
@@ -11,7 +12,12 @@ type PersonDetailPageProps = {
 
 export default async function PersonDetailPage({ params }: PersonDetailPageProps) {
   const { id } = await params;
-  const statement = await getPersonStatement(id, currentStatementPeriod());
+  const [statement, transactionFormOptions] = await Promise.all([
+    getPersonStatement(id, currentStatementPeriod()),
+    // Lets the "Nova transação"/edit flow open right from this page —
+    // see PersonDetailView's own comment.
+    getTransactionFormOptions(),
+  ]);
 
   if (!statement) {
     const t = await getTranslations("scrn-people");
@@ -28,5 +34,14 @@ export default async function PersonDetailPage({ params }: PersonDetailPageProps
     );
   }
 
-  return <PersonDetailView personId={id} initialStatement={statement} />;
+  return (
+    <PersonDetailView
+      personId={id}
+      initialStatement={statement}
+      transactionAccounts={transactionFormOptions.accounts}
+      transactionCategories={transactionFormOptions.categories}
+      initialTransactionPeople={transactionFormOptions.people}
+      initialDefaultPersonId={transactionFormOptions.defaultPersonId}
+    />
+  );
 }
