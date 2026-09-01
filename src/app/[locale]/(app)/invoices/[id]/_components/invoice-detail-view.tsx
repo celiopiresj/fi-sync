@@ -20,6 +20,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
 import { formatPersonName } from "@/lib/format-person-name";
 import { DATE_ONLY_FORMAT_OPTIONS, dateOnlyKey } from "@/lib/date";
+import { cn } from "@/lib/utils";
 import type { Column, Row } from "@tanstack/react-table";
 import { PayInvoiceDialog } from "./pay-invoice-dialog";
 import { InvoiceTransactionFiltersSheet } from "./invoice-transaction-filters-sheet";
@@ -259,14 +260,44 @@ export function InvoiceDetailView({
     };
   }
 
-  function renderGroupHeader(row: Row<TransactionRow>) {
-    const dateKey = row.groupingValue as string;
-    const { label, summary } = formatGroupHeaderParts(dateKey);
+  // Desktop table groups by person instead of date (see columns.tsx's
+  // own "person" column — its accessorFn is exactly this same joined-
+  // names-or-selfLabel key, which is what DataTable's groupBy="person"
+  // below actually groups rows by; a split transaction becomes its own
+  // group under the combined names rather than appearing under each
+  // person separately, since a table row can only belong to one group).
+  // Mobile keeps the date-grouped list above unchanged — TransactionMobileList's
+  // own grouping is date-specific by design, not worth generalizing for
+  // this one screen.
+  const personTotalByKey = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const transaction of filteredTransactions) {
+      const key =
+        transaction.splits.length > 0
+          ? transaction.splits
+              .map((split) => formatPersonName(split.person.name))
+              .join(", ")
+          : tTransactions("table.self");
+      totals.set(key, (totals.get(key) ?? 0) + transaction.amount);
+    }
+    return totals;
+  }, [filteredTransactions, tTransactions]);
+
+  function renderPersonGroupHeader(row: Row<TransactionRow>) {
+    const personKey = row.groupingValue as string;
+    const total = personTotalByKey.get(personKey) ?? 0;
     return (
       <span className="inline-flex items-center gap-2">
-        <span>{label}</span>
-        <span className="text-xs font-normal text-muted-foreground tabular-nums">
-          {summary}
+        <span>{personKey}</span>
+        <span
+          className={cn(
+            "text-xs font-normal tabular-nums",
+            total < 0 ? "text-negative" : "text-positive",
+          )}
+        >
+          {formatSignedAmount(total, (value) =>
+            format.number(value, { style: "currency", currency: "BRL" }),
+          )}
         </span>
       </span>
     );
@@ -326,7 +357,13 @@ export function InvoiceDetailView({
         // so grouping by due date instead would collapse the whole table
         // into a single group (see columns.tsx's dateColumn comment).
         false,
-      ),
+      // The desktop DataTable below groups by "person", not "date" —
+      // DataTable only ever auto-hides whichever column it's actually
+      // grouping by (see its own columnVisibility comment), so the
+      // "date" column (built purely to be a hidden grouping key, no real
+      // header/cell formatting of its own) has to be dropped here or it
+      // shows up as a genuine, oddly-raw visible column instead.
+      ).filter((column) => column.id !== "date"),
     [tTransactions, tCommon, format],
   );
 
@@ -677,8 +714,8 @@ export function InvoiceDetailView({
           <DataTable
             columns={columns}
             data={filteredTransactions}
-            groupBy="date"
-            renderGroupHeader={renderGroupHeader}
+            groupBy="person"
+            renderGroupHeader={renderPersonGroupHeader}
             renderSubRows={renderSubRows}
             emptyState={emptyStateNode}
             getRowId={(row) => row.id}
