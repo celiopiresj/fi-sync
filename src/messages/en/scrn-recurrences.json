@@ -71,6 +71,10 @@
       "label": "Generate 12 more months",
       "pending": "Generating…"
     },
+    "advance": {
+      "label": "Advance",
+      "pending": "Advancing…"
+    },
     "empty": {
       "title": "No recurrences found",
       "description": "Adjust the filters or create a new recurrence.",
@@ -180,7 +184,11 @@
     "updatedCascade": "{count, plural, =0 {Recurrence updated} one {Recurrence updated — # upcoming occurrence was also updated} other {Recurrence updated — # upcoming occurrences were also updated}}",
     "deleted": "Recurrence deleted",
     "extended": "{count, plural, one {# more occurrence generated} other {# more occurrences generated}}",
+    "advanced": "Occurrence advanced and marked as paid",
     "error": "Couldn't complete the action"
+  },
+  "errors": {
+    "noPendingOccurrence": "There's no pending occurrence to advance."
   },
   "aria": {
     "close": "Close"

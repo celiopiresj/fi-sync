@@ -12,7 +12,12 @@ import {
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { formatPersonName } from "@/lib/format-person-name";
-import { ArrowsClockwiseIcon, CreditCardIcon, DotsThreeIcon } from "@phosphor-icons/react";
+import {
+  ArrowsClockwiseIcon,
+  CalendarCheckIcon,
+  CreditCardIcon,
+  DotsThreeIcon,
+} from "@phosphor-icons/react";
 import type { RecurrenceRow } from "../../_types/types";
 
 // Mobile counterpart to DataTable, mirroring transactions'
@@ -34,6 +39,8 @@ type Messages = {
   cardSubtitle: (account: string, frequency: string, person: string) => string;
   extendLabel: string;
   extendingLabel: string;
+  advanceLabel: string;
+  advancingLabel: string;
   creditCardAccountLabel: string;
   menuAria: string;
   menuEdit: string;
@@ -45,6 +52,8 @@ type Actions = {
   onDelete: (row: RecurrenceRow) => void;
   onExtend: (row: RecurrenceRow) => void;
   isExtending: (id: string) => boolean;
+  onAdvance: (row: RecurrenceRow) => void;
+  isAdvancing: (id: string) => boolean;
 };
 
 type RecurrenceMobileListProps = {
@@ -88,6 +97,7 @@ export function RecurrenceMobileList({
                 formatPersonName(recurrence.splits[0]!.person.name),
               );
           const pending = actions.isExtending(recurrence.id);
+          const advancing = actions.isAdvancing(recurrence.id);
 
           return (
             <div
@@ -188,6 +198,17 @@ export function RecurrenceMobileList({
                 >
                   <ArrowsClockwiseIcon className="size-3" />
                   {pending ? messages.extendingLabel : messages.extendLabel}
+                </button>
+              )}
+              {recurrence.canAdvance && (
+                <button
+                  type="button"
+                  onClick={() => actions.onAdvance(recurrence)}
+                  disabled={advancing}
+                  className="flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+                >
+                  <CalendarCheckIcon className="size-3" />
+                  {advancing ? messages.advancingLabel : messages.advanceLabel}
                 </button>
               )}
             </div>

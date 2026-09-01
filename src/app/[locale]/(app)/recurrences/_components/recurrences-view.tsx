@@ -43,6 +43,7 @@ import {
   updateCreditRecurrence,
   deleteRecurrence,
   extendRecurrenceGeneration,
+  advanceRecurrenceOccurrence,
   type RecurrenceFilters,
 } from "../actions";
 import { useRecurrencesData } from "../_hooks/use-recurrences-data";
@@ -138,6 +139,8 @@ export function RecurrencesView({
   // a Set (not a single id) since nothing prevents extending two
   // different rows back to back before the first finishes.
   const [extendingIds, setExtendingIds] = useState<Set<string>>(new Set());
+  // Same shape as extendingIds above, for "adiantar" calls in flight.
+  const [advancingIds, setAdvancingIds] = useState<Set<string>>(new Set());
 
   const filters: RecurrenceFilters = useMemo(
     () => ({ ...sheetFilters, search: searchText.trim() || undefined }),
@@ -171,9 +174,19 @@ export function RecurrencesView({
   // Split by account type (same reasoning as transactions-view.tsx's own
   // selectableDebitAccounts/selectableCreditAccounts) — debit and credit
   // are separate forms with separate account pickers, so each only ever
-  // sees the subset of accounts it actually applies to.
+  // sees the subset of accounts it actually applies to. Investment/
+  // pocket accounts are excluded from the debit list too (same as
+  // transactions-view.tsx's own) — aporte/resgate against them only
+  // ever goes through the dedicated Investments screen, never a
+  // recurrence.
   const selectableDebitAccounts = useMemo(
-    () => accounts.filter((account) => account.type !== "CREDIT_CARD"),
+    () =>
+      accounts.filter(
+        (account) =>
+          account.type !== "CREDIT_CARD" &&
+          account.type !== "INVESTMENT" &&
+          account.type !== "POCKET",
+      ),
     [accounts],
   );
   const selectableCreditAccounts = useMemo(
@@ -250,6 +263,32 @@ export function RecurrencesView({
     [invalidate, t],
   );
 
+  // "Adiantar" — same isX/handleX split as isExtending/handleExtend
+  // above, just against advanceRecurrenceOccurrence instead.
+  const isAdvancing = useCallback(
+    (id: string) => advancingIds.has(id),
+    [advancingIds],
+  );
+
+  const handleAdvance = useCallback(
+    async (row: RecurrenceRow) => {
+      setAdvancingIds((current) => new Set(current).add(row.id));
+      const result = await advanceRecurrenceOccurrence(row.id);
+      setAdvancingIds((current) => {
+        const next = new Set(current);
+        next.delete(row.id);
+        return next;
+      });
+      if (!result.error) {
+        invalidate();
+        toast.success(t("toast.advanced"));
+      } else {
+        toast.error(result.error);
+      }
+    },
+    [invalidate, t],
+  );
+
   function renderSubRows(row: RecurrenceRow, columns: Column<RecurrenceRow, unknown>[]) {
     return renderSplitSubRows(
       row.splits.map((split) => ({
@@ -281,6 +320,8 @@ export function RecurrencesView({
           splitPillLabel: (count) => t("table.splitPill", { count }),
           extendLabel: t("table.extend.label"),
           extendingLabel: t("table.extend.pending"),
+          advanceLabel: t("table.advance.label"),
+          advancingLabel: t("table.advance.pending"),
           creditCardAccountLabel: t("table.creditCardAccount"),
           menuAria: t("menu.aria"),
           menuEdit: t("menu.edit"),
@@ -293,9 +334,20 @@ export function RecurrencesView({
           onDelete: (row) => setDeletingRecurrence(row),
           onExtend: handleExtend,
           isExtending,
+          onAdvance: handleAdvance,
+          isAdvancing,
         },
       ),
-    [t, frequencyLabel, formatAmount, formatDuration, handleExtend, isExtending],
+    [
+      t,
+      frequencyLabel,
+      formatAmount,
+      formatDuration,
+      handleExtend,
+      isExtending,
+      handleAdvance,
+      isAdvancing,
+    ],
   );
 
   async function handleSubmitCreateDebit(
@@ -517,6 +569,8 @@ export function RecurrencesView({
                 t("table.cardSubtitle", { account, frequency, person }),
               extendLabel: t("table.extend.label"),
               extendingLabel: t("table.extend.pending"),
+              advanceLabel: t("table.advance.label"),
+              advancingLabel: t("table.advance.pending"),
               creditCardAccountLabel: t("table.creditCardAccount"),
               menuAria: t("menu.aria"),
               menuEdit: t("menu.edit"),
@@ -527,6 +581,8 @@ export function RecurrencesView({
               onDelete: (row) => setDeletingRecurrence(row),
               onExtend: handleExtend,
               isExtending,
+              onAdvance: handleAdvance,
+              isAdvancing,
             }}
             emptyState={emptyStateNode}
           />

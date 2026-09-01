@@ -14,6 +14,7 @@ import { resolveCategoryIcon } from "@/lib/category-icons";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
   ArrowsClockwiseIcon,
+  CalendarCheckIcon,
   CaretDownIcon,
   CaretUpIcon,
   CreditCardIcon,
@@ -48,6 +49,11 @@ type ColumnMessages = {
   // prompt), see actions.extend/isExtending below.
   extendLabel: string;
   extendingLabel: string;
+  // "Adiantar" / "Adiantando…" — shown under the description for rows
+  // listRecurrences flagged canAdvance (a still-PENDING occurrence
+  // exists), see actions.onAdvance/isAdvancing below.
+  advanceLabel: string;
+  advancingLabel: string;
   // aria-label for the small credit-card icon next to the account name
   // (accountColumn below) — same convention as transactions' own
   // creditCardAccountLabel in table/columns.tsx.
@@ -65,6 +71,10 @@ type ColumnActions = {
   // tracks which row(s) are currently pending via isExtending below.
   onExtend: (row: RecurrenceRow) => void;
   isExtending: (id: string) => boolean;
+  // Triggers advanceRecurrenceOccurrence for this row — same split as
+  // onExtend/isExtending above.
+  onAdvance: (row: RecurrenceRow) => void;
+  isAdvancing: (id: string) => boolean;
 };
 
 export function getRecurrenceColumns(
@@ -80,6 +90,7 @@ export function getRecurrenceColumns(
       cell: ({ row }) => {
         const CategoryIcon = resolveCategoryIcon(row.original.category?.icon);
         const pending = actions.isExtending(row.original.id);
+        const advancing = actions.isAdvancing(row.original.id);
         return (
           <div className="flex min-w-0 flex-col gap-0.5">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -113,6 +124,20 @@ export function getRecurrenceColumns(
               >
                 <ArrowsClockwiseIcon className="size-3" />
                 {pending ? messages.extendingLabel : messages.extendLabel}
+              </button>
+            )}
+            {row.original.canAdvance && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  actions.onAdvance(row.original);
+                }}
+                disabled={advancing}
+                className="flex w-fit shrink-0 items-center gap-1 pl-9 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+              >
+                <CalendarCheckIcon className="size-3" />
+                {advancing ? messages.advancingLabel : messages.advanceLabel}
               </button>
             )}
           </div>

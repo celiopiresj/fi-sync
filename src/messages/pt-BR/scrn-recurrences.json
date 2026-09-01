@@ -71,6 +71,10 @@
       "label": "Gerar mais 12 meses",
       "pending": "Gerando…"
     },
+    "advance": {
+      "label": "Adiantar",
+      "pending": "Adiantando…"
+    },
     "empty": {
       "title": "Nenhuma recorrência encontrada",
       "description": "Ajuste os filtros ou crie uma nova recorrência.",
@@ -180,7 +184,11 @@
     "updatedCascade": "{count, plural, =0 {Recorrência atualizada} one {Recorrência atualizada — # ocorrência futura também foi atualizada} other {Recorrência atualizada — # ocorrências futuras também foram atualizadas}}",
     "deleted": "Recorrência excluída",
     "extended": "{count, plural, one {Mais # ocorrência gerada} other {Mais # ocorrências geradas}}",
+    "advanced": "Ocorrência adiantada e marcada como paga",
     "error": "Não foi possível concluir a ação"
+  },
+  "errors": {
+    "noPendingOccurrence": "Não há nenhuma ocorrência pendente para adiantar."
   },
   "aria": {
     "close": "Fechar"

@@ -130,6 +130,31 @@ export async function listRecurrences(filters: RecurrenceFilters = {}) {
     orderBy: { createdAt: "desc" },
   });
 
+  // Which recurrences have a still-PENDING occurrence to "adiantar"
+  // (advanceRecurrenceOccurrence below) — a separate batched query
+  // rather than a second `include.transactions` on the relation above
+  // (Prisma doesn't support two differently-filtered includes of the
+  // same relation in one query): this one is ordered ascending, so the
+  // FIRST row seen per recurrenceId is its own soonest-due pending
+  // occurrence, exactly what the button needs to know exists.
+  const soonestPendingByRecurrenceId = new Map<string, Date>();
+  if (recurrences.length > 0) {
+    const pendingOccurrences = await prisma.transaction.findMany({
+      where: {
+        recurrenceId: { in: recurrences.map((recurrence) => recurrence.id) },
+        status: "PENDING",
+      },
+      orderBy: { date: "asc" },
+      select: { recurrenceId: true, date: true },
+    });
+    for (const occurrence of pendingOccurrences) {
+      if (!occurrence.recurrenceId) continue;
+      if (!soonestPendingByRecurrenceId.has(occurrence.recurrenceId)) {
+        soonestPendingByRecurrenceId.set(occurrence.recurrenceId, occurrence.date);
+      }
+    }
+  }
+
   return recurrences.map((recurrence) => {
     const lastGeneratedDate = recurrence.transactions[0]?.date ?? null;
     // Already generated all the way through its own endDate — nothing
@@ -169,6 +194,7 @@ export async function listRecurrences(filters: RecurrenceFilters = {}) {
       })),
       isActive: recurrence._count.transactions > 0,
       needsExtension,
+      canAdvance: soonestPendingByRecurrenceId.has(recurrence.id),
     };
   });
 }
@@ -364,7 +390,17 @@ export async function createDebitRecurrence(data: DebitRecurrenceCreateFormValue
   const account = await prisma.account.findUnique({
     where: { id: value.accountId, userId },
   });
-  if (!account || account.type === "CREDIT_CARD") {
+  // Same exclusion as the batch transaction endpoint's own
+  // investmentAccountNotAllowed guard (transactions/actions.ts) —
+  // investment/pocket accounts only ever move money through the
+  // dedicated Investments screen's own aporte/resgate flow
+  // (createInvestmentMovement), never a debit recurrence.
+  if (
+    !account ||
+    account.type === "CREDIT_CARD" ||
+    account.type === "INVESTMENT" ||
+    account.type === "POCKET"
+  ) {
     return { error: "Invalid account" };
   }
 
@@ -452,7 +488,17 @@ export async function updateDebitRecurrence(
   const account = await prisma.account.findUnique({
     where: { id: value.accountId, userId },
   });
-  if (!account || account.type === "CREDIT_CARD") {
+  // Same exclusion as the batch transaction endpoint's own
+  // investmentAccountNotAllowed guard (transactions/actions.ts) —
+  // investment/pocket accounts only ever move money through the
+  // dedicated Investments screen's own aporte/resgate flow
+  // (createInvestmentMovement), never a debit recurrence.
+  if (
+    !account ||
+    account.type === "CREDIT_CARD" ||
+    account.type === "INVESTMENT" ||
+    account.type === "POCKET"
+  ) {
     return { error: "Invalid account" };
   }
 
@@ -908,4 +954,45 @@ export async function extendRecurrenceGeneration(id: string) {
   revalidatePath("/recurrences");
   revalidatePath("/transactions");
   return { error: null, generatedCount };
+}
+
+// "Adiantar" — settles the recurrence's soonest still-PENDING occurrence
+// today instead of waiting for its own scheduled date: moves that one
+// Transaction's date to today and marks it COMPLETED, same as paying a
+// bill early. Works the same regardless of frequency (daily/weekly/
+// monthly) — always just the single next-due row, never a whole month's
+// worth for a daily/weekly rule. Only ever touches ONE occurrence per
+// call; the rest of the schedule (and every other future occurrence) is
+// untouched.
+export async function advanceRecurrenceOccurrence(id: string) {
+  const userId = await requireUserId();
+
+  const recurrence = await prisma.recurrence.findUnique({
+    where: { id, userId },
+    select: { id: true },
+  });
+  if (!recurrence) {
+    return { error: "Not found" };
+  }
+
+  const nextOccurrence = await prisma.transaction.findFirst({
+    where: { recurrenceId: id, status: "PENDING" },
+    orderBy: { date: "asc" },
+  });
+  if (!nextOccurrence) {
+    const t = await getTranslations("scrn-recurrences");
+    return { error: t("errors.noPendingOccurrence") };
+  }
+
+  await prisma.transaction.update({
+    where: { id: nextOccurrence.id },
+    data: {
+      date: parseCalendarDate(todayCalendarDate()),
+      status: "COMPLETED",
+    },
+  });
+
+  revalidatePath("/recurrences");
+  revalidatePath("/transactions");
+  return { error: null };
 }
