@@ -39,6 +39,7 @@ import type { InvoiceTransactionFilters } from "../_types/types";
 // resolution logic that isn't worth duplicating.
 import { CreditTransactionSheet } from "../../../transactions/_components/form/credit-transaction-sheet";
 import { DeleteDialog } from "../../../transactions/_components/delete-dialog";
+import { DeleteInstallmentScopeDialog } from "../../../transactions/_components/delete-installment-scope-dialog";
 import { BulkActionsBar } from "../../../transactions/_components/table/bulk-actions-bar";
 import { getTransactionColumns } from "../../../transactions/_components/table/columns";
 import { TransactionMobileList } from "../../../transactions/_components/table/transaction-mobile-list";
@@ -114,6 +115,12 @@ export function InvoiceDetailView({
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  // Same "needsInstallmentScope" swap as transactions-view.tsx's own —
+  // see its comment.
+  const [deleteInstallmentScope, setDeleteInstallmentScope] = useState<{
+    installmentNumber: number;
+    installmentCount: number;
+  } | null>(null);
   const [searchText, setSearchText] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [filters, setFilters] = useState<InvoiceTransactionFilters>({});
@@ -344,16 +351,37 @@ export function InvoiceDetailView({
     return result;
   }
 
-  async function handleDeleteConfirm() {
+  // Same "needsInstallmentScope" swap as transactions-view.tsx's own
+  // performDelete — see its comment.
+  async function performDelete(scope?: "this" | "all") {
     if (!deletingTransaction) return;
     setIsDeleting(true);
-    await deleteTransaction(deletingTransaction.id);
+    const result = await deleteTransaction(
+      deletingTransaction.id,
+      scope ? { installmentScope: scope } : undefined,
+    );
     setIsDeleting(false);
+
+    if (result.needsInstallmentScope) {
+      setDeleteInstallmentScope(result.needsInstallmentScope);
+      return;
+    }
+    if (result.error) {
+      toast.error(result.error);
+      setDeletingTransaction(null);
+      setDeleteInstallmentScope(null);
+      return;
+    }
     setDeletingTransaction(null);
+    setDeleteInstallmentScope(null);
     queryClient.invalidateQueries({ queryKey: ["invoices"] });
     queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
     toast.success(tTransactions("toast.deleted"));
     router.refresh();
+  }
+
+  async function handleDeleteConfirm() {
+    await performDelete();
   }
 
   // Same three bulk actions as transactions-view.tsx's own (see its
@@ -730,13 +758,29 @@ export function InvoiceDetailView({
       />
 
       <DeleteDialog
-        open={deletingTransaction !== null}
+        open={deletingTransaction !== null && deleteInstallmentScope === null}
         onOpenChange={(open) => {
           if (!open) setDeletingTransaction(null);
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
       />
+
+      {deleteInstallmentScope && (
+        <DeleteInstallmentScopeDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteInstallmentScope(null);
+              setDeletingTransaction(null);
+            }
+          }}
+          installmentNumber={deleteInstallmentScope.installmentNumber}
+          installmentCount={deleteInstallmentScope.installmentCount}
+          isPending={isDeleting}
+          onChooseScope={(scope) => performDelete(scope)}
+        />
+      )}
 
       <DeleteDialog
         open={isBulkDeleteOpen}

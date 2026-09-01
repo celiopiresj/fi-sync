@@ -1393,6 +1393,126 @@ export async function updateCreditTransaction(
     }
   }
 
+  // Resizing the group's own installment count — independent of
+  // editScope above (that only decides how far description/category/
+  // status/amount propagate to EXISTING siblings; this decides whether
+  // installments need to be added or removed). Runs after the amount
+  // possibly changed above, so a grown group's new rows continue at
+  // whatever the per-installment amount ends up being.
+  if (
+    existing.installmentGroupId &&
+    existing.installmentCount !== null &&
+    installmentCount !== existing.installmentCount
+  ) {
+    const groupId = existing.installmentGroupId;
+    const t = await getTranslations("scrn-transactions");
+
+    if (installmentCount > existing.installmentCount) {
+      // Grow: append new installments after the current last one, same
+      // per-installment amount, continuing the exact same monthly cadence
+      // from the group's own installment 1 (never re-derived from
+      // whatever installment happens to be last, so a manually-edited
+      // date on an existing row can't drift the new ones' schedule).
+      const firstInstallment = await prisma.transaction.findFirst({
+        where: { userId, installmentGroupId: groupId, installmentNumber: 1 },
+      });
+      const lastInstallment = await prisma.transaction.findFirst({
+        where: { userId, installmentGroupId: groupId },
+        orderBy: { installmentNumber: "desc" },
+      });
+      if (!firstInstallment || !lastInstallment) {
+        return { error: "Not found" };
+      }
+
+      const account = await prisma.account.findUnique({
+        where: { id: lastInstallment.accountId, userId },
+        include: { creditCardDetails: true },
+      });
+      if (!account || account.type !== "CREDIT_CARD" || !account.creditCardDetails) {
+        return { error: "Invalid account" };
+      }
+      const creditCardDetails = account.creditCardDetails;
+
+      // Same +1-day cursor advance as extendRecurrenceGeneration's own —
+      // start right after the last existing installment's own cycle.
+      let cursorDate = fromAppZoned(
+        addDays(
+          toAppZoned(computeInvoiceCycle(lastInstallment.date, creditCardDetails).closingDate),
+          1,
+        ),
+      );
+
+      for (
+        let newNumber = existing.installmentCount + 1;
+        newNumber <= installmentCount;
+        newNumber++
+      ) {
+        const { nextCursorDate } = await createCreditTransactionRow({
+          userId,
+          value,
+          amount,
+          date: installmentDate(firstInstallment.date, newNumber - 1),
+          creditCardDetails,
+          installmentGroupId: groupId,
+          installmentNumber: newNumber,
+          installmentCount,
+          cursorDate,
+        });
+        cursorDate = nextCursorDate;
+      }
+
+      await prisma.transaction.updateMany({
+        where: { userId, installmentGroupId: groupId, installmentNumber: { lte: existing.installmentCount } },
+        data: { installmentCount },
+      });
+    } else {
+      // Shrink: remove installments from the end down to the new count
+      // — installmentNumber existing.installmentCount, then -1, ...,
+      // down to installmentCount + 1 — never the other direction, so a
+      // partial failure never leaves a gap in the middle of the
+      // schedule. Blocked entirely (nothing deleted) if ANY of those
+      // already has a payment: same policy deleteTransaction's own
+      // installment-group guard uses — this never deletes a payment on
+      // the user's behalf, only tells them to undo it first.
+      const removedNumbers: number[] = [];
+      for (let n = existing.installmentCount; n > installmentCount; n--) {
+        removedNumbers.push(n);
+      }
+
+      const toRemove = await prisma.transaction.findMany({
+        where: { userId, installmentGroupId: groupId, installmentNumber: { in: removedNumbers } },
+        include: {
+          transactionInvoice: { include: { invoice: { include: { payments: true } } } },
+        },
+        orderBy: { installmentNumber: "desc" },
+      });
+
+      const paidCount = toRemove.filter(
+        (row) => (row.transactionInvoice?.invoice.payments.length ?? 0) > 0,
+      ).length;
+      if (paidCount > 0) {
+        return { error: t("fields.installments.groupHasPaid", { count: paidCount }) };
+      }
+
+      await prisma.$transaction(async (tx) => {
+        const removeIds = toRemove.map((row) => row.id);
+        const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, removeIds);
+        // Already ordered desc (last installment first) from the query
+        // above — one at a time, per this file's own "sequential against
+        // Neon's serverless driver" discipline.
+        for (const row of toRemove) {
+          await tx.transaction.deleteMany({ where: { id: row.id, userId } });
+        }
+        await recomputeAffectedInvoices(tx, affectedInvoiceIds);
+      });
+
+      await prisma.transaction.updateMany({
+        where: { userId, installmentGroupId: groupId },
+        data: { installmentCount },
+      });
+    }
+  }
+
   revalidateCreditTransactions();
   return { error: null };
 }
@@ -1537,12 +1657,78 @@ export async function createCreditTransactionsBatch(
 // so there's no kind-specific branch needed here. Revalidates the
 // credit-only paths too rather than looking up the row's account type
 // first — an extra revalidation on a debit delete is harmless.
-export async function deleteTransaction(id: string) {
+// Installments naturally come as a group (one Transaction per month) —
+// deleting just one, silently leaving the rest, is rarely what's
+// actually wanted. When `id` belongs to one:
+//   1. If ANY sibling installment's own invoice already has a payment,
+//      the whole delete is blocked (`error` set) — this never deletes a
+//      payment on the user's behalf, only says to undo it first (on the
+//      invoice) before the schedule itself can be touched.
+//   2. Otherwise, if `options.installmentScope` wasn't given yet, nothing
+//      is deleted — `needsInstallmentScope` comes back instead so the
+//      caller (DeleteDialog) can ask "só esta parcela ou todas?" and
+//      resubmit with the answer.
+//   3. With `installmentScope: "all"`, every installment in the group is
+//      removed, from the LAST installmentNumber down to the first — so
+//      a failure partway through never leaves a gap in the middle of an
+//      otherwise-intact schedule.
+// A plain (non-installment) transaction skips all of this — same single
+// delete as always.
+export async function deleteTransaction(
+  id: string,
+  options?: { installmentScope?: "this" | "all" },
+) {
   const userId = await requireUserId();
 
+  const existing = await prisma.transaction.findUnique({
+    where: { id, userId },
+    select: { installmentGroupId: true },
+  });
+  if (!existing) {
+    return { error: "Not found" };
+  }
+
+  let idsToDelete = [id];
+
+  if (existing.installmentGroupId) {
+    // Ordered desc (last installment first) up front — reused as-is for
+    // the actual delete loop below once a scope is known.
+    const siblings = await prisma.transaction.findMany({
+      where: { userId, installmentGroupId: existing.installmentGroupId },
+      include: {
+        transactionInvoice: { include: { invoice: { include: { payments: true } } } },
+      },
+      orderBy: { installmentNumber: "desc" },
+    });
+
+    const paidCount = siblings.filter(
+      (row) => (row.transactionInvoice?.invoice.payments.length ?? 0) > 0,
+    ).length;
+    if (paidCount > 0) {
+      const t = await getTranslations("scrn-transactions");
+      return { error: t("fields.installments.groupHasPaid", { count: paidCount }) };
+    }
+
+    if (!options?.installmentScope) {
+      const target = siblings.find((row) => row.id === id);
+      return {
+        error: null,
+        needsInstallmentScope: {
+          installmentNumber: target?.installmentNumber ?? 1,
+          installmentCount: siblings.length,
+        },
+      };
+    }
+
+    idsToDelete =
+      options.installmentScope === "all" ? siblings.map((row) => row.id) : [id];
+  }
+
   await prisma.$transaction(async (tx) => {
-    const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, [id]);
-    await tx.transaction.deleteMany({ where: { id, userId } });
+    const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, idsToDelete);
+    for (const deleteId of idsToDelete) {
+      await tx.transaction.deleteMany({ where: { id: deleteId, userId } });
+    }
     await recomputeAffectedInvoices(tx, affectedInvoiceIds);
   });
 

@@ -138,7 +138,8 @@
       "label": "Installments",
       "placeholder": "Number of installments",
       "optionLabel": "{count}x",
-      "noneUpcoming": "Every installment is already due — there are no upcoming ones to add."
+      "noneUpcoming": "Every installment is already due — there are no upcoming ones to add.",
+      "groupHasPaid": "{count, plural, one {Can't complete this: # installment has already been paid. Undo the payment on its invoice first.} other {Can't complete this: # installments have already been paid. Undo the payments on their invoices first.}}"
     },
     "installmentAmountMode": {
       "label": "The amount entered is",
@@ -354,6 +355,13 @@
       "this": "Only this installment",
       "future": "This and future installments",
       "all": "All installments"
+    },
+    "deleteInstallmentScope": {
+      "title": "Delete installment {number} of {total}",
+      "description": "This transaction is part of an installment purchase. Delete just this installment, or all {total}?",
+      "this": "Only this installment",
+      "all": "All {total} installments",
+      "cancel": "Cancel"
     }
   },
 

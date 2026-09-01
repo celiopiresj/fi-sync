@@ -73,6 +73,7 @@ import {
   type TransactionFilters,
 } from "../actions";
 import { DeleteDialog } from "./delete-dialog";
+import { DeleteInstallmentScopeDialog } from "./delete-installment-scope-dialog";
 import { CreditTransactionSheet } from "./form/credit-transaction-sheet";
 import { DebitTransactionSheet } from "./form/debit-transaction-sheet";
 import { BulkActionsBar } from "./table/bulk-actions-bar";
@@ -180,6 +181,14 @@ export function TransactionsView({
   const [deletingTransaction, setDeletingTransaction] =
     useState<TransactionRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  // Set once deleteTransaction reports `needsInstallmentScope` — swaps
+  // the plain DeleteDialog for DeleteInstallmentScopeDialog's "esta
+  // parcela ou todas?" choice instead. Cleared alongside
+  // deletingTransaction on cancel/success.
+  const [deleteInstallmentScope, setDeleteInstallmentScope] = useState<{
+    installmentNumber: number;
+    installmentCount: number;
+  } | null>(null);
 
   // Table multi-select (redesign spec item 4) — `selectedIds` holds real
   // Transaction ids (see DataTable's `getRowId` below), not row indexes,
@@ -513,14 +522,39 @@ export function TransactionsView({
     toast.success(t("toast.batchCreated", { count }));
   }
 
-  async function handleDeleteConfirm() {
+  // Shared by the plain DeleteDialog's confirm (no scope yet) and
+  // DeleteInstallmentScopeDialog's own choice — deleteTransaction
+  // (actions.ts) reports `needsInstallmentScope` the first time it's
+  // called on an installment-group row without one, which is what
+  // swaps DeleteDialog for the scope dialog instead of deleting
+  // anything yet.
+  async function performDelete(scope?: "this" | "all") {
     if (!deletingTransaction) return;
     setIsDeleting(true);
-    await deleteTransaction(deletingTransaction.id);
+    const result = await deleteTransaction(
+      deletingTransaction.id,
+      scope ? { installmentScope: scope } : undefined,
+    );
     setIsDeleting(false);
+
+    if (result.needsInstallmentScope) {
+      setDeleteInstallmentScope(result.needsInstallmentScope);
+      return;
+    }
+    if (result.error) {
+      toast.error(result.error);
+      setDeletingTransaction(null);
+      setDeleteInstallmentScope(null);
+      return;
+    }
     setDeletingTransaction(null);
+    setDeleteInstallmentScope(null);
     invalidate();
     toast.success(t("toast.deleted"));
+  }
+
+  async function handleDeleteConfirm() {
+    await performDelete();
   }
 
   // The three bulk actions (BulkActionsBar, rendered by DataTable's
@@ -982,13 +1016,29 @@ export function TransactionsView({
       />
 
       <DeleteDialog
-        open={deletingTransaction !== null}
+        open={deletingTransaction !== null && deleteInstallmentScope === null}
         onOpenChange={(open) => {
           if (!open) setDeletingTransaction(null);
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
       />
+
+      {deleteInstallmentScope && (
+        <DeleteInstallmentScopeDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setDeleteInstallmentScope(null);
+              setDeletingTransaction(null);
+            }
+          }}
+          installmentNumber={deleteInstallmentScope.installmentNumber}
+          installmentCount={deleteInstallmentScope.installmentCount}
+          isPending={isDeleting}
+          onChooseScope={(scope) => performDelete(scope)}
+        />
+      )}
 
       <DeleteDialog
         open={isBulkDeleteOpen}

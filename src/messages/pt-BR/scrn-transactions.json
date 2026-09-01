@@ -138,7 +138,8 @@
       "label": "Parcelas",
       "placeholder": "Número de parcelas",
       "optionLabel": "{count}x",
-      "noneUpcoming": "Todas as parcelas já venceram — nenhuma parcela futura para adicionar."
+      "noneUpcoming": "Todas as parcelas já venceram — nenhuma parcela futura para adicionar.",
+      "groupHasPaid": "{count, plural, one {Não é possível concluir: # parcela já foi paga. Desfaça o pagamento na fatura antes.} other {Não é possível concluir: # parcelas já foram pagas. Desfaça os pagamentos nas faturas antes.}}"
     },
     "installmentAmountMode": {
       "label": "O valor digitado é",
@@ -354,6 +355,13 @@
       "this": "Apenas esta parcela",
       "future": "Esta e as próximas parcelas",
       "all": "Todas as parcelas"
+    },
+    "deleteInstallmentScope": {
+      "title": "Excluir parcela {number} de {total}",
+      "description": "Essa transação faz parte de uma compra parcelada. Deseja excluir só esta parcela ou todas as {total}?",
+      "this": "Apenas esta parcela",
+      "all": "Todas as {total} parcelas",
+      "cancel": "Cancelar"
     }
   },
 
