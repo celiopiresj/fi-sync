@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { useFieldContext } from "@/lib/form/form-context";
@@ -11,6 +11,7 @@ import {
   formatLocalCalendarDate,
 } from "@/lib/date";
 import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
+import { Input } from "@/components/ui/input";
 import { PickerSearchInput } from "@/components/form/picker-search-input";
 import {
   Popover,
@@ -321,6 +322,17 @@ export function DatePickerRowField({
 }: DatePickerRowFieldProps) {
   const field = useFieldContext<string>();
   const [open, setOpen] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // Plain `autoFocus` races Radix's own focus-trap effect on the mobile
+  // Sheet variant (same issue debit-transaction-form.tsx's own
+  // amountInputRef works around) — focus explicitly instead, re-running
+  // on every open since this component stays mounted across opens/closes
+  // (only `open` itself toggles, no remount to re-trigger a mount-only
+  // effect).
+  useEffect(() => {
+    if (open) dateInputRef.current?.focus();
+  }, [open]);
 
   const parsedDate = parseLocalCalendarDate(field.state.value);
 
@@ -337,16 +349,31 @@ export function DatePickerRowField({
         sheetTitle={sheetTitle ?? label}
         popoverClassName="w-auto"
       >
-        <Calendar
-          mode="single"
-          selected={parsedDate}
-          onSelect={(date) => {
-            if (!date) return;
-            field.handleChange(formatLocalCalendarDate(date));
-            setOpen(false);
-          }}
-          autoFocus
-        />
+        <div className="flex flex-col gap-2">
+          {/* Typing is just as valid an entry method as clicking a day —
+              a native date input, same as DateField's own (which has no
+              picker at all), kept in sync with the Calendar below: both
+              read/write the same "yyyy-MM-dd" field value, so picking a
+              day updates this input and typing a date moves the
+              Calendar's own selection. */}
+          <Input
+            ref={dateInputRef}
+            type="date"
+            value={field.state.value}
+            onChange={(e) => {
+              if (e.target.value) field.handleChange(e.target.value);
+            }}
+          />
+          <Calendar
+            mode="single"
+            selected={parsedDate}
+            onSelect={(date) => {
+              if (!date) return;
+              field.handleChange(formatLocalCalendarDate(date));
+              setOpen(false);
+            }}
+          />
+        </div>
       </PickerRow>
       {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
         <p className="mt-1 px-3 text-xs text-red-600 dark:text-red-400">
