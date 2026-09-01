@@ -48,19 +48,24 @@ async function validateCreditCardAccount(data: CreditCardAccountFormValues) {
 // every invoice that still counts against the limit (this also already
 // includes PARTIALLY_PAID, which is exactly what should still count).
 //
-// Also bounded to the currently-open cycle and earlier — a cycle that
-// hasn't opened yet doesn't reduce today's available limit just because
-// it already exists as an Invoice row. That row can exist well ahead of
-// its own closing date: a recurrence (see recurrences/actions.ts and
-// transactions/actions.ts's own recurrence path) pre-generates up to 12
-// months of future, still-PENDING occurrences and their invoices in one
-// go, same as a multi-installment purchase would for its own later
-// installments — those future cycles are real future commitments, but
-// (unlike an installment, whose full amount really is already owed the
-// moment the purchase is made) nothing has actually been charged on them
-// yet. Verified against real data: an account with two monthly
-// recurrences showed a negative available limit purely from ~12 months
-// of not-yet-open future invoices being summed in.
+// A cycle that hasn't opened yet still exists as an Invoice row well
+// ahead of its own closing date: a recurrence (see recurrences/
+// actions.ts and transactions/actions.ts's own recurrence path)
+// pre-generates up to 12 months of future, still-PENDING occurrences and
+// their invoices in one go, same as a multi-installment purchase would
+// for its own later installments. Those two future-invoice cases are
+// NOT the same commitment, though: a recurrence's future occurrences are
+// only a projection — nothing has actually been charged yet, and the
+// rule can still be edited/deleted before any of them happen — while an
+// installment purchase's later installments are already owed in full the
+// moment the purchase is made, same as buying it à vista and just paying
+// the bank back over time. So a future cycle only counts installment
+// transactions (`installmentGroupId` set) toward outstanding, never a
+// pure recurrence occurrence (`recurrenceId` set, no installmentGroupId
+// — the two are mutually exclusive, enforced in refineCreditTransaction)
+// — verified against real data: an account with two monthly recurrences
+// showed a negative available limit purely from ~12 months of not-yet-
+// open future invoices being summed in before this distinction existed.
 export async function listCreditCardAccounts() {
   const userId = await requireUserId();
 
@@ -76,7 +81,9 @@ export async function listCreditCardAccounts() {
         where: { status: { not: "PAID" } },
         include: {
           transactionInvoices: {
-            include: { transaction: { select: { amount: true } } },
+            include: {
+              transaction: { select: { amount: true, installmentGroupId: true } },
+            },
           },
           payments: { select: { amount: true } },
           creditsReceived: { select: { amount: true } },
@@ -101,23 +108,28 @@ export async function listCreditCardAccounts() {
     const currentCycleClosingKey = account.creditCardDetails
       ? dateOnlyKey(computeInvoiceCycle(todayDate, account.creditCardDetails).closingDate)
       : null;
-    const outstanding = account.invoices
-      .filter(
-        (invoice) =>
-          !currentCycleClosingKey || dateOnlyKey(invoice.closingDate) <= currentCycleClosingKey,
-      )
-      .reduce((sum, invoice) => {
-        const invoiceTotal = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
-        const paidAmount = invoice.payments.reduce(
-          (paidSum, payment) => paidSum + payment.amount.toNumber(),
-          0,
-        );
-        const creditApplied = invoice.creditsReceived.reduce(
-          (creditSum, credit) => creditSum + credit.amount.toNumber(),
-          0,
-        );
-        return sum + Math.max(0, invoiceTotal - paidAmount - creditApplied);
-      }, 0);
+    const outstanding = account.invoices.reduce((sum, invoice) => {
+      const isFutureCycle =
+        currentCycleClosingKey !== null &&
+        dateOnlyKey(invoice.closingDate) > currentCycleClosingKey;
+      // See the file-level comment above — a future cycle only counts
+      // its installment transactions, not plain recurrence occurrences.
+      const countedTransactionInvoices = isFutureCycle
+        ? invoice.transactionInvoices.filter(
+            (ti) => ti.transaction.installmentGroupId !== null,
+          )
+        : invoice.transactionInvoices;
+      const invoiceTotal = sumInvoiceTransactionsTotal(countedTransactionInvoices);
+      const paidAmount = invoice.payments.reduce(
+        (paidSum, payment) => paidSum + payment.amount.toNumber(),
+        0,
+      );
+      const creditApplied = invoice.creditsReceived.reduce(
+        (creditSum, credit) => creditSum + credit.amount.toNumber(),
+        0,
+      );
+      return sum + Math.max(0, invoiceTotal - paidAmount - creditApplied);
+    }, 0);
     const limit = account.creditCardDetails?.limit.toNumber() ?? 0;
     const dueDay = account.creditCardDetails?.dueDay ?? null;
 
