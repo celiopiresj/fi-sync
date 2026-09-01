@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentProps, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { PickerSearchInput } from "@/components/form/picker-search-input";
 
 // The batch entry form's compact chip pattern — a small pill (unselected:
@@ -207,6 +208,15 @@ export function DateChipSelect({
 }: DateChipSelectProps) {
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // Explicit focus instead of plain `autoFocus` — same Radix Sheet
+  // focus-trap race as picker-row-field.tsx's own DatePickerRowField,
+  // re-run on every open since this component stays mounted across
+  // opens/closes.
+  useEffect(() => {
+    if (open) dateInputRef.current?.focus();
+  }, [open]);
 
   const parsedDate = parseLocalCalendarDate(value);
   const displayLabel = parsedDate
@@ -222,16 +232,27 @@ export function DateChipSelect({
   );
 
   const content = (
-    <Calendar
-      mode="single"
-      selected={parsedDate}
-      onSelect={(date) => {
-        if (!date) return;
-        onChange(formatLocalCalendarDate(date));
-        setOpen(false);
-      }}
-      autoFocus
-    />
+    <div className="flex flex-col gap-2">
+      {/* Typing is just as valid an entry method as clicking a day —
+          same pairing as picker-row-field.tsx's own DatePickerRowField. */}
+      <Input
+        ref={dateInputRef}
+        type="date"
+        value={value}
+        onChange={(e) => {
+          if (e.target.value) onChange(e.target.value);
+        }}
+      />
+      <Calendar
+        mode="single"
+        selected={parsedDate}
+        onSelect={(date) => {
+          if (!date) return;
+          onChange(formatLocalCalendarDate(date));
+          setOpen(false);
+        }}
+      />
+    </div>
   );
 
   if (isMobile) {
