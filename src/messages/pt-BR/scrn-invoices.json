@@ -81,6 +81,7 @@
     },
     "transactions": {
       "title": "Transações",
+      "add": "Adicionar transação",
       "empty": "Nenhuma transação nesta fatura ainda",
       "searchPlaceholder": "Buscar por descrição…",
       "searchClear": "Limpar busca",

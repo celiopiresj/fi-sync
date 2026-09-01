@@ -5,7 +5,8 @@ import { useTranslations, useFormatter } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
-import { ArrowLeftIcon, ReceiptIcon } from "@phosphor-icons/react";
+import { subDays } from "date-fns";
+import { ArrowLeftIcon, PlusIcon, ReceiptIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -70,9 +71,12 @@ type InvoiceDetailViewProps = {
 // Same create/edit(/duplicate) union transactions-view.tsx's own
 // dialogState uses — "duplicate" is mode "create" prefilled from an
 // existing row (see CreditTransactionForm's toFormValues, which prefills
-// regardless of isEditing).
+// regardless of isEditing). A brand-new "Adicionar transação" (no
+// prefillFrom) is create mode too, just without a source row to copy —
+// CreditTransactionForm falls back to this page's own defaultAccountId/
+// defaultCardId/defaultDate in that case instead.
 type DialogState =
-  | { mode: "create"; prefillFrom: TransactionRow }
+  | { mode: "create"; prefillFrom?: TransactionRow }
   | { mode: "edit"; row: TransactionRow }
   | null;
 
@@ -145,6 +149,25 @@ export function InvoiceDetailView({
     return [...byId.values()];
   }, [invoice.transactions]);
   const activeCardId = selectedCardId || cards[0]?.id || "";
+
+  // Defaults for a brand-new "Adicionar transação" (no prefillFrom) —
+  // `cards` above only lists cards that already have a transaction IN
+  // this invoice, which is empty for a just-opened/still-empty invoice,
+  // so the fallback reaches into this account's own full card list
+  // instead. `closingDate - 1 day` (not `closingDate` itself, which
+  // computeInvoiceCycle treats as already the START of the NEXT cycle —
+  // see invoice-resolution.ts's own boundary-day comment, and not
+  // "today", which could fall in a different cycle than the one being
+  // viewed) is always inside this invoice's own cycle regardless of
+  // when "today" actually is.
+  const invoiceAccountOption = transactionAccounts.find(
+    (account) => account.id === invoice.accountId,
+  );
+  const newTransactionDefaultCardId =
+    activeCardId || invoiceAccountOption?.cards[0]?.id;
+  const newTransactionDefaultDate = dateOnlyKey(
+    subDays(invoice.closingDate, 1),
+  );
 
   const transactionsForCard = useMemo(() => {
     if (cards.length <= 1) return invoice.transactions;
@@ -576,7 +599,17 @@ export function InvoiceDetailView({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium">{t("detail.transactions.title")}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-medium">{t("detail.transactions.title")}</h2>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDialogState({ mode: "create" })}
+          >
+            <PlusIcon />
+            {t("detail.transactions.add")}
+          </Button>
+        </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput
@@ -681,12 +714,17 @@ export function InvoiceDetailView({
         categories={categories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={invoice.accountId}
+        defaultCardId={newTransactionDefaultCardId}
+        defaultDate={newTransactionDefaultDate}
         onSubmit={handleSubmitTransaction}
-        // Editing/duplicating from an invoice never offers the batch
-        // table (CreditTransactionSheet's own canUseBatch requires
-        // mode==="create" AND no prefill, so a duplicate — mode "create"
-        // WITH prefillFrom — already excludes it too) — these two just
-        // satisfy its props and are never actually invoked.
+        // No batch table here — CreditBatchTransactionTable has no
+        // per-row defaultAccountId/defaultCardId of its own the way the
+        // single form above does, and this page is specifically about
+        // adding to ONE known invoice — allowBatch={false} keeps
+        // CreditTransactionSheet's own toggle/table hidden, so these two
+        // are never actually invoked.
+        allowBatch={false}
         onSubmitBatch={async () => ({ error: null, rowIndex: null })}
         onBatchSuccess={() => {}}
       />

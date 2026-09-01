@@ -70,12 +70,20 @@ function centsToAmountString(cents: number): string {
 function toFormValues(
   row: TransactionRow | null,
   defaultPersonId: string | null,
+  // Only applied when there's no `row` to prefill from — lets a caller
+  // that already knows the context (e.g. invoice-detail-view.tsx, which
+  // knows exactly which account/card/cycle it's showing) skip the
+  // account/card picker instead of leaving it blank. Ignored while
+  // editing/duplicating an existing row.
+  defaults?: { accountId?: string; cardId?: string; date?: string },
 ): CreditTransactionFormValues {
   if (!row) {
     return {
       ...emptyCreditTransactionFormValues,
-      date: todayCalendarDate(),
+      date: defaults?.date ?? todayCalendarDate(),
       personId: defaultPersonId ?? "",
+      accountId: defaults?.accountId ?? "",
+      cardId: defaults?.cardId ?? "",
     };
   }
 
@@ -109,6 +117,11 @@ type CreditTransactionFormProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  // See toFormValues' own `defaults` param — only used for a fresh
+  // create (isEditing false, initialValues null).
+  defaultAccountId?: string;
+  defaultCardId?: string;
+  defaultDate?: string;
   onSubmit: (
     values: CreditTransactionFormValues,
     options?: {
@@ -126,6 +139,9 @@ export function CreditTransactionForm({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
+  defaultCardId,
+  defaultDate,
   onSubmit,
   onSuccess,
 }: CreditTransactionFormProps) {
@@ -202,7 +218,11 @@ export function CreditTransactionForm({
   }
 
   const form = useZodForm(schema, {
-    defaultValues: toFormValues(initialValues, defaultPersonId),
+    defaultValues: toFormValues(initialValues, defaultPersonId, {
+      accountId: defaultAccountId,
+      cardId: defaultCardId,
+      date: defaultDate,
+    }),
     onSubmit: async ({ value }) => {
       // Editing an existing à-vista purchase into installments only
       // ever CREATES installments 2..N (installment 1 is this same

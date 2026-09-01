@@ -81,6 +81,7 @@
     },
     "transactions": {
       "title": "Transactions",
+      "add": "Add transaction",
       "empty": "No transactions on this invoice yet",
       "searchPlaceholder": "Search by description…",
       "searchClear": "Clear search",

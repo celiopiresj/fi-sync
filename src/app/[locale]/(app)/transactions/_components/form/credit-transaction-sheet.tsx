@@ -34,6 +34,17 @@ type CreditTransactionSheetProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  // Forwarded to CreditTransactionForm's own defaults — see its comment.
+  defaultAccountId?: string;
+  defaultCardId?: string;
+  defaultDate?: string;
+  // Hides the single/batch toggle and the batch table entirely,
+  // regardless of mode/prefill — invoice-detail-view.tsx sets this
+  // false since it has no real onSubmitBatch to offer (batch rows have
+  // no per-row defaultAccountId/defaultCardId of their own, unlike the
+  // single form above). Defaults to true, matching every other caller
+  // (transactions-view.tsx's own "add" flow).
+  allowBatch?: boolean;
   onSubmit: (
     values: CreditTransactionFormValues,
     options?: {
@@ -56,6 +67,10 @@ export function CreditTransactionSheet({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
+  defaultCardId,
+  defaultDate,
+  allowBatch = true,
   onSubmit,
   onSubmitBatch,
   onBatchSuccess,
@@ -66,7 +81,7 @@ export function CreditTransactionSheet({
   // Only creating a brand-new purchase can go through the batch table —
   // editing/duplicating a single row always uses the regular form. Same
   // convention as DebitTransactionSheet's own canUseBatch/isBatch.
-  const canUseBatch = mode === "create" && !prefill;
+  const canUseBatch = allowBatch && mode === "create" && !prefill;
   const isBatch = canUseBatch && entryMode === "batch";
 
   return (
@@ -135,6 +150,9 @@ export function CreditTransactionSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId}
+              defaultCardId={defaultCardId}
+              defaultDate={defaultDate}
               onSubmit={onSubmit}
               onSuccess={() => onOpenChange(false)}
             />
