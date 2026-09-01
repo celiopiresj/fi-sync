@@ -97,9 +97,14 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
   // Sign convention matches the person detail page's "Saldo na conta"/
   // "Total a pagar": positive balance = the user owes this person,
   // negative = this person owes the user (see listPeople in actions.ts).
+  // Excludes the self ("Eu") person — a balance against yourself isn't a
+  // real debt either direction, so it shouldn't inflate what's actually
+  // owed across everyone else (see the card rendering below, which hides
+  // the balance/"Cobrar" UI for the same person for the same reason).
   const { totalToReceive, totalToPay, pendingCount } = useMemo(() => {
     return people.reduce(
       (acc, person) => {
+        if (person.isSelf) return acc;
         if (person.balance < 0) acc.totalToReceive += Math.abs(person.balance);
         if (person.balance > 0) acc.totalToPay += person.balance;
         if (person.balance !== 0) acc.pendingCount += 1;
@@ -422,52 +427,74 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                         </DropdownMenu>
                       </CardAction>
                     </CardHeader>
-                    <CardContent className="flex flex-col gap-3">
-                      <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 p-3">
-                        <span className="text-xs text-muted-foreground">
-                          {t("card.balanceLabel")}
-                        </span>
-                        <div className="flex flex-col items-end gap-1">
-                          <span
-                            className={cn(
-                              "text-base font-bold tabular-nums",
-                              balanceTextClass,
-                            )}
-                          >
-                            {balanceSign}
-                            {money(Math.abs(person.balance))}
+                    {/* flex-1: grows to fill whatever height the grid
+                        stretched this card to (equal-height siblings),
+                        so the footer sits right after the real content
+                        instead of floating with dead space below it —
+                        matters most for the self ("Eu") card, which has
+                        no balance block to fill that space with. */}
+                    <CardContent className="flex flex-1 flex-col gap-3">
+                      {/* A balance against yourself isn't a real debt —
+                          "Saldo Atual"/"Você recebe"/"Você deve" only
+                          make sense between the user and someone else,
+                          same reasoning the KPI totals above exclude
+                          self for. */}
+                      {!person.isSelf && (
+                        <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 p-3">
+                          <span className="text-xs text-muted-foreground">
+                            {t("card.balanceLabel")}
                           </span>
-                          <Badge variant={balanceBadgeVariant} className="uppercase">
-                            {t(`card.balanceStatus.${balanceStatus}`)}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-1">
+                            <span
+                              className={cn(
+                                "text-base font-bold tabular-nums",
+                                balanceTextClass,
+                              )}
+                            >
+                              {balanceSign}
+                              {money(Math.abs(person.balance))}
+                            </span>
+                            <Badge variant={balanceBadgeVariant} className="uppercase">
+                              {t(`card.balanceStatus.${balanceStatus}`)}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       <p className="flex items-center gap-1 px-0.5 text-xs text-muted-foreground">
                         <ReceiptIcon className="size-3.5" />
                         {t("card.splitsCount", { count: person.splitsCount })}
                       </p>
                     </CardContent>
-                    <CardFooter className="grid grid-cols-2 gap-2">
+                    <CardFooter
+                      className={cn(
+                        "grid gap-2",
+                        person.isSelf ? "grid-cols-1" : "grid-cols-2",
+                      )}
+                    >
                       <Button asChild variant="outline" size="sm">
                         <Link href={`/people/${person.id}`}>
                           {t("buttons.viewStatement")}
                         </Link>
                       </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleCharge(person)}
-                        disabled={!phone || isCharging}
-                        title={phone ? undefined : t("detail.header.noPhone")}
-                      >
-                        {isCharging ? (
-                          <SpinnerIcon className="size-4 animate-spin" />
-                        ) : (
-                          <ChatCircleIcon className="size-4" />
-                        )}
-                        {t("buttons.charge")}
-                      </Button>
+                      {/* "Cobrar" only makes sense against someone else —
+                          same reasoning as the balance block above. */}
+                      {!person.isSelf && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleCharge(person)}
+                          disabled={!phone || isCharging}
+                          title={phone ? undefined : t("detail.header.noPhone")}
+                        >
+                          {isCharging ? (
+                            <SpinnerIcon className="size-4 animate-spin" />
+                          ) : (
+                            <ChatCircleIcon className="size-4" />
+                          )}
+                          {t("buttons.charge")}
+                        </Button>
+                      )}
                     </CardFooter>
                   </Card>
                 );

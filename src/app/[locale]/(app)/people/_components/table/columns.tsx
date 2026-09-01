@@ -110,6 +110,12 @@ export function getPeopleColumns(
       accessorKey: "balance",
       header: () => <div className="text-right">{messages.columns.balance}</div>,
       cell: ({ row }) => {
+        // A balance against yourself isn't a real debt either direction
+        // — same reasoning people-view.tsx's own card rendering hides
+        // this for (see its comment).
+        if (row.original.isSelf) {
+          return <div className="text-right text-sm text-muted-foreground">—</div>;
+        }
         const status = balanceStatusOf(row.original.balance);
         return (
           <div className="flex items-center justify-end gap-2">
