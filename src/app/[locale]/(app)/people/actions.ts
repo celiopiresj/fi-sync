@@ -311,15 +311,25 @@ export async function getPersonStatement(personId: string, period: StatementPeri
     }),
   ]);
 
-  // One section per credit-card account that has an Invoice closing in
-  // this calendar month AND at least one purchase split to this person —
+  // One section per credit-card account that has an Invoice DUE in this
+  // calendar month AND at least one purchase split to this person —
   // cards with neither are left out entirely rather than shown empty.
+  // Matched by dueDate, not closingDate — same "which month a credit
+  // purchase belongs to" convention transactions/actions.ts's own
+  // effectiveDate uses (a row's period is its invoice's due date, not
+  // its closing date). Matching by closingDate instead used to put a
+  // purchase under a different month here than the one /transactions
+  // would show it under for the exact same period — confirmed against
+  // real data: an installment due 12/09 (September, per effectiveDate)
+  // has its own invoice CLOSING 29/08, so the old closingDate match
+  // surfaced it under "Agosto" here while /transactions already called
+  // it "Setembro".
   const cardSectionResults = await Promise.all(
     cardAccounts.map(async (account) => {
       const invoice = await prisma.invoice.findFirst({
         where: {
           accountId: account.id,
-          closingDate: { gte: monthFrom, lte: monthTo },
+          dueDate: { gte: monthFrom, lte: monthTo },
         },
         include: {
           transactionInvoices: {

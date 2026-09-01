@@ -36,15 +36,24 @@ export function PersonDetailView({
   const t = useTranslations("scrn-people");
   const format = useFormatter();
 
-  const [period, setPeriod] = useState<StatementPeriod>(() =>
-    currentStatementPeriod(),
-  );
+  // Captured once, separately from the mutable `period` state below —
+  // `initialStatement` was only ever fetched server-side for THIS
+  // period (see page.tsx), so usePersonStatement needs to know whether
+  // `period` still matches it before reusing it as `initialData` for a
+  // different period's own query key. Same split as invoices-view.tsx's
+  // own initialPeriod/period.
+  const [initialPeriod] = useState(() => currentStatementPeriod());
+  const [period, setPeriod] = useState<StatementPeriod>(initialPeriod);
   const [previewOpen, setPreviewOpen] = useState(false);
+
+  const isDefaultPeriod =
+    period.year === initialPeriod.year && period.month === initialPeriod.month;
 
   const { data: statement } = usePersonStatement(
     personId,
     period,
     initialStatement,
+    isDefaultPeriod,
   );
 
   const money = (value: number) =>

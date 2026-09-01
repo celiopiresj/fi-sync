@@ -10,8 +10,8 @@ export type CashCycle = { start: Date; end: Date; isOpen: boolean };
 // Cash movements (non credit-card) on the person detail page (people/[id])
 // are grouped into a fixed statement cycle running the 20th of the month
 // before `period` through the 19th of `period`'s own month — independent
-// of any card's own closing day (card items keep using the real
-// Invoice.closingDate per account instead, see getPersonStatement in
+// of any card's own due day (card items keep using the real
+// Invoice.dueDate per account instead, see getPersonStatement in
 // actions.ts). `end` is capped at "today" while the cycle is still
 // running, so a still-open cycle only shows what's actually happened so
 // far rather than a range reaching into the future. "Today" is read from
@@ -45,8 +45,9 @@ export function shiftStatementPeriod(
 }
 
 // First/last calendar day of `period`'s month as Dates — used to match a
-// credit-card account's Invoice.closingDate to the selected period (each
-// card's own closing day, not the 20-19 cash cycle above).
+// credit-card account's Invoice.dueDate to the selected period (each
+// card's own due day, not the 20-19 cash cycle above — and not
+// closingDate either, see getPersonStatement's own comment on why).
 export function periodMonthRange(period: StatementPeriod): {
   from: Date;
   to: Date;
