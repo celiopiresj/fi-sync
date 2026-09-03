@@ -198,9 +198,36 @@
     "batch": "Adicionar em lote"
   },
 
+  "quickAdd": {
+    "title": "Nova transação",
+    "subtitle": "Adicionar um lançamento manual",
+    "debitOption": {
+      "title": "Transação no débito",
+      "subtitle": "Dinheiro, Pix, débito ou transferência"
+    },
+    "creditOption": {
+      "title": "Despesa no cartão",
+      "subtitle": "Com parcelamento e prévia da fatura"
+    },
+    "batchOption": {
+      "title": "Adicionar em lote",
+      "subtitle": "Várias linhas de uma vez, na mesma conta"
+    }
+  },
+
   "batch": {
     "title": "Lançamento em lote",
     "description": "Adicione várias transações de uma vez",
+    "mobile": {
+      "title": "Adicionar em lote",
+      "subtitle": "{count, plural, =0 {Nenhuma linha ainda} one {# linha · toque para editar} other {# linhas · toque para editar}}",
+      "appliesToAll": "Vale para todas as linhas",
+      "addRow": "Adicionar linha",
+      "readyRows": "{count, plural, =0 {Nenhuma linha pronta} one {# linha pronta} other {# linhas prontas}}",
+      "submitCount": "{count, plural, one {Criar # lançamento} other {Criar # lançamentos}}",
+      "rowIncomplete": "Incompleta",
+      "empty": "Toque em \"Adicionar linha\" para começar"
+    },
     "add": "Adicionar",
     "saveChange": "Salvar alteração",
     "cancelEdit": "Cancelar edição",

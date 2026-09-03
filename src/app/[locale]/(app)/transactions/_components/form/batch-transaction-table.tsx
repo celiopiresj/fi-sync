@@ -1,38 +1,28 @@
 "use client";
 
-import { AmountInput } from "@/components/form/amount-field";
 import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { parseLocalCalendarDate, todayCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
-  evaluateExpression,
-  isCompoundExpression,
-} from "@/lib/math/safe-expression";
-import {
   PencilSimpleIcon,
-  PlusIcon,
   SpinnerIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   emptyBatchRow,
-  paymentMethodFormValues,
-  transactionTypeValues,
   type BatchRowFormValues,
 } from "../../_schema/schema";
+import { parseAmountLoose, resolveAmount } from "../../_lib/batch-amounts";
+import { filterDebitBatchAccounts } from "../../_lib/batch-accounts";
 import type {
   AccountOption,
   CategoryOption,
   PersonOption,
 } from "../../_types/types";
-import { ChipSelect, DateChipSelect } from "./chip-select";
-import { CreatePersonInline } from "./create-person-inline";
+import { BatchRowFields } from "./batch-row-fields";
 
 // A fresh row defaulting to today and to `defaultPersonId` — same
 // reasoning as the single-transaction form's toFormValues — computed
@@ -45,36 +35,6 @@ function makeEmptyRow(defaultPersonId: string | null): BatchRowFormValues {
     date: todayCalendarDate(),
     personId: defaultPersonId ?? "",
   };
-}
-
-// Resolves the draft's typed amount (comma/period decimals, or an
-// expression like "120+35" — same convention as the single-transaction
-// form's amount field) to a plain positive number, or null if it isn't
-// one yet. Queue items store the *resolved* value (see handleAddOrSave
-// below), not the raw typed string — a queued row is a fixed snapshot,
-// not something that re-evaluates later.
-function resolveAmount(raw: string): number | null {
-  const evaluated = isCompoundExpression(raw) ? evaluateExpression(raw) : null;
-  const parsed = evaluated ?? (raw ? Number(raw.replace(",", ".")) : NaN);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-}
-
-// Split amounts are tracked in integer cents — same reasoning (and same
-// helpers, duplicated per this route's own self-containment convention)
-// as debit-transaction-form.tsx's own "Dividir com outras pessoas" math.
-function toCents(value: number | null): number {
-  if (value === null || !Number.isFinite(value)) return 0;
-  return Math.round(value * 100);
-}
-
-function parseAmountLoose(value: string): number | null {
-  if (!value) return null;
-  const parsed = Number(value.replace(",", "."));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function centsToAmountString(cents: number): string {
-  return (cents / 100).toFixed(2).replace(".", ",");
 }
 
 type BatchTransactionTableProps = {
@@ -99,21 +59,7 @@ export function BatchTransactionTable({
   const t = useTranslations("scrn-transactions");
   const format = useFormatter();
 
-  // Batch entry is debit-only — a credit-card account needs the
-  // single-transaction form so the invoice/installment logic in
-  // `createTransaction` actually runs (see actions.ts,
-  // `resolveInvoiceForDate`). Leaving cards out of this list is what
-  // keeps that constraint honest instead of silently creating a
-  // transaction with no invoice link. Investment/pocket accounts are
-  // excluded too — aporte/resgate against them only ever goes through
-  // the dedicated Investments screen now (investments/actions.ts's own
-  // createInvestmentMovement posts both transfer legs), never here.
-  const debitAccounts = accounts.filter(
-    (account) =>
-      account.type === "CHECKING" ||
-      account.type === "SAVINGS" ||
-      account.type === "CASH",
-  );
+  const debitAccounts = filterDebitBatchAccounts(accounts);
 
   const [draft, setDraft] = useState<BatchRowFormValues>(() =>
     makeEmptyRow(defaultPersonId),
@@ -123,155 +69,18 @@ export function BatchTransactionTable({
   // null means the draft form is building a brand-new entry.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [queue, setQueue] = useState<BatchRowFormValues[]>([]);
-  // Splitting a specific amount with specific people doesn't carry over
-  // to the next queued row the way account/category/person do — starts
-  // false for every new entry (handleAddOrSave/handleCancelEdit reset it),
-  // re-derived from the row's own splits when editing one back in
-  // (handleEdit).
-  const [isDividing, setIsDividing] = useState(false);
+  // Bumped every time the draft becomes "a different row" (added, edited,
+  // cancelled). BatchRowFields keys off this so it remounts and re-derives
+  // its own divide-with-people toggle from the row it is handed, instead
+  // of that state leaking from one entry into the next.
+  const [draftKey, setDraftKey] = useState(0);
 
   const [serverError, setServerError] = useState<string | null>(null);
   const [errorRowIndex, setErrorRowIndex] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Only categories matching the draft row's own type — same rule the
-  // single-transaction forms' pickers follow.
-  const categoryType = draft.type === "income" ? "INCOME" : "EXPENSE";
-  const filteredCategories = categories.filter(
-    (category) => category.type === categoryType,
-  );
-
   function patchDraft(patch: Partial<BatchRowFormValues>) {
-    setDraft((current) => {
-      const next = { ...current, ...patch };
-      // The category picker is scoped to the row's own type (see
-      // filteredCategories below) — switching type drops a categoryId
-      // that no longer matches, same "dependent field reset" the credit
-      // batch table already does for cardId when accountId changes.
-      if (patch.type !== undefined && patch.type !== current.type) {
-        const nextCategoryType = patch.type === "income" ? "INCOME" : "EXPENSE";
-        const category = categories.find((c) => c.id === current.categoryId);
-        if (category && category.type !== nextCategoryType) next.categoryId = "";
-      }
-      return next;
-    });
-  }
-
-  // --- Person split math (identical to debit-transaction-form.tsx's own,
-  // adapted from TanStack Form field ops to plain draft/setDraft state) --
-  const splits = draft.splits;
-  const secondaries = splits.slice(1);
-  const totalCents = toCents(resolveAmount(draft.amount));
-  const secondaryCentsList = secondaries.map((split) =>
-    toCents(parseAmountLoose(split.amount)),
-  );
-  const secondaryCentsSum = secondaryCentsList.reduce((sum, c) => sum + c, 0);
-  const primaryAmountCents = totalCents - secondaryCentsSum;
-  const primaryAmountDisplay = centsToAmountString(
-    Math.max(primaryAmountCents, 0),
-  );
-  const isOverAllocated = primaryAmountCents < 0;
-  const primaryPerson = people.find((person) => person.id === draft.personId);
-  const sign = draft.type === "expense" ? -1 : 1;
-
-  useEffect(() => {
-    if (isDividing) {
-      if (splits.length === 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        patchDraft({
-          splits: [
-            { personId: draft.personId, amount: centsToAmountString(totalCents) },
-          ],
-        });
-      }
-    } else if (splits.length > 0) {
-      patchDraft({ splits: [] });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDividing]);
-
-  useEffect(() => {
-    if (!isDividing) return;
-    if (splits[0]?.personId !== draft.personId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      patchDraft({
-        splits: splits.map((s, i) =>
-          i === 0 ? { ...s, personId: draft.personId } : s,
-        ),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft.personId, isDividing]);
-
-  useEffect(() => {
-    if (!isDividing) return;
-    const next = centsToAmountString(primaryAmountCents);
-    if (splits[0]?.amount !== next) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      patchDraft({
-        splits: splits.map((s, i) => (i === 0 ? { ...s, amount: next } : s)),
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryAmountCents, isDividing]);
-
-  const isFirstTotalRender = useRef(true);
-  useEffect(() => {
-    if (isFirstTotalRender.current) {
-      isFirstTotalRender.current = false;
-      return;
-    }
-    if (splits.length <= 1) return;
-    const peopleCount = splits.length;
-    const share = Math.floor(totalCents / peopleCount);
-    const shareStr = centsToAmountString(share);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    patchDraft({
-      splits: splits.map((s, i) => (i === 0 ? s : { ...s, amount: shareStr })),
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalCents]);
-
-  useEffect(() => {
-    if (secondaries.length !== 1) return;
-    const maxCents = Math.max(totalCents - 1, 0);
-    if (secondaryCentsList[0] > maxCents) {
-      const clamped = centsToAmountString(maxCents);
-      if (splits[1]?.amount !== clamped) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        patchDraft({
-          splits: splits.map((s, i) => (i === 1 ? { ...s, amount: clamped } : s)),
-        });
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalCents, secondaryCentsList[0], secondaries.length]);
-
-  // Same "redistribute if pristine, else come in at zero" rule as
-  // debit-transaction-form.tsx's own handleAddSecondaryPerson.
-  function handleAddSecondaryPerson(newPersonId = "") {
-    const peopleCountBefore = splits.length;
-    const shareBefore =
-      peopleCountBefore > 0 ? Math.floor(totalCents / peopleCountBefore) : 0;
-    const isPristine = secondaryCentsList.every((cents) => cents === shareBefore);
-
-    if (isPristine) {
-      const peopleCountAfter = peopleCountBefore + 1;
-      const shareAfter = Math.floor(totalCents / peopleCountAfter);
-      const shareAfterStr = centsToAmountString(shareAfter);
-      const redistributed = splits.map((s, i) =>
-        i === 0 ? s : { ...s, amount: shareAfterStr },
-      );
-      patchDraft({
-        splits: [...redistributed, { personId: newPersonId, amount: shareAfterStr }],
-      });
-    } else {
-      patchDraft({ splits: [...splits, { personId: newPersonId, amount: "0,00" }] });
-    }
-  }
-
-  function handleRemoveSecondary(index: number) {
-    patchDraft({ splits: splits.filter((_, i) => i !== index) });
+    setDraft((current) => ({ ...current, ...patch }));
   }
 
   function handleAddOrSave() {
@@ -300,7 +109,10 @@ export function BatchTransactionTable({
       return;
     }
 
-    if (isDividing) {
+    // A row carrying splits is by definition one that was divided — the
+    // toggle itself lives inside BatchRowFields now, so the check reads
+    // off the row rather than off a separate flag here.
+    if (draft.splits.length > 0) {
       const splitsTotal = draft.splits.reduce(
         (sum, split) => sum + (parseAmountLoose(split.amount) ?? 0),
         0,
@@ -332,32 +144,24 @@ export function BatchTransactionTable({
     // Chips "remember" their last value for the next entry — only
     // description/amount reset, matching the spec's replacement for the
     // old "mesma conta/tipo/pessoa para todas" global toggles. Splits
-    // don't carry over (see isDividing's own comment above) — always back
-    // to "not divided" for whatever gets added/built next.
+    // don't carry over — always back to "not divided" for whatever gets
+    // added/built next.
     setDraft({ ...snapshot, description: "", amount: "", splits: [] });
-    setIsDividing(false);
+    setDraftKey((key) => key + 1);
   }
 
   function handleEdit(index: number) {
     setDraft(queue[index]);
     setEditingIndex(index);
     setDraftError(null);
-    setIsDividing(queue[index].splits.length > 0);
-    // Loading a row's own amount into the draft changes totalCents, which
-    // would otherwise trip the "redistribute secondaries" effect right as
-    // this row's already-custom split loads in — unlike the single-
-    // transaction form (a fresh component instance per edit, so its own
-    // isFirstRender ref only ever needs to guard one mount), this table
-    // stays mounted across edits of many different rows, so the guard has
-    // to be re-armed on every entry into edit mode, not just once ever.
-    isFirstTotalRender.current = true;
+    setDraftKey((key) => key + 1);
   }
 
   function handleCancelEdit() {
     setEditingIndex(null);
-    setIsDividing(false);
     setDraft((current) => ({ ...current, description: "", amount: "", splits: [] }));
     setDraftError(null);
+    setDraftKey((key) => key + 1);
   }
 
   function handleDelete(index: number) {
@@ -440,226 +244,17 @@ export function BatchTransactionTable({
             </p>
           )}
 
-          <ToggleGroup
-            type="single"
-            variant="tabs"
-            value={draft.type}
-            onValueChange={(value) => {
-              if (value)
-                patchDraft({ type: value as BatchRowFormValues["type"] });
-            }}
-            className="w-full">
-            {transactionTypeValues.map((type) => (
-              <ToggleGroupItem key={type} value={type} className="flex-1">
-                {t(`fields.type.${type}`)}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-
-          <div className="flex gap-2">
-            <Input
-              className="flex-1"
-              value={draft.description}
-              onChange={(e) => patchDraft({ description: e.target.value })}
-              placeholder={t("fields.description.placeholder")}
-            />
-            <AmountInput
-              className="w-28"
-              value={draft.amount}
-              onChange={(value) => patchDraft({ amount: value })}
-              placeholder={t("fields.amount.placeholder")}
-              allowExpression
-            />
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            <DateChipSelect
-              label={t("batch.columns.date")}
-              value={draft.date}
-              onChange={(value) => patchDraft({ date: value })}
-              sheetTitle={t("batch.columns.date")}
-            />
-            <ChipSelect
-              label={t("batch.columns.account")}
-              value={draft.accountId}
-              onChange={(value) => patchDraft({ accountId: value })}
-              options={debitAccounts.map((account) => ({
-                value: account.id,
-                label: account.name,
-              }))}
-              sheetTitle={t("batch.columns.account")}
-            />
-            <ChipSelect
-              label={t("batch.columns.paymentMethod")}
-              value={draft.paymentMethod}
-              onChange={(value) => patchDraft({ paymentMethod: value })}
-              options={paymentMethodFormValues.map((method) => ({
-                value: method,
-                label: t(`fields.paymentMethod.${method}`),
-              }))}
-              sheetTitle={t("batch.columns.paymentMethod")}
-            />
-            <ChipSelect
-              label={t("batch.columns.category")}
-              value={draft.categoryId}
-              onChange={(value) => patchDraft({ categoryId: value })}
-              options={filteredCategories.map((category) => ({
-                value: category.id,
-                label: category.name,
-              }))}
-              sheetTitle={t("batch.columns.category")}
-            />
-            {/* Only worth asking "who's this for" once there's more
-                than just you — see debit-transaction-form.tsx's own
-                comment on the same field. */}
-            {people.length > 1 && (
-              <ChipSelect
-                label={t("batch.columns.person")}
-                value={draft.personId}
-                onChange={(value) => patchDraft({ personId: value })}
-                options={people.map((person) => ({
-                  value: person.id,
-                  label: person.name,
-                }))}
-                formatDisplay={formatPersonName}
-                sheetTitle={t("batch.columns.person")}
-                footer={
-                  <div className="border-t border-border p-1.5 pt-2">
-                    <CreatePersonInline
-                      label={t("splits.newPerson")}
-                      triggerClassName="px-1.5"
-                      onCreated={(person) => patchDraft({ personId: person.id })}
-                    />
-                  </div>
-                }
-              />
-            )}
-          </div>
-
-          {/* Compact counterpart of debit-transaction-form.tsx's own
-              "Dividir com outras pessoas" card — same toggle/payer/owes
-              shape, sized down (ChipSelect + a narrow AmountInput per row
-              instead of full SelectField/AmountField blocks) to fit this
-              already-dense draft card. Same "only worth it with someone
-              else to split with" gating as the Pessoa chip above. */}
-          {people.length > 1 && (
-            <div className="flex flex-col gap-2 rounded-md border border-border/60 p-2">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium">{t("splits.toggleLabel")}</p>
-                  {!draft.personId && (
-                    <p className="text-[11px] text-muted-foreground">
-                      {t("splits.needsPersonFirst")}
-                    </p>
-                  )}
-                </div>
-                <Switch
-                  checked={isDividing}
-                  onCheckedChange={setIsDividing}
-                  disabled={!draft.personId}
-                />
-              </div>
-
-              {isDividing && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
-                    <div className="flex flex-col">
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("splits.payerLabel")}
-                      </span>
-                      <span className="text-xs font-medium">
-                        {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
-                      </span>
-                    </div>
-                    <span className="text-xs font-medium tabular-nums">
-                      {format.number(
-                        sign * Number(primaryAmountDisplay.replace(",", ".")),
-                        { style: "currency", currency: "BRL" },
-                      )}
-                    </span>
-                  </div>
-
-                  {isOverAllocated && (
-                    <p className="text-[11px] text-red-600 dark:text-red-400">
-                      {t("splits.exceeds", {
-                        value: format.number(Math.abs(primaryAmountCents) / 100, {
-                          style: "currency",
-                          currency: "BRL",
-                        }),
-                      })}
-                    </p>
-                  )}
-
-                  {secondaries.map((split, i) => {
-                    const index = i + 1;
-                    return (
-                      <div key={index} className="flex items-center gap-1.5">
-                        <ChipSelect
-                          label={t("fields.person.label")}
-                          value={split.personId}
-                          onChange={(value) =>
-                            patchDraft({
-                              splits: splits.map((s, si) =>
-                                si === index ? { ...s, personId: value } : s,
-                              ),
-                            })
-                          }
-                          options={people.map((person) => ({
-                            value: person.id,
-                            label: person.name,
-                          }))}
-                          formatDisplay={formatPersonName}
-                          sheetTitle={t("fields.person.label")}
-                        />
-                        <AmountInput
-                          className="w-24"
-                          value={split.amount}
-                          onChange={(value) =>
-                            patchDraft({
-                              splits: splits.map((s, si) =>
-                                si === index ? { ...s, amount: value } : s,
-                              ),
-                            })
-                          }
-                          placeholder={t("fields.amount.placeholder")}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleRemoveSecondary(index)}
-                        >
-                          <TrashIcon />
-                          <span className="sr-only">{t("splits.remove")}</span>
-                        </Button>
-                      </div>
-                    );
-                  })}
-
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1">
-                    <button
-                      type="button"
-                      onClick={() => handleAddSecondaryPerson()}
-                      className="flex items-center gap-1.5 text-left text-[11px] text-primary transition-colors hover:underline"
-                    >
-                      <PlusIcon className="size-3.5" />
-                      {t("splits.addPerson")}
-                    </button>
-                    <CreatePersonInline
-                      label={t("splits.newPerson")}
-                      triggerClassName="px-1.5"
-                      onCreated={(person) => handleAddSecondaryPerson(person.id)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <BatchRowFields
+            key={draftKey}
+            value={draft}
+            onChange={patchDraft}
+            accounts={debitAccounts}
+            categories={categories}
+            people={people}
+          />
 
           {draftError && (
-            <p className="text-xs text-red-600 dark:text-red-400">
-              {draftError}
-            </p>
+            <p className="text-xs text-negative">{draftError}</p>
           )}
 
           <div className="flex gap-2">

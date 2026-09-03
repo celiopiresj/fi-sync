@@ -198,9 +198,36 @@
     "batch": "Add in bulk"
   },
 
+  "quickAdd": {
+    "title": "New transaction",
+    "subtitle": "Add a manual entry",
+    "debitOption": {
+      "title": "Debit transaction",
+      "subtitle": "Cash, Pix, debit or transfer"
+    },
+    "creditOption": {
+      "title": "Card expense",
+      "subtitle": "With installments and invoice preview"
+    },
+    "batchOption": {
+      "title": "Batch entry",
+      "subtitle": "Several rows at once, on the same account"
+    }
+  },
+
   "batch": {
     "title": "Batch entry",
     "description": "Add several transactions at once",
+    "mobile": {
+      "title": "Batch entry",
+      "subtitle": "{count, plural, =0 {No rows yet} one {# row · tap to edit} other {# rows · tap to edit}}",
+      "appliesToAll": "Applies to every row",
+      "addRow": "Add row",
+      "readyRows": "{count, plural, =0 {No rows ready} one {# row ready} other {# rows ready}}",
+      "submitCount": "{count, plural, one {Create # transaction} other {Create # transactions}}",
+      "rowIncomplete": "Incomplete",
+      "empty": "Tap \"Add row\" to get started"
+    },
     "add": "Add",
     "saveChange": "Save change",
     "cancelEdit": "Cancel edit",

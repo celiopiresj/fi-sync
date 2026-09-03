@@ -51,10 +51,16 @@ function DrawerContent({
   className,
   children,
   showCloseButton = true,
+  showDragHandle = true,
   closeLabel,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
   showCloseButton?: boolean
+  // The grab bar a bottom drawer shows above its content. On by default
+  // (it is what tells you the sheet can be swiped away), but a drawer
+  // that fills the whole screen reads as a page rather than a sheet, so
+  // those turn it off and offer an explicit close control instead.
+  showDragHandle?: boolean
   // Accessible name for the close button's sr-only text. No literal
   // default on purpose (see AGENTS.md: no hardcoded/default UI text) —
   // callers pass their own translated string (e.g. `t("aria.close")`).
@@ -71,7 +77,9 @@ function DrawerContent({
         )}
         {...props}
       >
-        <div className="mx-auto mt-4 hidden h-1.5 w-25 shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        {showDragHandle && (
+          <div className="mx-auto mt-4 hidden h-1.5 w-25 shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/drawer-content:block" />
+        )}
         {children}
         {showCloseButton && (
           <DrawerPrimitive.Close data-slot="drawer-close" asChild>
