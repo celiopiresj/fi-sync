@@ -18,6 +18,8 @@
     "categories": "Categories",
     "budgets": "Budgets",
     "projections": "Projections",
+    "wallet": "Wallet",
+    "more": "More",
     "sections": {
       "dayToDay": "Everyday",
       "wallet": "Wallet",
@@ -67,5 +69,9 @@
     "searchPlaceholder": "Search…",
     "searchClear": "Clear search",
     "noResults": "No results found"
+  },
+  "aria": {
+    "primaryNavigation": "Primary navigation",
+    "addTransaction": "New transaction"
   }
 }

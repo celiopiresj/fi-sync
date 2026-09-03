@@ -1,0 +1,34 @@
+{
+  "title": "Carteira",
+  "subtitle": "Contas, cartões e o que você tem a receber",
+
+  "buttons": {
+    "viewAll": "Ver todos"
+  },
+
+  "cards": {
+    "accounts": {
+      "title": "Contas",
+      "count": "{count, plural, one {# conta} other {# contas}}"
+    },
+    "creditCards": {
+      "title": "Cartões",
+      "usage": "{value} do limite",
+      "due": "vence dia {day}",
+      "empty": "Nenhum cartão cadastrado"
+    },
+    "invoices": {
+      "title": "Faturas",
+      "subtitle": "{count, plural, =0 {Nenhuma aguardando pagamento} one {# aguardando pagamento} other {# aguardando pagamento}}"
+    },
+    "investments": {
+      "title": "Investimentos",
+      "subtitlePositive": "+{value} no mês",
+      "subtitleNegative": "{value} no mês"
+    },
+    "loans": {
+      "title": "Empréstimos",
+      "subtitle": "{count, plural, =0 {Ninguém te deve no momento} one {# pessoa te deve} other {# pessoas te devem}}"
+    }
+  }
+}

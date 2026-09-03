@@ -1,6 +1,7 @@
 "use client";
 
 import { navItems, navSections } from "@/components/nav/nav-items";
+import { resolveActiveHref } from "@/lib/nav/resolve-active-href";
 import {
   Sidebar,
   SidebarContent,
@@ -22,18 +23,10 @@ export function AppSidebar() {
 
   const pathname = usePathname();
 
-  // Picks the single longest-`href`-prefix match across every item
-  // rather than letting each one check `pathname.startsWith(href)`
-  // independently — keeps this correct if a future item's href ever
-  // nests under another item's (e.g. two routes sharing a prefix), so a
-  // deeper route doesn't highlight both entries at once.
-  const activeHref = navItems.reduce<string | null>((best, item) => {
-    const matches =
-      item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-    if (!matches) return best;
-    if (!best || item.href.length > best.length) return item.href;
-    return best;
-  }, null);
+  const activeHref = resolveActiveHref(
+    pathname,
+    navItems.map((item) => item.href),
+  );
 
   return (
     <Sidebar collapsible="icon">

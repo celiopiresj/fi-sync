@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ComponentProps } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { usePathname, useRouter } from "@/i18n/navigation";
@@ -22,12 +22,9 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { GlobeIcon, MoonIcon, SignOutIcon, SunIcon } from "@phosphor-icons/react";
+import { initialsFrom } from "@/lib/format-initials";
 
 const themeValues = ["light", "dark", "system"] as const;
-
-function initialsFrom(value: string) {
-  return value.slice(0, 2).toUpperCase();
-}
 
 // Single top-right account entry point (header, see (app)/layout.tsx) —
 // avatar click opens session info + theme + language + sign out all in
@@ -35,7 +32,17 @@ function initialsFrom(value: string) {
 // rows" pattern Google's own account switcher uses. Replaces the old
 // ModeToggle/LanguageSwitcher/UserMenu trio that used to sit in the
 // sidebar footer.
-export function AccountMenu() {
+type AccountMenuProps = {
+  // The display name, when the caller already knows it from the server
+  // (the home screen gets it on its overview payload). Without it the
+  // name only arrives after mount, which leaves the avatar blank on the
+  // first paint — fine in the app header, but not where the avatar is
+  // the first thing on the screen.
+  name?: string;
+  avatarSize?: ComponentProps<typeof Avatar>["size"];
+};
+
+export function AccountMenu({ name: nameProp, avatarSize = "sm" }: AccountMenuProps = {}) {
   const t = useTranslations("common");
   const locale = useLocale();
   const pathname = usePathname();
@@ -57,7 +64,9 @@ export function AccountMenu() {
 
   const activeTheme = mounted ? (theme ?? "system") : "system";
   const email = mounted ? (session?.user?.email ?? "") : "";
-  const name = mounted ? (session?.user?.name ?? email) : "";
+  // A caller-supplied name is server-rendered, so it is safe before
+  // mount — it's identical on both sides of hydration.
+  const name = nameProp ?? (mounted ? (session?.user?.name ?? email) : "");
 
   async function handleSignOut() {
     await authClient.signOut();
@@ -73,7 +82,7 @@ export function AccountMenu() {
           disabled={!mounted || isSessionPending}
           className="rounded-full"
         >
-          <Avatar size="sm">
+          <Avatar size={avatarSize}>
             <AvatarFallback>{name ? initialsFrom(name) : ""}</AvatarFallback>
           </Avatar>
           <span className="sr-only">{t("userMenu.open")}</span>

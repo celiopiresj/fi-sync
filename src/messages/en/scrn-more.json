@@ -1,0 +1,39 @@
+{
+  "title": "More",
+
+  "groups": {
+    "planning": "Planning",
+    "records": "Records",
+    "account": "Account"
+  },
+
+  "rows": {
+    "budgets": {
+      "title": "Budgets",
+      "subtitle": "{count, plural, =0 {No category over budget} one {# category over budget} other {# categories over budget}}"
+    },
+    "projections": {
+      "title": "Projections"
+    },
+    "recurrences": {
+      "title": "Recurrences",
+      "active": "{count, plural, one {# active} other {# active}}",
+      "needsExtension": "{count, plural, one {# needs generating} other {# need generating}}"
+    },
+    "categories": {
+      "title": "Categories"
+    },
+    "people": {
+      "title": "People"
+    },
+    "theme": {
+      "title": "Theme"
+    },
+    "language": {
+      "title": "Language"
+    },
+    "signOut": {
+      "title": "Sign out"
+    }
+  }
+}

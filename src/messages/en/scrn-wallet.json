@@ -1,0 +1,34 @@
+{
+  "title": "Wallet",
+  "subtitle": "Accounts, cards and what people owe you",
+
+  "buttons": {
+    "viewAll": "View all"
+  },
+
+  "cards": {
+    "accounts": {
+      "title": "Accounts",
+      "count": "{count, plural, one {# account} other {# accounts}}"
+    },
+    "creditCards": {
+      "title": "Cards",
+      "usage": "{value} of limit",
+      "due": "due day {day}",
+      "empty": "No card registered yet"
+    },
+    "invoices": {
+      "title": "Invoices",
+      "subtitle": "{count, plural, =0 {None awaiting payment} one {# awaiting payment} other {# awaiting payment}}"
+    },
+    "investments": {
+      "title": "Investments",
+      "subtitlePositive": "+{value} this month",
+      "subtitleNegative": "{value} this month"
+    },
+    "loans": {
+      "title": "Loans",
+      "subtitle": "{count, plural, =0 {No one owes you right now} one {# person owes you} other {# people owe you}}"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "title": "Mais",
+
+  "groups": {
+    "planning": "Planejamento",
+    "records": "Cadastros",
+    "account": "Conta"
+  },
+
+  "rows": {
+    "budgets": {
+      "title": "Orçamentos",
+      "subtitle": "{count, plural, =0 {Nenhuma categoria estourada} one {# categoria estourada} other {# categorias estouradas}}"
+    },
+    "projections": {
+      "title": "Projeções"
+    },
+    "recurrences": {
+      "title": "Recorrências",
+      "active": "{count, plural, one {# ativa} other {# ativas}}",
+      "needsExtension": "{count, plural, one {# precisa gerar} other {# precisam gerar}}"
+    },
+    "categories": {
+      "title": "Categorias"
+    },
+    "people": {
+      "title": "Pessoas"
+    },
+    "theme": {
+      "title": "Tema"
+    },
+    "language": {
+      "title": "Idioma"
+    },
+    "signOut": {
+      "title": "Sair"
+    }
+  }
+}

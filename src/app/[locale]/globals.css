@@ -192,4 +192,19 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+  /* Below `md` the app is the installed PWA / phone layout, where a
+     drawn scrollbar track reads as a browser chrome leak rather than a
+     control — iOS and Android both use overlay scrollbars that fade out
+     on their own, so nothing is lost by hiding it. Desktop keeps its
+     scrollbars: there the bar is the only cue for how long a page is and
+     where you are in it. `48rem` is the `md` breakpoint (768px), the same
+     cutoff `useIsMobile` and the sidebar/tab-bar split already use. */
+  @media (width < 48rem) {
+    * {
+      scrollbar-width: none;
+    }
+    *::-webkit-scrollbar {
+      display: none;
+    }
+  }
 }

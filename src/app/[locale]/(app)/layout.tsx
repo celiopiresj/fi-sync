@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { AccountMenu } from "@/components/nav/account-menu";
+import { MobileNavShell } from "@/components/nav/mobile-nav-shell";
 import { auth } from "@/lib/auth/server";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "@/i18n/navigation";
@@ -37,8 +38,15 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-10 items-center gap-2 border-b border-border px-2">
-          <SidebarTrigger />
+        {/* Desktop only. On a phone this bar held nothing but the account
+            avatar (its SidebarTrigger is already `md:inline-flex`), and it
+            sat directly above each screen's own header — two stacked bars
+            for one screen. Its three functions are reachable on mobile
+            from the "Mais" tab (theme, language, sign out, see
+            more/_components/more-view.tsx) on every route, and the home
+            additionally hangs this same menu off its own avatar. */}
+        <header className="hidden h-10 items-center gap-2 border-b border-border px-2 md:flex">
+          <SidebarTrigger className="hidden md:inline-flex" />
           {/* Single account entry point, top-right — theme, language and
               sign out all live in here now (see AccountMenu's own
               comment) instead of three separate sidebar footer rows. */}
@@ -46,8 +54,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <AccountMenu />
           </div>
         </header>
-        <div className="flex-1 p-4">{children}</div>
+        <div className="flex-1 p-4 pb-24 md:pb-4">{children}</div>
       </SidebarInset>
+      <MobileNavShell />
     </SidebarProvider>
   );
 }

@@ -18,6 +18,8 @@
     "categories": "Categorias",
     "budgets": "Orçamentos",
     "projections": "Projeções",
+    "wallet": "Carteira",
+    "more": "Mais",
     "sections": {
       "dayToDay": "Dia a dia",
       "wallet": "Carteira",
@@ -67,5 +69,9 @@
     "searchPlaceholder": "Buscar…",
     "searchClear": "Limpar busca",
     "noResults": "Nenhum resultado encontrado"
+  },
+  "aria": {
+    "primaryNavigation": "Navegação principal",
+    "addTransaction": "Nova transação"
   }
 }
