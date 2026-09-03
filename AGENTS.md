@@ -165,6 +165,18 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   that sheet actually uses). This is a bug to fix, not a style
   preference, wherever a `SheetContent`/`DrawerContent` `className` sets
   a breakpoint-prefixed size utility without the matching `data-[...]:`.
+  Matching the prefix is necessary but **not sufficient**: the override
+  also has to be a value `tailwind-merge` recognizes as conflicting, or
+  both classes survive into the DOM at equal specificity and the winner
+  is decided by whichever rule Tailwind happened to emit last. The known
+  trap is `max-h-none`, which `cn()` does *not* dedupe against
+  `max-h-[80vh]` — verified against the real strings, along with
+  `max-h-full`/`max-h-screen`/`max-h-dvh`, which all do dedupe and
+  actually drop the cap. So to uncap a bottom drawer, use
+  `data-[vaul-drawer-direction=bottom]:max-h-dvh`, never `max-h-none`
+  (see `add-transaction-drawer.tsx`). When an override looks correct but
+  doesn't take, check the merged class string before assuming
+  specificity is the cause.
 - **Never hand-write an arbitrary pixel value in a Tailwind class when a
   canonical class already produces that exact value — always use the
   canonical one.** Tailwind v4's spacing scale (`w-*`, `h-*`, `size-*`,
