@@ -120,7 +120,22 @@ export function ProjectionsView({ initialProjections }: ProjectionsViewProps) {
           ))}
         </div>
       ) : (
-        <ProjectionList entries={projections} />
+        <>
+          {/* ProjectionList's <Table> doesn't reflow well below
+              `min-[700px]` (same limitation as transactions'/
+              recurrences' own DataTable) — ProjectionCard already covers
+              every field the table's columns show, so it's reused as the
+              narrow-screen fallback instead of a dedicated mobile-list
+              component. */}
+          <div className="hidden min-[700px]:block">
+            <ProjectionList entries={projections} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 min-[700px]:hidden">
+            {projections.map((entry) => (
+              <ProjectionCard key={entry.monthKey} entry={entry} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

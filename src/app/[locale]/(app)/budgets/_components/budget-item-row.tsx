@@ -29,7 +29,7 @@ export function BudgetItemRow({ item }: BudgetItemRowProps) {
 
   return (
     <div className="flex flex-col gap-1.5 py-2">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <div className="flex items-center gap-2.5 min-w-0">
           <div
             className={cn(

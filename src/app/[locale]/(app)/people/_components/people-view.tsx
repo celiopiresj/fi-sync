@@ -225,6 +225,168 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
 
   const hasPeople = people.length > 0;
 
+  // Shared between "cards" mode (always) and "list" mode's own
+  // narrow-screen fallback below `min-[700px]` — DataTable doesn't reflow
+  // well on a phone (same limitation as transactions'/recurrences' own
+  // DataTable, see transaction-mobile-list.tsx's comment), and this grid
+  // already contains every field the table's columns show, so it doubles
+  // as that fallback instead of a dedicated people-mobile-list.tsx twin.
+  const peopleCardsGrid = (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {filteredPeople.map((person) => {
+        const phone = joinPersonPhone(
+          person.phoneCountryCode,
+          person.phone,
+        );
+        const color = getPersonColorClasses(person.name, person.colorStyle);
+        const balanceStatus = balanceStatusOf(person.balance);
+        const balanceBadgeVariant =
+          balanceStatus === "toReceive"
+            ? "default"
+            : balanceStatus === "toPay"
+              ? "destructive"
+              : "secondary";
+        const balanceTextClass =
+          balanceStatus === "toReceive"
+            ? "text-positive"
+            : balanceStatus === "toPay"
+              ? "text-negative"
+              : "text-foreground";
+        const balanceSign =
+          balanceStatus === "toReceive"
+            ? "+ "
+            : balanceStatus === "toPay"
+              ? "- "
+              : "";
+        const isCharging = chargingPersonId === person.id;
+
+        return (
+          <Card key={person.id} radius="lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-base">
+                <Avatar>
+                  <AvatarFallback className={color}>
+                    {getPersonInitial(person.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-0.5">
+                  <span className="flex items-center gap-1.5">
+                    {person.name}
+                    {person.isSelf && (
+                      <Badge variant="secondary">{t("card.selfBadge")}</Badge>
+                    )}
+                  </span>
+                  {phone ? (
+                    <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
+                      <PhoneIcon className="size-3" />
+                      {phone}
+                    </span>
+                  ) : null}
+                </div>
+              </CardTitle>
+              <CardAction>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon-sm">
+                      <DotsThreeIcon />
+                      <span className="sr-only">{t("aria.menu")}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        setDialogState({ mode: "edit", row: person })
+                      }
+                    >
+                      {t("menu.edit")}
+                    </DropdownMenuItem>
+                    {!person.isSelf && (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onSelect={() => setDeletingPerson(person)}
+                      >
+                        {t("menu.delete")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardAction>
+            </CardHeader>
+            {/* flex-1: grows to fill whatever height the grid
+                stretched this card to (equal-height siblings),
+                so the footer sits right after the real content
+                instead of floating with dead space below it —
+                matters most for the self ("Eu") card, which has
+                no balance block to fill that space with. */}
+            <CardContent className="flex flex-1 flex-col gap-3">
+              {/* A balance against yourself isn't a real debt —
+                  "Saldo Atual"/"Você recebe"/"Você deve" only
+                  make sense between the user and someone else,
+                  same reasoning the KPI totals above exclude
+                  self for. */}
+              {!person.isSelf && (
+                <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 p-3">
+                  <span className="text-xs text-muted-foreground">
+                    {t("card.balanceLabel")}
+                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      className={cn(
+                        "text-base font-bold tabular-nums",
+                        balanceTextClass,
+                      )}
+                    >
+                      {balanceSign}
+                      {money(Math.abs(person.balance))}
+                    </span>
+                    <Badge variant={balanceBadgeVariant} className="uppercase">
+                      {t(`card.balanceStatus.${balanceStatus}`)}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              <p className="flex items-center gap-1 px-0.5 text-xs text-muted-foreground">
+                <ReceiptIcon className="size-3.5" />
+                {t("card.splitsCount", { count: person.splitsCount })}
+              </p>
+            </CardContent>
+            <CardFooter
+              className={cn(
+                "grid gap-2",
+                person.isSelf ? "grid-cols-1" : "grid-cols-2",
+              )}
+            >
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/people/${person.id}`}>
+                  {t("buttons.viewStatement")}
+                </Link>
+              </Button>
+              {/* "Cobrar" only makes sense against someone else —
+                  same reasoning as the balance block above. */}
+              {!person.isSelf && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => handleCharge(person)}
+                  disabled={!phone || isCharging}
+                  title={phone ? undefined : t("detail.header.noPhone")}
+                >
+                  {isCharging ? (
+                    <SpinnerIcon className="size-4 animate-spin" />
+                  ) : (
+                    <ChatCircleIcon className="size-4" />
+                  )}
+                  {t("buttons.charge")}
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
       <PageHeader
@@ -340,166 +502,24 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
               </EmptyContent>
             </Empty>
           ) : viewMode === "list" ? (
-            <DataTable
-              columns={columns}
-              data={filteredPeople}
-              getRowId={(row) => row.id}
-              emptyState={null}
-            />
+            <>
+              {/* DataTable doesn't reflow well below `min-[700px]` (same
+                  limitation as transactions'/recurrences' own DataTable) —
+                  the cards grid already covers every field the table's
+                  columns show, so it's reused as the narrow-screen
+                  fallback instead of a dedicated mobile-list component. */}
+              <div className="hidden min-[700px]:block">
+                <DataTable
+                  columns={columns}
+                  data={filteredPeople}
+                  getRowId={(row) => row.id}
+                  emptyState={null}
+                />
+              </div>
+              <div className="block min-[700px]:hidden">{peopleCardsGrid}</div>
+            </>
           ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredPeople.map((person) => {
-                const phone = joinPersonPhone(
-                  person.phoneCountryCode,
-                  person.phone,
-                );
-                const color = getPersonColorClasses(person.name, person.colorStyle);
-                const balanceStatus = balanceStatusOf(person.balance);
-                const balanceBadgeVariant =
-                  balanceStatus === "toReceive"
-                    ? "default"
-                    : balanceStatus === "toPay"
-                      ? "destructive"
-                      : "secondary";
-                const balanceTextClass =
-                  balanceStatus === "toReceive"
-                    ? "text-positive"
-                    : balanceStatus === "toPay"
-                      ? "text-negative"
-                      : "text-foreground";
-                const balanceSign =
-                  balanceStatus === "toReceive"
-                    ? "+ "
-                    : balanceStatus === "toPay"
-                      ? "- "
-                      : "";
-                const isCharging = chargingPersonId === person.id;
-
-                return (
-                  <Card key={person.id} radius="lg">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-3 text-base">
-                        <Avatar>
-                          <AvatarFallback className={color}>
-                            {getPersonInitial(person.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col gap-0.5">
-                          <span className="flex items-center gap-1.5">
-                            {person.name}
-                            {person.isSelf && (
-                              <Badge variant="secondary">{t("card.selfBadge")}</Badge>
-                            )}
-                          </span>
-                          {phone ? (
-                            <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
-                              <PhoneIcon className="size-3" />
-                              {phone}
-                            </span>
-                          ) : null}
-                        </div>
-                      </CardTitle>
-                      <CardAction>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm">
-                              <DotsThreeIcon />
-                              <span className="sr-only">{t("aria.menu")}</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onSelect={() =>
-                                setDialogState({ mode: "edit", row: person })
-                              }
-                            >
-                              {t("menu.edit")}
-                            </DropdownMenuItem>
-                            {!person.isSelf && (
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onSelect={() => setDeletingPerson(person)}
-                              >
-                                {t("menu.delete")}
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </CardAction>
-                    </CardHeader>
-                    {/* flex-1: grows to fill whatever height the grid
-                        stretched this card to (equal-height siblings),
-                        so the footer sits right after the real content
-                        instead of floating with dead space below it —
-                        matters most for the self ("Eu") card, which has
-                        no balance block to fill that space with. */}
-                    <CardContent className="flex flex-1 flex-col gap-3">
-                      {/* A balance against yourself isn't a real debt —
-                          "Saldo Atual"/"Você recebe"/"Você deve" only
-                          make sense between the user and someone else,
-                          same reasoning the KPI totals above exclude
-                          self for. */}
-                      {!person.isSelf && (
-                        <div className="flex items-center justify-between gap-2 rounded-xl bg-muted/50 p-3">
-                          <span className="text-xs text-muted-foreground">
-                            {t("card.balanceLabel")}
-                          </span>
-                          <div className="flex flex-col items-end gap-1">
-                            <span
-                              className={cn(
-                                "text-base font-bold tabular-nums",
-                                balanceTextClass,
-                              )}
-                            >
-                              {balanceSign}
-                              {money(Math.abs(person.balance))}
-                            </span>
-                            <Badge variant={balanceBadgeVariant} className="uppercase">
-                              {t(`card.balanceStatus.${balanceStatus}`)}
-                            </Badge>
-                          </div>
-                        </div>
-                      )}
-
-                      <p className="flex items-center gap-1 px-0.5 text-xs text-muted-foreground">
-                        <ReceiptIcon className="size-3.5" />
-                        {t("card.splitsCount", { count: person.splitsCount })}
-                      </p>
-                    </CardContent>
-                    <CardFooter
-                      className={cn(
-                        "grid gap-2",
-                        person.isSelf ? "grid-cols-1" : "grid-cols-2",
-                      )}
-                    >
-                      <Button asChild variant="outline" size="sm">
-                        <Link href={`/people/${person.id}`}>
-                          {t("buttons.viewStatement")}
-                        </Link>
-                      </Button>
-                      {/* "Cobrar" only makes sense against someone else —
-                          same reasoning as the balance block above. */}
-                      {!person.isSelf && (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleCharge(person)}
-                          disabled={!phone || isCharging}
-                          title={phone ? undefined : t("detail.header.noPhone")}
-                        >
-                          {isCharging ? (
-                            <SpinnerIcon className="size-4 animate-spin" />
-                          ) : (
-                            <ChatCircleIcon className="size-4" />
-                          )}
-                          {t("buttons.charge")}
-                        </Button>
-                      )}
-                    </CardFooter>
-                  </Card>
-                );
-              })}
-            </div>
+            peopleCardsGrid
           )}
         </div>
       )}
