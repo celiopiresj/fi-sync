@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Bar, BarChart, ReferenceLine, XAxis, YAxis } from "recharts";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   ChartContainer,
   ChartTooltip,
@@ -25,6 +26,15 @@ const compactMoneyFormatter = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 0,
 });
+// Phone-width axis ticks drop the currency symbol ("8 mil" instead of
+// "R$ 8 mil"): the same tick is ~40% narrower, which is what lets the
+// Y axis give ~20px of a ~280px card back to the bars. Nothing is lost
+// by it — the legend right above already reads "Receitas (R$)" and the
+// tooltip still formats full currency.
+const compactNumberFormatter = new Intl.NumberFormat("pt-BR", {
+  notation: "compact",
+  maximumFractionDigits: 0,
+});
 
 type Range = "6" | "12";
 
@@ -34,6 +44,7 @@ type HomeBalanceChartProps = {
 
 export function HomeBalanceChart({ monthlyTrend }: HomeBalanceChartProps) {
   const t = useTranslations("scrn-home");
+  const isMobile = useIsMobile();
   const [range, setRange] = useState<Range>("6");
 
   // monthlyTrend already covers the full 12-month window server-side —
@@ -51,14 +62,19 @@ export function HomeBalanceChart({ monthlyTrend }: HomeBalanceChartProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-positive" />
+      {/* Wraps instead of squeezing: at phone width the legend and the
+          range toggle don't fit on one line, and `justify-between` alone
+          was compressing the legend until "Receitas (R$)" broke across
+          two lines mid-label. Wrapping drops the toggle to its own row
+          and `whitespace-nowrap` keeps each label in one piece. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="size-2 shrink-0 rounded-full bg-positive" />
             {t("chart.income")}
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-negative" />
+          <span className="flex items-center gap-1.5 whitespace-nowrap">
+            <span className="size-2 shrink-0 rounded-full bg-negative" />
             {t("chart.expenses")}
           </span>
         </div>
@@ -84,13 +100,21 @@ export function HomeBalanceChart({ monthlyTrend }: HomeBalanceChartProps) {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 10 }}
+            // 12 months of labels collide on a phone. `undefined` on
+            // desktop leaves Recharts' own default in place rather than
+            // changing the wide layout too.
+            interval={isMobile ? "preserveStartEnd" : undefined}
           />
           <YAxis
             tickLine={false}
             axisLine={false}
-            width={56}
+            width={isMobile ? 38 : 56}
             tick={{ fontSize: 10 }}
-            tickFormatter={(value: number) => compactMoneyFormatter.format(value)}
+            tickFormatter={(value: number) =>
+              (isMobile ? compactNumberFormatter : compactMoneyFormatter).format(
+                value,
+              )
+            }
           />
           <ChartTooltip
             content={

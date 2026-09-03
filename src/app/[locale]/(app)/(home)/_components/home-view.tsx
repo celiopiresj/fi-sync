@@ -3,9 +3,8 @@
 import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
+import { KpiCard, KpiGrid, KpiPill } from "@/components/screen/kpi-card";
 import { cn } from "@/lib/utils";
-import { authClient } from "@/lib/auth/client";
 import {
   ArrowDownLeftIcon,
   ArrowUpRightIcon,
@@ -21,13 +20,12 @@ import type { HomeOverview } from "../_types/types";
 
 type HomeViewProps = {
   overview: HomeOverview;
+  className?: string;
 };
 
-export function HomeView({ overview }: HomeViewProps) {
+export function HomeView({ overview, className }: HomeViewProps) {
   const t = useTranslations("scrn-home");
   const format = useFormatter();
-  const { data: session } = authClient.useSession();
-
   function money(value: number) {
     return format.number(value, { style: "currency", currency: "BRL" });
   }
@@ -35,10 +33,10 @@ export function HomeView({ overview }: HomeViewProps) {
     return format.number(value / 100, { style: "percent", maximumFractionDigits: 1 });
   }
 
-  const firstName = session?.user?.name?.split(" ")[0];
+  const firstName = overview.userName.split(" ")[0];
 
   return (
-    <div className="mx-auto flex max-w-350 flex-col gap-6">
+    <div className={cn("mx-auto flex max-w-350 flex-col gap-6", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <p className="text-xs text-muted-foreground">
@@ -87,9 +85,9 @@ export function HomeView({ overview }: HomeViewProps) {
           icon={<ArrowDownLeftIcon className="size-5" />}
           subtitle={
             overview.incomeChangePercent === null ? undefined : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-positive/10 px-2 py-0.5 text-xs font-medium text-positive">
+              <KpiPill tone="positive">
                 {t("kpis.incomeChange", { value: percent(overview.incomeChangePercent) })}
-              </span>
+              </KpiPill>
             )
           }
         />
@@ -100,13 +98,8 @@ export function HomeView({ overview }: HomeViewProps) {
           icon={<ArrowUpRightIcon className="size-5" />}
           subtitle={
             overview.expensesVsBudgetPercent === null ? undefined : (
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
-                  overview.expensesVsBudgetPercent <= 0
-                    ? "bg-positive/10 text-positive"
-                    : "bg-negative/10 text-negative",
-                )}
+              <KpiPill
+                tone={overview.expensesVsBudgetPercent <= 0 ? "positive" : "negative"}
               >
                 {t(
                   overview.expensesVsBudgetPercent <= 0
@@ -114,7 +107,7 @@ export function HomeView({ overview }: HomeViewProps) {
                     : "kpis.overBudget",
                   { value: percent(Math.abs(overview.expensesVsBudgetPercent)) },
                 )}
-              </span>
+              </KpiPill>
             )
           }
         />
@@ -124,9 +117,9 @@ export function HomeView({ overview }: HomeViewProps) {
           tone="warning"
           icon={<ReceiptIcon className="size-5" />}
           subtitle={
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+            <KpiPill tone="warning">
               {t("kpis.invoicesDueSubtitle", { count: overview.attention.closedInvoicesCount })}
-            </span>
+            </KpiPill>
           }
         />
       </KpiGrid>

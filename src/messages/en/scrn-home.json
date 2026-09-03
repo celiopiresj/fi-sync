@@ -16,7 +16,14 @@
     "underBudget": "{value} under budget",
     "overBudget": "{value} over budget",
     "invoicesDue": "Due on invoices",
-    "invoicesDueSubtitle": "{count, plural, =0 {No invoice awaiting settlement} one {# invoice awaiting settlement} other {# invoices awaiting settlement}}"
+    "invoicesDueSubtitle": "{count, plural, =0 {No invoice awaiting settlement} one {# invoice awaiting settlement} other {# invoices awaiting settlement}}",
+    "invoicesDueCount": "{count, plural, =0 {No invoices} one {# invoice} other {# invoices}}",
+    "totalBalanceAccounts": "{count, plural, one {# account} other {# accounts}}"
+  },
+
+  "aria": {
+    "showBalances": "Show balances",
+    "hideBalances": "Hide balances"
   },
 
   "chart": {

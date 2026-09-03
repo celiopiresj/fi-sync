@@ -36,9 +36,15 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           {transactions.map((transaction) => {
             const color = resolveCategoryColorClasses(transaction.categoryColorStyle);
             const Icon = resolveCategoryIcon(transaction.categoryIcon);
-            const subtitleParts = [transaction.categoryName, transaction.accountName].filter(
-              (part): part is string => Boolean(part),
-            );
+            // The date rides in this context line rather than under the
+            // amount: the row's right edge stays a single value, which is
+            // what keeps the list scannable at phone width, and nothing
+            // is dropped to get there.
+            const subtitleParts = [
+              transaction.categoryName,
+              transaction.accountName,
+              format.dateTime(transaction.date, DATE_ONLY_FORMAT_OPTIONS),
+            ].filter((part): part is string => Boolean(part));
 
             return (
               <div key={transaction.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
@@ -58,19 +64,14 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     {subtitleParts.join(" • ")}
                   </span>
                 </div>
-                <div className="flex shrink-0 flex-col items-end">
-                  <span
-                    className={cn(
-                      "text-sm font-medium tabular-nums",
-                      transaction.amount < 0 ? "text-negative" : "text-positive",
-                    )}
-                  >
-                    {format.number(transaction.amount, { style: "currency", currency: "BRL" })}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {format.dateTime(transaction.date, DATE_ONLY_FORMAT_OPTIONS)}
-                  </span>
-                </div>
+                <span
+                  className={cn(
+                    "shrink-0 text-sm font-medium tabular-nums",
+                    transaction.amount < 0 ? "text-negative" : "text-positive",
+                  )}
+                >
+                  {format.number(transaction.amount, { style: "currency", currency: "BRL" })}
+                </span>
               </div>
             );
           })}

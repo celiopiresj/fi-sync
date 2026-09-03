@@ -12,13 +12,14 @@ import { listRecurrences } from "../recurrences/actions";
 import { currentPeriod, periodRange, shiftPeriod, type Period } from "../transactions/_lib/period";
 import { formatMonthAbbreviationPtBr } from "../transactions/_lib/format-month-label";
 
-async function requireUserId() {
+async function requireUser() {
   const { data: session } = await auth.getSession();
   if (!session?.user?.id) {
     throw new Error("Unauthorized");
   }
-  return session.user.id;
+  return session.user;
 }
+
 
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
@@ -49,7 +50,8 @@ const CASH_FLOW_ACCOUNT_TYPES = ["CREDIT_CARD", "INVESTMENT", "POCKET"] as const
 // what it's for, and the dependency only ever flows one direction (leaves
 // → here, never back).
 export async function getHomeOverview() {
-  const userId = await requireUserId();
+  const user = await requireUser();
+  const userId = user.id;
   const t = await getTranslations("scrn-home");
   const todayDate = parseCalendarDate(todayCalendarDate());
   const period = currentPeriod();
@@ -231,7 +233,17 @@ export async function getHomeOverview() {
   );
 
   return {
+    // Carried on the overview so the greeting and the avatar initials
+    // render identically on the server and on the client's first pass.
+    // Reading them from `authClient.useSession()` in the view instead
+    // meant an empty name during SSR and the real one after hydration —
+    // a React hydration mismatch on the very first thing on the screen
+    // (see account-menu.tsx's own comment on the same hazard, which it
+    // handles with a `mounted` guard because it has no server-rendered
+    // source for the session; here the server already has one).
+    userName: user.name ?? "",
     totalBalance,
+    accountsCount: accounts.length,
     monthIncome,
     monthExpenses,
     invoicesDue,

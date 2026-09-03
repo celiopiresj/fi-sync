@@ -16,15 +16,14 @@ import type { HomeOverview } from "../_types/types";
 
 type Tone = "warning" | "negative" | "default";
 
-const TONE_CARD: Record<Tone, string> = {
-  warning: "bg-warning/10",
-  negative: "bg-negative/10",
-  default: "bg-muted/60",
-};
-const TONE_ICON: Record<Tone, string> = {
-  warning: "text-warning",
-  negative: "text-negative",
-  default: "text-muted-foreground",
+// The row's tone rides on the icon badge, not on the row's own
+// background — same treatment the category breakdown and the recent
+// transactions list already give their icons, so the three cards stacked
+// on the mobile home read as one family instead of three tinted blocks.
+const TONE_ICON_BADGE: Record<Tone, string> = {
+  warning: "bg-warning/10 text-warning",
+  negative: "bg-negative/10 text-negative",
+  default: "bg-muted text-muted-foreground",
 };
 
 // "A, B e C" — same join every naturally-listed detail line below uses
@@ -135,30 +134,23 @@ export function AttentionList({ attention }: AttentionListProps) {
           {rows.map((row) => (
             <div
               key={row.key}
-              className={cn(
-                "flex items-center justify-between gap-3 rounded-md px-3 py-2.5",
-                TONE_CARD[row.tone],
-              )}
+              className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2.5"
             >
-              <div className="flex min-w-0 items-start gap-2.5">
-                <row.icon className={cn("mt-0.5 size-4 shrink-0", TONE_ICON[row.tone])} />
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span
+                  className={cn(
+                    "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                    TONE_ICON_BADGE[row.tone],
+                  )}
+                >
+                  <row.icon className="size-4" />
+                </span>
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium">{row.title}</span>
                   <span className="truncate text-xs text-muted-foreground">{row.detail}</span>
                 </div>
               </div>
-              <Button
-                asChild
-                size="sm"
-                variant={
-                  row.tone === "negative"
-                    ? "destructive"
-                    : row.tone === "warning"
-                      ? "default"
-                      : "outline"
-                }
-                className="shrink-0"
-              >
+              <Button asChild size="sm" variant="outline" className="shrink-0">
                 <Link href={row.href}>{row.actionLabel}</Link>
               </Button>
             </div>

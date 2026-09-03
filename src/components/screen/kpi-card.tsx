@@ -19,12 +19,22 @@ const TONE_TEXT: Record<KpiTone, string> = {
   warning: "text-warning",
 };
 
-const TONE_ICON_BADGE: Record<KpiTone, string> = {
+// The translucent "tinted surface" every tone-carrying chip in this
+// family shares — the icon badge and `KpiPill` render the same swatch,
+// so they stay one map rather than two copies that can drift apart.
+const TONE_TINT: Record<KpiTone, string> = {
   default: "bg-muted text-muted-foreground",
   positive: "bg-positive/10 text-positive",
   negative: "bg-negative/10 text-negative",
   warning: "bg-warning/10 text-warning",
 };
+
+// Where `icon` sits relative to the text. "leading" is the wide layout
+// (icon badge on the left, text stacked beside it) used across the
+// desktop screens; "inline" stacks everything instead — icon and label
+// sharing the top line, value under them — which is what fits two cards
+// side by side on a phone without the value wrapping.
+type KpiIconPlacement = "leading" | "inline";
 
 type KpiCardProps = {
   label: string;
@@ -32,6 +42,7 @@ type KpiCardProps = {
   subtitle?: ReactNode;
   tone?: KpiTone;
   icon?: ReactNode;
+  iconPlacement?: KpiIconPlacement;
   className?: string;
 };
 
@@ -46,8 +57,38 @@ export function KpiCard({
   subtitle,
   tone = "default",
   icon,
+  iconPlacement = "leading",
   className,
 }: KpiCardProps) {
+  if (icon && iconPlacement === "inline") {
+    return (
+      <Card className={className}>
+        <CardContent className="flex flex-col gap-1">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <span
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center rounded-md",
+                TONE_TINT[tone],
+              )}
+            >
+              {icon}
+            </span>
+            <span className="min-w-0 truncate">{label}</span>
+          </span>
+          <span
+            className={cn(
+              "text-xl font-semibold tabular-nums",
+              tone !== "default" && TONE_TEXT[tone],
+            )}
+          >
+            {value}
+          </span>
+          {subtitle ? <span className="text-xs">{subtitle}</span> : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (icon) {
     return (
       <Card className={className}>
@@ -55,7 +96,7 @@ export function KpiCard({
           <span
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-lg",
-              TONE_ICON_BADGE[tone],
+              TONE_TINT[tone],
             )}
           >
             {icon}
@@ -102,6 +143,28 @@ export function KpiCard({
         ) : null}
       </CardContent>
     </Card>
+  );
+}
+
+type KpiPillProps = {
+  tone?: KpiTone;
+  children: ReactNode;
+};
+
+// The small tinted capsule a KPI hangs under its value to qualify it
+// ("+12,4% vs. mês anterior", "8,2% dentro do orçamento"). Passed as a
+// card's `subtitle`; every screen that wants one uses this rather than
+// re-typing the rounded-full/px-2/py-0.5 chip markup per call site.
+export function KpiPill({ tone = "default", children }: KpiPillProps) {
+  return (
+    <span
+      className={cn(
+        "inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        TONE_TINT[tone],
+      )}
+    >
+      {children}
+    </span>
   );
 }
 
