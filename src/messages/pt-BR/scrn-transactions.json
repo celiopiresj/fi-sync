@@ -54,6 +54,7 @@
 
   "summary": {
     "balanceLabel": "Saldo do período",
+    "totalSpentLabel": "Total gasto",
     "comparisonAbove": "{value} acima de {month}",
     "comparisonBelow": "{value} abaixo de {month}",
     "comparisonEqual": "Igual a {month}",
@@ -63,7 +64,7 @@
   },
 
   "search": {
-    "placeholder": "Buscar lançamento",
+    "placeholder": "Buscar por descrição ou valor",
     "clear": "Limpar busca"
   },
 
@@ -400,13 +401,18 @@
     "batchCreated": "{count, plural, one {# transação criada} other {# transações criadas}}",
     "bulkCategorized": "{count, plural, one {# transação categorizada} other {# transações categorizadas}}",
     "bulkStatusChanged": "{count, plural, one {# transação atualizada} other {# transações atualizadas}}",
-    "bulkDeleted": "{count, plural, one {# transação excluída} other {# transações excluídas}}"
+    "bulkDeleted": "{count, plural, one {# transação excluída} other {# transações excluídas}}",
+    "markedCompleted": "Transação marcada como concluída"
   },
 
   "tabs": {
     "all": "Todas",
     "income": "Receitas",
-    "expenses": "Despesas"
+    "expenses": "Despesas",
+    "accountKind": {
+      "debit": "Débito",
+      "credit": "Crédito"
+    }
   },
 
   "pagination": {
@@ -424,7 +430,8 @@
     "close": "Fechar",
     "menu": "Abrir menu de ações",
     "sort": "Ordenar coluna",
-    "delete": "Excluir transação"
+    "delete": "Excluir transação",
+    "markCompleted": "Marcar como concluída"
   },
 
   "errors": {

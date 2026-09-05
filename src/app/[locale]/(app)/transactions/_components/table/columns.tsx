@@ -15,6 +15,7 @@ import { dateOnlyKey } from "@/lib/date";
 import {
   CaretDownIcon,
   CaretUpIcon,
+  CheckCircleIcon,
   CreditCardIcon,
   DotsThreeIcon,
   PencilSimpleIcon,
@@ -70,6 +71,11 @@ type ColumnMessages = {
   // aria-label for the small credit-card icon next to the account name
   // (accountColumn below) — the icon itself has no visible text.
   creditCardAccountLabel: string;
+  // aria-label for the quick "mark as completed" button shown next to a
+  // PENDING row's status badge (see the description cell below) — only
+  // ever rendered for PENDING, never FAILED (see transactionFormStatusValues'
+  // own comment on why FAILED is excluded from user-triggered status changes).
+  markCompletedAria: string;
   menuAria: string;
   menuEdit: string;
   menuDuplicate: string;
@@ -80,6 +86,7 @@ type ColumnActions = {
   onEdit: (row: TransactionRow) => void;
   onDuplicate: (row: TransactionRow) => void;
   onDelete: (row: TransactionRow) => void;
+  onMarkCompleted: (row: TransactionRow) => void;
 };
 
 const statusVariant: Record<
@@ -195,6 +202,21 @@ export function getTransactionColumns(
                   >
                     {messages.statusLabel(row.original.status)}
                   </Badge>
+                )}
+                {row.original.status === "PENDING" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-5 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      actions.onMarkCompleted(row.original);
+                    }}
+                  >
+                    <CheckCircleIcon className="size-3.5" />
+                    <span className="sr-only">{messages.markCompletedAria}</span>
+                  </Button>
                 )}
               </div>
               {subtitleParts.length > 0 && (

@@ -62,6 +62,19 @@ function accountFilterWhere(accountId: string | undefined): Record<string, unkno
   return {};
 }
 
+// Lets the search box also find a transaction by its amount, typed the
+// same comma-decimal way as every AmountInput in this app ("184,90" or
+// "184.90") — parsed once here and reused by every query filtered by
+// `search` (listTransactions, getCategoryExpenseBreakdown) so the two
+// can't drift on what counts as a numeric search. `null` for anything
+// that isn't a plain signed decimal (an ordinary text search term falls
+// through to just the description match).
+function parseSearchAmount(search: string): number | null {
+  const normalized = search.trim().replace(",", ".");
+  if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
+  return Number(normalized);
+}
+
 // Scopes a period ("from"/"to", already "yyyy-MM-dd" strings) to either
 // the transaction's own date (everything except credit-card purchases)
 // or its linked invoice's dueDate (credit-card purchases) — a card
@@ -180,7 +193,19 @@ export async function listTransactions(filters: TransactionFilters = {}) {
     });
   }
   if (filters.search) {
-    where.description = { contains: filters.search, mode: "insensitive" };
+    // Matches the description as before, plus either sign of the typed
+    // amount when it parses as one — a search doesn't know whether the
+    // row it's looking for is an income or an expense, so "184,90" has
+    // to find both a -184.90 expense and a +184.90 income.
+    const searchAmount = parseSearchAmount(filters.search);
+    andConditions.push({
+      OR: [
+        { description: { contains: filters.search, mode: "insensitive" } },
+        ...(searchAmount !== null
+          ? [{ amount: searchAmount }, { amount: -searchAmount }]
+          : []),
+      ],
+    });
   }
   if (filters.from || filters.to) {
     andConditions.push(effectiveDateWhere(filters.from, filters.to));
@@ -371,13 +396,31 @@ export async function getCategoryExpenseBreakdown(
     amount: { lt: 0 },
     ...accountFilterWhere(filters.accountId),
   };
+  // Independent "at least one of these" conditions (the search's own OR,
+  // effectiveDateWhere's own OR) can't both be assigned to `where.OR`
+  // directly — the second would silently clobber the first. Collected
+  // here and AND-ed together at the end instead — same reasoning as
+  // listTransactions' own `andConditions` above.
+  const andConditions: Record<string, unknown>[] = [];
+
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.search) {
-    where.description = { contains: filters.search, mode: "insensitive" };
+    // Every row here is already an expense (amount: { lt: 0 } above), so
+    // only the negative counterpart of a typed amount can ever match —
+    // see listTransactions' own comment for why a plain search checks
+    // both signs.
+    const searchAmount = parseSearchAmount(filters.search);
+    andConditions.push({
+      OR: [
+        { description: { contains: filters.search, mode: "insensitive" } },
+        ...(searchAmount !== null ? [{ amount: -Math.abs(searchAmount) }] : []),
+      ],
+    });
   }
   if (filters.from || filters.to) {
-    Object.assign(where, effectiveDateWhere(filters.from, filters.to));
+    andConditions.push(effectiveDateWhere(filters.from, filters.to));
   }
+  if (andConditions.length > 0) where.AND = andConditions;
 
   // No `: CategoryGroupRow[]` annotation here (unlike the `.map`/`filter`
   // callbacks below, which keep theirs) — Prisma's `groupBy` overload

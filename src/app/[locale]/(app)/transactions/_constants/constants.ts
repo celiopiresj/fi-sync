@@ -7,3 +7,15 @@
 // (actions.ts) that interprets them.
 export const ALL_CARDS_ACCOUNT_FILTER = "__all_cards__";
 export const ALL_NON_CARD_ACCOUNTS_FILTER = "__all_non_card_accounts__";
+
+// True for either sentinel above — a group filter still spans many
+// different accounts, unlike one picked by real id. Distinguishes "an
+// account filter is actually narrowing the list" (FiltersSheet's active-
+// filter badge/count, the chip row) from "just which kind of account
+// this screen's Débito/Crédito tabs are scoped to" (transactions-view.tsx),
+// and gates whether the table's own Account column is redundant — it
+// only is once every visible row shares the exact same account, which a
+// group sentinel alone doesn't guarantee.
+export function isAccountGroupFilter(accountId: string | undefined): boolean {
+  return accountId === ALL_CARDS_ACCOUNT_FILTER || accountId === ALL_NON_CARD_ACCOUNTS_FILTER;
+}

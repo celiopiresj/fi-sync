@@ -315,6 +315,25 @@ export function InvoiceDetailView({
     );
   }
 
+  // Quick per-row action (status badge's own button, both table and
+  // mobile list, mirroring transactions-view.tsx's own) — reuses the same
+  // bulk Server Action with a single-id array. Declared before `columns`/
+  // the mobile list's actions prop since both reference it.
+  const handleMarkCompleted = useCallback(
+    async (row: TransactionRow) => {
+      const result = await updateTransactionsBulk([row.id], {
+        status: "COMPLETED",
+      });
+      if (!result.error) {
+        queryClient.invalidateQueries({ queryKey: ["invoices"] });
+        queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+        toast.success(tTransactions("toast.markedCompleted"));
+        router.refresh();
+      }
+    },
+    [queryClient, router, tTransactions],
+  );
+
   const columns = useMemo(
     () =>
       getTransactionColumns(
@@ -335,6 +354,7 @@ export function InvoiceDetailView({
           oneTimePaymentLabel: tTransactions("table.oneTimePayment"),
           formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
           creditCardAccountLabel: tTransactions("table.creditCardAccount"),
+          markCompletedAria: tTransactions("aria.markCompleted"),
           menuAria: tTransactions("aria.menu"),
           menuEdit: tTransactions("menu.edit"),
           menuDuplicate: tTransactions("menu.duplicate"),
@@ -346,6 +366,7 @@ export function InvoiceDetailView({
           onEdit: (row) => setDialogState({ mode: "edit", row }),
           onDuplicate: (row) => setDialogState({ mode: "create", prefillFrom: row }),
           onDelete: (row) => setDeletingTransaction(row),
+          onMarkCompleted: handleMarkCompleted,
         },
         // Every row here already belongs to this one invoice's account —
         // an Account column would be redundant (same rule
@@ -364,7 +385,7 @@ export function InvoiceDetailView({
       // header/cell formatting of its own) has to be dropped here or it
       // shows up as a genuine, oddly-raw visible column instead.
       ).filter((column) => column.id !== "date"),
-    [tTransactions, tCommon, format],
+    [tTransactions, tCommon, format, handleMarkCompleted],
   );
 
   async function handleSubmitTransaction(
@@ -740,6 +761,7 @@ export function InvoiceDetailView({
               oneTimePaymentLabel: tTransactions("table.oneTimePayment"),
               formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
               creditCardAccountLabel: tTransactions("table.creditCardAccount"),
+              markCompletedAria: tTransactions("aria.markCompleted"),
               menuAria: tTransactions("aria.menu"),
               menuEdit: tTransactions("menu.edit"),
               menuDuplicate: tTransactions("menu.duplicate"),
@@ -749,6 +771,7 @@ export function InvoiceDetailView({
               onEdit: (row) => setDialogState({ mode: "edit", row }),
               onDuplicate: (row) => setDialogState({ mode: "create", prefillFrom: row }),
               onDelete: (row) => setDeletingTransaction(row),
+              onMarkCompleted: handleMarkCompleted,
             }}
             emptyState={emptyStateNode}
           />

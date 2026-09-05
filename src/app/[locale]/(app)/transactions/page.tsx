@@ -1,6 +1,7 @@
 import { getTransactionFormOptions, listTransactions } from "./actions";
 import { TransactionsView } from "./_components/transactions-view";
 import { currentPeriod, parsePeriodKey, periodRange } from "./_lib/period";
+import { ALL_NON_CARD_ACCOUNTS_FILTER } from "./_constants/constants";
 
 type TransactionsPageProps = {
   // `?month=yyyy-MM`, `?person=`, `?category=`, `?type=income|expenses` —
@@ -37,6 +38,10 @@ export default async function TransactionsPage({
       personId: person,
       categoryId: category,
       type: initialType,
+      // Débito is the screen's default tab (TransactionsView's own
+      // initialSheetFilters) — mirrored here so this initial fetch
+      // matches exactly, same reasoning as the comment above.
+      accountId: ALL_NON_CARD_ACCOUNTS_FILTER,
     }),
   ]);
 

@@ -7,6 +7,7 @@ import { useMemo } from "react";
 import type { TransactionRow } from "../../_types/types";
 import type { TransactionFilters } from "../../actions";
 import type { Period } from "../../_lib/period";
+import type { AccountKind } from "../../_lib/account-kind";
 import { CategoryBreakdownList } from "./category-breakdown-list";
 import { MonthlyBalanceChart } from "./monthly-balance-chart";
 
@@ -31,6 +32,13 @@ type SummaryCardsProps = {
   accountId?: string;
   period: Period;
   filters: TransactionFilters;
+  // Which Débito/Crédito tab (transactions-view.tsx) is active — a card
+  // barely ever carries real income (an "Estorno" refund is the rare
+  // exception), so the first panel drops the income/expense split bar
+  // and legend for a plain "Total gasto" figure instead once this is
+  // "credit". The monthly chart and category breakdown stay the same for
+  // both — they already read fine for an expense-only account.
+  accountKind: AccountKind;
   onSelectMonth: (month: string) => void;
   onSelectCategory: (categoryId: string) => void;
 };
@@ -55,6 +63,7 @@ export function SummaryCards({
   accountId,
   period,
   filters,
+  accountKind,
   onSelectMonth,
   onSelectCategory,
 }: SummaryCardsProps) {
@@ -93,7 +102,14 @@ export function SummaryCards({
         month: previousMonthLabel,
       });
     } else {
-      const diff = balance - sumIncomeExpenses(previousTransactions).balance;
+      // Credit compares total spend (there's essentially no income to
+      // net against — see the accountKind comment on SummaryCardsProps),
+      // debit keeps comparing the net balance.
+      const previousSums = sumIncomeExpenses(previousTransactions);
+      const diff =
+        accountKind === "credit"
+          ? Math.abs(expenses) - Math.abs(previousSums.expenses)
+          : balance - previousSums.balance;
       if (Math.abs(diff) < 0.005) {
         comparisonText = t("summary.comparisonEqual", {
           month: previousMonthLabel,
@@ -117,14 +133,18 @@ export function SummaryCards({
       <div className="flex w-full min-w-0 flex-col gap-4 p-4 lg:flex-1">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">
-            {t("summary.balanceLabel")}
+            {t(accountKind === "credit" ? "summary.totalSpentLabel" : "summary.balanceLabel")}
           </span>
           <span
             className={cn(
               "text-[26px] font-medium tabular-nums",
-              balance >= 0 ? "text-positive" : "text-negative",
+              accountKind === "credit"
+                ? "text-negative"
+                : balance >= 0
+                  ? "text-positive"
+                  : "text-negative",
             )}>
-            {money(balance)}
+            {accountKind === "credit" ? money(Math.abs(expenses)) : money(balance)}
           </span>
           {/* Reserves its line even while loading, so the card's height
               doesn't jump once the comparison query resolves. */}
@@ -133,27 +153,34 @@ export function SummaryCards({
           </span>
         </div>
 
-        <div className="flex h-2.5 w-full max-w-105 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full bg-positive"
-            style={{ width: `${incomeShare}%` }}
-          />
-          <div
-            className="h-full bg-negative"
-            style={{ width: `${expensesShare}%` }}
-          />
-        </div>
+        {/* Dropped for credit — an income/expense split bar and legend
+            read as noise once income is basically never real money (see
+            the accountKind comment on SummaryCardsProps). */}
+        {accountKind !== "credit" && (
+          <>
+            <div className="flex h-2.5 w-full max-w-105 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-positive"
+                style={{ width: `${incomeShare}%` }}
+              />
+              <div
+                className="h-full bg-negative"
+                style={{ width: `${expensesShare}%` }}
+              />
+            </div>
 
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5 text-xs text-foreground">
-            <span className="size-2 shrink-0 rounded-full bg-positive" />
-            {t("summary.legendIncome", { value: money(income) })}
-          </span>
-          <span className="flex items-center gap-1.5 text-xs text-foreground">
-            <span className="size-2 shrink-0 rounded-full bg-negative" />
-            {t("summary.legendExpenses", { value: money(Math.abs(expenses)) })}
-          </span>
-        </div>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-xs text-foreground">
+                <span className="size-2 shrink-0 rounded-full bg-positive" />
+                {t("summary.legendIncome", { value: money(income) })}
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-foreground">
+                <span className="size-2 shrink-0 rounded-full bg-negative" />
+                {t("summary.legendExpenses", { value: money(Math.abs(expenses)) })}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex w-full min-w-0 flex-col gap-2 p-4 lg:flex-1">

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CreditCardIcon, DotsThreeIcon } from "@phosphor-icons/react";
+import { CheckCircleIcon, CreditCardIcon, DotsThreeIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +50,8 @@ type Messages = {
   // See the matching field on ColumnMessages in table/columns.tsx.
   formatPurchaseDate: (date: Date) => string;
   creditCardAccountLabel: string;
+  // See the matching field on ColumnMessages in table/columns.tsx.
+  markCompletedAria: string;
   menuAria: string;
   menuEdit: string;
   menuDuplicate: string;
@@ -60,6 +62,7 @@ type Actions = {
   onEdit: (row: TransactionRow) => void;
   onDuplicate: (row: TransactionRow) => void;
   onDelete: (row: TransactionRow) => void;
+  onMarkCompleted: (row: TransactionRow) => void;
 };
 
 const statusVariant: Record<
@@ -219,6 +222,18 @@ export function TransactionMobileList({
                           >
                             {messages.statusLabel(row.status)}
                           </Badge>
+                        )}
+                        {row.status === "PENDING" && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            className="size-5 shrink-0"
+                            onClick={() => actions.onMarkCompleted(row)}
+                          >
+                            <CheckCircleIcon className="size-3.5" />
+                            <span className="sr-only">{messages.markCompletedAria}</span>
+                          </Button>
                         )}
                       </div>
                       {hasMultipleSplits && (

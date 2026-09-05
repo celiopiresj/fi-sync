@@ -54,6 +54,7 @@
 
   "summary": {
     "balanceLabel": "Period balance",
+    "totalSpentLabel": "Total spent",
     "comparisonAbove": "{value} above {month}",
     "comparisonBelow": "{value} below {month}",
     "comparisonEqual": "Same as {month}",
@@ -63,7 +64,7 @@
   },
 
   "search": {
-    "placeholder": "Search transactions",
+    "placeholder": "Search by description or amount",
     "clear": "Clear search"
   },
 
@@ -400,13 +401,18 @@
     "batchCreated": "{count, plural, one {# transaction created} other {# transactions created}}",
     "bulkCategorized": "{count, plural, one {# transaction categorized} other {# transactions categorized}}",
     "bulkStatusChanged": "{count, plural, one {# transaction updated} other {# transactions updated}}",
-    "bulkDeleted": "{count, plural, one {# transaction deleted} other {# transactions deleted}}"
+    "bulkDeleted": "{count, plural, one {# transaction deleted} other {# transactions deleted}}",
+    "markedCompleted": "Transaction marked as completed"
   },
 
   "tabs": {
     "all": "All",
     "income": "Income",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "accountKind": {
+      "debit": "Debit",
+      "credit": "Credit"
+    }
   },
 
   "pagination": {
@@ -424,7 +430,8 @@
     "close": "Close",
     "menu": "Open actions menu",
     "sort": "Sort column",
-    "delete": "Delete transaction"
+    "delete": "Delete transaction",
+    "markCompleted": "Mark as completed"
   },
 
   "errors": {

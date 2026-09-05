@@ -3,6 +3,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +40,11 @@ import { useTransactionFormOptions } from "../_hooks/use-transaction-form-option
 import { useTransactionsData } from "../_hooks/use-transactions-data";
 import { formatGroupDateHeader } from "../_lib/format-group-date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
+import { accountIdForKind, resolveAccountKind } from "../_lib/account-kind";
 import {
   ALL_CARDS_ACCOUNT_FILTER,
   ALL_NON_CARD_ACCOUNTS_FILTER,
+  isAccountGroupFilter,
 } from "../_constants/constants";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
@@ -116,17 +119,21 @@ const CHIP_FIELD = {
   type: "type",
 } as const;
 
-// True when `value` has no filter actually applied. Deliberately checks
+// True when `value` has no filter actually applied, for the chip row's
+// own visibility (hasChipFilters below — the only caller; isDefaultFilters
+// is a separate plain JSON.stringify comparison). Deliberately checks
 // each field's truthiness rather than `Object.keys(value).length` —
-// FiltersSheet's Selects clear a filter by setting it to `undefined`
-// (e.g. picking "Todas as contas" again), which leaves the key present
-// with an unset value rather than removing it, so a key-presence check
-// would keep counting it as "active" forever after. Shared by
-// isDefaultFilters and hasChipFilters below so the two can't drift apart
-// on what "no filter" means.
+// FiltersSheet's Selects clear a filter by setting it to `undefined`,
+// which leaves the key present with an unset value rather than removing
+// it, so a key-presence check would keep counting it as "active" forever
+// after. `accountId` additionally excludes the two group sentinels
+// (_constants/constants.ts) — since the Débito/Crédito tabs added below
+// always keep one of those set, treating either as "an active filter"
+// would make the chip row (and its "Limpar tudo") permanently show up
+// even with nothing genuinely narrowed beyond the active tab.
 function hasActiveSheetFilters(value: SheetFilters): boolean {
   return Boolean(
-    value.accountId ||
+    (value.accountId && !isAccountGroupFilter(value.accountId)) ||
       value.categoryId ||
       value.personId ||
       value.dateFrom ||
@@ -172,10 +179,25 @@ export function TransactionsView({
     const typeParam = searchParams.get("type");
     const type =
       typeParam === "income" || typeParam === "expenses" ? typeParam : undefined;
-    return { personId, categoryId, type };
+    // Débito is the screen's default tab (see the accountKind toggle
+    // below) — page.tsx's own initial fetch mirrors this exact same
+    // default so the cache seed stays valid (same reasoning as
+    // isDefaultFilters' own comment).
+    return { personId, categoryId, type, accountId: ALL_NON_CARD_ACCOUNTS_FILTER };
   });
   const [sheetFilters, setSheetFilters] = useState<SheetFilters>(initialSheetFilters);
   const [searchText, setSearchText] = useState("");
+
+  // Derived from `sheetFilters.accountId` (never its own separate state)
+  // so the Débito/Crédito tabs and FiltersSheet's own Conta/Cartão
+  // selects can never disagree — whichever last set `accountId` decides
+  // which tab shows active. Clicking a tab broadens back to "every
+  // account of this kind," discarding any more specific account
+  // FiltersSheet had narrowed to.
+  const accountKind = resolveAccountKind(sheetFilters.accountId, accounts);
+  function handleAccountKindChange(kind: typeof accountKind) {
+    setSheetFilters((current) => ({ ...current, accountId: accountIdForKind(kind) }));
+  }
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const [deletingTransaction, setDeletingTransaction] =
@@ -406,6 +428,24 @@ export function TransactionsView({
     );
   }
 
+  // Quick per-row action (status badge's own button, both table and mobile
+  // list) — reuses the same bulk Server Action with a single-id array
+  // rather than a dedicated one, same as the bulk toolbar's own status
+  // change further below. Declared before `columns`/the mobile list's
+  // actions prop since both reference it.
+  const handleMarkCompleted = useCallback(
+    async (row: TransactionRow) => {
+      const result = await updateTransactionsBulk([row.id], {
+        status: "COMPLETED",
+      });
+      if (!result.error) {
+        invalidate();
+        toast.success(t("toast.markedCompleted"));
+      }
+    },
+    [invalidate, t],
+  );
+
   const columns = useMemo(
     () =>
       getTransactionColumns(
@@ -426,6 +466,7 @@ export function TransactionsView({
           oneTimePaymentLabel: t("table.oneTimePayment"),
           formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
           creditCardAccountLabel: t("table.creditCardAccount"),
+          markCompletedAria: t("aria.markCompleted"),
           menuAria: t("aria.menu"),
           menuEdit: t("menu.edit"),
           menuDuplicate: t("menu.duplicate"),
@@ -445,15 +486,18 @@ export function TransactionsView({
               prefillFrom: row,
             }),
           onDelete: (row) => setDeletingTransaction(row),
+          onMarkCompleted: handleMarkCompleted,
         },
-        // Filtering to one account makes an Account column redundant —
-        // see tasks/xxx section 4.
-        !sheetFilters.accountId,
+        // Filtering to one SPECIFIC account makes an Account column
+        // redundant (tasks/xxx section 4) — a group sentinel doesn't
+        // count (the Débito/Crédito tabs keep one set at all times, and
+        // rows within a kind still span several different accounts).
+        !sheetFilters.accountId || isAccountGroupFilter(sheetFilters.accountId),
         // Group by each credit-card row's invoice due date, not its own
         // purchase date — see columns.tsx's dateColumn comment.
         true,
       ),
-    [t, tCommon, format, sheetFilters.accountId],
+    [t, tCommon, format, sheetFilters.accountId, handleMarkCompleted],
   );
 
   // Dispatches to the create/update action matching whichever sheet is
@@ -677,7 +721,15 @@ export function TransactionsView({
   const hasChipFilters = hasActiveSheetFilters(sheetFilters);
 
   function chipLabel(kind: keyof typeof CHIP_FIELD): string | null {
-    if (kind === "account" && sheetFilters.accountId) {
+    // A group sentinel ("Todas as contas"/"Todos os cartões") is just
+    // which Débito/Crédito tab is active, not a real narrowing — only a
+    // specific account earns a removable chip here (see
+    // isAccountGroupFilter's own comment).
+    if (
+      kind === "account" &&
+      sheetFilters.accountId &&
+      !isAccountGroupFilter(sheetFilters.accountId)
+    ) {
       return t("filters.chips.account", {
         value: accountFilterName(sheetFilters.accountId),
       });
@@ -722,7 +774,14 @@ export function TransactionsView({
       // than key presence either way, but there's no reason to leave a
       // dangling `accountId: undefined` around once it's cleared.
       const next = { ...current };
-      if (kind === "account") delete next.accountId;
+      // Broadens back to "every account of this kind" rather than
+      // deleting the key outright — an actually-unset accountId would
+      // put the screen back in the old "both kinds mixed" state the
+      // Débito/Crédito tabs no longer make reachable (see
+      // resolveAccountKind's own comment).
+      if (kind === "account") {
+        next.accountId = accountIdForKind(resolveAccountKind(current.accountId, accounts));
+      }
       if (kind === "category") delete next.categoryId;
       if (kind === "person") delete next.personId;
       if (kind === "dateRange") {
@@ -828,18 +887,23 @@ export function TransactionsView({
         accountId={sheetFilters.accountId}
         period={period}
         filters={filters}
+        accountKind={accountKind}
         onSelectMonth={handleSelectMonth}
         onSelectCategory={handleSelectCategory}
       />
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          {/* Search + filters stay grouped together and size to their own
-              content/cap — the flex-1 spacer below is what pushes "Nova
-              transação" to the right, so the empty space on wide screens
-              lands between the groups (list controls vs. primary action)
-              instead of inside the search box. */}
-          <div className="flex items-center gap-3">
+          {/* Search + filters + the Débito/Crédito tab stay grouped
+              together and size to their own content/cap — the flex-1
+              spacer below is what pushes "Nova transação" to the right,
+              so the empty space on wide screens lands between the groups
+              (list controls vs. primary action) instead of inside the
+              search box. `flex-wrap` (only on this inner group, not the
+              outer row) is what added the tab without eating into the
+              "Nova transação" button's own spot on a narrow screen —
+              it drops to a second line here first instead. */}
+          <div className="flex flex-wrap items-center gap-3">
             <SearchInput
               value={searchText}
               onChange={setSearchText}
@@ -853,7 +917,23 @@ export function TransactionsView({
               accounts={accounts}
               categories={categories}
               people={people}
+              accountKind={accountKind}
             />
+            <ToggleGroup
+              type="single"
+              variant="tabs"
+              value={accountKind}
+              onValueChange={(value) => {
+                if (value) handleAccountKindChange(value as typeof accountKind);
+              }}
+            >
+              <ToggleGroupItem value="debit">
+                {t("tabs.accountKind.debit")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="credit">
+                {t("tabs.accountKind.credit")}
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
           <div className="flex-1" />
           <DropdownMenu>
@@ -904,7 +984,11 @@ export function TransactionsView({
             )}
             <button
               type="button"
-              onClick={() => setSheetFilters({})}
+              // Keeps the active Débito/Crédito tab (broadened to "every
+              // account of this kind") rather than wiping accountId
+              // entirely — same reasoning as removeChip's own "account"
+              // case above.
+              onClick={() => setSheetFilters({ accountId: accountIdForKind(accountKind) })}
               className="text-xs text-muted-foreground underline-offset-2 hover:underline">
               {t("filters.clearAll")}
             </button>
@@ -954,6 +1038,7 @@ export function TransactionsView({
               oneTimePaymentLabel: t("table.oneTimePayment"),
               formatPurchaseDate: (date) => format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS),
               creditCardAccountLabel: t("table.creditCardAccount"),
+              markCompletedAria: t("aria.markCompleted"),
               menuAria: t("aria.menu"),
               menuEdit: t("menu.edit"),
               menuDuplicate: t("menu.duplicate"),
@@ -969,6 +1054,7 @@ export function TransactionsView({
                   prefillFrom: row,
                 }),
               onDelete: (row) => setDeletingTransaction(row),
+              onMarkCompleted: handleMarkCompleted,
             }}
             emptyState={emptyStateNode}
           />
