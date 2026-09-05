@@ -42,14 +42,24 @@ export async function ensureUserSynced(
 
   // Categories with `userId: null` are shared by everyone (see
   // prisma/schema.prisma), so this is a global existence check, not a
-  // per-user one — seeded once, the first time anyone logs in after this
-  // shipped.
-  const hasSystemCategories = await prisma.category.findFirst({
+  // per-user one. Per-category (name + type), not just "any system
+  // category at all" — DEFAULT_CATEGORIES has grown since this first
+  // shipped (e.g. the CARD_PAYMENT one added for invoice payments), and a
+  // database that already had SOME system categories from an earlier
+  // version otherwise never gets the new ones backfilled, since the
+  // whole block used to short-circuit on the very first row it found.
+  const existingSystemCategories = await prisma.category.findMany({
     where: { userId: null },
-    select: { id: true },
+    select: { name: true, type: true },
   });
-  if (!hasSystemCategories) {
-    await prisma.category.createMany({ data: DEFAULT_CATEGORIES });
+  const existingKeys = new Set(
+    existingSystemCategories.map((c) => `${c.type}:${c.name}`),
+  );
+  const missingSystemCategories = DEFAULT_CATEGORIES.filter(
+    (c) => !existingKeys.has(`${c.type}:${c.name}`),
+  );
+  if (missingSystemCategories.length > 0) {
+    await prisma.category.createMany({ data: missingSystemCategories });
   }
 
   // Person has no shared/global row — always userId-scoped (see

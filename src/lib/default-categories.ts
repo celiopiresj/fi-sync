@@ -7,7 +7,8 @@ import type { CategoryType } from "@/generated/prisma/client";
 // Also reused by prisma/seed.ts for the demo dataset, so the demo never
 // drifts from what a real user actually gets.
 //
-// Covers every `CategoryType` value (EXPENSE/INCOME/INVESTMENT/LOAN) —
+// Covers every `CategoryType` value
+// (EXPENSE/INCOME/INVESTMENT/LOAN/CARD_PAYMENT) —
 // `type` must be set explicitly per entry since Prisma's column default
 // (`EXPENSE`) would otherwise silently mistype every non-EXPENSE row
 // here.

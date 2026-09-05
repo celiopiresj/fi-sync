@@ -108,7 +108,21 @@ export async function getHomeOverview() {
     ),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, amount: { lt: 0 }, date: { gte: monthStartDate, lte: todayDate } },
+      // invoicePayment excludes a paid invoice's settlement leg (the
+      // checking-account debit created by payInvoice) — its amount is
+      // already counted once, split across the individual card purchase
+      // transactions it settles (each keeps its own real category); adding
+      // the settlement itself back in under "Fatura de Cartão" would
+      // double the total for every card expense once its invoice is paid.
+      // Same reasoning as projections/actions.ts's own cardExpenseByMonth
+      // split, applied here to keep a paid invoice's spending attributed
+      // to its real categories instead of collapsing into one lump sum.
+      where: {
+        userId,
+        amount: { lt: 0 },
+        date: { gte: monthStartDate, lte: todayDate },
+        invoicePayment: { is: null },
+      },
       _sum: { amount: true },
     }),
     prisma.transaction.findMany({

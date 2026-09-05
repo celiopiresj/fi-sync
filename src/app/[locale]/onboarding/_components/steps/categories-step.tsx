@@ -22,10 +22,10 @@ export type OnboardingCategory = {
   // returned by createCategory once the row actually exists.
   id: string;
   name: string;
-  // Never LOAN — that type is system-only (see prisma/schema.prisma's
-  // CategoryType.LOAN comment) and CATEGORY_TYPES below (what a user
-  // can actually pick here) excludes it.
-  type: Exclude<CategoryType, "LOAN">;
+  // Never LOAN or CARD_PAYMENT — both are system-only (see
+  // prisma/schema.prisma's matching comments) and CATEGORY_TYPES below
+  // (what a user can actually pick here) excludes them.
+  type: Exclude<CategoryType, "LOAN" | "CARD_PAYMENT">;
   colorStyle: string | null;
   icon: string | null;
 };
@@ -39,10 +39,11 @@ type CategoriesStepProps = {
 };
 
 // Custom categories a user creates here are only ever EXPENSE/INCOME/
-// INVESTMENT — LOAN is system-only (see prisma/schema.prisma's
-// CategoryType.LOAN comment), so it's excluded from this list. The
-// seeded-categories preview below uses its own, wider list instead so
-// the seeded "Empréstimo" category still shows up there.
+// INVESTMENT — LOAN and CARD_PAYMENT are system-only (see
+// prisma/schema.prisma's matching comments), so both are excluded from
+// this list. The seeded-categories preview below uses its own, wider
+// list instead so the seeded "Empréstimo"/"Fatura de Cartão" categories
+// still show up there.
 const CATEGORY_TYPES: OnboardingCategory["type"][] = [
   "EXPENSE",
   "INCOME",
@@ -53,6 +54,7 @@ const SEEDED_CATEGORY_TYPES: CategoryType[] = [
   "INCOME",
   "INVESTMENT",
   "LOAN",
+  "CARD_PAYMENT",
 ];
 // 100 of the shared icon set's 126 — this step's own picker, not the
 // full CategoryIconPicker (which lives in categories' own route-private

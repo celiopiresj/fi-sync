@@ -20,9 +20,10 @@ export { AVAILABLE_COLORS, CategoryColorPicker };
 // AGENTS.md's "Status/money colors" convention (expense = negative,
 // income = positive; investment has no dedicated token, so it reuses
 // "warning" as a third distinct tone rather than inventing a raw color).
-// LOAN reuses "negative" too — every loan installment payment is a
-// plain expense (see prisma/schema.prisma's CategoryType.LOAN comment)
-// — even though it never actually reaches CategoryTypeSelector below
+// LOAN and CARD_PAYMENT both reuse "negative" too — every loan
+// installment/invoice payment is a plain expense (see
+// prisma/schema.prisma's CategoryType.LOAN/CARD_PAYMENT comments) — even
+// though neither ever actually reaches CategoryTypeSelector below
 // (system-only, not user-selectable), the Record still needs every
 // CategoryType key to type-check.
 const TYPE_TEXT: Record<CategoryType, string> = {
@@ -30,6 +31,7 @@ const TYPE_TEXT: Record<CategoryType, string> = {
   INCOME: "text-positive",
   INVESTMENT: "text-warning",
   LOAN: "text-negative",
+  CARD_PAYMENT: "text-negative",
 };
 
 // Written as full literal class strings (not built by string
@@ -44,6 +46,8 @@ const TYPE_SELECTED: Record<CategoryType, string> = {
   INVESTMENT:
     "data-[state=on]:border-warning/40 data-[state=on]:bg-warning/10 data-[state=on]:text-warning",
   LOAN:
+    "data-[state=on]:border-negative/40 data-[state=on]:bg-negative/10 data-[state=on]:text-negative",
+  CARD_PAYMENT:
     "data-[state=on]:border-negative/40 data-[state=on]:bg-negative/10 data-[state=on]:text-negative",
 };
 
@@ -102,10 +106,10 @@ export function CategoryPreviewCard({
   );
 }
 
-// LOAN is system-only (see prisma/schema.prisma's CategoryType.LOAN
-// comment) — never one of the choices here, so this selector's own
-// value type excludes it rather than widening to the full CategoryType.
-type SelectableCategoryType = Exclude<CategoryType, "LOAN">;
+// LOAN and CARD_PAYMENT are system-only (see prisma/schema.prisma's
+// matching comments) — never a choice here, so this selector's own value
+// type excludes both rather than widening to the full CategoryType.
+type SelectableCategoryType = Exclude<CategoryType, "LOAN" | "CARD_PAYMENT">;
 
 export function CategoryTypeSelector({
   value,

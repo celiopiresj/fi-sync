@@ -320,6 +320,16 @@ enum CategoryType {
   // category-selectors.tsx's CategoryTypeSelector) — users never create
   // one of these directly.
   LOAN
+  // System-only, same reasoning as LOAN above — the one seeded "Fatura de
+  // Cartão" category (default-categories.ts) a credit-card invoice
+  // payment's settlement Transaction is auto-tagged with (see
+  // findInvoicePaymentCategory, invoices/actions.ts). That settlement
+  // posts to a real checking/savings/cash account (payAccount), same as
+  // any other expense — it just used to leave categoryId unset, which
+  // read as "no category" instead of what it actually is: paying off
+  // purchases already categorized individually when they were made on
+  // the card.
+  CARD_PAYMENT
 }
 
 model Category {

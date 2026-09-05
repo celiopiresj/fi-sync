@@ -29,6 +29,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { cn } from "@/lib/utils";
 import {
+  CreditCardIcon,
   HandCoinsIcon,
   PiggyBankIcon,
   PlusIcon,
@@ -48,18 +49,26 @@ type CategoriesViewProps = {
   data: CategoryRow[];
 };
 
-type FilterType = "all" | "EXPENSE" | "INCOME" | "INVESTMENT" | "LOAN";
+type FilterType =
+  | "all"
+  | "EXPENSE"
+  | "INCOME"
+  | "INVESTMENT"
+  | "LOAN"
+  | "CARD_PAYMENT";
 
 // Same tone map as category-selectors.tsx (kept local to each file rather
 // than shared, since neither imports from the other) — expense/income map
 // onto the app's negative/positive money tokens, investment reuses warning
-// as a third distinct tone, loan reuses negative (every loan payment is a
-// plain expense — see prisma/schema.prisma's CategoryType.LOAN comment).
+// as a third distinct tone, loan and card payment both reuse negative
+// (both are plain expenses — see prisma/schema.prisma's
+// CategoryType.LOAN/CARD_PAYMENT comments).
 const TYPE_TEXT: Record<Exclude<FilterType, "all">, string> = {
   EXPENSE: "text-negative",
   INCOME: "text-positive",
   INVESTMENT: "text-warning",
   LOAN: "text-negative",
+  CARD_PAYMENT: "text-negative",
 };
 
 const TYPE_ICON: Record<Exclude<FilterType, "all">, ReactNode> = {
@@ -67,6 +76,7 @@ const TYPE_ICON: Record<Exclude<FilterType, "all">, ReactNode> = {
   INCOME: <TrendUpIcon className="size-3" />,
   INVESTMENT: <PiggyBankIcon className="size-3" />,
   LOAN: <HandCoinsIcon className="size-3" />,
+  CARD_PAYMENT: <CreditCardIcon className="size-3" />,
 };
 
 export function CategoriesView({ data }: CategoriesViewProps) {
@@ -182,6 +192,9 @@ export function CategoriesView({ data }: CategoriesViewProps) {
             </ToggleGroupItem>
             <ToggleGroupItem value="LOAN">
               {t("filters.loan")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="CARD_PAYMENT">
+              {t("filters.cardPayment")}
             </ToggleGroupItem>
           </ToggleGroup>
 

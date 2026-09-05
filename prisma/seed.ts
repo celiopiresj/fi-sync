@@ -76,12 +76,18 @@ async function main() {
   const existingCategories = await prisma.category.findMany({
     where: { userId: null },
   });
-  const categories =
-    existingCategories.length > 0
-      ? existingCategories
-      : await Promise.all(
-          DEFAULT_CATEGORIES.map((def) => prisma.category.create({ data: def })),
-        );
+  const existingKeys = new Set(
+    existingCategories.map((c) => `${c.type}:${c.name}`),
+  );
+  const missingCategories = DEFAULT_CATEGORIES.filter(
+    (def) => !existingKeys.has(`${def.type}:${def.name}`),
+  );
+  const categories = [
+    ...existingCategories,
+    ...(await Promise.all(
+      missingCategories.map((def) => prisma.category.create({ data: def })),
+    )),
+  ];
   const food = categories.find((c) => c.name === "Alimentação")!;
   const transport = categories.find((c) => c.name === "Transporte")!;
   const salary = categories.find((c) => c.name === "Salário")!;

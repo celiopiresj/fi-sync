@@ -27,6 +27,24 @@ async function requireUserId() {
   return session.user.id;
 }
 
+// Every invoice payment's settlement Transaction is filed under this
+// category, so it reads apart from the individually-categorized
+// purchases that made up the invoice (see prisma/schema.prisma's
+// CategoryType.CARD_PAYMENT comment) — looked up by name/type rather
+// than a fixed id since it's a plain seeded row, not something the
+// schema pins. Falls back to no category if a user somehow deleted it;
+// never blocks the payment over it. Same convention as loans/actions.ts'
+// own findLoanCategory.
+async function findInvoicePaymentCategory(userId: string) {
+  return prisma.category.findFirst({
+    where: {
+      name: "Fatura de Cartão",
+      type: "CARD_PAYMENT",
+      OR: [{ userId: null }, { userId }],
+    },
+  });
+}
+
 // Derives the status shown to the user without ever writing "CLOSED" to
 // the DB — see the doc comment on invoiceDisplayStatusValues in
 // _schema/schema.ts. `PARTIALLY_PAID`/`PAID` always win once set (by
@@ -449,6 +467,7 @@ export async function payInvoice(id: string, data: PayInvoiceFormValues) {
   const paidCents = Math.round(value.paidAmount * 100);
   const appliedCents = Math.min(paidCents, remainingDueCents);
   const overflowCents = Math.max(0, paidCents - remainingDueCents);
+  const invoicePaymentCategory = await findInvoicePaymentCategory(userId);
 
   let splitsCreateInput: { personId: string; amount: number }[];
 
@@ -543,6 +562,7 @@ export async function payInvoice(id: string, data: PayInvoiceFormValues) {
         }),
         amount: -(appliedCents / 100),
         date: paidAt,
+        categoryId: invoicePaymentCategory?.id,
         splits: { create: splitsCreateInput },
       },
     });
