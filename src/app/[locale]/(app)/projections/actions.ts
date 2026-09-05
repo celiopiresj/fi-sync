@@ -3,12 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
-import {
-  dateOnlyKey,
-  parseCalendarDate,
-  todayCalendarDate,
-  toAppZoned,
-} from "@/lib/date";
+import { dateOnlyKey, parseCalendarDate, toAppZoned } from "@/lib/date";
 import {
   addMonths,
   monthFirstDay,
@@ -86,20 +81,28 @@ function riskStatusFor(
 // from this same series so the running balance can never disagree
 // between the overview and the detail page for the same month.
 async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
-  const todayStr = todayCalendarDate();
-  const todayDate = parseCalendarDate(todayStr);
   const zonedToday = toAppZoned(new Date());
   const currentMonth: ProjectionMonth = {
     year: zonedToday.getFullYear(),
     month: zonedToday.getMonth(),
   };
+  // The current month's own bucket covers its FULL calendar span, same
+  // as every future month — not "today onward". Splitting it at today
+  // instead used to zero out a month's own recurring salary/bills the
+  // moment their date passed, which read as "nothing left to receive/
+  // spend this month" even on the 2nd of the month, right after payday.
+  // The month-end running balance is unaffected either way (every
+  // transaction dated <= month-end still counts exactly once) — only
+  // where the split between "starting balance" and "this month's
+  // forecast" falls changes.
+  const currentMonthStartDate = parseCalendarDate(monthFirstDay(currentMonth));
   const horizonEndDate = parseCalendarDate(
     monthLastDay(addMonths(currentMonth, MAX_MONTHS_AHEAD - 1)),
   );
 
-  // Saldo atual: Account has no stored balance field (tasks/016's own
+  // Saldo inicial: Account has no stored balance field (tasks/016's own
   // open question 1) — the only source of truth is summing every
-  // non-credit-card transaction dated up to and including today.
+  // non-credit-card transaction dated before the current month started.
   // `status: { not: FAILED }` (not `COMPLETED` only) so a transaction
   // still PENDING from a few days ago — hasn't been marked COMPLETED
   // yet, but already happened — still counts; only a cancelled one is
@@ -111,33 +114,47 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     where: {
       userId,
       status: { not: "FAILED" },
-      date: { lte: todayDate },
+      date: { lt: currentMonthStartDate },
       account: { type: { not: "CREDIT_CARD" } },
     },
     select: { amount: true, splits: SPLITS_SELECT },
   });
 
-  // Every future non-card transaction and every future card invoice in
-  // one query each (not one query per month — same "one query, bucket
-  // in JS" shape budgets/actions.ts's getBudgetWithSpending uses for its
-  // own per-category spending). `date: { gt: todayDate }` (strictly
-  // after, not >=) so today's own transactions — already folded into
-  // pastTransactions above — aren't double-counted here.
+  // Every non-card transaction and every card invoice from the current
+  // month onward, in one query each (not one query per month — same "one
+  // query, bucket in JS" shape budgets/actions.ts's getBudgetWithSpending
+  // uses for its own per-category spending). `date/dueDate: { gte:
+  // currentMonthStartDate }` — the current month's own already-passed
+  // days included, not just what's still ahead of today (see the comment
+  // above) — so anything dated before pastTransactions' own cutoff isn't
+  // double-counted here.
   const [futureTransactions, futureInvoices] = await Promise.all([
     prisma.transaction.findMany({
       where: {
         userId,
         status: { not: "FAILED" },
-        date: { gt: todayDate, lte: horizonEndDate },
+        date: { gte: currentMonthStartDate, lte: horizonEndDate },
         account: { type: { not: "CREDIT_CARD" } },
       },
-      select: { date: true, amount: true, splits: SPLITS_SELECT },
+      select: {
+        date: true,
+        amount: true,
+        splits: SPLITS_SELECT,
+        // Non-null exactly for an invoice-payment settlement Transaction
+        // (invoices/actions.ts's payInvoice) — real money on a real
+        // checking/savings/cash account, but it's paying off card debt,
+        // not a "conta" expense. Below, this is what keeps that spend
+        // counted as cardExpenses instead of accountExpenses once the
+        // invoice it belongs to is actually paid (see the comment on
+        // that branch).
+        invoicePayment: { select: { id: true } },
+      },
     }),
     prisma.invoice.findMany({
       where: {
         account: { userId, type: "CREDIT_CARD" },
         status: { not: "PAID" },
-        dueDate: { gte: todayDate, lte: horizonEndDate },
+        dueDate: { gte: currentMonthStartDate, lte: horizonEndDate },
       },
       include: {
         transactionInvoices: {
@@ -163,6 +180,11 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
 
   const incomeByMonth = new Map<string, number>();
   const accountExpenseByMonth = new Map<string, number>();
+  // Declared here (not after this loop, where every other by-month map
+  // below is built) so an invoice-payment settlement can add straight
+  // into it as it's found, alongside the still-unpaid invoices' own
+  // contribution further down.
+  const cardExpenseByMonth = new Map<string, number>();
   for (const transaction of futureTransactions) {
     const key = dateOnlyKey(transaction.date).slice(0, 7);
     const amount = selfShareAmount(
@@ -171,6 +193,22 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     );
     if (amount >= 0) {
       incomeByMonth.set(key, (incomeByMonth.get(key) ?? 0) + amount);
+    } else if (transaction.invoicePayment) {
+      // Paying off a card invoice is card spending, however you slice
+      // it — it doesn't turn into a "conta" expense just because the
+      // settlement Transaction itself posts to a checking/savings/cash
+      // account. Counted in the month the PAYMENT actually happened, not
+      // the invoice's own dueDate month: that's the whole reason this
+      // still shows up at all once the invoice is PAID and drops out of
+      // futureInvoices below — using the settlement's real date (always
+      // >= currentMonthStartDate, same as this transaction itself) is
+      // what keeps the money from disappearing into a month this series
+      // doesn't cover, if the invoice was originally due before this
+      // window even started.
+      cardExpenseByMonth.set(
+        key,
+        (cardExpenseByMonth.get(key) ?? 0) + Math.abs(amount),
+      );
     } else {
       accountExpenseByMonth.set(
         key,
@@ -179,7 +217,6 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     }
   }
 
-  const cardExpenseByMonth = new Map<string, number>();
   for (const invoice of futureInvoices) {
     const key = dateOnlyKey(invoice.dueDate).slice(0, 7);
     const selfShareTotal = invoice.transactionInvoices.reduce(
@@ -233,11 +270,11 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     entries.push({
       monthKey: key,
       isCurrentMonth,
-      // The first bucket only covers "today → end of month": days up to
-      // and including yesterday are already folded into pastSum/
-      // initialBalance above, so starting it at the 1st would double
-      // them.
-      fromDate: isCurrentMonth ? todayDate : parseCalendarDate(monthFirstDay(month)),
+      // Always the 1st → last day of the month, current month included
+      // (see the comment above computeMonthSeries' own queries) — so
+      // getProjectionDetail's line-item fetch always matches exactly
+      // what this month's own totals here were summed from.
+      fromDate: parseCalendarDate(monthFirstDay(month)),
       toDate: parseCalendarDate(monthLastDay(month)),
       initialBalance,
       projectedBalance: runningBalance,
@@ -254,8 +291,11 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
 
 // User-review-required answers this implements (tasks/016-projections.md):
 // 1. Saldo Previsto = running balance — starts from every non-card
-//    account's real transaction history up to today, then accumulates
-//    each month's income minus (account expenses + card invoices due).
+//    account's real transaction history up to the start of the current
+//    month, then accumulates each FULL month's income minus (account
+//    expenses + card invoices due), current month included — its own
+//    already-passed days aren't split out separately (see
+//    computeMonthSeries' own comment on why).
 // 2. "Gasto no cartão" = invoices whose dueDate falls in that month
 //    (real cash impact), not purchases made that month.
 // 3. Default 6 months ahead, adjustable via the period selector (3/6/12
@@ -340,6 +380,11 @@ export async function getProjectionDetail(monthId: string) {
         amount: true,
         splits: SPLITS_SELECT,
         category: { select: { name: true } },
+        // Same reasoning as computeMonthSeries' own select above — sorts
+        // an invoice-payment settlement into cardsBreakdown below instead
+        // of accountsBreakdown, matching how it's already counted in
+        // month.cardExpenses/accountExpenses.
+        invoicePayment: { select: { id: true } },
       },
       orderBy: { date: "asc" },
     }),
@@ -348,7 +393,7 @@ export async function getProjectionDetail(monthId: string) {
   // Same self-share rule as computeMonthSeries above — an invoice with
   // zero self-share (every purchase in it belongs to someone else) is
   // left out entirely rather than shown as an R$0,00 row.
-  const cardsBreakdown = invoices
+  const stillOwedCardsBreakdown = invoices
     .map((invoice) => {
       const selfShareTotal = invoice.transactionInvoices.reduce(
         (sum, ti) =>
@@ -392,14 +437,38 @@ export async function getProjectionDetail(monthId: string) {
     name: transaction.description,
     categoryName: transaction.category?.name ?? null,
     date: transaction.date,
+    isInvoicePayment: transaction.invoicePayment !== null,
     selfShare: selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
     ),
   }));
 
+  // An invoice-payment settlement is card spending, not a "conta"
+  // expense (see computeMonthSeries' own comment on the exact same
+  // rule) — folded into cardsBreakdown below instead of accountsBreakdown,
+  // dated by when it was actually paid rather than the invoice's own
+  // dueDate (there's no invoice-shaped row to hang it on here: the
+  // invoice it settles is either PAID already — excluded from `invoices`
+  // above — or still open with its own separate row for whatever
+  // remains). No cardLastFourDigits: it settles the whole invoice, not
+  // one specific physical card on the account.
+  const paidCardsBreakdown = transactionsWithSelfShare
+    .filter((transaction) => transaction.selfShare < 0 && transaction.isInvoicePayment)
+    .map((transaction) => ({
+      id: transaction.id,
+      name: transaction.name,
+      cardLastFourDigits: null,
+      dueDate: transaction.date,
+      amount: Math.abs(transaction.selfShare),
+    }));
+
+  const cardsBreakdown = [...stillOwedCardsBreakdown, ...paidCardsBreakdown].sort(
+    (a, b) => a.dueDate.getTime() - b.dueDate.getTime(),
+  );
+
   const accountsBreakdown = transactionsWithSelfShare
-    .filter((transaction) => transaction.selfShare < 0)
+    .filter((transaction) => transaction.selfShare < 0 && !transaction.isInvoicePayment)
     .map((transaction) => ({
       id: transaction.id,
       name: transaction.name,
