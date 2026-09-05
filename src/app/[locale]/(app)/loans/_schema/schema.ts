@@ -68,9 +68,22 @@ export function refineLoanReceived(
   }
 }
 
+// The user types what actually got paid — not an interest/discount
+// figure on top of the nominal amount. Comparing this against the
+// installment's own `amount` (or, from settleRemainingLoanInstallments,
+// the summed remaining balance) is what tells apart "paid more than
+// owed" (interest/late fee) from "paid less" (an early-payment discount)
+// — see classifyLoanPaymentAdjustment (_lib/loan-payment.ts), used by
+// both the payment dialogs' preview and the Server Actions that post the
+// settlement Transaction(s). Reuses the app's standard positive-decimal
+// grammar, so "required"/"invalid" errors come translated for free from
+// the shared zod error map (src/lib/zod/zod-error-map.ts) — no
+// installment-specific cross-field rule needed here at all, unlike
+// refineLoanReceived above.
 export const registerLoanPaymentSchema = z.object({
   accountId: z.string().min(1),
   paidAt: z.string().min(1),
+  paidAmount: decimalString,
 });
 
 export type RegisterLoanPaymentFormValues = z.input<
@@ -84,4 +97,5 @@ export const emptyRegisterLoanPaymentFormValues: RegisterLoanPaymentFormValues =
   {
     accountId: "",
     paidAt: "",
+    paidAmount: "",
   };

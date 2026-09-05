@@ -117,9 +117,13 @@
   },
   "payment": {
     "transactionDescription": "{description} · Parcela {number} de {count}",
+    "earlySettlementTag": "Quitação antecipada",
+    "interestTag": "Juros",
+    "discountTag": "Desconto",
     "toast": {
       "registered": "Pagamento registrado.",
-      "undone": "Pagamento desfeito."
+      "undone": "Pagamento desfeito.",
+      "settled": "{count, plural, one {# parcela quitada.} other {# parcelas quitadas.}}"
     },
     "dialog": {
       "title": "Registrar pagamento",
@@ -127,8 +131,19 @@
       "accountLabel": "Conta",
       "accountPlaceholder": "Escolher conta",
       "dateLabel": "Data do pagamento",
+      "paidAmountLabel": "Valor pago",
+      "interestPreview": "+ {amount} de juros",
+      "discountPreview": "- {amount} de desconto",
       "cancel": "Cancelar",
       "confirm": "Registrar"
+    },
+    "settle": {
+      "button": "Quitar restante",
+      "dialog": {
+        "title": "Quitar parcelas restantes",
+        "description": "{count, plural, one {# parcela pendente} other {# parcelas pendentes}} · {amount}",
+        "confirm": "Quitar"
+      }
     }
   },
   "detail": {
@@ -145,6 +160,7 @@
     "installments": {
       "title": "Parcelas",
       "row": "Parcela {number} de {count}",
+      "nominalAmount": "parcela original {amount}",
       "paid": "Paga",
       "undo": "Desfazer",
       "registerPayment": "Registrar pagamento"

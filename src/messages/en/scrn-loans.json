@@ -117,9 +117,13 @@
   },
   "payment": {
     "transactionDescription": "{description} · Installment {number} of {count}",
+    "earlySettlementTag": "Early settlement",
+    "interestTag": "Interest",
+    "discountTag": "Discount",
     "toast": {
       "registered": "Payment registered.",
-      "undone": "Payment undone."
+      "undone": "Payment undone.",
+      "settled": "{count, plural, one {# installment settled.} other {# installments settled.}}"
     },
     "dialog": {
       "title": "Register payment",
@@ -127,8 +131,19 @@
       "accountLabel": "Account",
       "accountPlaceholder": "Choose account",
       "dateLabel": "Payment date",
+      "paidAmountLabel": "Amount paid",
+      "interestPreview": "+ {amount} interest",
+      "discountPreview": "- {amount} discount",
       "cancel": "Cancel",
       "confirm": "Register"
+    },
+    "settle": {
+      "button": "Settle remaining",
+      "dialog": {
+        "title": "Settle remaining installments",
+        "description": "{count, plural, one {# pending installment} other {# pending installments}} · {amount}",
+        "confirm": "Settle"
+      }
     }
   },
   "detail": {
@@ -145,6 +160,7 @@
     "installments": {
       "title": "Installments",
       "row": "Installment {number} of {count}",
+      "nominalAmount": "original installment {amount}",
       "paid": "Paid",
       "undo": "Undo",
       "registerPayment": "Register payment"

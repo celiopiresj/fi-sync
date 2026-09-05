@@ -2,10 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
+import { allocate, BRL, dinero, toDecimal } from "dinero.js";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import { computeLoanInstallmentDates } from "./_lib/installment-dates";
+import {
+  classifyLoanPaymentAdjustment,
+  type LoanPaymentAdjustmentType,
+} from "./_lib/loan-payment";
 import {
   loanSchema,
   refineLoanReceived,
@@ -32,6 +37,36 @@ async function findLoanCategory(userId: string) {
   return prisma.category.findFirst({
     where: { name: "Empréstimo", type: "LOAN", OR: [{ userId: null }, { userId }] },
   });
+}
+
+// Composes a payment's Transaction description out of independent tags
+// (early settlement, interest, discount) rather than one message key per
+// combination — the same "parts.filter(Boolean).join" shape the home
+// screen's attention-list.tsx already uses for its own compound detail
+// lines, applied here so registerLoanPayment and
+// settleRemainingLoanInstallments don't each hardcode their own set of
+// message keys for what's really the same three orthogonal facts.
+function buildLoanPaymentDescription(
+  t: Awaited<ReturnType<typeof getTranslations<"scrn-loans">>>,
+  params: {
+    description: string;
+    number: number;
+    count: number;
+    adjustmentType: LoanPaymentAdjustmentType;
+    isSettlement: boolean;
+  },
+): string {
+  const parts = [
+    t("payment.transactionDescription", {
+      description: params.description,
+      number: params.number,
+      count: params.count,
+    }),
+    params.isSettlement ? t("payment.earlySettlementTag") : null,
+    params.adjustmentType === "interest" ? t("payment.interestTag") : null,
+    params.adjustmentType === "discount" ? t("payment.discountTag") : null,
+  ];
+  return parts.filter(Boolean).join(" · ");
 }
 
 // People a loan can be tied to — never the user themselves (a loan is
@@ -80,7 +115,10 @@ export async function listLoans(filters: LoanFilters = {}) {
     },
     include: {
       person: { select: { id: true, name: true } },
-      installments: { orderBy: { installmentNumber: "asc" } },
+      installments: {
+        orderBy: { installmentNumber: "asc" },
+        include: { transaction: { select: { amount: true } } },
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -101,13 +139,34 @@ export async function listLoans(filters: LoanFilters = {}) {
       installmentAmount: loan.installments[0]?.amount.toNumber() ?? 0,
       installmentCount: loan.installments.length,
       paidInstallmentCount: paid.length,
-      paidTotal: paid.reduce((sum, i) => sum + i.amount.toNumber(), 0),
+      // The actual money moved, not the nominal schedule — see
+      // paidAmountOf's own comment (below getLoanDetail) for why an
+      // interest/discount adjustment makes these diverge.
+      paidTotal: paid.reduce((sum, i) => sum + paidAmountOf(i), 0),
       remainingTotal: pending.reduce((sum, i) => sum + i.amount.toNumber(), 0),
       overdueCount,
       nextDueDate: pending[0]?.dueDate ?? null,
       status,
     };
   });
+}
+
+// The real amount an already-paid installment cost — its linked
+// Transaction's amount, not the installment's own `amount` — because
+// registerLoanPayment/settleRemainingLoanInstallments can post a
+// different figure once an interest/discount adjustment applies.
+// `installment.amount` itself is NEVER mutated for this (see
+// _schema/schema.ts's own comment on refineLoanPaymentAdjustment): it
+// stays the original schedule so undoLoanPayment has something correct
+// to revert back to. Falls back to the nominal amount only if the
+// relation somehow didn't resolve (transactionId set but no matching
+// row) — not an expected runtime path, just type-level defensiveness
+// against a nullable include.
+function paidAmountOf(installment: {
+  amount: { toNumber(): number };
+  transaction: { amount: { toNumber(): number } } | null;
+}): number {
+  return Math.abs(installment.transaction?.amount.toNumber() ?? installment.amount.toNumber());
 }
 
 export async function getLoanDetail(id: string) {
@@ -117,12 +176,16 @@ export async function getLoanDetail(id: string) {
     where: { id, userId },
     include: {
       person: { select: { id: true, name: true } },
-      installments: { orderBy: { installmentNumber: "asc" } },
+      installments: {
+        orderBy: { installmentNumber: "asc" },
+        include: { transaction: { select: { amount: true } } },
+      },
     },
   });
   if (!loan) return null;
 
   const todayDate = parseCalendarDate(todayCalendarDate());
+  const pendingCount = loan.installments.filter((i) => i.transactionId === null).length;
 
   return {
     id: loan.id,
@@ -132,20 +195,32 @@ export async function getLoanDetail(id: string) {
     dueDate: loan.dueDate,
     paidTotal: loan.installments
       .filter((i) => i.transactionId !== null)
-      .reduce((sum, i) => sum + i.amount.toNumber(), 0),
+      .reduce((sum, i) => sum + paidAmountOf(i), 0),
     remainingTotal: loan.installments
       .filter((i) => i.transactionId === null)
       .reduce((sum, i) => sum + i.amount.toNumber(), 0),
-    installments: loan.installments.map((installment) => ({
-      id: installment.id,
-      installmentNumber: installment.installmentNumber,
-      installmentCount: installment.installmentCount,
-      dueDate: installment.dueDate,
-      amount: installment.amount.toNumber(),
-      isPaid: installment.transactionId !== null,
-      isOverdue:
-        installment.transactionId === null && installment.dueDate < todayDate,
-    })),
+    // "Quitar restante" only makes sense with more than one pending
+    // installment — with exactly one, it's the same action as that
+    // row's own "Registrar pagamento" button.
+    canSettleRemaining: pendingCount > 1,
+    installments: loan.installments.map((installment) => {
+      const isPaid = installment.transactionId !== null;
+      const paidAmount = isPaid ? paidAmountOf(installment) : null;
+      return {
+        id: installment.id,
+        installmentNumber: installment.installmentNumber,
+        installmentCount: installment.installmentCount,
+        dueDate: installment.dueDate,
+        amount: installment.amount.toNumber(),
+        // Only ever different from `amount` once an interest/discount
+        // adjustment was applied at payment time — null while pending,
+        // since there's nothing paid yet to have a real value.
+        paidAmount,
+        isPaid,
+        isOverdue:
+          installment.transactionId === null && installment.dueDate < todayDate,
+      };
+    }),
   };
 }
 
@@ -371,8 +446,11 @@ export async function deleteLoan(id: string) {
 // someone isn't tracked by this feature. Creates the real settlement
 // Transaction (same principle payInvoice, invoices/actions.ts, already
 // follows for a fatura payment), tags it with the "Empréstimo" category,
-// and links it. Never a partial amount: the installment's own `amount`
-// is what gets posted, not anything the user types.
+// and links it. The amount posted is whatever the user typed as
+// `paidAmount` — not necessarily the installment's own nominal `amount`;
+// classifyLoanPaymentAdjustment (_lib/loan-payment.ts) compares the two
+// only to tag the transaction's description ("Juros"/"Desconto"), it
+// never changes what actually gets posted.
 export async function registerLoanPayment(
   installmentId: string,
   data: RegisterLoanPaymentFormValues,
@@ -405,17 +483,23 @@ export async function registerLoanPayment(
   const t = await getTranslations("scrn-loans");
   const paidAt = parseCalendarDate(value.paidAt);
   const loanCategory = await findLoanCategory(userId);
-  const signedAmount = -installment.amount.toNumber();
+  const adjustment = classifyLoanPaymentAdjustment(
+    installment.amount.toNumber(),
+    value.paidAmount,
+  );
+  const signedAmount = -value.paidAmount;
 
   await prisma.$transaction(async (tx) => {
     const transaction = await tx.transaction.create({
       data: {
         userId,
         accountId: account.id,
-        description: t("payment.transactionDescription", {
+        description: buildLoanPaymentDescription(t, {
           description: installment.loan.description,
           number: installment.installmentNumber,
           count: installment.installmentCount,
+          adjustmentType: adjustment.type,
+          isSettlement: false,
         }),
         amount: signedAmount,
         date: paidAt,
@@ -438,6 +522,104 @@ export async function registerLoanPayment(
   revalidatePath("/accounts");
   revalidatePath("/people");
   return { error: null };
+}
+
+// Pays off every remaining installment of a loan in one go — the
+// "quitação antecipada" case, where `paidAmount` is what settles the
+// WHOLE remaining balance rather than one installment. Still one
+// Transaction per installment (not one lump Transaction for all of
+// them): LoanInstallment.transactionId is a one-to-one relation
+// (prisma/schema.prisma), and keeping that intact means undoLoanPayment
+// keeps working unchanged — undoing one installment from a settlement
+// un-pays only that one, exactly like undoing any other payment.
+// allocate() (dinero.js) splits `paidAmount` across installments by
+// their nominal weight, without losing remainder cents — same technique
+// payInvoice (invoices/actions.ts) already uses to split a payment
+// across people instead of installments.
+export async function settleRemainingLoanInstallments(
+  loanId: string,
+  data: RegisterLoanPaymentFormValues,
+) {
+  const userId = await requireUserId();
+
+  const loan = await prisma.loan.findFirst({
+    where: { id: loanId, userId },
+    include: {
+      installments: {
+        where: { transactionId: null },
+        orderBy: { installmentNumber: "asc" },
+      },
+    },
+  });
+  if (!loan) {
+    return { error: "Not found", count: 0 };
+  }
+  if (loan.installments.length === 0) {
+    return { error: "Nothing to settle", count: 0 };
+  }
+
+  const result = registerLoanPaymentSchema.safeParse(data);
+  if (!result.success) {
+    return { error: result.error.issues[0]?.message ?? "Invalid data", count: 0 };
+  }
+  const value = result.data;
+
+  const account = await prisma.account.findFirst({
+    where: { id: value.accountId, userId, type: { in: ["CHECKING", "SAVINGS", "CASH"] } },
+  });
+  if (!account) {
+    return { error: "Invalid account", count: 0 };
+  }
+
+  const t = await getTranslations("scrn-loans");
+  const paidAt = parseCalendarDate(value.paidAt);
+  const loanCategory = await findLoanCategory(userId);
+  const nominalTotal = loan.installments.reduce(
+    (sum, installment) => sum + installment.amount.toNumber(),
+    0,
+  );
+  const adjustment = classifyLoanPaymentAdjustment(nominalTotal, value.paidAmount);
+  const shares = allocate(
+    dinero({ amount: Math.round(value.paidAmount * 100), currency: BRL }),
+    loan.installments.map((installment) => Math.round(installment.amount.toNumber() * 100)),
+  );
+
+  await prisma.$transaction(async (tx) => {
+    for (const [index, installment] of loan.installments.entries()) {
+      const signedAmount = -Number(toDecimal(shares[index]!));
+      const transaction = await tx.transaction.create({
+        data: {
+          userId,
+          accountId: account.id,
+          description: buildLoanPaymentDescription(t, {
+            description: loan.description,
+            number: installment.installmentNumber,
+            count: installment.installmentCount,
+            adjustmentType: adjustment.type,
+            isSettlement: true,
+          }),
+          amount: signedAmount,
+          date: paidAt,
+          categoryId: loanCategory?.id,
+          splits: {
+            create: [{ personId: loan.personId, amount: signedAmount }],
+          },
+        },
+      });
+
+      await tx.loanInstallment.update({
+        where: { id: installment.id },
+        data: { transactionId: transaction.id },
+      });
+    }
+  });
+
+  revalidatePath("/loans");
+  revalidatePath(`/loans/${loanId}`);
+  revalidatePath("/transactions");
+  revalidatePath("/accounts");
+  revalidatePath("/people");
+  return { error: null, count: loan.installments.length };
 }
 
 // Deletes the settlement Transaction a payment created — LoanInstallment.
