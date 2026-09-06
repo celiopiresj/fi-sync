@@ -1,0 +1,61 @@
+{
+  "title": "Telegram",
+  "subtitle": "Fale com o Fi-Sync pelo Telegram para consultar suas finanças e registrar lançamentos.",
+
+  "cards": {
+    "status": {
+      "linked": {
+        "title": "Conversa vinculada",
+        "description": "O bot já reconhece você e responde com os seus dados."
+      },
+      "unlinked": {
+        "title": "Ainda não vinculado",
+        "description": "Gere um código e envie para o bot para liberar o acesso aos seus dados."
+      }
+    },
+    "code": {
+      "title": "Código de vínculo",
+      "description": "Envie este código para o bot em até {minutes} minutos:",
+      "command": "/vincular {code}",
+      "expired": "Este código expirou. Gere um novo."
+    },
+    "steps": {
+      "title": "Como vincular",
+      "one": "Abra a conversa com o seu bot no Telegram.",
+      "two": "Gere um código de vínculo aqui nesta tela.",
+      "three": "Envie o comando /vincular seguido do código para o bot."
+    },
+    "examples": {
+      "title": "O que dá para pedir",
+      "one": "Quanto eu gastei esse mês?",
+      "two": "Qual o saldo das minhas contas?",
+      "three": "Quanto tá a fatura do cartão?",
+      "four": "Almoço 32 no débito",
+      "five": "Tênis 400 em 4x no cartão",
+      "note": "Antes de registrar qualquer lançamento, o bot repete o que entendeu e pede sua confirmação."
+    }
+  },
+
+  "buttons": {
+    "generate": "Gerar código",
+    "regenerate": "Gerar novo código",
+    "copy": "Copiar",
+    "openBot": "Abrir o bot",
+    "disconnect": "Desvincular"
+  },
+
+  "dialog": {
+    "disconnect": {
+      "title": "Desvincular o Telegram?",
+      "description": "O bot deixa de responder com os seus dados e o histórico da conversa é apagado. Você pode vincular de novo quando quiser.",
+      "confirm": "Desvincular",
+      "cancel": "Cancelar"
+    }
+  },
+
+  "toast": {
+    "codeGenerated": "Código gerado",
+    "codeCopied": "Comando copiado",
+    "disconnected": "Telegram desvinculado"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "title": "Telegram",
+  "subtitle": "Talk to Fi-Sync on Telegram to check your finances and record transactions.",
+
+  "cards": {
+    "status": {
+      "linked": {
+        "title": "Chat linked",
+        "description": "The bot already recognizes you and answers with your data."
+      },
+      "unlinked": {
+        "title": "Not linked yet",
+        "description": "Generate a code and send it to the bot to give it access to your data."
+      }
+    },
+    "code": {
+      "title": "Link code",
+      "description": "Send this code to the bot within {minutes} minutes:",
+      "command": "/vincular {code}",
+      "expired": "This code has expired. Generate a new one."
+    },
+    "steps": {
+      "title": "How to link",
+      "one": "Open the chat with your bot on Telegram.",
+      "two": "Generate a link code on this screen.",
+      "three": "Send the /vincular command followed by the code to the bot."
+    },
+    "examples": {
+      "title": "What you can ask",
+      "one": "How much did I spend this month?",
+      "two": "What are my account balances?",
+      "three": "How much is my card statement?",
+      "four": "Lunch 32 on debit",
+      "five": "Sneakers 400 in 4 installments on the card",
+      "note": "Before recording anything, the bot repeats what it understood and asks you to confirm."
+    }
+  },
+
+  "buttons": {
+    "generate": "Generate code",
+    "regenerate": "Generate a new code",
+    "copy": "Copy",
+    "openBot": "Open the bot",
+    "disconnect": "Unlink"
+  },
+
+  "dialog": {
+    "disconnect": {
+      "title": "Unlink Telegram?",
+      "description": "The bot stops answering with your data and the chat history is deleted. You can link it again whenever you want.",
+      "confirm": "Unlink",
+      "cancel": "Cancel"
+    }
+  },
+
+  "toast": {
+    "codeGenerated": "Code generated",
+    "codeCopied": "Command copied",
+    "disconnected": "Telegram unlinked"
+  }
+}

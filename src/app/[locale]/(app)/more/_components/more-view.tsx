@@ -23,6 +23,7 @@ import {
   SignOutIcon,
   SunIcon,
   TagIcon,
+  TelegramLogoIcon,
   TrendUpIcon,
   UsersThreeIcon,
   type IconProps,
@@ -144,6 +145,13 @@ export function MoreView({ overview }: MoreViewProps) {
           {t("groups.account")}
         </span>
         <div className="flex flex-col divide-y divide-border rounded-lg border border-border">
+          <NavRow
+            icon={TelegramLogoIcon}
+            title={t("rows.telegram.title")}
+            subtitle={t("rows.telegram.subtitle")}
+            href="/telegram"
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild disabled={!mounted}>
               <button type="button" className="flex w-full items-center gap-3 px-4 py-3">

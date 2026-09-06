@@ -1,6 +1,6 @@
 "use server";
 
-import { addDays, addMonths, addWeeks } from "date-fns";
+import { addDays, addMonths } from "date-fns";
 import { getTranslations } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -17,6 +17,16 @@ import {
   computeCurrentInvoiceCycle,
   resolveInvoiceForDate,
 } from "@/lib/invoice-resolution";
+// Shared by every list/aggregate query filtered by period here
+// (listTransactions, getTransactionById, getMonthlyBalances,
+// getCategoryExpenseBreakdown) and by the Telegram bot's own reads — see
+// the note in that file for why it isn't local to this screen anymore.
+import { effectiveDateWhere } from "@/lib/transaction-period";
+import { resolveSplitsCreateInput } from "@/lib/transaction-splits";
+import {
+  RECURRENCE_GENERATION_WINDOW_MONTHS,
+  stepDate,
+} from "@/lib/recurrence-window";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import {
   debitTransactionSchema,
@@ -30,7 +40,6 @@ import {
   type BatchRowValues,
   type CreditBatchRowFormValues,
   type CreditBatchRowValues,
-  type RecurrenceFrequencyOption,
   type DebitTransactionFormValues,
   type DebitTransactionValues,
   type CreditTransactionFormValues,
@@ -73,32 +82,6 @@ function parseSearchAmount(search: string): number | null {
   const normalized = search.trim().replace(",", ".");
   if (!/^-?\d+(\.\d+)?$/.test(normalized)) return null;
   return Number(normalized);
-}
-
-// Scopes a period ("from"/"to", already "yyyy-MM-dd" strings) to either
-// the transaction's own date (everything except credit-card purchases)
-// or its linked invoice's dueDate (credit-card purchases) — a card
-// purchase belongs to whichever month you'll actually pay for it in, not
-// the month you swiped the card, mirroring /invoices' own
-// closingDate->dueDate switch (see invoices/actions.ts's listInvoices).
-// Shared by every list/aggregate query filtered by period
-// (listTransactions, getTransactionById, getMonthlyBalances,
-// getCategoryExpenseBreakdown) so the four don't drift on this.
-function effectiveDateWhere(from?: string, to?: string): Record<string, unknown> {
-  if (!from && !to) return {};
-  const range = {
-    ...(from ? { gte: parseCalendarDate(from) } : {}),
-    ...(to ? { lte: parseCalendarDate(to) } : {}),
-  };
-  return {
-    OR: [
-      { account: { type: { not: "CREDIT_CARD" } }, date: range },
-      {
-        account: { type: "CREDIT_CARD" },
-        transactionInvoice: { invoice: { dueDate: range } },
-      },
-    ],
-  };
 }
 
 async function requireUserId() {
@@ -614,67 +597,6 @@ export async function previewInstallmentCycles(
 // month to the already-clamped Feb 28).
 function installmentDate(originalDate: Date, monthsAhead: number): Date {
   return fromAppZoned(addMonths(toAppZoned(originalDate), monthsAhead));
-}
-
-// Mirrors recurrences/actions.ts's own GENERATION_WINDOW_MONTHS — a
-// recurrence started from this screen must behave identically to one
-// created from /recurrences (same rolling-window generation, so it
-// shows up as "active" in listRecurrences and supports the same
-// extendRecurrenceGeneration flow) rather than a separate "repeat N
-// times and then silently stop" shortcut.
-const RECURRENCE_GENERATION_WINDOW_MONTHS = 12;
-
-function stepDate(date: Date, frequency: RecurrenceFrequencyOption) {
-  if (frequency === "none") return date;
-  // Do the arithmetic on the App-timezone wall-clock digits, not the
-  // server process's own timezone — see src/lib/date.ts.
-  const zoned = toAppZoned(date);
-  switch (frequency) {
-    case "daily":
-      return fromAppZoned(addDays(zoned, 1));
-    case "weekly":
-      return fromAppZoned(addWeeks(zoned, 1));
-    case "monthly":
-      return fromAppZoned(addMonths(zoned, 1));
-  }
-}
-
-// Reconciles the top-level `personId` field with the opt-in `splits`
-// array into Prisma's `splits.create` input — shared by both the debit
-// and credit paths below, since debitTransactionSchema and
-// creditTransactionSchema both end up with the same
-// `{ personId, splits, type }` shape here. See the personId/splits
-// comments on debitTransactionSchema in _schema/schema.ts.
-function resolveSplitsCreateInput(
-  value: { personId: string; splits: { personId: string; amount: number }[]; type: "income" | "expense" },
-  amount: number,
-) {
-  if (value.splits.length > 0) {
-    // The typed splits sum to whatever total the user was actually
-    // looking at when dividing — the full purchase in "total"
-    // installment mode, just this one installment's share in
-    // "perInstallment" mode — but `amount` is what THIS row actually
-    // stores (e.g. one installment's own share, total/N). Scaling every
-    // split by the same ratio keeps each person's proportional share
-    // while making the splits always sum to the row's real amount,
-    // instead of silently storing every installment with the FULL
-    // total's split shares. Verified, real bug: a 5x installment
-    // purchase split 3 ways (mode "total") stored every installment's
-    // splits as the whole purchase's shares — 5x too large in
-    // aggregate, and not matching the row's own (correctly divided)
-    // amount at all. `rawTotal` is always > 0 here (split amounts are
-    // schema-validated positive), so no divide-by-zero guard needed.
-    const rawTotal = value.splits.reduce((sum, split) => sum + split.amount, 0);
-    const scale = Math.abs(amount) / rawTotal;
-    return value.splits.map((split) => ({
-      personId: split.personId,
-      amount: value.type === "expense" ? -split.amount * scale : split.amount * scale,
-    }));
-  }
-  if (value.personId) {
-    return [{ personId: value.personId, amount }];
-  }
-  return null;
 }
 
 function revalidateTransactions() {

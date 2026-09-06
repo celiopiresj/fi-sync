@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition, type ComponentProps } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
-import { usePathname, useRouter } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { authClient } from "@/lib/auth/client";
 import {
@@ -21,7 +21,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { GlobeIcon, MoonIcon, SignOutIcon, SunIcon } from "@phosphor-icons/react";
+import {
+  GlobeIcon,
+  MoonIcon,
+  SignOutIcon,
+  SunIcon,
+  TelegramLogoIcon,
+} from "@phosphor-icons/react";
 import { initialsFrom } from "@/lib/format-initials";
 
 const themeValues = ["light", "dark", "system"] as const;
@@ -143,6 +149,15 @@ export function AccountMenu({ name: nameProp, avatarSize = "sm" }: AccountMenuPr
             </DropdownMenuRadioGroup>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem asChild>
+          <Link href="/telegram">
+            <TelegramLogoIcon />
+            {t("userMenu.telegram")}
+          </Link>
+        </DropdownMenuItem>
 
         <DropdownMenuSeparator />
 

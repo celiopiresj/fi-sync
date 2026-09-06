@@ -26,6 +26,10 @@
     "people": {
       "title": "People"
     },
+    "telegram": {
+      "title": "Telegram",
+      "subtitle": "Check and record through the bot"
+    },
     "theme": {
       "title": "Theme"
     },

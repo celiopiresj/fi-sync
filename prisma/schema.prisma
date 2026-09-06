@@ -77,14 +77,68 @@ model User {
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  accounts     Account[]
-  people       Person[]
-  categories   Category[]
-  transactions Transaction[]
-  recurrences  Recurrence[]
-  budgetGroups BudgetGroup[]
-  budgets      Budget[]
-  loans        Loan[]
+  // --- Telegram bot (src/app/api/telegram) ---
+  // The Telegram chat this user talks to the bot from. Stored as a
+  // String, not BigInt: Telegram chat ids are 64-bit and only ever used
+  // here as an opaque identifier (matched on the way in, echoed back in
+  // the sendMessage URL), so there's nothing to gain from a numeric
+  // column and plenty to lose (BigInt doesn't survive JSON, and Prisma
+  // hands it back as a JS BigInt every read). Unique because a chat maps
+  // to exactly one fi-sync user — the webhook's ONLY way to know whose
+  // data it's touching.
+  telegramChatId            String?   @unique
+  // One-time code the user generates on /telegram and sends to the bot
+  // as `/vincular <codigo>`. Cleared the moment it's redeemed (or
+  // replaced when a new one is generated), so a code is single-use by
+  // construction rather than by a separate "used" flag.
+  telegramLinkCode          String?   @unique
+  telegramLinkCodeExpiresAt DateTime? @db.Timestamptz(3)
+  // The lançamento the bot last read back for confirmation, stored as the
+  // already-resolved tool input (see src/lib/telegram/draft.ts) so a plain
+  // "sim" is written without going back to the model at all. Without it a
+  // confirmation costs a whole second agent turn: the chat history only
+  // keeps text (src/lib/telegram/history.ts), so the model has to re-list
+  // accounts, categories and people just to rebuild what it already had.
+  // Single-slot on purpose — there is only ever one pending confirmation
+  // per chat, and it is dropped as soon as the user says anything else.
+  telegramDraft             Json?
+  telegramDraftAt           DateTime? @db.Timestamptz(3)
+
+  accounts         Account[]
+  people           Person[]
+  categories       Category[]
+  transactions     Transaction[]
+  recurrences      Recurrence[]
+  budgetGroups     BudgetGroup[]
+  budgets          Budget[]
+  loans            Loan[]
+  telegramMessages TelegramMessage[]
+}
+
+enum TelegramMessageRole {
+  USER
+  ASSISTANT
+}
+
+// Short rolling chat history for the Telegram bot, so a follow-up
+// ("sim", "na verdade foi 45") still has the turn before it in context.
+// It lives in the database rather than in a module-level Map because the
+// webhook runs serverless — a second message can easily land on a cold
+// instance that never saw the first one. Deliberately plain text only
+// (no tool calls/results): what a follow-up actually needs is what was
+// said, and keeping it text means nothing here has to track the AI SDK's
+// message shape. Trimmed to the last TELEGRAM_HISTORY_LIMIT turns on
+// every write (src/lib/telegram/history.ts) instead of growing forever.
+model TelegramMessage {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role      TelegramMessageRole
+  content   String
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
 }
 
 enum AccountType {
