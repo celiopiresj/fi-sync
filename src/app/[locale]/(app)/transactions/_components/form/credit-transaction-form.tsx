@@ -96,8 +96,23 @@ function toFormValues(
     amount: Math.abs(row.amount).toString(),
     date: new Date(row.date).toISOString().slice(0, 10),
     status: row.status,
-    installments: "1",
-    installmentAmountMode: "total",
+    // Prefilled from the row's own group, never a flat "1": on edit this
+    // field doubles as "how many installments this group should have"
+    // (see updateCreditTransaction's resize block in actions.ts), so a
+    // hardcoded "1" made every edit of an N-parcela purchase submit as
+    // "shrink this group down to 1" and delete installments 2..N — the
+    // user only meant to change a description. A row outside any group
+    // (à vista) still starts at 1, where the field means "convert this
+    // purchase into N installments".
+    installments: row.installmentGroupId
+      ? String(row.installmentCount ?? 1)
+      : "1",
+    // An existing group's row already stores ONE installment's share, not
+    // the purchase total — `amount` above is prefilled from it, so the
+    // "total" reading would misdescribe the number in the field (and
+    // misprice the rows if the group is grown). Only a fresh purchase, or
+    // an à-vista one being converted, gets to choose.
+    installmentAmountMode: row.installmentGroupId ? "perInstallment" : "total",
     recurrence: "none",
     personId: row.splits[0]?.personId ?? "",
     splits:
@@ -693,17 +708,25 @@ export function CreditTransactionForm({
 
           {showInstallments && installmentCount > 1 && (
             <div className="flex flex-col gap-1.5">
-              <form.AppField name="installmentAmountMode">
-                {(field) => (
-                  <field.ToggleGroupField
-                    label={t("fields.installmentAmountMode.label")}
-                    options={installmentAmountModeValues.map((mode) => ({
-                      value: mode,
-                      label: t(`fields.installmentAmountMode.${mode}`),
-                    }))}
-                  />
-                )}
-              </form.AppField>
+              {/* Hidden while editing a row that's already part of a
+                  group: there the typed amount can only mean "one
+                  installment's share" (updateCreditTransaction ignores
+                  this field for an existing group), so offering the
+                  choice would let the user pick a reading the server
+                  never applies. The total preview below still shows. */}
+              {!isInstallmentGroupEdit && (
+                <form.AppField name="installmentAmountMode">
+                  {(field) => (
+                    <field.ToggleGroupField
+                      label={t("fields.installmentAmountMode.label")}
+                      options={installmentAmountModeValues.map((mode) => ({
+                        value: mode,
+                        label: t(`fields.installmentAmountMode.${mode}`),
+                      }))}
+                    />
+                  )}
+                </form.AppField>
+              )}
               {installmentAmountMode === "perInstallment" && parsedAmount !== null && (
                 <p className="text-xs text-muted-foreground">
                   {t("fields.installmentAmountMode.totalPreview", {
