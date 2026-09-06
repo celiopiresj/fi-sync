@@ -19,26 +19,54 @@ import type { CategoryType } from "@/generated/prisma/client";
 // `CATEGORY_ICONS` map.
 //
 // `colorStyle` must be one of `AVAILABLE_COLORS`' `class` values (see
-// src/components/form/color-picker.tsx — the same 8-color palette users
-// pick from when editing a category) — copied as literal strings here
-// rather than imported, so this stays a plain data module the seed
-// scripts (prisma/seed.ts, scripts/seed-categories.ts) can run through
-// `tsx` without pulling in a React component file. Reused across
-// multiple categories below; there's no 1:1 requirement, just enough
-// variety that the category list/grid doesn't look monochrome.
+// src/components/form/color-picker.tsx — the same palette users pick
+// from when editing a category) — copied as literal strings here rather
+// than imported, so this stays a plain data module the seed scripts
+// (prisma/seed.ts, scripts/seed-categories.ts) can run through `tsx`
+// without pulling in a React component file. Sticking to the picker's
+// exact strings is what keeps `resolveCategoryColorClasses`
+// ((home)/_lib/category-color.ts) able to resolve the bold bar color
+// from a category's stored badge class, and what guarantees Tailwind
+// actually emits these utilities — a class that only ever exists as a
+// DB string is never scanned, so it would render colorless.
+//
+// The hue per category follows the app's category color spec: one hue
+// per meaning (red = esforço físico, orange = alimentação, stone/zinc/
+// slate = burocracia e serviços, emerald/green/lime = dinheiro entrando,
+// …), which is why the list below spreads across the full palette
+// instead of cycling a handful of colors.
 
+const RED = "bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400";
 const ORANGE =
   "bg-orange-100 text-orange-600 dark:bg-orange-950/60 dark:text-orange-400";
-const PURPLE =
-  "bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400";
-const INDIGO =
-  "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400";
+const AMBER =
+  "bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400";
+const YELLOW =
+  "bg-yellow-100 text-yellow-600 dark:bg-yellow-950/60 dark:text-yellow-400";
+const LIME = "bg-lime-100 text-lime-600 dark:bg-lime-950/60 dark:text-lime-400";
+const GREEN =
+  "bg-green-100 text-green-600 dark:bg-green-950/60 dark:text-green-400";
 const EMERALD =
   "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400";
 const TEAL = "bg-teal-100 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400";
+const CYAN = "bg-cyan-100 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-400";
 const SKY = "bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400";
 const BLUE = "bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400";
+const INDIGO =
+  "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400";
+const VIOLET =
+  "bg-violet-100 text-violet-600 dark:bg-violet-950/60 dark:text-violet-400";
+const PURPLE =
+  "bg-purple-100 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400";
+const FUCHSIA =
+  "bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-950/60 dark:text-fuchsia-400";
+const PINK = "bg-pink-100 text-pink-600 dark:bg-pink-950/60 dark:text-pink-400";
 const ROSE = "bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400";
+const SLATE =
+  "bg-slate-100 text-slate-600 dark:bg-slate-950/60 dark:text-slate-400";
+const ZINC = "bg-zinc-100 text-zinc-600 dark:bg-zinc-950/60 dark:text-zinc-400";
+const STONE =
+  "bg-stone-100 text-stone-600 dark:bg-stone-950/60 dark:text-stone-400";
 
 // Deliberately a plain (not `as const`) array — nothing here needs the
 // literal string types, and a `readonly` array/tuple can't be passed
@@ -51,44 +79,51 @@ export const DEFAULT_CATEGORIES: {
 }[] = [
   // Expense
   { name: "Alimentação", type: "EXPENSE", icon: "ForkKnife", colorStyle: ORANGE },
-  { name: "Transporte", type: "EXPENSE", icon: "Car", colorStyle: BLUE },
+  { name: "Transporte", type: "EXPENSE", icon: "Car", colorStyle: SKY },
   { name: "Moradia", type: "EXPENSE", icon: "House", colorStyle: INDIGO },
   { name: "Lazer", type: "EXPENSE", icon: "Confetti", colorStyle: PURPLE },
   { name: "Saúde", type: "EXPENSE", icon: "Heartbeat", colorStyle: ROSE },
-  { name: "Educação", type: "EXPENSE", icon: "GraduationCap", colorStyle: SKY },
-  { name: "Compras", type: "EXPENSE", icon: "ShoppingBag", colorStyle: ROSE },
-  { name: "Vestuário", type: "EXPENSE", icon: "TShirt", colorStyle: PURPLE },
-  { name: "Viagem", type: "EXPENSE", icon: "Airplane", colorStyle: SKY },
-  { name: "Pets", type: "EXPENSE", icon: "PawPrint", colorStyle: ORANGE },
-  { name: "Assinaturas", type: "EXPENSE", icon: "Television", colorStyle: INDIGO },
+  { name: "Educação", type: "EXPENSE", icon: "GraduationCap", colorStyle: BLUE },
+  { name: "Compras", type: "EXPENSE", icon: "ShoppingBag", colorStyle: PINK },
+  { name: "Vestuário", type: "EXPENSE", icon: "TShirt", colorStyle: FUCHSIA },
+  { name: "Viagem", type: "EXPENSE", icon: "Airplane", colorStyle: TEAL },
+  { name: "Pets", type: "EXPENSE", icon: "PawPrint", colorStyle: AMBER },
+  { name: "Assinaturas", type: "EXPENSE", icon: "Television", colorStyle: VIOLET },
   { name: "Presentes", type: "EXPENSE", icon: "Gift", colorStyle: ROSE },
-  { name: "Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: BLUE },
-  { name: "Tributos e Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: BLUE },
-  { name: "Seguros", type: "EXPENSE", icon: "Umbrella", colorStyle: INDIGO },
-  { name: "Serviços", type: "EXPENSE", icon: "Wrench", colorStyle: ORANGE },
-  { name: "Tecnologia", type: "EXPENSE", icon: "DeviceMobile", colorStyle: BLUE },
-  { name: "Academia", type: "EXPENSE", icon: "Barbell", colorStyle: PURPLE },
-  { name: "Filhos", type: "EXPENSE", icon: "Baby", colorStyle: SKY },
+  { name: "Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: STONE },
+  { name: "Tributos e Impostos", type: "EXPENSE", icon: "Receipt", colorStyle: STONE },
+  { name: "Seguros", type: "EXPENSE", icon: "Umbrella", colorStyle: SLATE },
+  { name: "Serviços", type: "EXPENSE", icon: "Wrench", colorStyle: ZINC },
+  { name: "Tecnologia", type: "EXPENSE", icon: "DeviceMobile", colorStyle: CYAN },
+  { name: "Academia", type: "EXPENSE", icon: "Barbell", colorStyle: RED },
+  { name: "Filhos", type: "EXPENSE", icon: "Baby", colorStyle: YELLOW },
+  { name: "Outras Despesas", type: "EXPENSE", icon: "Tag", colorStyle: SLATE },
 
   // Income
   { name: "Salário", type: "INCOME", icon: "Money", colorStyle: EMERALD },
   { name: "Freelance", type: "INCOME", icon: "Briefcase", colorStyle: TEAL },
-  { name: "Bônus", type: "INCOME", icon: "Coins", colorStyle: EMERALD },
-  { name: "Reembolso", type: "INCOME", icon: "Wallet", colorStyle: TEAL },
-  { name: "Rendimentos", type: "INCOME", icon: "ChartLine", colorStyle: EMERALD },
-  { name: "Outras Receitas", type: "INCOME", icon: "Coin", colorStyle: TEAL },
+  { name: "Bônus", type: "INCOME", icon: "Coins", colorStyle: AMBER },
+  { name: "Reembolso", type: "INCOME", icon: "Wallet", colorStyle: SKY },
+  { name: "Rendimentos", type: "INCOME", icon: "ChartLine", colorStyle: LIME },
+  { name: "Outras Receitas", type: "INCOME", icon: "Coin", colorStyle: GREEN },
 
   // Investment
-  { name: "Ações", type: "INVESTMENT", icon: "ChartBar", colorStyle: TEAL },
+  { name: "Ações", type: "INVESTMENT", icon: "ChartBar", colorStyle: BLUE },
   { name: "Renda Fixa", type: "INVESTMENT", icon: "Bank", colorStyle: EMERALD },
   { name: "Fundos Imobiliários", type: "INVESTMENT", icon: "Buildings", colorStyle: INDIGO },
-  { name: "Criptomoedas", type: "INVESTMENT", icon: "CurrencyBtc", colorStyle: PURPLE },
-  { name: "Previdência", type: "INVESTMENT", icon: "PiggyBank", colorStyle: TEAL },
-  { name: "Reserva de Emergência", type: "INVESTMENT", icon: "Vault", colorStyle: EMERALD },
+  { name: "Criptomoedas", type: "INVESTMENT", icon: "CurrencyBtc", colorStyle: VIOLET },
+  { name: "Previdência", type: "INVESTMENT", icon: "PiggyBank", colorStyle: CYAN },
+  { name: "Reserva de Emergência", type: "INVESTMENT", icon: "Vault", colorStyle: YELLOW },
 
   // Loan — system-only, not offered in the category create/edit form's
   // own type picker (see prisma/schema.prisma's CategoryType.LOAN
   // comment); every loan installment payment is auto-tagged with this
   // one category (findLoanCategory, loans/actions.ts).
-  { name: "Empréstimo", type: "LOAN", icon: "HandCoins", colorStyle: TEAL },
+  { name: "Empréstimo", type: "LOAN", icon: "HandCoins", colorStyle: ORANGE },
+
+  // Card payment — system-only, same reasoning as Loan above (see
+  // prisma/schema.prisma's CategoryType.CARD_PAYMENT comment); every
+  // credit-card invoice payment's settlement Transaction is auto-tagged
+  // with this one category (findInvoicePaymentCategory, invoices/actions.ts).
+  { name: "Fatura de Cartão", type: "CARD_PAYMENT", icon: "CreditCard", colorStyle: INDIGO },
 ];
