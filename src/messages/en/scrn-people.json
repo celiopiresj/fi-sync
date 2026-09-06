@@ -176,7 +176,9 @@
       "title": "{month} invoice",
       "installment": "{number}/{count}",
       "cash": "One-time",
-      "total": "Invoice total"
+      "total": "Invoice total",
+      "paid": "Paid: {value}",
+      "remaining": "Remaining: {value}"
     },
     "loans": {
       "title": "Loans",

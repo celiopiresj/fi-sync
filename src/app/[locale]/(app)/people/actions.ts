@@ -27,7 +27,7 @@ export async function listPeople() {
   const userId = await requireUserId();
   const todayDate = parseCalendarDate(todayCalendarDate());
 
-  const [people, cashBalances, paidCardBalances] = await Promise.all([
+  const [people, cashBalances] = await Promise.all([
     prisma.person.findMany({
       where: { userId },
       include: { _count: { select: { splits: true } } },
@@ -51,31 +51,24 @@ export async function listPeople() {
       },
       _sum: { amount: true },
     }),
-    // Sums each person's share of the actual settlement transaction(s) a
-    // card invoice payment created (InvoicePayment.transaction), not the
-    // original purchase splits gated by the invoice's overall status —
-    // an invoice can now be PARTIALLY_PAID with only SOME people's
-    // shares actually settled (manual allocation, see payInvoice in
-    // invoices/actions.ts), so "was this person paid" has to be read off
-    // what was really paid on their behalf, not the invoice's aggregate
-    // state.
-    prisma.transactionSplit.groupBy({
-      by: ["personId"],
-      where: {
-        transaction: {
-          userId,
-          invoicePayment: { invoice: { account: { type: "CREDIT_CARD" } } },
-        },
-      },
-      _sum: { amount: true },
-    }),
   ]);
 
   // Same "cash settles immediately, card only once its invoice is paid"
   // rule as getPersonStatement's `balance` below — kept as a second,
   // batched (groupBy over every person at once, not one aggregate per
-  // person) query pair here since the list needs every person's number
-  // in one page load. Deliberately excludes this month's still-open/
+  // person) query here since the list needs every person's number in one
+  // page load. A card purchase enters this figure only when its invoice
+  // is actually paid, and it does so through this very query, with no
+  // second term: paying an invoice posts the settlement expense on a
+  // CHECKING/SAVINGS/CASH account (payInvoice restricts the paying
+  // account to those) carrying one negative split per person it covers,
+  // so `account: { type: { not: "CREDIT_CARD" } }` above already picks
+  // it up. There used to be a separate `paidCardBalances` groupBy over
+  // exactly those settlement splits added on top of this one, which
+  // counted every invoice payment twice — verified against real data:
+  // one person whose only settlement split was -187,18 had a true
+  // balance of 565,47 reported as 378,29. Deliberately excludes this
+  // month's still-open/
   // unpaid card charges (unlike getPersonStatement's `totalToSettle`,
   // which layers those in) — that figure is period-specific and would
   // need a per-person invoice lookup to compute for a whole list, so the
@@ -85,13 +78,6 @@ export async function listPeople() {
   // owes the user.
   const balanceByPersonId = new Map<string, number>();
   for (const row of cashBalances) {
-    balanceByPersonId.set(
-      row.personId,
-      (balanceByPersonId.get(row.personId) ?? 0) +
-        (row._sum.amount?.toNumber() ?? 0),
-    );
-  }
-  for (const row of paidCardBalances) {
     balanceByPersonId.set(
       row.personId,
       (balanceByPersonId.get(row.personId) ?? 0) +
@@ -256,7 +242,6 @@ export async function getPersonStatement(personId: string, period: StatementPeri
   const [
     movements,
     cashBalanceAgg,
-    paidCardBalanceAgg,
     paidThisMonthAgg,
     cardAccounts,
     pendingLoanInstallments,
@@ -280,20 +265,6 @@ export async function getPersonStatement(personId: string, period: StatementPeri
           userId,
           account: { type: { not: "CREDIT_CARD" } },
           date: { lte: todayDate },
-        },
-      },
-      _sum: { amount: true },
-    }),
-    // Same "read off what was actually settled, not the invoice's
-    // aggregate status" rule as listPeople's own paidCardBalances above —
-    // sums this person's share of the real settlement transaction(s), not
-    // their original purchase splits gated by invoice.status.
-    prisma.transactionSplit.aggregate({
-      where: {
-        personId,
-        transaction: {
-          userId,
-          invoicePayment: { invoice: { account: { type: "CREDIT_CARD" } } },
         },
       },
       _sum: { amount: true },
@@ -413,6 +384,13 @@ export async function getPersonStatement(personId: string, period: StatementPeri
         isPaid: Math.abs(remaining) < 0.01,
         items,
         total,
+        // What this person has already settled against this invoice, as
+        // its own field rather than left for the view to derive from
+        // `total - remaining` (AGENTS.md: no computation in components) —
+        // the section's footer shows it whenever it isn't zero, so the
+        // badge can go back to being the plain sum of the rows listed
+        // underneath it instead of silently netting the payment in.
+        paid: paidForPerson,
         remaining,
       };
     }),
@@ -422,9 +400,12 @@ export async function getPersonStatement(personId: string, period: StatementPeri
     (section): section is NonNullable<typeof section> => section !== null,
   );
 
-  const balance =
-    (cashBalanceAgg._sum.amount?.toNumber() ?? 0) +
-    (paidCardBalanceAgg._sum.amount?.toNumber() ?? 0);
+  // Card purchases reach this figure only through the invoice payment
+  // that settled them — that settlement is itself a cash transaction
+  // with this person's split on it, so `cashBalanceAgg` above is the
+  // whole story. See listPeople's own comment for the double-count this
+  // replaced.
+  const balance = cashBalanceAgg._sum.amount?.toNumber() ?? 0;
 
   const pendingCardTotal = cardSections
     .filter((section) => !section.isPaid)

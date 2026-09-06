@@ -422,14 +422,20 @@ export function PersonDetailView({
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
               <h2 className="text-sm font-medium">{section.accountName}</h2>
+              {/* The sum of the rows listed right below, nothing else.
+                  It used to show `remaining` (this person's share minus
+                  whatever they'd already paid toward the invoice), which
+                  read as a broken total: two rows of -89,99 and -100,00
+                  under a badge saying -2,81. The already-paid part now
+                  has its own line in the section footer. */}
               <Badge
                 variant="secondary"
                 className={cn(
                   "tabular-nums",
-                  section.remaining >= 0 ? "text-positive" : "text-negative",
+                  section.total >= 0 ? "text-positive" : "text-negative",
                 )}
               >
-                {money(section.remaining)}
+                {money(section.total)}
               </Badge>
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
@@ -473,6 +479,20 @@ export function PersonDetailView({
               ))}
             </div>
           </div>
+
+          {/* Only when this person already settled part of this invoice
+              (see `paid` in getPersonStatement) — otherwise the badge
+              above already says everything there is to say. */}
+          {section.paid !== 0 && (
+            <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground tabular-nums">
+              <span>{t("detail.invoices.paid", { value: money(section.paid) })}</span>
+              <span>
+                {t("detail.invoices.remaining", {
+                  value: money(section.remaining),
+                })}
+              </span>
+            </div>
+          )}
         </div>
       ))}
 

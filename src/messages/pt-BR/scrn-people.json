@@ -176,7 +176,9 @@
       "title": "Fatura de {month}",
       "installment": "{number}/{count}",
       "cash": "À vista",
-      "total": "Total fatura"
+      "total": "Total fatura",
+      "paid": "Pago: {value}",
+      "remaining": "Restante: {value}"
     },
     "loans": {
       "title": "Empréstimos",
