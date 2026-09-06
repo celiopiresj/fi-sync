@@ -28,6 +28,15 @@ import {
   stepDate,
 } from "@/lib/recurrence-window";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
+import { parseStatement } from "@/lib/statement-import/parse";
+import {
+  ACCEPTED_IMPORT_MEDIA_TYPES,
+  MAX_IMPORT_FILE_BYTES,
+  MAX_IMPORT_FILE_MB,
+  statementSourceKindValues,
+  type StatementEntry,
+  type StatementSourceKind,
+} from "@/lib/statement-import/schema";
 import {
   debitTransactionSchema,
   refineDebitTransaction,
@@ -1872,4 +1881,72 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
 
   revalidateTransactions();
   return { error: null, rowIndex: null };
+}
+
+// ---------------------------------------------------------------------
+// Importação de fatura/extrato — lê o arquivo anexado e devolve os
+// lançamentos reconhecidos. NÃO grava nada: o que sai daqui volta pro
+// cliente como linhas pré-preenchidas do lote, que o usuário confere e
+// completa (pessoa/categoria) antes de mandar pro
+// createTransactionsBatch/createCreditTransactionsBatch de sempre. Ler e
+// gravar em uma chamada só pareceria mais direto, mas um erro de leitura
+// viraria transação de verdade sem ninguém ter olhado.
+// ---------------------------------------------------------------------
+export async function importStatementFile(formData: FormData) {
+  await requireUserId();
+
+  const t = await getTranslations("scrn-transactions");
+  const empty: StatementEntry[] = [];
+
+  const file = formData.get("file");
+  const source = formData.get("source");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: t("import.errors.noFile"), entries: empty };
+  }
+  if (!statementSourceKindValues.includes(source as StatementSourceKind)) {
+    return { error: t("import.errors.failed"), entries: empty };
+  }
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    return {
+      error: t("import.errors.tooLarge", { size: MAX_IMPORT_FILE_MB }),
+      entries: empty,
+    };
+  }
+  // The browser reports the type; a file with none (some Android
+  // pickers) falls through to the same "unsupported" answer as a .docx,
+  // which is the honest one — nothing downstream can read it.
+  if (!ACCEPTED_IMPORT_MEDIA_TYPES.includes(file.type as never)) {
+    return { error: t("import.errors.unsupported"), entries: empty };
+  }
+
+  const result = await parseStatement({
+    bytes: new Uint8Array(await file.arrayBuffer()),
+    mediaType: file.type,
+    source: source as StatementSourceKind,
+    today: todayCalendarDate(),
+  });
+
+  if (result.status === "no-text") {
+    return { error: t("import.errors.noText"), entries: empty };
+  }
+  if (result.status === "not-configured") {
+    return { error: t("import.errors.notConfigured"), entries: empty };
+  }
+  if (result.status === "truncated") {
+    return { error: t("import.errors.truncated"), entries: empty };
+  }
+  if (result.status === "rate-limited") {
+    return {
+      error: t("import.errors.rateLimited", {
+        seconds: result.retryAfterSeconds ?? 60,
+      }),
+      entries: empty,
+    };
+  }
+  if (result.entries.length === 0) {
+    return { error: t("import.errors.nothingFound"), entries: empty };
+  }
+
+  return { error: null, entries: result.entries };
 }

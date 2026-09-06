@@ -19,7 +19,8 @@
       "title": "New transaction",
       "description": "Add a manual entry",
       "debit": "Debit transaction",
-      "credit": "Card expense"
+      "credit": "Card expense",
+    "import": "Import statement or invoice"
     },
     "import": {
       "title": "Import",
@@ -213,6 +214,10 @@
     "batchOption": {
       "title": "Batch entry",
       "subtitle": "Several rows at once, on the same account"
+    },
+    "importOption": {
+      "title": "Import statement or invoice",
+      "subtitle": "PDF or photo — rows come pre-filled"
     }
   },
 
@@ -256,6 +261,55 @@
       "account": "Account",
       "paymentMethod": "Payment",
       "installments": "Installments"
+    }
+  },
+
+  "import": {
+    "title": "Import statement or invoice",
+    "description": "Read the file and check the entries before creating them",
+    "source": {
+      "title": "Where do these entries go?",
+      "description": "Pick the invoice's card or the statement's account — every row starts out with it filled in.",
+      "cards": "Credit cards",
+      "accounts": "Accounts",
+      "empty": "Create an account or a card before importing."
+    },
+    "file": {
+      "title": "Attach the file",
+      "description": "Invoice or statement PDF, or a photo/screenshot. Up to {size} MB.",
+      "choose": "Choose file",
+      "camera": "Take a photo",
+      "replace": "Replace file",
+      "analyze": "Read file",
+      "back": "Back"
+    },
+    "parsing": {
+      "title": "Reading the file",
+      "description": "This usually takes a few seconds."
+    },
+    "review": {
+      "title": "Check what was read",
+      "subtitle": "{count, plural, =0 {Nothing recognized} one {# entry recognized} other {# entries recognized}}",
+      "destination": "Goes to",
+      "applyToAll": "Apply to all",
+      "selectAll": "Select all",
+      "clearAll": "Clear all",
+      "rowIncomplete": "Missing fields",
+      "selected": "{count, plural, =0 {No rows selected} one {# row selected} other {# rows selected}}",
+      "submit": "{count, plural, one {Create # row} other {Create # rows}}",
+      "empty": "No entries found in this file.",
+      "tryAgain": "Try another file"
+    },
+    "errors": {
+      "noFile": "Choose a file first",
+      "tooLarge": "File is too large — the limit is {size} MB.",
+      "unsupported": "Unsupported format. Send a PDF or an image.",
+      "noText": "Could not read text from this PDF. If it is a scan, send a photo or screenshot instead.",
+      "truncated": "This file has too many entries for a single read. Send a crop with fewer lines, or the PDF instead of a photo of it.",
+      "nothingFound": "No entries found in this file.",
+      "notConfigured": "Automatic reading is not configured in this environment.",
+      "rateLimited": "Too many reads in a row. Try again in {seconds}s.",
+      "failed": "Could not read this file. Try again or send another one."
     }
   },
 

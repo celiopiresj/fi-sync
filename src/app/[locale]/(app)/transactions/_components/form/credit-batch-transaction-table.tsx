@@ -35,15 +35,10 @@ import type {
   CategoryOption,
   PersonOption,
 } from "../../_types/types";
+import { INSTALLMENT_OPTIONS } from "../../_constants/constants";
 import { ChipSelect, DateChipSelect } from "./chip-select";
 import { CreatePersonInline } from "./create-person-inline";
 import { PastInstallmentsDialog } from "./past-installments-dialog";
-
-// Same fixed 1–24 range the single-form's own installments field allows
-// in practice (no hard cap there, but no card realistically bills more)
-// — a ChipSelect needs a bounded option list, unlike the free-typed
-// TextField the single form uses.
-const INSTALLMENT_OPTIONS = Array.from({ length: 24 }, (_, i) => String(i + 1));
 
 // A fresh row defaulting to today and to `defaultPersonId` — same
 // reasoning as debit's own makeEmptyRow in batch-transaction-table.tsx.

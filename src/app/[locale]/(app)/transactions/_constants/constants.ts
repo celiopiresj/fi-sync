@@ -19,3 +19,12 @@ export const ALL_NON_CARD_ACCOUNTS_FILTER = "__all_non_card_accounts__";
 export function isAccountGroupFilter(accountId: string | undefined): boolean {
   return accountId === ALL_CARDS_ACCOUNT_FILTER || accountId === ALL_NON_CARD_ACCOUNTS_FILTER;
 }
+
+// The installment counts a chip picker can offer. Fixed 1–24: no card
+// realistically bills more, and a ChipSelect needs a bounded option list
+// (unlike the single credit form's free-typed TextField). Shared by the
+// credit batch table's draft card and the fatura import's row editor so
+// the two can't drift on the ceiling.
+export const INSTALLMENT_OPTIONS = Array.from({ length: 24 }, (_, i) =>
+  String(i + 1),
+);

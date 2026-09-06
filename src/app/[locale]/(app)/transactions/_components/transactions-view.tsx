@@ -82,6 +82,7 @@ import { DebitTransactionSheet } from "./form/debit-transaction-sheet";
 import { BulkActionsBar } from "./table/bulk-actions-bar";
 import { getTransactionColumns } from "./table/columns";
 import { FiltersSheet } from "./table/filters-sheet";
+import { ImportStatementSheet } from "./import/import-statement-sheet";
 import { SummaryCards } from "./table/summary-cards";
 import { TransactionMobileList } from "./table/transaction-mobile-list";
 
@@ -200,6 +201,11 @@ export function TransactionsView({
   }
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
+  // Its own flag rather than another DialogState kind: the import sheet
+  // has no mode/prefill/row of its own, and folding it into that union
+  // would make every `dialogState.kind === "debit"` check upstream carry
+  // a case that can never apply to it.
+  const [importOpen, setImportOpen] = useState(false);
   const [deletingTransaction, setDeletingTransaction] =
     useState<TransactionRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -956,6 +962,9 @@ export function TransactionsView({
                 }>
                 {t("buttons.add.credit")}
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setImportOpen(true)}>
+                {t("buttons.add.import")}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -1079,6 +1088,25 @@ export function TransactionsView({
         onSubmit={handleSubmitDebit}
         onSubmitBatch={handleSubmitBatch}
         onBatchSuccess={handleBatchSuccess}
+      />
+
+      <ImportStatementSheet
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        // The full list, not the two `selectable*` splits: the import
+        // offers cards AND accounts in one picker, and drops the
+        // archived ones itself (there is no row being edited here whose
+        // old account would need to survive the filter).
+        accounts={accounts}
+        categories={categories}
+        people={people}
+        defaultPersonId={defaultPersonId}
+        onSubmitDebit={handleSubmitBatch}
+        onSubmitCredit={handleSubmitCreditBatch}
+        onSuccess={(count) => {
+          handleBatchSuccess(count);
+          setImportOpen(false);
+        }}
       />
 
       <CreditTransactionSheet

@@ -19,7 +19,8 @@
       "title": "Nova transação",
       "description": "Adicionar um lançamento manual",
       "debit": "Transação no débito",
-      "credit": "Despesa no cartão"
+      "credit": "Despesa no cartão",
+    "import": "Importar fatura ou extrato"
     },
     "import": {
       "title": "Importar",
@@ -213,6 +214,10 @@
     "batchOption": {
       "title": "Adicionar em lote",
       "subtitle": "Várias linhas de uma vez, na mesma conta"
+    },
+    "importOption": {
+      "title": "Importar fatura ou extrato",
+      "subtitle": "PDF ou foto — as linhas vêm preenchidas"
     }
   },
 
@@ -256,6 +261,55 @@
       "account": "Conta",
       "paymentMethod": "Pagamento",
       "installments": "Parcelas"
+    }
+  },
+
+  "import": {
+    "title": "Importar fatura ou extrato",
+    "description": "Leia o arquivo e confira os lançamentos antes de criar",
+    "source": {
+      "title": "Onde entram esses lançamentos?",
+      "description": "Escolha o cartão da fatura ou a conta do extrato — todas as linhas já nascem com ele preenchido.",
+      "cards": "Cartões de crédito",
+      "accounts": "Contas",
+      "empty": "Cadastre uma conta ou um cartão antes de importar."
+    },
+    "file": {
+      "title": "Anexe o arquivo",
+      "description": "PDF da fatura ou do extrato, ou uma foto/print. Até {size} MB.",
+      "choose": "Escolher arquivo",
+      "camera": "Tirar foto",
+      "replace": "Trocar arquivo",
+      "analyze": "Ler arquivo",
+      "back": "Voltar"
+    },
+    "parsing": {
+      "title": "Lendo o arquivo",
+      "description": "Isso costuma levar alguns segundos."
+    },
+    "review": {
+      "title": "Confira o que foi lido",
+      "subtitle": "{count, plural, =0 {Nada reconhecido} one {# lançamento reconhecido} other {# lançamentos reconhecidos}}",
+      "destination": "Entra em",
+      "applyToAll": "Aplicar a todas",
+      "selectAll": "Marcar todas",
+      "clearAll": "Desmarcar todas",
+      "rowIncomplete": "Falta preencher",
+      "selected": "{count, plural, =0 {Nenhuma linha marcada} one {# linha marcada} other {# linhas marcadas}}",
+      "submit": "{count, plural, one {Lançar # linha} other {Lançar # linhas}}",
+      "empty": "Não encontrei lançamentos nesse arquivo.",
+      "tryAgain": "Tentar outro arquivo"
+    },
+    "errors": {
+      "noFile": "Escolha um arquivo primeiro",
+      "tooLarge": "Arquivo grande demais — o limite é {size} MB.",
+      "unsupported": "Formato não aceito. Envie um PDF ou uma imagem.",
+      "noText": "Não consegui ler o texto desse PDF. Se ele for digitalizado, envie uma foto ou um print.",
+      "truncated": "O arquivo tem lançamentos demais para uma leitura só. Envie um recorte com menos linhas, ou o PDF em vez da foto.",
+      "nothingFound": "Não encontrei lançamentos nesse arquivo.",
+      "notConfigured": "A leitura automática não está configurada neste ambiente.",
+      "rateLimited": "Muitas leituras seguidas. Tente de novo em {seconds}s.",
+      "failed": "Não consegui ler esse arquivo. Tente de novo ou envie outro."
     }
   },
 

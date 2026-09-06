@@ -1,5 +1,6 @@
 import { groq } from "@ai-sdk/groq";
-import { APICallError, generateText, hasToolCall, RetryError, stepCountIs } from "ai";
+import { generateText, hasToolCall, stepCountIs } from "ai";
+import { groqRateLimitRetryAfter } from "@/lib/ai/groq-rate-limit";
 import { clearDraft } from "./draft";
 import { appendTurn, loadHistory } from "./history";
 import { buildFiSyncInstructions } from "./persona";
@@ -86,7 +87,7 @@ export async function runFiSyncAgent(params: {
         .map((toolResult) => toolResult.output as Record<string, unknown>)
         .at(-1) ?? null;
   } catch (error) {
-    const retryAfterSeconds = rateLimitRetryAfter(error);
+    const retryAfterSeconds = groqRateLimitRetryAfter(error);
     if (retryAfterSeconds === null) throw error;
     // Nothing is appended to the history: the turn never produced an
     // answer, and persisting half a turn would leave the next message
@@ -125,23 +126,4 @@ function readyReply(output: Record<string, unknown> | null): string | null {
   if (typeof output?.reply === "string") return output.reply;
   if (typeof output?.error === "string") return output.error;
   return null;
-}
-
-// Groq answers an exhausted token budget with 429 plus a `retry-after`
-// header in whole seconds. With retries disabled the SDK surfaces the
-// APICallError directly, but it still wraps it in a RetryError whenever
-// it did attempt more than once — unwrap both shapes rather than
-// depending on which one shows up. Returns null for anything that is not
-// a rate limit, so a genuine bug still propagates instead of being
-// reported to the user as "tente de novo em alguns segundos".
-function rateLimitRetryAfter(error: unknown): number | null {
-  const apiError = RetryError.isInstance(error) ? error.lastError : error;
-
-  if (!APICallError.isInstance(apiError) || apiError.statusCode !== 429) {
-    return null;
-  }
-
-  const header = apiError.responseHeaders?.["retry-after"];
-  const seconds = header ? Number.parseInt(header, 10) : Number.NaN;
-  return Number.isFinite(seconds) ? seconds : null;
 }

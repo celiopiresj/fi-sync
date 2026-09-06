@@ -16,6 +16,7 @@ import {
   ArrowsLeftRightIcon,
   CaretRightIcon,
   CreditCardIcon,
+  FileArrowUpIcon,
   ListChecksIcon,
   SpinnerIcon,
   XIcon,
@@ -26,8 +27,9 @@ import { useQuickAddTransactionMutations } from "@/hooks/use-quick-add-transacti
 import { DebitTransactionForm } from "./debit-transaction-form";
 import { CreditTransactionForm } from "./credit-transaction-form";
 import { BatchTransactionMobile } from "./batch-transaction-mobile";
+import { ImportStatementScreen } from "../import/import-statement-screen";
 
-type Step = "choose" | "debit" | "credit" | "batch";
+type Step = "choose" | "debit" | "credit" | "batch" | "import";
 
 type AddTransactionDrawerProps = {
   open: boolean;
@@ -44,7 +46,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
   const t = useTranslations("scrn-transactions");
   const [step, setStep] = useState<Step>("choose");
   const { data: options, isLoading } = useQuickAddTransactionOptions(open);
-  const { submitDebit, submitCredit, submitBatch } =
+  const { submitDebit, submitCredit, submitBatch, submitCreditBatch } =
     useQuickAddTransactionMutations();
 
   function handleOpenChange(nextOpen: boolean) {
@@ -164,6 +166,24 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                 </div>
                 <CaretRightIcon className="size-4 shrink-0 text-muted-foreground" />
               </button>
+              <button
+                type="button"
+                onClick={() => setStep("import")}
+                className="flex items-center gap-3 rounded-lg border border-border p-3.5 text-left"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <FileArrowUpIcon className="size-5" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium">
+                    {t("quickAdd.importOption.title")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("quickAdd.importOption.subtitle")}
+                  </span>
+                </div>
+                <CaretRightIcon className="size-4 shrink-0 text-muted-foreground" />
+              </button>
             </div>
           </>
         )}
@@ -186,6 +206,34 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
               onSubmit={submitBatch}
               onSuccess={handleBatchSuccess}
             />
+          ))}
+
+        {step === "import" &&
+          (isLoading || !options ? (
+            <div className="flex flex-1 items-center justify-center">
+              <SpinnerIcon className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            // Same "renders its own header and footer" arrangement as the
+            // batch step above, for the same reason: its header changes
+            // with the step it is on (escolher origem vs. conferir).
+            // That visible title isn't a DrawerTitle, though — the screen
+            // is shared with /transactions' sheet, which has no Vaul
+            // context at all — so the accessible name Radix requires on
+            // the content is supplied here instead.
+            <>
+              <DrawerTitle className="sr-only">{t("import.title")}</DrawerTitle>
+              <ImportStatementScreen
+                accounts={options.accounts}
+                categories={options.categories}
+                people={options.people}
+                defaultPersonId={options.defaultPersonId}
+                onSubmitDebit={submitBatch}
+                onSubmitCredit={submitCreditBatch}
+                onSuccess={handleBatchSuccess}
+                onClose={() => handleOpenChange(false)}
+              />
+            </>
           ))}
 
         {(step === "debit" || step === "credit") && (

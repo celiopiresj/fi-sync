@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import {
   createCreditTransaction,
+  createCreditTransactionsBatch,
   createDebitTransaction,
   createTransactionsBatch,
 } from "@/app/[locale]/(app)/transactions/actions";
@@ -72,5 +73,18 @@ export function useQuickAddTransactionMutations() {
     [invalidate],
   );
 
-  return { submitDebit, submitCredit, submitBatch };
+  // Credit-card counterpart of submitBatch above — same "the caller
+  // toasts, since only it knows the row count" convention. Used by the
+  // fatura import, whose rows are always card purchases; the manual
+  // batch step is debit-only (see filterDebitBatchAccounts).
+  const submitCreditBatch = useCallback(
+    async (rows: Parameters<typeof createCreditTransactionsBatch>[0]) => {
+      const result = await createCreditTransactionsBatch(rows);
+      if (!result.error) invalidate();
+      return result;
+    },
+    [invalidate],
+  );
+
+  return { submitDebit, submitCredit, submitBatch, submitCreditBatch };
 }
