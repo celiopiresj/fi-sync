@@ -500,34 +500,64 @@ export async function payInvoice(id: string, data: PayInvoiceFormValues) {
       }
     }
 
+    // SIGNED cents here (an expense is negative, a refund/reversal
+    // positive), flipped into a magnitude only at the very end. Summing
+    // `Math.abs(split)` per row instead made a refund ADD to what its
+    // person owes rather than subtract it — the exact 2x overstatement
+    // sumInvoiceTransactionsTotal already documents for the invoice's
+    // own total (src/lib/invoice-total.ts), reproduced one layer down in
+    // the per-person split of it. Since the invoice total DOES net the
+    // refund out, the inflated ratios no longer summed to the amount
+    // being allocated, and `allocate` silently scaled every person's
+    // share down to fit.
     const owedTotalsCents = new Map<string, number>();
     let selfPersonId: string | null | undefined;
 
-    for (const ti of existing.transactionInvoices) {
-      const splits = ti.transaction.splits;
-      if (splits.length === 0) {
-        if (selfPersonId === undefined) {
-          const self = await prisma.person.findFirst({
-            where: { userId, isSelf: true },
-            select: { id: true },
-          });
-          selfPersonId = self?.id ?? null;
-        }
-        if (selfPersonId) {
-          const cents = Math.round(Math.abs(ti.transaction.amount.toNumber()) * 100);
-          owedTotalsCents.set(selfPersonId, (owedTotalsCents.get(selfPersonId) ?? 0) + cents);
-        }
-        continue;
+    function addOwed(personId: string, cents: number) {
+      owedTotalsCents.set(personId, (owedTotalsCents.get(personId) ?? 0) + cents);
+    }
+
+    async function resolveSelfPersonId() {
+      if (selfPersonId === undefined) {
+        const self = await prisma.person.findFirst({
+          where: { userId, isSelf: true },
+          select: { id: true },
+        });
+        selfPersonId = self?.id ?? null;
       }
-      for (const split of splits) {
-        const cents = Math.round(Math.abs(split.amount.toNumber()) * 100);
-        owedTotalsCents.set(split.personId, (owedTotalsCents.get(split.personId) ?? 0) + cents);
+      return selfPersonId;
+    }
+
+    for (const ti of existing.transactionInvoices) {
+      const amountCents = Math.round(ti.transaction.amount.toNumber() * 100);
+      let attributedCents = 0;
+      for (const split of ti.transaction.splits) {
+        const cents = Math.round(split.amount.toNumber() * 100);
+        addOwed(split.personId, cents);
+        attributedCents += cents;
+      }
+
+      // Whatever the splits don't cover is the user's own share — the
+      // same rule the app applies to a transaction with NO splits at all
+      // (see Transaction.splits in prisma/schema.prisma), just extended
+      // to a PARTIALLY split one, which the previous version ignored
+      // entirely: a R$53,11 purchase with only R$13,28 attributed left
+      // R$39,83 out of the ratio total, so everyone else's share of the
+      // payment got scaled to cover it.
+      const uncoveredCents = amountCents - attributedCents;
+      if (uncoveredCents !== 0) {
+        const self = await resolveSelfPersonId();
+        if (self) addOwed(self, uncoveredCents);
       }
     }
 
     const remainingByPersonCents = new Map<string, number>();
     for (const [personId, owedCents] of owedTotalsCents) {
-      const remaining = owedCents - (alreadyPaidByPerson.get(personId) ?? 0);
+      // Negated: a real debt accumulated above as a negative (expense
+      // sign), while `allocate` needs a positive ratio. Someone whose
+      // refunds outweigh their purchases nets out non-positive here and
+      // drops out of the allocation entirely, same as before.
+      const remaining = -owedCents - (alreadyPaidByPerson.get(personId) ?? 0);
       if (remaining > 0) remainingByPersonCents.set(personId, remaining);
     }
 
