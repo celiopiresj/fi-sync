@@ -759,6 +759,7 @@ async function validateDebit(data: DebitTransactionFormValues) {
   const schema = debitTransactionSchema.superRefine((value, ctx) =>
     refineDebitTransaction(value, ctx, {
       messages: {
+        categoryRequired: tValidation("required"),
         paymentMethodRequired: tValidation("required"),
         splitsMismatch: t("splits.mismatch"),
       },
@@ -964,9 +965,11 @@ export async function updateDebitTransaction(
 
 async function validateCredit(data: CreditTransactionFormValues) {
   const t = await getTranslations("scrn-transactions");
+  const tValidation = await getTranslations("common.validation");
 
   const schema = creditTransactionSchema.superRefine((value, ctx) =>
     refineCreditTransaction(value, ctx, {
+      categoryRequired: tValidation("required"),
       splitsMismatch: t("splits.mismatch"),
       recurrenceInstallmentConflict: t("recurrence.conflict"),
     }),
@@ -1595,6 +1598,9 @@ export async function createCreditTransactionsBatch(
   // createTransactionsBatch below) — enforced here rather than in the
   // schema so the message can be translated.
   for (const { index, value } of parsedRows) {
+    if (!value.categoryId) {
+      return { error: t("batch.categoryRequired"), rowIndex: index };
+    }
     if (!value.personId) {
       return { error: t("batch.personRequired"), rowIndex: index };
     }
@@ -1885,6 +1891,9 @@ export async function createTransactionsBatch(rows: BatchRowFormValues[]) {
     // have a payment method. Both stay unrefined in `batchRowSchema`
     // itself so these checks can return a translated message — see the
     // comment there.
+    if (!value.categoryId) {
+      return { error: t("batch.categoryRequired"), rowIndex: index };
+    }
     if (!value.personId) {
       return { error: t("batch.personRequired"), rowIndex: index };
     }

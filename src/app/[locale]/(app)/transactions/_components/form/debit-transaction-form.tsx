@@ -178,6 +178,7 @@ export function DebitTransactionForm({
       debitTransactionSchema.superRefine((value, ctx) =>
         refineDebitTransaction(value, ctx, {
           messages: {
+            categoryRequired: tValidation("required"),
             paymentMethodRequired: tValidation("required"),
             splitsMismatch: t("splits.mismatch"),
           },
@@ -399,9 +400,11 @@ export function DebitTransactionForm({
         ? t("fields.amount.label")
         : !date
           ? t("fields.date.label")
-          : !paymentMethod
-            ? t("fields.paymentMethod.label")
-            : null;
+          : !categoryId
+            ? t("fields.category.label")
+            : !paymentMethod
+              ? t("fields.paymentMethod.label")
+              : null;
 
   return (
     <form

@@ -171,11 +171,28 @@ export function refineDebitTransaction(
   ctx: z.RefinementCtx,
   options: {
     messages: {
+      categoryRequired: string;
       paymentMethodRequired: string;
       splitsMismatch: string;
     };
   },
 ) {
+  // Every transaction has to land in a category — an uncategorized row
+  // silently drops out of every category-based report (the home screen's
+  // breakdown, budgets, projections), so it's checked here rather than
+  // left to the user to notice later. Enforced in the refine, not as
+  // `.min(1)` on the schema field, for the same reason paymentMethod is:
+  // the message has to arrive already translated (AGENTS.md), and a
+  // failing `.min(1)` would short-circuit into Zod's untranslated
+  // default instead.
+  if (!data.categoryId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["categoryId"],
+      message: options.messages.categoryRequired,
+    });
+  }
+
   if (!data.paymentMethod) {
     ctx.addIssue({
       code: "custom",
@@ -263,10 +280,21 @@ export function refineCreditTransaction(
   data: CreditTransactionValues,
   ctx: z.RefinementCtx,
   messages: {
+    categoryRequired: string;
     splitsMismatch: string;
     recurrenceInstallmentConflict: string;
   },
 ) {
+  // Same rule (and same reasoning) as refineDebitTransaction's own — see
+  // its comment.
+  if (!data.categoryId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["categoryId"],
+      message: messages.categoryRequired,
+    });
+  }
+
   if (data.splits.length > 0) {
     const total = data.splits.reduce((sum, split) => sum + split.amount, 0);
     if (Math.abs(total - data.amount) > 0.01) {

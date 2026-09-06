@@ -242,6 +242,7 @@
     "totalExpense": "Despesas",
     "netTotal": "Saldo líquido",
     "total": "Total",
+    "categoryRequired": "Selecione uma categoria para essa linha",
     "personRequired": "Selecione uma pessoa para essa linha",
     "paymentMethodRequired": "Selecione um método de pagamento para essa linha",
     "missingField": "Preencha: {field}",

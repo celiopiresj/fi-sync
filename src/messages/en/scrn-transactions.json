@@ -242,6 +242,7 @@
     "totalExpense": "Expenses",
     "netTotal": "Net balance",
     "total": "Total",
+    "categoryRequired": "Select a category for this row",
     "personRequired": "Select a person for this row",
     "paymentMethodRequired": "Select a payment method for this row",
     "missingField": "Fill in: {field}",

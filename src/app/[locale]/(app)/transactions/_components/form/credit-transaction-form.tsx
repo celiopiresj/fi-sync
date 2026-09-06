@@ -162,6 +162,7 @@ export function CreditTransactionForm({
 }: CreditTransactionFormProps) {
   const t = useTranslations("scrn-transactions");
   const tCommon = useTranslations("common");
+  const tValidation = useTranslations("common.validation");
   const format = useFormatter();
   const [serverError, setServerError] = useState<string | null>(null);
 
@@ -186,11 +187,12 @@ export function CreditTransactionForm({
     () =>
       creditTransactionSchema.superRefine((value, ctx) =>
         refineCreditTransaction(value, ctx, {
+          categoryRequired: tValidation("required"),
           splitsMismatch: t("splits.mismatch"),
           recurrenceInstallmentConflict: t("recurrence.conflict"),
         }),
       ),
-    [t],
+    [t, tValidation],
   );
 
   const [pastInstallmentsValue, setPastInstallmentsValue] =
@@ -497,7 +499,9 @@ export function CreditTransactionForm({
           ? t("fields.date.label")
           : !cardId
             ? t("fields.card.holderLabel")
-            : null;
+            : !categoryId
+              ? t("fields.category.label")
+              : null;
 
   return (
     <form

@@ -93,11 +93,13 @@ export function BatchTransactionTable({
           ? t("fields.date.label")
           : !draft.accountId
             ? t("fields.account.label")
-            : !draft.paymentMethod
-              ? t("fields.paymentMethod.label")
-              : !draft.personId
-                ? t("fields.person.label")
-                : null;
+            : !draft.categoryId
+              ? t("fields.category.label")
+              : !draft.paymentMethod
+                ? t("fields.paymentMethod.label")
+                : !draft.personId
+                  ? t("fields.person.label")
+                  : null;
 
     if (missingLabel || resolved === null) {
       // `missingLabel` is only ever null here if `resolved` is what

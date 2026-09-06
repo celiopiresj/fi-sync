@@ -243,9 +243,11 @@ export function CreditBatchTransactionTable({
             ? t("fields.card.label")
             : !draft.cardId
               ? t("fields.card.holderLabel")
-              : !draft.personId
-                ? t("fields.person.label")
-                : null;
+              : !draft.categoryId
+                ? t("fields.category.label")
+                : !draft.personId
+                  ? t("fields.person.label")
+                  : null;
 
     if (missingLabel || resolved === null) {
       setDraftError(t("batch.missingField", { field: missingLabel ?? "" }));
