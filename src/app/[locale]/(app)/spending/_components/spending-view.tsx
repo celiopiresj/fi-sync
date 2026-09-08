@@ -8,6 +8,13 @@ import { PageHeader, PeriodStepper } from "@/components/screen/page-header";
 import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -27,33 +34,39 @@ import {
 } from "../../transactions/_lib/period";
 import { accountIdForKind } from "../../transactions/_lib/account-kind";
 import { useSpendingData } from "../_hooks/use-spending-data";
-import type { AccountKind, CategoryBreakdown } from "../_types/types";
+import type { AccountKind, CategoryBreakdown, PersonOption } from "../_types/types";
 
 type SpendingViewProps = {
   initialBreakdown: CategoryBreakdown;
+  people: PersonOption[];
 };
 
 const INITIAL_ACCOUNT_KIND: AccountKind = "debit";
+const ALL_PEOPLE_VALUE = "__all__";
 
-export function SpendingView({ initialBreakdown }: SpendingViewProps) {
+export function SpendingView({ initialBreakdown, people }: SpendingViewProps) {
   const t = useTranslations("scrn-spending");
   const format = useFormatter();
 
   const [initialPeriod] = useState(() => currentPeriod());
   const [period, setPeriod] = useState<Period>(initialPeriod);
   const [accountKind, setAccountKind] = useState<AccountKind>(INITIAL_ACCOUNT_KIND);
+  const [personId, setPersonId] = useState<string | undefined>(undefined);
 
   const { from, to } = useMemo(() => periodRange(period), [period]);
   const accountId = accountIdForKind(accountKind);
 
   const isDefaultFilters =
-    periodsEqual(period, initialPeriod) && accountKind === INITIAL_ACCOUNT_KIND;
+    periodsEqual(period, initialPeriod) &&
+    accountKind === INITIAL_ACCOUNT_KIND &&
+    personId === undefined;
 
   const { breakdown } = useSpendingData({
     from,
     to,
     accountId,
     accountKind,
+    personId,
     initialBreakdown,
     useInitialData: isDefaultFilters,
   });
@@ -84,17 +97,37 @@ export function SpendingView({ initialBreakdown }: SpendingViewProps) {
           previousLabel={t("period.previous")}
           nextLabel={t("period.next")}
         />
-        <ToggleGroup
-          type="single"
-          variant="tabs"
-          value={accountKind}
-          onValueChange={(value) => {
-            if (value) setAccountKind(value as AccountKind);
-          }}
-        >
-          <ToggleGroupItem value="debit">{t("tabs.debit")}</ToggleGroupItem>
-          <ToggleGroupItem value="credit">{t("tabs.credit")}</ToggleGroupItem>
-        </ToggleGroup>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select
+            value={personId ?? ALL_PEOPLE_VALUE}
+            onValueChange={(value) =>
+              setPersonId(value === ALL_PEOPLE_VALUE ? undefined : value)
+            }
+          >
+            <SelectTrigger className="w-45">
+              <SelectValue placeholder={t("filters.person")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL_PEOPLE_VALUE}>{t("filters.allPeople")}</SelectItem>
+              {people.map((person) => (
+                <SelectItem key={person.id} value={person.id}>
+                  {person.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <ToggleGroup
+            type="single"
+            variant="tabs"
+            value={accountKind}
+            onValueChange={(value) => {
+              if (value) setAccountKind(value as AccountKind);
+            }}
+          >
+            <ToggleGroupItem value="debit">{t("tabs.debit")}</ToggleGroupItem>
+            <ToggleGroupItem value="credit">{t("tabs.credit")}</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
 
       <KpiGrid columns={2}>
@@ -122,6 +155,7 @@ export function SpendingView({ initialBreakdown }: SpendingViewProps) {
                 share={totalExpenses > 0 ? item.total / totalExpenses : 0}
                 month={from.slice(0, 7)}
                 accountId={accountId}
+                personId={personId}
                 money={money}
               />
             ))}
@@ -137,12 +171,14 @@ function CategoryRow({
   share,
   month,
   accountId,
+  personId,
   money,
 }: {
   item: CategoryBreakdown["items"][number];
   share: number;
   month: string;
   accountId: string;
+  personId: string | undefined;
   money: (value: number) => string;
 }) {
   const t = useTranslations("scrn-spending");
@@ -199,7 +235,12 @@ function CategoryRow({
     <Link
       href={{
         pathname: "/transactions",
-        query: { month, category: item.id, account: accountId },
+        query: {
+          month,
+          category: item.id,
+          account: accountId,
+          ...(personId ? { person: personId } : {}),
+        },
       }}
       aria-label={t("viewTransactions", { name: item.name })}
       className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-accent/50"

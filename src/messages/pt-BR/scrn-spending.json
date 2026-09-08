@@ -12,6 +12,11 @@
     "credit": "Crédito"
   },
 
+  "filters": {
+    "person": "Pessoa",
+    "allPeople": "Todas as pessoas"
+  },
+
   "kpis": {
     "total": "Total gasto",
     "categoriesCount": "Categorias com gasto"

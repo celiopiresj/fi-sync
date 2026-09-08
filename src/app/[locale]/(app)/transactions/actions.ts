@@ -80,6 +80,26 @@ function accountFilterWhere(accountId: string | undefined): Record<string, unkno
   return {};
 }
 
+// The "at least one of these" OR condition for narrowing a query down to
+// one Person's transactions — an unattributed row (no splits at all) is
+// implicitly the user's own (same convention transactions/columns.tsx's
+// `selfLabel` fallback and projections/_lib/self-share.ts both rely on),
+// so filtering by the Person marked isSelf has to match those rows too,
+// not just ones with an explicit split naming them. Shared by
+// listTransactions and getCategoryExpenseBreakdown so this subtle rule
+// can't drift between the two.
+async function personFilterCondition(userId: string, personId: string) {
+  const person = await prisma.person.findUnique({
+    where: { id: personId, userId },
+    select: { isSelf: true },
+  });
+  return {
+    OR: person?.isSelf
+      ? [{ splits: { some: { personId } } }, { splits: { none: {} } }]
+      : [{ splits: { some: { personId } } }],
+  };
+}
+
 // Lets the search box also find a transaction by its amount, typed the
 // same comma-decimal way as every AmountInput in this app ("184,90" or
 // "184.90") — parsed once here and reused by every query filtered by
@@ -166,23 +186,7 @@ export async function listTransactions(filters: TransactionFilters = {}) {
 
   if (filters.categoryId) where.categoryId = filters.categoryId;
   if (filters.personId) {
-    // An unattributed transaction (no splits at all) is implicitly the
-    // user's own (same convention transactions/columns.tsx's `selfLabel`
-    // fallback and projections/_lib/self-share.ts both rely on) — so
-    // filtering by the Person marked isSelf has to match those rows too,
-    // not just ones with an explicit split naming them.
-    const person = await prisma.person.findUnique({
-      where: { id: filters.personId, userId },
-      select: { isSelf: true },
-    });
-    andConditions.push({
-      OR: person?.isSelf
-        ? [
-            { splits: { some: { personId: filters.personId } } },
-            { splits: { none: {} } },
-          ]
-        : [{ splits: { some: { personId: filters.personId } } }],
-    });
+    andConditions.push(await personFilterCondition(userId, filters.personId));
   }
   if (filters.search) {
     // Matches the description as before, plus either sign of the typed
@@ -390,7 +394,7 @@ type CategoryGroupRow = {
 export async function getCategoryExpenseBreakdown(
   filters: Pick<
     TransactionFilters,
-    "accountId" | "categoryId" | "search" | "from" | "to"
+    "accountId" | "categoryId" | "personId" | "search" | "from" | "to"
   > = {},
 ): Promise<CategoryBreakdown> {
   const userId = await requireUserId();
@@ -399,6 +403,14 @@ export async function getCategoryExpenseBreakdown(
     userId,
     amount: { lt: 0 },
     ...accountFilterWhere(filters.accountId),
+    // Unlike getHomeOverview's own categoryBreakdown query ((home)/
+    // actions.ts), which sums every account together and so has to
+    // exclude a paid invoice's settlement leg to avoid counting it
+    // twice, this screen keeps Débito and Crédito on separate tabs
+    // (accountId is always one of the two group sentinels below) — the
+    // settlement expense (Débito) and the purchases it paid off
+    // (Crédito) never appear in the same total here, so there's nothing
+    // to double-count and the settlement stays in.
   };
   // Independent "at least one of these" conditions (the search's own OR,
   // effectiveDateWhere's own OR) can't both be assigned to `where.OR`
@@ -408,6 +420,9 @@ export async function getCategoryExpenseBreakdown(
   const andConditions: Record<string, unknown>[] = [];
 
   if (filters.categoryId) where.categoryId = filters.categoryId;
+  if (filters.personId) {
+    andConditions.push(await personFilterCondition(userId, filters.personId));
+  }
   if (filters.search) {
     // Every row here is already an expense (amount: { lt: 0 } above), so
     // only the negative counterpart of a typed amount can ever match —
