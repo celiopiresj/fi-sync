@@ -441,25 +441,82 @@ export async function getCategoryExpenseBreakdown(
   }
   if (andConditions.length > 0) where.AND = andConditions;
 
-  // No `: CategoryGroupRow[]` annotation here (unlike the `.map`/`filter`
-  // callbacks below, which keep theirs) — Prisma's `groupBy` overload
-  // resolves `T` partly by unifying the call's OWN return type against
-  // whatever the call site expects, so a contextual array type here
-  // constrains the args themselves and breaks inference (surfaced as a
-  // baffling "missing length/pop/push/concat..." error). Left to infer
-  // its real (richer) Prisma payload type instead; that type is a
-  // structural superset of CategoryGroupRow, so every downstream
-  // `(group: CategoryGroupRow) => ...` below still type-checks against it.
-  const grouped = await prisma.transaction.groupBy({
-    by: ["categoryId"],
-    where,
-    _sum: { amount: true },
-    _count: { _all: true },
-  });
+  // { total, count } per category, keyed by categoryId (or
+  // "uncategorized") — built one of two ways depending on whether a
+  // person filter is active, then fed into the same name/icon/colorStyle
+  // resolution and item-shaping below regardless of which path built it.
+  let totalsByCategory: Map<string, { total: number; count: number }>;
 
-  const categoryIds = grouped
-    .map((group: CategoryGroupRow) => group.categoryId)
-    .filter((id): id is string => id !== null);
+  if (filters.personId) {
+    // A category's SPLIT total isn't a plain sum of `amount` once a
+    // person filter narrows it down — a R$300 dinner split 3 ways is
+    // R$300 toward "Alimentação" for the category as a whole, but only
+    // ~R$100 of it is any one person's own share. Prisma's `groupBy`
+    // can't group by a joined field (`transaction.categoryId` isn't a
+    // TransactionSplit column), so this path fetches the already-
+    // filtered transactions with just this person's own split included
+    // and buckets by hand instead of asking the database to sum the
+    // whole row. A person's worth of one month's transactions is small
+    // enough for this — same "one query, then bucket in JS" tradeoff
+    // budgets' own getBudgetWithSpending already makes for a comparable
+    // amount of data.
+    const transactions = await prisma.transaction.findMany({
+      where,
+      select: {
+        categoryId: true,
+        amount: true,
+        splits: { where: { personId: filters.personId }, select: { amount: true } },
+      },
+    });
+
+    totalsByCategory = new Map();
+    for (const transaction of transactions) {
+      // `personFilterCondition` above only ever lets a transaction
+      // through here in one of two shapes: it carries an explicit split
+      // for this exact person (whose own `amount` is already scaled to
+      // this row's real total, see resolveSplitsCreateInput), or — only
+      // when the filtered person is `isSelf` — it carries no splits at
+      // all, which is implicitly 100% theirs (same convention this
+      // screen's uncategorized bucket, and every other self-share read
+      // in this app, follows — see projections/_lib/self-share.ts).
+      // Either way, at most one split can match (personId is unique per
+      // transaction, see TransactionSplit's own @@unique), so [0] is safe.
+      const share = transaction.splits[0]?.amount.toNumber() ?? transaction.amount.toNumber();
+      const key = transaction.categoryId ?? "uncategorized";
+      const bucket = totalsByCategory.get(key) ?? { total: 0, count: 0 };
+      bucket.total += Math.abs(share);
+      bucket.count += 1;
+      totalsByCategory.set(key, bucket);
+    }
+  } else {
+    // No `: CategoryGroupRow[]` annotation here (unlike the `.map`/
+    // `.filter` callbacks below, which keep theirs) — Prisma's `groupBy`
+    // overload resolves `T` partly by unifying the call's OWN return
+    // type against whatever the call site expects, so a contextual
+    // array type here constrains the args themselves and breaks
+    // inference (surfaced as a baffling "missing length/pop/push/
+    // concat..." error). Left to infer its real (richer) Prisma payload
+    // type instead; that type is a structural superset of
+    // CategoryGroupRow, so `(group: CategoryGroupRow) => ...` below
+    // still type-checks against it.
+    const grouped = await prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where,
+      _sum: { amount: true },
+      _count: { _all: true },
+    });
+    totalsByCategory = new Map(
+      grouped.map((group: CategoryGroupRow): [string, { total: number; count: number }] => [
+        group.categoryId ?? "uncategorized",
+        {
+          total: Math.abs(group._sum.amount?.toNumber() ?? 0),
+          count: group._count._all,
+        },
+      ]),
+    );
+  }
+
+  const categoryIds = [...totalsByCategory.keys()].filter((id) => id !== "uncategorized");
   // Explicit type for the same reason as CategoryGroupRow above: without
   // it, `categories` resolves to `any` (the unresolvable generated Prisma
   // client), which makes `new Map(categories.map(...))` below infer
@@ -488,16 +545,16 @@ export async function getCategoryExpenseBreakdown(
 
   const uncategorizedLabel: string = t("chart.byCategory.uncategorized");
 
-  const items = grouped
-    .map((group: CategoryGroupRow): CategoryBreakdownItem => {
-      const category = group.categoryId ? categoryById.get(group.categoryId) : undefined;
+  const items = [...totalsByCategory.entries()]
+    .map(([id, { total, count }]): CategoryBreakdownItem => {
+      const category = id !== "uncategorized" ? categoryById.get(id) : undefined;
       return {
-        id: group.categoryId ?? "uncategorized",
+        id,
         name: category?.name ?? uncategorizedLabel,
-        total: Math.abs(group._sum.amount?.toNumber() ?? 0),
+        total,
         icon: category?.icon ?? null,
         colorStyle: category?.colorStyle ?? null,
-        transactionsCount: group._count._all,
+        transactionsCount: count,
       };
     })
     .filter((item) => item.total > 0)
