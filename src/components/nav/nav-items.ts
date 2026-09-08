@@ -8,6 +8,7 @@ import {
   ArrowsClockwiseIcon,
   CreditCardIcon,
   ChartPieSliceIcon,
+  ChartBarIcon,
   HandCoinsIcon,
   PiggyBankIcon,
   TagIcon,
@@ -35,7 +36,8 @@ export type NavItem = {
     | "loans"
     | "categories"
     | "budgets"
-    | "projections";
+    | "projections"
+    | "spending";
   icon: ComponentType<IconProps>;
 };
 
@@ -93,6 +95,11 @@ export const navSections: NavSection[] = [
         href: "/projections",
         labelKey: "projections",
         icon: TrendUpIcon,
+      },
+      {
+        href: "/spending",
+        labelKey: "spending",
+        icon: ChartBarIcon,
       },
     ],
   },

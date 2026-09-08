@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
-import { resolveCategoryColorClasses } from "../_lib/category-color";
+import { resolveCategoryColorClasses } from "@/lib/category-color";
 import type { HomeOverview } from "../_types/types";
 
 // Top N real categories, straight from the server's already-sorted

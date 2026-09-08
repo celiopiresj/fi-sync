@@ -1,0 +1,27 @@
+{
+  "title": "Spending by category",
+  "description": "Where your money went in each category, month by month",
+
+  "period": {
+    "previous": "Previous month",
+    "next": "Next month"
+  },
+
+  "tabs": {
+    "debit": "Debit",
+    "credit": "Credit"
+  },
+
+  "kpis": {
+    "total": "Total spent",
+    "categoriesCount": "Categories with spending"
+  },
+
+  "transactionsCount": "{count, plural, =0 {No transactions} one {# transaction} other {# transactions}}",
+  "viewTransactions": "View {name}'s transactions",
+
+  "empty": {
+    "title": "No spending this period",
+    "description": "Once there are expenses, they'll show up here grouped by category."
+  }
+}

@@ -15,6 +15,9 @@
     "projections": {
       "title": "Projeções"
     },
+    "spending": {
+      "title": "Gastos por categoria"
+    },
     "recurrences": {
       "title": "Recorrências",
       "active": "{count, plural, one {# ativa} other {# ativas}}",

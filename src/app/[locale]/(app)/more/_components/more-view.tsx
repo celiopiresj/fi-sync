@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   CaretRightIcon,
+  ChartBarIcon,
   ChartPieSliceIcon,
   ArrowsClockwiseIcon,
   GlobeIcon,
@@ -121,6 +122,7 @@ export function MoreView({ overview }: MoreViewProps) {
             href="/budgets"
           />
           <NavRow icon={TrendUpIcon} title={t("rows.projections.title")} href="/projections" />
+          <NavRow icon={ChartBarIcon} title={t("rows.spending.title")} href="/spending" />
           <NavRow
             icon={ArrowsClockwiseIcon}
             title={t("rows.recurrences.title")}

@@ -7,7 +7,10 @@ import { AVAILABLE_COLORS } from "@/components/form/color-picker";
 // color already picked rather than inventing a second palette — same
 // technique cards/_lib/card-tile-color.ts already uses for its own tile
 // header. No match (color never set, or a category without one) falls
-// back to a neutral gray for both.
+// back to a neutral gray for both. Shared (not route-local) because both
+// the home dashboard's category breakdown and the spending-by-category
+// screen render the same bar/badge pair off the same Category.colorStyle
+// value.
 export function resolveCategoryColorClasses(colorStyle: string | null): {
   badge: string;
   bar: string;

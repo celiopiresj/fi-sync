@@ -6,7 +6,7 @@ import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
 import { resolveCategoryIcon } from "@/lib/category-icons";
-import { resolveCategoryColorClasses } from "../_lib/category-color";
+import { resolveCategoryColorClasses } from "@/lib/category-color";
 import type { HomeOverview } from "../_types/types";
 
 type RecentTransactionsProps = {

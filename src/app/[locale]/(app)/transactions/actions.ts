@@ -347,7 +347,18 @@ export async function getMonthlyBalances(
   }));
 }
 
-export type CategoryBreakdownItem = { id: string; name: string; total: number };
+export type CategoryBreakdownItem = {
+  id: string;
+  name: string;
+  total: number;
+  // null for the synthetic "uncategorized" bucket — a real Category can
+  // still have either field null (both are optional on that model), so
+  // this isn't itself a signal of "uncategorized" to a caller; check
+  // `id === "uncategorized"` for that.
+  icon: string | null;
+  colorStyle: string | null;
+  transactionsCount: number;
+};
 export type CategoryBreakdown = {
   items: CategoryBreakdownItem[];
   totalExpenses: number;
@@ -373,6 +384,7 @@ export type CategoryBreakdown = {
 type CategoryGroupRow = {
   categoryId: string | null;
   _sum: { amount: { toNumber(): number } | null };
+  _count: { _all: number };
 };
 
 export async function getCategoryExpenseBreakdown(
@@ -427,6 +439,7 @@ export async function getCategoryExpenseBreakdown(
     by: ["categoryId"],
     where,
     _sum: { amount: true },
+    _count: { _all: true },
   });
 
   const categoryIds = grouped
@@ -435,22 +448,25 @@ export async function getCategoryExpenseBreakdown(
   // Explicit type for the same reason as CategoryGroupRow above: without
   // it, `categories` resolves to `any` (the unresolvable generated Prisma
   // client), which makes `new Map(categories.map(...))` below infer
-  // `Map<unknown, unknown>` instead of `Map<string, string>` — and
-  // `Map<unknown,...>.get(...) ?? ""` collapses to TypeScript's `{}`
-  // type rather than `string`.
-  const categories: { id: string; name: string }[] = categoryIds.length
+  // `Map<unknown, unknown>` instead of `Map<string, {...}>` — and
+  // `Map<unknown,...>.get(...) ?? ...` collapses to TypeScript's `{}`
+  // type rather than the real shape.
+  const categories: {
+    id: string;
+    name: string;
+    icon: string | null;
+    colorStyle: string | null;
+  }[] = categoryIds.length
     ? await prisma.category.findMany({
         where: { id: { in: categoryIds } },
-        select: { id: true, name: true },
+        select: { id: true, name: true, icon: true, colorStyle: true },
       })
     : [];
-  const categoryNameById = new Map(
-    categories.map(
-      (category: { id: string; name: string }): [string, string] => [
-        category.id,
-        category.name,
-      ],
-    ),
+  const categoryById = new Map(
+    categories.map((category): [string, (typeof categories)[number]] => [
+      category.id,
+      category,
+    ]),
   );
 
   const t = await getTranslations("scrn-transactions");
@@ -459,13 +475,14 @@ export async function getCategoryExpenseBreakdown(
 
   const items = grouped
     .map((group: CategoryGroupRow): CategoryBreakdownItem => {
-      const name: string = group.categoryId
-        ? (categoryNameById.get(group.categoryId) ?? "")
-        : uncategorizedLabel;
+      const category = group.categoryId ? categoryById.get(group.categoryId) : undefined;
       return {
         id: group.categoryId ?? "uncategorized",
-        name,
+        name: category?.name ?? uncategorizedLabel,
         total: Math.abs(group._sum.amount?.toNumber() ?? 0),
+        icon: category?.icon ?? null,
+        colorStyle: category?.colorStyle ?? null,
+        transactionsCount: group._count._all,
       };
     })
     .filter((item) => item.total > 0)

@@ -25,7 +25,7 @@ import type { CategoryType } from "@/generated/prisma/client";
 // (prisma/seed.ts, scripts/seed-categories.ts) can run through `tsx`
 // without pulling in a React component file. Sticking to the picker's
 // exact strings is what keeps `resolveCategoryColorClasses`
-// ((home)/_lib/category-color.ts) able to resolve the bold bar color
+// (lib/category-color.ts) able to resolve the bold bar color
 // from a category's stored badge class, and what guarantees Tailwind
 // actually emits these utilities — a class that only ever exists as a
 // DB string is never scanned, so it would render colorless.

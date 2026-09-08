@@ -1,0 +1,27 @@
+{
+  "title": "Gastos por categoria",
+  "description": "Para onde foi o seu dinheiro em cada categoria, mês a mês",
+
+  "period": {
+    "previous": "Mês anterior",
+    "next": "Próximo mês"
+  },
+
+  "tabs": {
+    "debit": "Débito",
+    "credit": "Crédito"
+  },
+
+  "kpis": {
+    "total": "Total gasto",
+    "categoriesCount": "Categorias com gasto"
+  },
+
+  "transactionsCount": "{count, plural, =0 {Nenhum lançamento} one {# lançamento} other {# lançamentos}}",
+  "viewTransactions": "Ver transações de {name}",
+
+  "empty": {
+    "title": "Nenhum gasto neste período",
+    "description": "Assim que houver despesas, elas aparecem aqui agrupadas por categoria."
+  }
+}
