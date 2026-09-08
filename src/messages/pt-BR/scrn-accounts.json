@@ -49,6 +49,31 @@
     "delete": "Excluir"
   },
 
+  "detail": {
+    "back": "Voltar para contas",
+    "notFound": {
+      "title": "Conta não encontrada",
+      "description": "Esta conta não existe ou foi excluída.",
+      "button": "Voltar para contas"
+    },
+    "kpis": {
+      "balance": "Saldo atual",
+      "people": "Pessoas com movimento"
+    },
+    "people": {
+      "title": "Saldo por pessoa",
+      "description": "Quanto do saldo atual desta conta pertence a cada pessoa",
+      "selfBadge": "Você",
+      "unattributed": "Sem pessoa",
+      "transactionsCount": "{count, plural, =0 {Nenhum lançamento} one {# lançamento} other {# lançamentos}}",
+      "viewTransactions": "Ver transações de {name}",
+      "empty": {
+        "title": "Nenhum lançamento nesta conta",
+        "description": "Assim que houver lançamentos, o saldo de cada pessoa aparece aqui."
+      }
+    }
+  },
+
   "dialog": {
     "create": {
       "title": "Nova conta",

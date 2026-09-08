@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Link } from "@/i18n/navigation";
 import { BankIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -169,7 +170,13 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                       <Card
                         key={account.id}
                         className={cn(
-                          "max-w-85",
+                          // `relative` is what anchors the stretched
+                          // link on the account name below (its
+                          // `after:absolute after:inset-0` covers the
+                          // whole card, so clicking anywhere on it opens
+                          // the detail screen) — the actions menu opts
+                          // back out with its own `relative z-10`.
+                          "relative max-w-85",
                           account.status === "INACTIVE" && "opacity-60",
                         )}
                       >
@@ -186,9 +193,14 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                                 className={cn("size-5", color.icon)}
                               />
                             </span>
-                            {account.name}
+                            <Link
+                              href={`/accounts/${account.id}`}
+                              className="after:absolute after:inset-0 hover:underline"
+                            >
+                              {account.name}
+                            </Link>
                           </CardTitle>
-                          <CardAction>
+                          <CardAction className="relative z-10">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon-sm">

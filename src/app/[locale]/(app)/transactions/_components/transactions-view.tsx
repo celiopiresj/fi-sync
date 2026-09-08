@@ -165,10 +165,12 @@ export function TransactionsView({
   // link) opens the screen already scoped to that month instead of the
   // current one — page.tsx's own initial fetch mirrors this same
   // resolution so the two can't disagree on what "the default" is.
-  // `?person=`/`?category=`/`?type=` (set the same way `?month=` is — the
-  // projections screen's "Ver extrato" link, tasks/016) seed the sheet's
-  // own filters too, so a link can open the screen already scoped to a
-  // specific person/category/income-or-expense instead of just the month.
+  // `?person=`/`?category=`/`?type=`/`?account=` (set the same way
+  // `?month=` is — the projections screen's "Ver extrato" link,
+  // tasks/016, and the account detail screen's per-person rows) seed the
+  // sheet's own filters too, so a link can open the screen already
+  // scoped to a specific person/category/account/income-or-expense
+  // instead of just the month.
   const searchParams = useSearchParams();
   const [initialPeriod] = useState(
     () => parsePeriodKey(searchParams.get("month")) ?? currentPeriod(),
@@ -183,8 +185,12 @@ export function TransactionsView({
     // Débito is the screen's default tab (see the accountKind toggle
     // below) — page.tsx's own initial fetch mirrors this exact same
     // default so the cache seed stays valid (same reasoning as
-    // isDefaultFilters' own comment).
-    return { personId, categoryId, type, accountId: ALL_NON_CARD_ACCOUNTS_FILTER };
+    // isDefaultFilters' own comment). An explicit `?account=` wins over
+    // it: the tab that shows active is derived from whatever accountId
+    // ends up here (resolveAccountKind below), so a card account linked
+    // to opens on Crédito without needing its own param.
+    const accountId = searchParams.get("account") || ALL_NON_CARD_ACCOUNTS_FILTER;
+    return { personId, categoryId, type, accountId };
   });
   const [sheetFilters, setSheetFilters] = useState<SheetFilters>(initialSheetFilters);
   const [searchText, setSearchText] = useState("");

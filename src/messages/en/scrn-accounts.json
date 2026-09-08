@@ -49,6 +49,31 @@
     "delete": "Delete"
   },
 
+  "detail": {
+    "back": "Back to accounts",
+    "notFound": {
+      "title": "Account not found",
+      "description": "This account doesn't exist or was deleted.",
+      "button": "Back to accounts"
+    },
+    "kpis": {
+      "balance": "Current balance",
+      "people": "People with activity"
+    },
+    "people": {
+      "title": "Balance per person",
+      "description": "How much of this account's current balance belongs to each person",
+      "selfBadge": "You",
+      "unattributed": "No person",
+      "transactionsCount": "{count, plural, =0 {No transactions} one {# transaction} other {# transactions}}",
+      "viewTransactions": "View {name}'s transactions",
+      "empty": {
+        "title": "No transactions in this account",
+        "description": "Once there are transactions, each person's balance shows up here."
+      }
+    }
+  },
+
   "dialog": {
     "create": {
       "title": "New account",

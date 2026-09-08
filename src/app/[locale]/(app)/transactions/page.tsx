@@ -4,15 +4,17 @@ import { currentPeriod, parsePeriodKey, periodRange } from "./_lib/period";
 import { ALL_NON_CARD_ACCOUNTS_FILTER } from "./_constants/constants";
 
 type TransactionsPageProps = {
-  // `?month=yyyy-MM`, `?person=`, `?category=`, `?type=income|expenses` —
-  // set the same way (the projections screen's "Ver extrato" link,
-  // tasks/016) so this page opens already scoped to them instead of
-  // always the unfiltered current month.
+  // `?month=yyyy-MM`, `?person=`, `?category=`, `?type=income|expenses`,
+  // `?account=` — set the same way (the projections screen's "Ver
+  // extrato" link, tasks/016; the account detail screen's per-person
+  // rows) so this page opens already scoped to them instead of always
+  // the unfiltered current month.
   searchParams: Promise<{
     month?: string;
     person?: string;
     category?: string;
     type?: string;
+    account?: string;
   }>;
 };
 
@@ -26,7 +28,7 @@ export default async function TransactionsPage({
   // with exactly, or its query would treat this result as valid cached
   // data for a different filter set's query key and never refetch,
   // showing the wrong data until something else triggered a refetch.
-  const { month, person, category, type } = await searchParams;
+  const { month, person, category, type, account } = await searchParams;
   const { from, to } = periodRange(parsePeriodKey(month) ?? currentPeriod());
   const initialType = type === "income" || type === "expenses" ? type : undefined;
 
@@ -40,8 +42,10 @@ export default async function TransactionsPage({
       type: initialType,
       // Débito is the screen's default tab (TransactionsView's own
       // initialSheetFilters) — mirrored here so this initial fetch
-      // matches exactly, same reasoning as the comment above.
-      accountId: ALL_NON_CARD_ACCOUNTS_FILTER,
+      // matches exactly, same reasoning as the comment above. `?account=`
+      // narrows to one specific account instead, which also decides
+      // which tab opens active (resolveAccountKind, in the view).
+      accountId: account || ALL_NON_CARD_ACCOUNTS_FILTER,
     }),
   ]);
 
