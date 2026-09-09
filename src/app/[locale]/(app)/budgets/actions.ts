@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { parseCalendarDate } from "@/lib/date";
+import { effectiveDateWhere } from "@/lib/transaction-period";
 import { Prisma } from "@/generated/prisma/client";
 import {
   budgetSchema,
@@ -90,10 +91,16 @@ export async function getBudgetWithSpending(month: string) {
   const transactions = await prisma.transaction.findMany({
     where: {
       userId,
-      date: {
-        gte: parseCalendarDate(firstDay),
-        lte: parseCalendarDate(lastDay),
-      },
+      // A card purchase counts toward the month its invoice is DUE, not
+      // the month it was bought in — same rule every other period-
+      // scoped read in the app follows (listTransactions,
+      // getCategoryExpenseBreakdown, getMonthlyBalances; see
+      // src/lib/transaction-period.ts's own comment). Previously this
+      // used the transaction's own `date` for every account type,
+      // meaning a card purchase near the end of the month landed in
+      // this month's budget even when its invoice — and the money
+      // actually leaving an account — wouldn't be due until next month.
+      ...effectiveDateWhere(firstDay, lastDay),
       // Only expenses (negative amounts) count toward budget spending
       amount: { lt: 0 },
     },
