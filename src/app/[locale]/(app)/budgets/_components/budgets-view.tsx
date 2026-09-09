@@ -48,6 +48,7 @@ import type {
 } from "../_types/types";
 import { BudgetGroupSection } from "./budget-group-section";
 import { BudgetSheet } from "./form/budget-sheet";
+import { CopyPreviousConfirmDialog } from "./form/copy-previous-confirm-dialog";
 import { GroupManagerDialog } from "./form/group-manager-dialog";
 import { SummaryCards } from "./summary-cards";
 
@@ -92,6 +93,13 @@ export function BudgetsView({
     mode: "create" | "edit";
   }>({ open: false, mode: "create" });
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
+  // Only ever opened from the "Editar" menu's own "Copiar do mês
+  // anterior" item below — that's the one path where a budget already
+  // exists for the current month, so copying over it is destructive
+  // (replaces every current limit) and needs confirmation first. The
+  // empty-state's own copy shortcut has nothing to overwrite and skips
+  // this.
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
 
   // Toolbar state — search/status filter narrow which items render below;
   // viewMode (default "cards") picks BudgetGroupSection's item layout.
@@ -223,6 +231,11 @@ export function BudgetsView({
       toast.success(t("toast.copied"));
     }
     return result;
+  }
+
+  async function handleConfirmCopyFromPrevious() {
+    const result = await handleCopyFromPrevious();
+    if (!result.error) setCopyConfirmOpen(false);
   }
 
   // Group CRUD handlers. handleCreateGroup returns the result (not just
@@ -367,7 +380,7 @@ export function BudgetsView({
                     }>
                     {t("buttons.edit")}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={handleCopyFromPrevious}>
+                  <DropdownMenuItem onSelect={() => setCopyConfirmOpen(true)}>
                     {t("buttons.copyPrevious")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onSelect={() => setGroupDialogOpen(true)}>
@@ -425,6 +438,16 @@ export function BudgetsView({
         }
         isPending={mutations.isPending}
         onCreateGroup={handleCreateGroup}
+      />
+
+      {/* Copy-from-previous-month overwrite confirmation */}
+      <CopyPreviousConfirmDialog
+        open={copyConfirmOpen}
+        onOpenChange={setCopyConfirmOpen}
+        onConfirm={handleConfirmCopyFromPrevious}
+        isPending={mutations.isPending}
+        previousMonthLabel={previousMonthLabel}
+        currentMonthLabel={periodMonthNameLong}
       />
 
       {/* Group manager dialog */}

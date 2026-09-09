@@ -276,11 +276,40 @@ export async function copyBudgetFromPreviousMonth(
 
   if (!previousBudget) return { error: "no_previous" };
 
-  // Check if target month already has a budget
+  // Target month already has a budget — overwrite it (delete-then-
+  // recreate its items, same transaction shape updateBudget itself uses)
+  // rather than refusing, now that the caller (budgets-view.tsx's own
+  // copy-confirm dialog) always confirms this replaces the current
+  // month's limits first. Verified, real bug: this used to reject with
+  // "already_exists" here with no toast for that case anywhere in the
+  // UI, so the "Copiar do mês anterior" menu item — only ever shown once
+  // the current month already HAS a budget — silently did nothing on
+  // every single click.
   const existing = await prisma.budget.findUnique({
     where: { userId_month: { userId, month: currentMonthDate } },
   });
-  if (existing) return { error: "already_exists" };
+
+  if (existing) {
+    await prisma.$transaction([
+      prisma.budgetItem.deleteMany({ where: { budgetId: existing.id } }),
+      prisma.budget.update({
+        where: { id: existing.id },
+        data: {
+          expectedIncome: previousBudget.expectedIncome,
+          items: {
+            create: previousBudget.items.map((item) => ({
+              categoryId: item.categoryId,
+              groupId: item.groupId,
+              limit: item.limit,
+              sortOrder: item.sortOrder,
+            })),
+          },
+        },
+      }),
+    ]);
+
+    return { created: false };
+  }
 
   await prisma.budget.create({
     data: {
