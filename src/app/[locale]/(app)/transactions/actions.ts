@@ -798,6 +798,10 @@ async function createDebitTransactionRow(params: {
   amount: number;
   date: Date;
   recurrenceId?: string;
+  // Defaults to `value.status` (the form's own single answer) — the
+  // recurrence-generation loops below override this per occurrence
+  // instead, since only THEY know each occurrence's own date.
+  status?: DebitTransactionValues["status"];
 }) {
   const { value, amount, date } = params;
 
@@ -811,7 +815,7 @@ async function createDebitTransactionRow(params: {
       description: value.description,
       amount,
       date,
-      status: value.status,
+      status: params.status ?? value.status,
       paymentMethod:
         value.paymentMethod === "" ? undefined : value.paymentMethod,
       recurrenceId: params.recurrenceId,
@@ -840,6 +844,7 @@ export async function createDebitTransaction(data: DebitTransactionFormValues) {
 
   if (value.recurrence !== "none") {
     const startDate = parseCalendarDate(value.date);
+    const todayDate = parseCalendarDate(todayCalendarDate());
     const windowEnd = fromAppZoned(
       addMonths(toAppZoned(startDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
     );
@@ -870,6 +875,13 @@ export async function createDebitTransaction(data: DebitTransactionFormValues) {
         amount: signedAmount,
         date: occurrenceDate,
         recurrenceId: recurrence.id,
+        // Verified, real bug: every occurrence used to get the form's
+        // own `value.status` (whatever the user picked for THIS first
+        // charge) — a purchase entered as already paid stamped every
+        // future occurrence COMPLETED too, up to a year out. Each one's
+        // status has to follow its own date vs. today instead, same
+        // rule /recurrences' own createRecurrenceOccurrence follows.
+        status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
       });
       occurrenceDate = stepDate(occurrenceDate, value.recurrence);
     }
@@ -959,6 +971,7 @@ export async function updateDebitTransaction(
   });
 
   if (isConvertingToRecurrence && newRecurrenceId) {
+    const todayDate = parseCalendarDate(todayCalendarDate());
     const windowEnd = fromAppZoned(
       addMonths(toAppZoned(editedDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
     );
@@ -970,6 +983,10 @@ export async function updateDebitTransaction(
         amount: signedAmount,
         date: occurrenceDate,
         recurrenceId: newRecurrenceId,
+        // Same fix as createDebitTransaction's own recurrence loop —
+        // each generated occurrence's status follows its own date vs.
+        // today, not the edited row's `value.status`.
+        status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
       });
       occurrenceDate = stepDate(occurrenceDate, value.recurrence);
     }
@@ -1022,6 +1039,10 @@ async function createCreditTransactionRow(params: {
   installmentCount?: number;
   recurrenceId?: string;
   cursorDate: Date;
+  // Defaults to `value.status` (the form's own single answer) — the
+  // recurrence-generation loops below override this per occurrence
+  // instead, since only THEY know each occurrence's own date.
+  status?: CreditTransactionValues["status"];
 }) {
   const { value, amount, date, creditCardDetails, cursorDate } = params;
 
@@ -1035,7 +1056,7 @@ async function createCreditTransactionRow(params: {
       description: value.description,
       amount,
       date,
-      status: value.status,
+      status: params.status ?? value.status,
       installmentGroupId: params.installmentGroupId,
       installmentNumber: params.installmentNumber,
       installmentCount: params.installmentCount,
@@ -1110,6 +1131,7 @@ export async function createCreditTransaction(
   // can be extended/edited from that screen going forward.
   if (value.recurrence !== "none") {
     const startDate = parseCalendarDate(value.date);
+    const todayDate = parseCalendarDate(todayCalendarDate());
     const windowEnd = fromAppZoned(
       addMonths(toAppZoned(startDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
     );
@@ -1142,6 +1164,15 @@ export async function createCreditTransaction(
         creditCardDetails,
         recurrenceId: recurrence.id,
         cursorDate: occurrenceDate,
+        // Verified, real bug — this is the exact one behind the wrong
+        // "Gasto: R$X" totals reported on real data: every occurrence
+        // used to get the form's own `value.status` (whatever the user
+        // picked for THIS first charge), so a card purchase entered as
+        // already paid stamped every future occurrence COMPLETED too,
+        // up to a year out. Each one's status has to follow its own
+        // date vs. today instead, same rule /recurrences' own
+        // createRecurrenceOccurrence follows.
+        status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
       });
       occurrenceDate = stepDate(occurrenceDate, value.recurrence);
     }
@@ -1343,6 +1374,7 @@ export async function updateCreditTransaction(
       return { error: "Invalid account" };
     }
     const creditCardDetails = account.creditCardDetails;
+    const todayDate = parseCalendarDate(todayCalendarDate());
     const windowEnd = fromAppZoned(
       addMonths(toAppZoned(editedDate), RECURRENCE_GENERATION_WINDOW_MONTHS),
     );
@@ -1356,6 +1388,10 @@ export async function updateCreditTransaction(
         creditCardDetails,
         recurrenceId: newRecurrenceId,
         cursorDate: occurrenceDate,
+        // Same fix as createCreditTransaction's own recurrence loop —
+        // each generated occurrence's status follows its own date vs.
+        // today, not the edited row's `value.status`.
+        status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
       });
       occurrenceDate = stepDate(occurrenceDate, value.recurrence);
     }
