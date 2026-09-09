@@ -92,6 +92,7 @@ export async function listPeople() {
     phone: person.phone,
     colorStyle: person.colorStyle,
     isSelf: person.isSelf,
+    includeInBudget: person.includeInBudget,
     splitsCount: person._count.splits,
     balance: balanceByPersonId.get(person.id) ?? 0,
   }));
@@ -124,10 +125,16 @@ export async function createPerson(data: PersonFormValues) {
       phoneCountryCode: phone.phoneCountryCode ?? undefined,
       phone: phone.phone ?? undefined,
       colorStyle: result.data.colorStyle,
+      includeInBudget: result.data.includeInBudget,
     },
   });
 
   revalidatePath("/people");
+  // getBudgetWithSpending (budgets/actions.ts) sums every included
+  // person's own share of each category — a new person created with
+  // the toggle on shifts every month's spent-per-category totals, not
+  // just this route's own list.
+  if (result.data.includeInBudget) revalidatePath("/budgets");
   // Callers that create a person inline from another form (e.g. the
   // transaction form's "Cadastrar nova pessoa") use this to select the
   // new person immediately instead of just refreshing the list and
@@ -149,6 +156,11 @@ export async function updatePerson(id: string, data: PersonFormValues) {
   }
 
   const phone = splitPersonPhone(result.data.phone);
+  // The self person's own row never submits this field
+  // (person-form.tsx hides the toggle for it) — `existing.isSelf`
+  // guards against a stale/tampered client payload flipping it anyway,
+  // since self must always count regardless of this flag.
+  const includeInBudget = existing.isSelf ? false : result.data.includeInBudget;
 
   await prisma.person.update({
     where: { id },
@@ -157,10 +169,16 @@ export async function updatePerson(id: string, data: PersonFormValues) {
       phoneCountryCode: phone.phoneCountryCode,
       phone: phone.phone,
       colorStyle: result.data.colorStyle,
+      includeInBudget,
     },
   });
 
   revalidatePath("/people");
+  // getBudgetWithSpending (budgets/actions.ts) sums every included
+  // person's own share of each category — only worth revalidating that
+  // route when the flag actually flipped, not on every unrelated edit
+  // (a renamed phone number doesn't change any budget total).
+  if (includeInBudget !== existing.includeInBudget) revalidatePath("/budgets");
   return { error: null };
 }
 

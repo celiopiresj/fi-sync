@@ -59,6 +59,10 @@
     },
     "color": {
       "label": "Color"
+    },
+    "includeInBudget": {
+      "label": "Include in budget",
+      "help": "This person's own share of split expenses starts counting toward the budget's spending per category, alongside your own."
     }
   },
 

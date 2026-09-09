@@ -20,6 +20,15 @@ export const personSchema = z.object({
   // person created before this field existed just falls back to
   // getPersonColorClasses' hash-based color (people/_lib/person-avatar.ts).
   colorStyle: z.string().optional(),
+  // Opt-in: this person's own share of split transactions counts toward
+  // the monthly budget's spending totals, in addition to the self
+  // ("Eu") Person, which always counts regardless — see Person's own
+  // comment in prisma/schema.prisma. Not shown in the form for the self
+  // person itself (person-form.tsx), so it's meaningless there. Optional
+  // (defaults to false) so createPersonInline's minimal
+  // `{ name, phone }` payload (transactions/_components/form/
+  // create-person-inline.tsx) doesn't have to know about it.
+  includeInBudget: z.boolean().optional().default(false),
 });
 
 export type PersonFormValues = z.input<typeof personSchema>;
@@ -29,6 +38,7 @@ export const emptyPersonFormValues: PersonFormValues = {
   name: "",
   phone: "",
   colorStyle: AVAILABLE_COLORS[0].class,
+  includeInBudget: false,
 };
 
 // Validated with libphonenumber-js instead of a regex, since valid

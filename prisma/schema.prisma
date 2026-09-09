@@ -356,6 +356,15 @@ model Person {
   // instead of its full amount.
   isSelf Boolean @default(false)
 
+  // Whether this person's own share of split transactions counts toward
+  // the monthly Budget's spending-per-category totals, in addition to
+  // the self ("Eu") Person, which always counts regardless of this flag
+  // (see getBudgetWithSpending, budgets/actions.ts) — a budget defaults
+  // to tracking only the user's own money, with this as the opt-in for
+  // "count so-and-so's spending toward it too" (e.g. a shared household
+  // budget). Meaningless (and left false) on the isSelf Person itself.
+  includeInBudget Boolean @default(false)
+
   splits           TransactionSplit[]
   recurrenceSplits RecurrenceSplit[]
   loans            Loan[]

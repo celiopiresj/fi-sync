@@ -88,6 +88,19 @@ export async function getBudgetWithSpending(month: string) {
   const firstDay = monthStr(monthValue);
   const lastDay = lastDayOfMonthStr(monthValue);
 
+  // A budget tracks the user's own money by default — the self ("Eu")
+  // Person always counts, plus anyone else explicitly opted in via
+  // Person.includeInBudget (see that field's own comment in
+  // prisma/schema.prisma). A split transaction only contributes the
+  // portion actually owned by one of these people, not its full amount
+  // — same reasoning getCategoryExpenseBreakdown's own person-filtered
+  // path follows (transactions/actions.ts).
+  const includedPeople = await prisma.person.findMany({
+    where: { userId, OR: [{ isSelf: true }, { includeInBudget: true }] },
+    select: { id: true },
+  });
+  const includedPersonIds = new Set(includedPeople.map((person) => person.id));
+
   const transactions = await prisma.transaction.findMany({
     where: {
       userId,
@@ -104,18 +117,33 @@ export async function getBudgetWithSpending(month: string) {
       // Only expenses (negative amounts) count toward budget spending
       amount: { lt: 0 },
     },
-    select: { categoryId: true, amount: true },
+    select: {
+      categoryId: true,
+      amount: true,
+      splits: { select: { personId: true, amount: true } },
+    },
   });
 
   // Sum spending by category (amounts are negative, convert to positive)
   const spendingByCategory = new Map<string, number>();
   for (const tx of transactions) {
     if (!tx.categoryId) continue;
+    // An unattributed transaction (no splits at all) is implicitly the
+    // user's own — same convention every other self-share read in this
+    // app follows (see projections/_lib/self-share.ts) — so it always
+    // counts in full, since self is always in `includedPersonIds`. A
+    // split transaction only contributes whichever splits belong to an
+    // included person; anyone else's share of the same purchase (e.g. a
+    // roommate not opted into the budget) is left out.
+    const share =
+      tx.splits.length === 0
+        ? Math.abs(Number(tx.amount))
+        : tx.splits
+            .filter((split) => includedPersonIds.has(split.personId))
+            .reduce((sum, split) => sum + Math.abs(Number(split.amount)), 0);
+    if (share === 0) continue;
     const current = spendingByCategory.get(tx.categoryId) ?? 0;
-    spendingByCategory.set(
-      tx.categoryId,
-      current + Math.abs(Number(tx.amount)),
-    );
+    spendingByCategory.set(tx.categoryId, current + share);
   }
 
   const items = budget.items.map((item) => {
@@ -289,6 +317,16 @@ export async function suggestBudgetLimits(): Promise<
 > {
   const userId = await requireUserId();
 
+  // Same "self + explicitly included people" scope as
+  // getBudgetWithSpending's own spending totals above — a suggested
+  // limit built from the whole household's history wouldn't match what
+  // the budget actually measures once it's created.
+  const includedPeople = await prisma.person.findMany({
+    where: { userId, OR: [{ isSelf: true }, { includeInBudget: true }] },
+    select: { id: true },
+  });
+  const includedPersonIds = new Set(includedPeople.map((person) => person.id));
+
   // Look back N months from current date
   const now = new Date();
   const startDate = new Date(now);
@@ -301,7 +339,11 @@ export async function suggestBudgetLimits(): Promise<
       amount: { lt: 0 }, // Only expenses
       categoryId: { not: null },
     },
-    select: { categoryId: true, amount: true },
+    select: {
+      categoryId: true,
+      amount: true,
+      splits: { select: { personId: true, amount: true } },
+    },
   });
 
   if (transactions.length === 0) {
@@ -312,11 +354,15 @@ export async function suggestBudgetLimits(): Promise<
   const spendingByCategory = new Map<string, number>();
   for (const tx of transactions) {
     if (!tx.categoryId) continue;
+    const share =
+      tx.splits.length === 0
+        ? Math.abs(Number(tx.amount))
+        : tx.splits
+            .filter((split) => includedPersonIds.has(split.personId))
+            .reduce((sum, split) => sum + Math.abs(Number(split.amount)), 0);
+    if (share === 0) continue;
     const current = spendingByCategory.get(tx.categoryId) ?? 0;
-    spendingByCategory.set(
-      tx.categoryId,
-      current + Math.abs(Number(tx.amount)),
-    );
+    spendingByCategory.set(tx.categoryId, current + share);
   }
 
   // Fetch category names

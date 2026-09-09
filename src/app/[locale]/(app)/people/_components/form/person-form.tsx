@@ -13,6 +13,7 @@ import {
 } from "../../_schema/schema";
 import { joinPersonPhone } from "../../_lib/phone";
 import { ColorPicker, AVAILABLE_COLORS } from "@/components/form/color-picker";
+import { Switch } from "@/components/ui/switch";
 import type { PersonRow } from "../../_types/types";
 
 function toFormValues(row: PersonRow | null): PersonFormValues {
@@ -21,6 +22,7 @@ function toFormValues(row: PersonRow | null): PersonFormValues {
     name: row.name,
     phone: joinPersonPhone(row.phoneCountryCode, row.phone) ?? "",
     colorStyle: row.colorStyle ?? AVAILABLE_COLORS[0].class,
+    includeInBudget: row.includeInBudget,
   };
 }
 
@@ -110,6 +112,31 @@ export function PersonForm({
           </div>
         )}
       </form.Field>
+
+      {/* Meaningless on the self ("Eu") person — self always counts
+          toward the budget regardless of this flag (see Person's own
+          comment in prisma/schema.prisma), so the toggle only makes
+          sense for anyone else. */}
+      {!initialValues?.isSelf && (
+        <form.Field name="includeInBudget">
+          {(field) => (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border p-3">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">
+                  {t("fields.includeInBudget.label")}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {t("fields.includeInBudget.help")}
+                </span>
+              </div>
+              <Switch
+                checked={field.state.value}
+                onCheckedChange={field.handleChange}
+              />
+            </div>
+          )}
+        </form.Field>
+      )}
 
       <FormError title={t("toast.error")} description={serverError} />
 

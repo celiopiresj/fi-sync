@@ -59,6 +59,10 @@
     },
     "color": {
       "label": "Cor"
+    },
+    "includeInBudget": {
+      "label": "Incluir no orçamento",
+      "help": "A parte desta pessoa nas despesas divididas passa a contar no gasto por categoria do orçamento, além da sua própria."
     }
   },
 
