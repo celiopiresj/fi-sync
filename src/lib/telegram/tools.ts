@@ -415,8 +415,16 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
     splits: splits.map((split) => ({ personId: split.person.id, amount: split.amount })),
     type: input.kind,
   };
+  // Only meaningful for the single-transaction/installment paths below,
+  // where the user is telling the bot about ONE specific charge. A
+  // recurrence's occurrences are never asked about individually — same
+  // as the /recurrences screen's own createRecurrenceOccurrence
+  // (recurrences/actions.ts), each one's status is derived from its own
+  // date vs. today, not from this flag (see the two recurrence loops
+  // below).
   const status = input.pending ? ("PENDING" as const) : ("COMPLETED" as const);
   const startDate = parseCalendarDate(date);
+  const todayDate = parseCalendarDate(todayCalendarDate());
 
   if (!isCard) {
     // A recurrence creates the rule row plus a rolling window of real
@@ -452,7 +460,13 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
             description: input.description,
             amount: signedAmount,
             date: occurrenceDate,
-            status,
+            // Verified, real bug: this used to be the flat `status`
+            // above for every occurrence, so a recurrence whose first
+            // charge was already paid got its whole 12-month generated
+            // window stamped COMPLETED, including occurrences a year
+            // out — future ones must be PENDING regardless of the
+            // first one's own paid/pending state.
+            status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
             paymentMethod: input.paymentMethod,
             recurrenceId: recurrence.id,
             splits: templateSplits ? { create: templateSplits } : undefined,
@@ -502,6 +516,11 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
     installmentNumber?: number;
     installmentCount?: number;
     recurrenceId?: string;
+    // Defaults to the flat `status` above (the single-transaction/
+    // installment callers' own paid/pending answer) — the recurrence
+    // loop below overrides this per occurrence instead, since only IT
+    // knows each occurrence's own date.
+    status?: "PENDING" | "COMPLETED";
   }) => {
     const rowSplits = resolveSplitsCreateInput(splitsValue, params.amount);
 
@@ -513,7 +532,7 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
         description: input.description,
         amount: params.amount,
         date: params.date,
-        status,
+        status: params.status ?? status,
         installmentGroupId: params.installmentGroupId,
         installmentNumber: params.installmentNumber,
         installmentCount: params.installmentCount,
@@ -567,6 +586,11 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
         date: occurrenceDate,
         cursorDate: occurrenceDate,
         recurrenceId: recurrence.id,
+        // Same fix as the debit recurrence loop above: each occurrence's
+        // status follows its own date vs. today, not the flat `status`
+        // (which used to stamp every future occurrence COMPLETED
+        // whenever the first charge was already paid).
+        status: occurrenceDate <= todayDate ? "COMPLETED" : "PENDING",
       });
       generated++;
       occurrenceDate = stepDate(occurrenceDate, input.recurrence);
@@ -577,7 +601,6 @@ export async function runCreateLancamento(userId: string, input: LancamentoInput
   }
 
   const installmentGroupId = input.installments > 1 ? crypto.randomUUID() : undefined;
-  const todayDate = parseCalendarDate(todayCalendarDate());
   let cursorDate = startDate;
   const invoiceDueDates: string[] = [];
 
