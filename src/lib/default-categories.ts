@@ -79,6 +79,7 @@ export const DEFAULT_CATEGORIES: {
 }[] = [
   // Expense
   { name: "Alimentação", type: "EXPENSE", icon: "ForkKnife", colorStyle: ORANGE },
+  { name: "Lanches e Deliverys", type: "EXPENSE", icon: "Hamburger", colorStyle: AMBER },
   { name: "Transporte", type: "EXPENSE", icon: "Car", colorStyle: SKY },
   { name: "Moradia", type: "EXPENSE", icon: "House", colorStyle: INDIGO },
   { name: "Lazer", type: "EXPENSE", icon: "Confetti", colorStyle: PURPLE },
