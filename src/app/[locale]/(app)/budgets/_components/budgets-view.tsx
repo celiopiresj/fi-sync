@@ -50,6 +50,7 @@ import { BudgetGroupSection } from "./budget-group-section";
 import { BudgetSheet } from "./form/budget-sheet";
 import { CopyPreviousConfirmDialog } from "./form/copy-previous-confirm-dialog";
 import { GroupManagerDialog } from "./form/group-manager-dialog";
+import { SuggestLimitsConfirmDialog } from "./form/suggest-limits-confirm-dialog";
 import { SummaryCards } from "./summary-cards";
 
 type ItemsFilter = "all" | "exceeded" | "within";
@@ -100,6 +101,11 @@ export function BudgetsView({
   // empty-state's own copy shortcut has nothing to overwrite and skips
   // this.
   const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
+  // Only ever opened from the empty state's own "Sugerir com base nos
+  // últimos N meses" button — nothing to overwrite there (mode is always
+  // effectively "create"), so this is a plain "do you want this?"
+  // confirmation, not a destructive one like copyConfirmOpen above.
+  const [suggestConfirmOpen, setSuggestConfirmOpen] = useState(false);
 
   // Toolbar state — search/status filter narrow which items render below;
   // viewMode (default "cards") picks BudgetGroupSection's item layout.
@@ -238,6 +244,37 @@ export function BudgetsView({
     if (!result.error) setCopyConfirmOpen(false);
   }
 
+  // Suggests each category's own limit from its average spend over the
+  // last SUGGESTION_MONTHS_COUNT months, then creates the current
+  // month's budget from those straight away (same "apply now, adjust
+  // later" flow as handleCopyFromPrevious above — expectedIncome starts
+  // at 0 since suggestBudgetLimits only ever averages EXPENSE history,
+  // there's no income figure to suggest here). Only reachable from the
+  // empty state (no budget for this month yet), so unlike copying there
+  // is nothing to overwrite and nothing to confirm beyond "yes, do this."
+  async function handleConfirmSuggestLimits() {
+    const suggestResult = await mutations.suggestLimits();
+    if (suggestResult.error === "no_history") {
+      toast.error(t("errors.noTransactionHistory.title"), {
+        description: t("errors.noTransactionHistory.description"),
+      });
+      return;
+    }
+    if (suggestResult.error || !suggestResult.suggestions) return;
+
+    const createResult = await mutations.createBudget(monthKey, {
+      expectedIncome: "0",
+      items: suggestResult.suggestions.map((suggestion) => ({
+        categoryId: suggestion.categoryId,
+        limit: String(suggestion.averageSpent),
+      })),
+    });
+    if (!createResult.error) {
+      toast.success(t("toast.suggested"));
+      setSuggestConfirmOpen(false);
+    }
+  }
+
   // Group CRUD handlers. handleCreateGroup returns the result (not just
   // void) so BudgetForm's own inline "new group" prompt — reached from
   // the per-item group picker, not just this screen's "Manage Groups"
@@ -319,7 +356,7 @@ export function BudgetsView({
               <Button
                 size="sm"
                 variant="outline"
-                onClick={handleCopyFromPrevious}
+                onClick={() => setSuggestConfirmOpen(true)}
                 disabled={mutations.isPending}>
                 {t("empty.createFromAverage")}
               </Button>
@@ -448,6 +485,14 @@ export function BudgetsView({
         isPending={mutations.isPending}
         previousMonthLabel={previousMonthLabel}
         currentMonthLabel={periodMonthNameLong}
+      />
+
+      {/* Suggest-limits-from-history confirmation */}
+      <SuggestLimitsConfirmDialog
+        open={suggestConfirmOpen}
+        onOpenChange={setSuggestConfirmOpen}
+        onConfirm={handleConfirmSuggestLimits}
+        isPending={mutations.isPending}
       />
 
       {/* Group manager dialog */}

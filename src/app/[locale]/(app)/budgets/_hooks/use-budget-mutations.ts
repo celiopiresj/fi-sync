@@ -6,6 +6,7 @@ import {
   createBudget,
   updateBudget,
   copyBudgetFromPreviousMonth,
+  suggestBudgetLimits,
   createBudgetGroup,
   updateBudgetGroup,
   deleteBudgetGroup,
@@ -41,6 +42,14 @@ export function useBudgetMutations(invalidate: () => void) {
     onSuccess: (result) => {
       if (!result.error) invalidate();
     },
+  });
+
+  // No own `invalidate()` — this only reads/computes suggestions, it
+  // never writes a Budget itself. The follow-up `createBudget` call the
+  // caller makes with those suggestions already invalidates via its own
+  // onSuccess above.
+  const suggestMutation = useMutation({
+    mutationFn: () => suggestBudgetLimits(),
   });
 
   const createGroupMutation = useMutation({
@@ -85,6 +94,10 @@ export function useBudgetMutations(invalidate: () => void) {
       (month: string) => copyMutation.mutateAsync(month),
       [copyMutation],
     ),
+    suggestLimits: useCallback(
+      () => suggestMutation.mutateAsync(),
+      [suggestMutation],
+    ),
     createGroup: useCallback(
       (values: BudgetGroupFormValues) =>
         createGroupMutation.mutateAsync(values),
@@ -102,7 +115,8 @@ export function useBudgetMutations(invalidate: () => void) {
     isPending:
       createMutation.isPending ||
       updateMutation.isPending ||
-      copyMutation.isPending,
+      copyMutation.isPending ||
+      suggestMutation.isPending,
     isGroupPending:
       createGroupMutation.isPending ||
       updateGroupMutation.isPending ||
