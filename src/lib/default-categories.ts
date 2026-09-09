@@ -84,6 +84,7 @@ export const DEFAULT_CATEGORIES: {
   { name: "Moradia", type: "EXPENSE", icon: "House", colorStyle: INDIGO },
   { name: "Lazer", type: "EXPENSE", icon: "Confetti", colorStyle: PURPLE },
   { name: "Saúde", type: "EXPENSE", icon: "Heartbeat", colorStyle: ROSE },
+  { name: "Cuidados Pessoais", type: "EXPENSE", icon: "Shower", colorStyle: FUCHSIA },
   { name: "Educação", type: "EXPENSE", icon: "GraduationCap", colorStyle: BLUE },
   { name: "Compras", type: "EXPENSE", icon: "ShoppingBag", colorStyle: PINK },
   { name: "Vestuário", type: "EXPENSE", icon: "TShirt", colorStyle: FUCHSIA },
