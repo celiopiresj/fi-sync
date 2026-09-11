@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { subDays } from "date-fns";
-import { ArrowLeftIcon, PlusIcon, ReceiptIcon } from "@phosphor-icons/react";
+import { ArrowLeftIcon, PencilSimpleIcon, PlusIcon, ReceiptIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -22,6 +22,7 @@ import { formatPersonName } from "@/lib/format-person-name";
 import { DATE_ONLY_FORMAT_OPTIONS, dateOnlyKey } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { Column, Row } from "@tanstack/react-table";
+import { EditPaymentDateDialog } from "./edit-payment-date-dialog";
 import { PayInvoiceDialog } from "./pay-invoice-dialog";
 import { InvoiceTransactionFiltersSheet } from "./invoice-transaction-filters-sheet";
 import {
@@ -111,6 +112,12 @@ export function InvoiceDetailView({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [payOpen, setPayOpen] = useState(false);
+  // Which payment's date is being edited (its id), or null when the
+  // dialog is closed — see EditPaymentDateDialog's own comment on why
+  // only the date is editable here.
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const editingPayment =
+    invoice.payments.find((payment) => payment.id === editingPaymentId) ?? null;
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<TransactionRow | null>(
     null,
@@ -385,7 +392,7 @@ export function InvoiceDetailView({
       // header/cell formatting of its own) has to be dropped here or it
       // shows up as a genuine, oddly-raw visible column instead.
       ).filter((column) => column.id !== "date"),
-    [tTransactions, tCommon, format, handleMarkCompleted],
+    [tTransactions, tCommon, format, handleMarkCompleted, setDialogState, setDeletingTransaction],
   );
 
   async function handleSubmitTransaction(
@@ -519,6 +526,16 @@ export function InvoiceDetailView({
     router.refresh();
   }
 
+  // Same reasoning as handlePaid above, minus invoice-people-owed/
+  // credit-card-accounts — moving a payment's date never changes how
+  // much it covers or who, only which account balance/month it lands
+  // in.
+  function handlePaymentDateUpdated() {
+    queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    router.refresh();
+  }
+
   const emptyStateNode = (
     <Empty className="border-none py-12">
       <EmptyHeader>
@@ -574,6 +591,8 @@ export function InvoiceDetailView({
       tTransactions,
       handleBulkCategorize,
       handleBulkStatusChange,
+      setSelectedIds,
+      setIsBulkDeleteOpen,
     ],
   );
 
@@ -673,9 +692,22 @@ export function InvoiceDetailView({
                         account: accountName,
                       })}
                     </span>
-                    <span className="shrink-0 text-sm font-medium tabular-nums text-negative">
-                      {money(payment.amount)}
-                    </span>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className="text-sm font-medium tabular-nums text-negative">
+                        {money(payment.amount)}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setEditingPaymentId(payment.id)}
+                      >
+                        <PencilSimpleIcon />
+                        <span className="sr-only">
+                          {t("detail.payments.editDate.title")}
+                        </span>
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -786,6 +818,18 @@ export function InvoiceDetailView({
         accounts={accounts}
         onPaid={handlePaid}
       />
+
+      {editingPayment && (
+        <EditPaymentDateDialog
+          open={editingPaymentId !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditingPaymentId(null);
+          }}
+          paymentId={editingPayment.id}
+          currentPaidAt={dateOnlyKey(editingPayment.paidAt)}
+          onUpdated={handlePaymentDateUpdated}
+        />
+      )}
 
       <CreditTransactionSheet
         open={dialogState !== null}

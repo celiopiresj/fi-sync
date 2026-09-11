@@ -103,7 +103,15 @@
     "payments": {
       "title": "Pagamentos",
       "empty": "Nenhum pagamento registrado ainda",
-      "row": "{date} · {account}"
+      "row": "{date} · {account}",
+      "editDate": {
+        "title": "Editar data do pagamento",
+        "description": "Ajuste a data em que esse pagamento realmente aconteceu. O valor, a conta e a quem ele se refere não mudam.",
+        "dateLabel": "Data do pagamento",
+        "cancel": "Cancelar",
+        "confirm": "Salvar",
+        "toast": "Data do pagamento atualizada"
+      }
     },
     "markPaid": {
       "button": "Registrar pagamento",

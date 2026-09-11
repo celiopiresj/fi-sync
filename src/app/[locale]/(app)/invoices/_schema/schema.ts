@@ -45,6 +45,16 @@ export const emptyPayInvoiceFormValues: PayInvoiceFormValues = {
   allocations: [],
 };
 
+// Editing an already-registered payment's own date (updateInvoicePaymentDate,
+// actions.ts) — deliberately just this one field, unlike payInvoiceSchema
+// above: the amount/account/who-it-settled are locked in once a payment
+// exists, only WHEN it happened is ever correctable after the fact.
+export const editPaymentDateSchema = z.object({
+  paidAt: z.string().min(1),
+});
+
+export type EditPaymentDateFormValues = z.input<typeof editPaymentDateSchema>;
+
 // Cross-field check that can't live in the static schema above — needs
 // the invoice's own live remainingDue, known only at the call site, not
 // something the static shape can encode. Applied via `superRefine`,

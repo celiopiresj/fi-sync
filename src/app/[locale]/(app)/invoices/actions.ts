@@ -638,3 +638,47 @@ export async function payInvoice(id: string, data: PayInvoiceFormValues) {
   revalidatePath("/projections");
   return { error: null };
 }
+
+// Corrects WHEN a payment happened (e.g. it was actually paid a day
+// earlier/later than what got typed at the time) without touching
+// anything about how much, by whom, or what it settled — those all stay
+// exactly as payInvoice originally computed them. Kept in lockstep with
+// the settlement Transaction's own `date` (payInvoice sets both to the
+// same value at creation, see its own comment) so the two can't drift
+// apart — this is the one legitimate way to edit either after the fact,
+// since the plain transaction edit form refuses this row entirely (see
+// transactions/_lib/special-transaction.ts).
+export async function updateInvoicePaymentDate(paymentId: string, paidAtStr: string) {
+  const userId = await requireUserId();
+
+  if (!paidAtStr) return { error: "Invalid data" };
+
+  const payment = await prisma.invoicePayment.findFirst({
+    where: { id: paymentId, invoice: { account: { userId } } },
+    select: { id: true, invoiceId: true, transactionId: true },
+  });
+  if (!payment) return { error: "Not found" };
+
+  const paidAt = parseCalendarDate(paidAtStr);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.invoicePayment.update({
+      where: { id: payment.id },
+      data: { paidAt },
+    });
+    await tx.transaction.update({
+      where: { id: payment.transactionId },
+      data: { date: paidAt },
+    });
+    // Invoice.paidAt is the latest of its payments' own dates — moving
+    // this one (the only payment, in the common case) can change that.
+    await recomputeInvoiceStatus(tx, payment.invoiceId);
+  });
+
+  revalidatePath("/invoices");
+  revalidatePath(`/invoices/${payment.invoiceId}`);
+  revalidatePath("/accounts");
+  revalidatePath("/transactions");
+  revalidatePath("/projections");
+  return { error: null };
+}
