@@ -445,6 +445,29 @@
       "this": "Only this installment",
       "all": "All {total} installments",
       "cancel": "Cancel"
+    },
+    "special": {
+      "initialBalance": {
+        "title": "Initial balance",
+        "description": "This transaction represents an account's opening balance — it isn't edited as a regular transaction. Adjust the amount from the Accounts screen.",
+        "goTo": "Go to Accounts"
+      },
+      "investmentMovement": {
+        "title": "Investment movement",
+        "description": "This transaction is a contribution, withdrawal, or yield — it's managed from the investment account's own screen, not as a regular transaction.",
+        "goTo": "Go to the investment account"
+      },
+      "loanInstallment": {
+        "title": "Loan installment",
+        "description": "This transaction is a loan installment payment — it's managed from the loan's own screen, not as a regular transaction.",
+        "goTo": "Go to the loan"
+      },
+      "invoicePayment": {
+        "title": "Invoice payment",
+        "description": "This transaction is a card invoice payment — it's managed from the invoice's own screen, not as a regular transaction.",
+        "goTo": "Go to the invoice"
+      },
+      "close": "Close"
     }
   },
 

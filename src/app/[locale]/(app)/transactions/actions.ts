@@ -227,6 +227,17 @@ export async function listTransactions(filters: TransactionFilters = {}) {
       transactionInvoice: {
         include: { invoice: { select: { dueDate: true } } },
       },
+      // Set only when THIS row IS the settlement for a loan installment
+      // or a card invoice payment (as opposed to transactionInvoice
+      // above, set on the original card purchases an invoice is made
+      // of) — existence alone (plus `isInitialBalance`/
+      // `investmentMovementKind`, already plain columns `include`
+      // brings along for free) is what resolveSpecialTransactionKind
+      // (_lib/special-transaction.ts) uses to redirect the edit sheet
+      // to that row's own real management screen instead of the plain
+      // debit/credit form, which doesn't understand any of these.
+      loanInstallment: { select: { loanId: true } },
+      invoicePayment: { select: { invoiceId: true } },
     },
     orderBy: { date: "desc" },
   });
@@ -281,6 +292,8 @@ export async function getTransactionById(id: string) {
       transactionInvoice: {
         include: { invoice: { select: { dueDate: true } } },
       },
+      loanInstallment: { select: { loanId: true } },
+      invoicePayment: { select: { invoiceId: true } },
     },
   });
   if (!transaction) return null;

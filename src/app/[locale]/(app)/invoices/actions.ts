@@ -186,6 +186,16 @@ export async function getInvoiceDetail(id: string) {
               transactionInvoice: {
                 include: { invoice: { select: { dueDate: true } } },
               },
+              // Also structurally required for TransactionRow (see
+              // resolveSpecialTransactionKind, transactions/_lib) — a
+              // row shown here is one of this invoice's own PURCHASES,
+              // never the settlement transaction that pays the whole
+              // invoice off, so these are always null in practice; kept
+              // for the same type-compatibility reason as
+              // transactionInvoice above, not because either is ever
+              // expected to be set on a purchase row.
+              loanInstallment: { select: { loanId: true } },
+              invoicePayment: { select: { invoiceId: true } },
             },
           },
         },

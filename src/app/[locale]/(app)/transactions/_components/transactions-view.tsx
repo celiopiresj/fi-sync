@@ -48,6 +48,10 @@ import {
 } from "../_constants/constants";
 import { formatPersonName } from "@/lib/format-person-name";
 import {
+  resolveSpecialTransactionKind,
+  type SpecialTransactionKind,
+} from "../_lib/special-transaction";
+import {
   currentPeriod,
   parsePeriodKey,
   periodRange,
@@ -83,6 +87,7 @@ import { BulkActionsBar } from "./table/bulk-actions-bar";
 import { getTransactionColumns } from "./table/columns";
 import { FiltersSheet } from "./table/filters-sheet";
 import { ImportStatementSheet } from "./import/import-statement-sheet";
+import { SpecialTransactionDialog } from "./special-transaction-dialog";
 import { SummaryCards } from "./table/summary-cards";
 import { TransactionMobileList } from "./table/transaction-mobile-list";
 
@@ -207,6 +212,12 @@ export function TransactionsView({
   }
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
+  // Set instead of dialogState whenever the row being "edited" is a
+  // special one (resolveSpecialTransactionKind) — swaps the normal
+  // debit/credit edit sheet for SpecialTransactionDialog's own
+  // redirect-to-the-real-owner explanation.
+  const [specialTransaction, setSpecialTransaction] =
+    useState<SpecialTransactionKind | null>(null);
   // Its own flag rather than another DialogState kind: the import sheet
   // has no mode/prefill/row of its own, and folding it into that union
   // would make every `dialogState.kind === "debit"` check upstream carry
@@ -458,6 +469,22 @@ export function TransactionsView({
     [invalidate, t],
   );
 
+  // Shared "Editar" entry point for both the table and the mobile list
+  // (their own actions.onEdit below) — a special row (see
+  // resolveSpecialTransactionKind's own comment) opens
+  // SpecialTransactionDialog instead of the plain debit/credit sheet,
+  // which has no idea how to edit an opening balance, an investment
+  // movement, a loan installment, or an invoice payment without
+  // desyncing whatever screen actually owns it.
+  const handleEditRow = useCallback((row: TransactionRow) => {
+    const special = resolveSpecialTransactionKind(row);
+    if (special) {
+      setSpecialTransaction(special);
+      return;
+    }
+    setDialogState({ mode: "edit", kind: kindForRow(row), row });
+  }, []);
+
   const columns = useMemo(
     () =>
       getTransactionColumns(
@@ -489,8 +516,7 @@ export function TransactionsView({
             format.number(value, { style: "currency", currency: "BRL" }),
           ),
         {
-          onEdit: (row) =>
-            setDialogState({ mode: "edit", kind: kindForRow(row), row }),
+          onEdit: handleEditRow,
           onDuplicate: (row) =>
             setDialogState({
               mode: "create",
@@ -509,7 +535,7 @@ export function TransactionsView({
         // purchase date — see columns.tsx's dateColumn comment.
         true,
       ),
-    [t, tCommon, format, sheetFilters.accountId, handleMarkCompleted],
+    [t, tCommon, format, sheetFilters.accountId, handleMarkCompleted, handleEditRow],
   );
 
   // Dispatches to the create/update action matching whichever sheet is
@@ -1060,8 +1086,7 @@ export function TransactionsView({
               menuDelete: t("menu.delete"),
             }}
             actions={{
-              onEdit: (row) =>
-                setDialogState({ mode: "edit", kind: kindForRow(row), row }),
+              onEdit: handleEditRow,
               onDuplicate: (row) =>
                 setDialogState({
                   mode: "create",
@@ -1075,6 +1100,14 @@ export function TransactionsView({
           />
         </div>
       </div>
+
+      <SpecialTransactionDialog
+        open={specialTransaction !== null}
+        onOpenChange={(open) => {
+          if (!open) setSpecialTransaction(null);
+        }}
+        special={specialTransaction}
+      />
 
       <DebitTransactionSheet
         open={dialogState !== null && dialogState.kind === "debit"}

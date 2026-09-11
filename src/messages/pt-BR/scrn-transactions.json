@@ -445,6 +445,29 @@
       "this": "Apenas esta parcela",
       "all": "Todas as {total} parcelas",
       "cancel": "Cancelar"
+    },
+    "special": {
+      "initialBalance": {
+        "title": "Saldo inicial",
+        "description": "Esta transação representa o saldo inicial de uma conta — ela não é editada como um lançamento comum. Ajuste o valor na tela de Contas.",
+        "goTo": "Ir para Contas"
+      },
+      "investmentMovement": {
+        "title": "Movimentação de investimento",
+        "description": "Esta transação é um aporte, resgate ou rendimento — ela é controlada pela tela da própria conta de investimento, não como um lançamento comum.",
+        "goTo": "Ir para a conta de investimento"
+      },
+      "loanInstallment": {
+        "title": "Parcela de empréstimo",
+        "description": "Esta transação é o pagamento de uma parcela de empréstimo — ela é controlada pela tela do empréstimo, não como um lançamento comum.",
+        "goTo": "Ir para o empréstimo"
+      },
+      "invoicePayment": {
+        "title": "Pagamento de fatura",
+        "description": "Esta transação é o pagamento de uma fatura de cartão — ela é controlada pela tela da fatura, não como um lançamento comum.",
+        "goTo": "Ir para a fatura"
+      },
+      "close": "Fechar"
     }
   },
 

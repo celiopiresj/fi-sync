@@ -45,6 +45,11 @@ import type { PersonStatement, StatementPeriod } from "../_types/types";
 // create/edit the same kind of rows filtered to one person.
 import { DebitTransactionSheet } from "../../../transactions/_components/form/debit-transaction-sheet";
 import { CreditTransactionSheet } from "../../../transactions/_components/form/credit-transaction-sheet";
+import { SpecialTransactionDialog } from "../../../transactions/_components/special-transaction-dialog";
+import {
+  resolveSpecialTransactionKind,
+  type SpecialTransactionKind,
+} from "../../../transactions/_lib/special-transaction";
 import { useTransactionFormOptions } from "../../../transactions/_hooks/use-transaction-form-options";
 import {
   createDebitTransaction,
@@ -114,6 +119,12 @@ export function PersonDetailView({
   // handleRowClick) — the statement's own rows don't carry enough to
   // prefill the edit form directly.
   const [isLoadingRow, setIsLoadingRow] = useState<string | null>(null);
+  // Set instead of dialogState whenever the fetched row turns out to be
+  // special (resolveSpecialTransactionKind) — same redirect-instead-of-
+  // edit behavior as the main /transactions screen; see
+  // SpecialTransactionDialog's own comment.
+  const [specialTransaction, setSpecialTransaction] =
+    useState<SpecialTransactionKind | null>(null);
 
   const isDefaultPeriod =
     period.year === initialPeriod.year && period.month === initialPeriod.month;
@@ -193,6 +204,11 @@ export function PersonDetailView({
     setIsLoadingRow(null);
     if (!row) {
       toast.error(tCommon("errorGeneric"));
+      return;
+    }
+    const special = resolveSpecialTransactionKind(row);
+    if (special) {
+      setSpecialTransaction(special);
       return;
     }
     setDialogState({
@@ -551,6 +567,14 @@ export function PersonDetailView({
           whatsappLink={whatsappLink}
         />
       ) : null}
+
+      <SpecialTransactionDialog
+        open={specialTransaction !== null}
+        onOpenChange={(open) => {
+          if (!open) setSpecialTransaction(null);
+        }}
+        special={specialTransaction}
+      />
 
       <DebitTransactionSheet
         open={dialogState !== null && dialogState.kind === "debit"}
