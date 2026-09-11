@@ -512,6 +512,11 @@
     "markCompleted": "Marcar como concluída"
   },
 
+  "delete": {
+    "alreadyPaid": "Não é possível excluir: essa compra já está paga na fatura. Desfaça o pagamento na fatura antes.",
+    "someAlreadyPaid": "{count, plural, one {Não é possível excluir: # das selecionadas já está paga na fatura. Desfaça o pagamento antes.} other {Não é possível excluir: # das selecionadas já estão pagas na fatura. Desfaça os pagamentos antes.}}"
+  },
+
   "errors": {
     "load": {
       "title": "Não foi possível carregar as transações",

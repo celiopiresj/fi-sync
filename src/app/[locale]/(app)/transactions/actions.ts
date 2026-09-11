@@ -1471,6 +1471,13 @@ export async function updateCreditTransaction(
     }
   }
 
+  // Transactions whose `amount` this edit actually touches — always this
+  // row itself (the `prisma.transaction.update` above always writes
+  // `amount`), plus any installment siblings the cascade below reprices.
+  // Fed into the invoice recompute near the end of this function (see
+  // that comment for why it's needed).
+  const amountEditedTransactionIds = [id];
+
   const editScope = options?.editScope ?? "this";
   if (existing.installmentGroupId && editScope !== "this") {
     const amountChanged = Math.abs(existing.amount.toNumber() - amount) > 0.001;
@@ -1485,6 +1492,10 @@ export async function updateCreditTransaction(
           : {}),
       },
     });
+
+    if (amountChanged) {
+      amountEditedTransactionIds.push(...siblings.map((sibling) => sibling.id));
+    }
 
     // Sequential, not Promise.all — same "one row at a time" discipline
     // every other multi-row loop in this file follows against Neon's
@@ -1626,6 +1637,36 @@ export async function updateCreditTransaction(
         data: { installmentCount },
       });
     }
+  }
+
+  // The updates above (this row, and — when editScope widened it —
+  // repriced installment siblings) can change a linked invoice's real
+  // total (sumInvoiceTransactionsTotal, src/lib/invoice-total.ts, always
+  // derives it live from TransactionInvoice). Invoice.status/paidAmount
+  // are only a CACHED snapshot of payments vs. that total, and
+  // recomputeInvoiceStatus is the single place allowed to rewrite them
+  // (see the comment on those columns in prisma/schema.prisma). Without
+  // this call, editing the amount on a transaction whose invoice was
+  // already marked PAID leaves that stale status in place: invoice-
+  // detail-view.tsx hides both the recalculated remainingDue and the
+  // "Pagar" button whenever displayStatus is PAID, so the user has no way
+  // to pay the new difference until the cached status catches up.
+  const amountEditedInvoiceLinks = await prisma.transactionInvoice.findMany({
+    where: { transactionId: { in: amountEditedTransactionIds } },
+    select: { invoiceId: true },
+  });
+  // Same explicit Set<string>()/add()/spread idiom as
+  // invoiceIdsAffectedByDeleting above, rather than
+  // `new Set(arr.map(...))` — keeps this deduping in the same style as
+  // every other "collect affected invoice ids" spot in this file.
+  const amountEditedInvoiceIds = new Set<string>();
+  for (const link of amountEditedInvoiceLinks) {
+    amountEditedInvoiceIds.add(link.invoiceId);
+  }
+  if (amountEditedInvoiceIds.size > 0) {
+    await prisma.$transaction(async (tx) => {
+      await recomputeAffectedInvoices(tx, [...amountEditedInvoiceIds]);
+    });
   }
 
   revalidateCreditTransactions();
@@ -1840,6 +1881,28 @@ export async function deleteTransaction(
 
     idsToDelete =
       options.installmentScope === "all" ? siblings.map((row) => row.id) : [id];
+  } else {
+    // A plain (non-installment) credit-card purchase can be linked to an
+    // Invoice that already has a real payment against it, same as an
+    // installment can (guarded above) — and invoiceIdsAffectedByDeleting
+    // below only ever finds an invoice through InvoicePayment.transactionId,
+    // i.e. only when the transaction BEING DELETED is itself a settlement
+    // row. A plain purchase has no InvoicePayment of its own, so without
+    // this guard it would delete cleanly but silently leave its invoice's
+    // cached status/paidAmount describing a total that no longer includes
+    // it — the same stale-status bug fixed above for editing an amount,
+    // reachable here too since deleting drops the total just as an edit
+    // can raise it. Same policy as the installment-group guard: never let
+    // a delete quietly undo money that already moved — tell the user to
+    // undo the payment first instead.
+    const linked = await prisma.transactionInvoice.findUnique({
+      where: { transactionId: id },
+      include: { invoice: { include: { payments: { select: { id: true } } } } },
+    });
+    if (linked && linked.invoice.payments.length > 0) {
+      const t = await getTranslations("scrn-transactions");
+      return { error: t("delete.alreadyPaid") };
+    }
   }
 
   await prisma.$transaction(async (tx) => {
@@ -1892,6 +1955,22 @@ export async function updateTransactionsBulk(
 export async function deleteTransactionsBulk(ids: string[]) {
   const userId = await requireUserId();
   if (ids.length === 0) return { error: null, count: 0 };
+
+  // Same policy as deleteTransaction's own guards (installment-group and
+  // plain-purchase, above) — never let a delete quietly undo money that
+  // already moved. A bulk selection can mix rows freely, so unlike those
+  // single-transaction guards this blocks the WHOLE batch the moment ANY
+  // selected transaction is already linked to a paid invoice, rather
+  // than silently deleting the rest around it.
+  const links = await prisma.transactionInvoice.findMany({
+    where: { transactionId: { in: ids } },
+    include: { invoice: { include: { payments: { select: { id: true } } } } },
+  });
+  const paidCount = links.filter((link) => link.invoice.payments.length > 0).length;
+  if (paidCount > 0) {
+    const t = await getTranslations("scrn-transactions");
+    return { error: t("delete.someAlreadyPaid", { count: paidCount }), count: 0 };
+  }
 
   const result = await prisma.$transaction(
     async (tx) => {

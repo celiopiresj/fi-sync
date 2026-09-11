@@ -512,6 +512,11 @@
     "markCompleted": "Mark as completed"
   },
 
+  "delete": {
+    "alreadyPaid": "Can't delete this: this purchase has already been paid on its invoice. Undo the payment on the invoice first.",
+    "someAlreadyPaid": "{count, plural, one {Can't delete: # of the selected transactions has already been paid on its invoice. Undo the payment first.} other {Can't delete: # of the selected transactions have already been paid on their invoices. Undo the payments first.}}"
+  },
+
   "errors": {
     "load": {
       "title": "Couldn't load transactions",
