@@ -56,6 +56,8 @@ export default async function TransactionsPage({
       categories={options.categories}
       initialPeople={options.people}
       initialDefaultPersonId={options.defaultPersonId}
+      defaultDebitAccountId={options.defaultDebitAccountId}
+      defaultCreditAccountId={options.defaultCreditAccountId}
     />
   );
 }

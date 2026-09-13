@@ -37,6 +37,7 @@ type DebitTransactionSheetProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (
     values: DebitTransactionFormValues,
   ) => Promise<{ error: string | null }>;
@@ -55,6 +56,7 @@ export function DebitTransactionSheet({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSubmitBatch,
   onBatchSuccess,
@@ -117,6 +119,7 @@ export function DebitTransactionSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId}
               onSubmit={onSubmitBatch}
               onSuccess={(count) => {
                 onBatchSuccess(count);
@@ -132,6 +135,7 @@ export function DebitTransactionSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId}
               onSubmit={onSubmit}
               onSuccess={() => onOpenChange(false)}
             />

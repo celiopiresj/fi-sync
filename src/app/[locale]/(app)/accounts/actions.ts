@@ -210,6 +210,45 @@ export async function toggleAccountStatus(id: string) {
   return { error: null };
 }
 
+// Marks (or, clicked again, unmarks) this account as the one every form
+// with an account field preselects — see Account.isDefault's own comment
+// in prisma/schema.prisma. At most one true per user, enforced here
+// (not a DB constraint): unsetting whichever OTHER account currently
+// holds it and this one in the same transaction is what keeps that
+// invariant, since nothing stops two plain sequential updates from both
+// succeeding with two accounts left true.
+export async function toggleDefaultAccount(id: string) {
+  const userId = await requireUserId();
+
+  const existing = await prisma.account.findUnique({ where: { id, userId } });
+  if (!existing) {
+    return { error: "Not found" };
+  }
+
+  await prisma.$transaction([
+    prisma.account.updateMany({
+      where: { userId, isDefault: true },
+      data: { isDefault: false },
+    }),
+    ...(existing.isDefault
+      ? []
+      : [prisma.account.update({ where: { id }, data: { isDefault: true } })]),
+  ]);
+
+  // Every screen that preselects an account reads it from its own
+  // options-fetch (getTransactionFormOptions, getRecurrenceFormOptions,
+  // getPayableAccounts, getLoanFormOptions, listTransferAccounts) —
+  // revalidate all of them so the new default takes effect without
+  // requiring a hard refresh.
+  revalidatePath("/accounts");
+  revalidatePath("/transactions");
+  revalidatePath("/recurrences");
+  revalidatePath("/invoices");
+  revalidatePath("/loans");
+  revalidatePath("/investments");
+  return { error: null };
+}
+
 // One account plus how its current balance breaks down per Person —
 // what the /accounts/[id] detail screen shows. Same "balance is just the
 // sum of transactions up to and including today" rule listAccounts

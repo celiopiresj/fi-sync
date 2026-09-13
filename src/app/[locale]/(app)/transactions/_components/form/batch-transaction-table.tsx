@@ -24,16 +24,20 @@ import type {
 } from "../../_types/types";
 import { BatchRowFields } from "./batch-row-fields";
 
-// A fresh row defaulting to today and to `defaultPersonId` — same
-// reasoning as the single-transaction form's toFormValues — computed
-// per call, not baked into the static emptyBatchRow, so a table left
-// open across midnight still starts new rows on the day they're
-// actually added.
-function makeEmptyRow(defaultPersonId: string | null): BatchRowFormValues {
+// A fresh row defaulting to today, `defaultPersonId`, and
+// `defaultAccountId` — same reasoning as the single-transaction form's
+// toFormValues — computed per call, not baked into the static
+// emptyBatchRow, so a table left open across midnight still starts new
+// rows on the day they're actually added.
+function makeEmptyRow(
+  defaultPersonId: string | null,
+  defaultAccountId: string | null,
+): BatchRowFormValues {
   return {
     ...emptyBatchRow,
     date: todayCalendarDate(),
     personId: defaultPersonId ?? "",
+    accountId: defaultAccountId ?? "",
   };
 }
 
@@ -42,6 +46,7 @@ type BatchTransactionTableProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (
     rows: BatchRowFormValues[],
   ) => Promise<{ error: string | null; rowIndex: number | null }>;
@@ -53,6 +58,7 @@ export function BatchTransactionTable({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSuccess,
 }: BatchTransactionTableProps) {
@@ -62,7 +68,7 @@ export function BatchTransactionTable({
   const debitAccounts = filterDebitBatchAccounts(accounts);
 
   const [draft, setDraft] = useState<BatchRowFormValues>(() =>
-    makeEmptyRow(defaultPersonId),
+    makeEmptyRow(defaultPersonId, defaultAccountId),
   );
   const [draftError, setDraftError] = useState<string | null>(null);
   // Index into `queue` while editing an existing item (pencil icon) —

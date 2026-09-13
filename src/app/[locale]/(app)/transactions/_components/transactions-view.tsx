@@ -113,6 +113,15 @@ type TransactionsViewProps = {
   categories: CategoryOption[];
   initialPeople: PersonOption[];
   initialDefaultPersonId: string | null;
+  // Whichever account is flagged Account.isDefault, split by which form
+  // it actually applies to (see getTransactionFormOptions' own comment)
+  // — null when the flagged account doesn't match that form's own type.
+  // Static server-rendered props, same as `accounts`/`categories`
+  // themselves: nothing changes which account is default from inside
+  // this screen, so there's no TanStack Query hook for these two like
+  // there is for defaultPersonId.
+  defaultDebitAccountId: string | null;
+  defaultCreditAccountId: string | null;
 };
 
 // Maps a chip's kind to the SheetFilters key it clears — used by both
@@ -154,6 +163,8 @@ export function TransactionsView({
   categories,
   initialPeople,
   initialDefaultPersonId,
+  defaultDebitAccountId,
+  defaultCreditAccountId,
 }: TransactionsViewProps) {
   const t = useTranslations("scrn-transactions");
   const tCommon = useTranslations("common");
@@ -1124,6 +1135,7 @@ export function TransactionsView({
         categories={categories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultDebitAccountId}
         onSubmit={handleSubmitDebit}
         onSubmitBatch={handleSubmitBatch}
         onBatchSuccess={handleBatchSuccess}
@@ -1163,6 +1175,7 @@ export function TransactionsView({
         categories={categories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultCreditAccountId ?? undefined}
         onSubmit={handleSubmitCredit}
         onSubmitBatch={handleSubmitCreditBatch}
         onBatchSuccess={handleBatchSuccess}

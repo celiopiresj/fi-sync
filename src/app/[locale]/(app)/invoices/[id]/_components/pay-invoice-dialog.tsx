@@ -89,6 +89,7 @@ export function PayInvoiceDialog({
       ...emptyPayInvoiceFormValues,
       paidAmount: centsToAmountString(remainingDueCents),
       paidAt: todayCalendarDate(),
+      accountId: accounts.find((account) => account.isDefault)?.id ?? "",
     } as PayInvoiceFormValues,
     onSubmit: async ({ value }) => {
       setServerError(null);

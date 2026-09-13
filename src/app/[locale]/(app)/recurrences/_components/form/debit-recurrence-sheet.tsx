@@ -33,6 +33,7 @@ type DebitRecurrenceSheetProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmitCreate: (
     values: DebitRecurrenceCreateFormValues,
   ) => Promise<{ error: string | null }>;
@@ -56,6 +57,7 @@ export function DebitRecurrenceSheet({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmitCreate,
   onSubmitEdit,
 }: DebitRecurrenceSheetProps) {
@@ -97,6 +99,7 @@ export function DebitRecurrenceSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId}
               onSubmit={onSubmitCreate}
               onSuccess={() => onOpenChange(false)}
             />

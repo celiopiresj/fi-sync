@@ -41,6 +41,7 @@ import {
   createAccount,
   deleteAccount,
   toggleAccountStatus,
+  toggleDefaultAccount,
   updateAccount,
 } from "../actions";
 import { useAccountsData } from "../_hooks/use-accounts-data";
@@ -108,6 +109,15 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
     if (!result.error) {
       invalidateAccounts();
       toast.success(t(wasActive ? "toast.archived" : "toast.reactivated"));
+    }
+  }
+
+  async function handleToggleDefault(account: AccountRow) {
+    const wasDefault = account.isDefault;
+    const result = await toggleDefaultAccount(account.id);
+    if (!result.error) {
+      invalidateAccounts();
+      toast.success(t(wasDefault ? "toast.defaultUnset" : "toast.defaultSet"));
     }
   }
 
@@ -222,6 +232,15 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                                   {t("menu.edit")}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
+                                  onSelect={() => handleToggleDefault(account)}
+                                >
+                                  {t(
+                                    account.isDefault
+                                      ? "menu.unsetDefault"
+                                      : "menu.setDefault",
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
                                   onSelect={() => handleToggleStatus(account)}
                                 >
                                   {t(
@@ -256,15 +275,20 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                               })}
                             </span>
                           )}
-                          <Badge
-                            variant={
-                              account.status === "ACTIVE"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {tCommon(`status.${account.status.toLowerCase()}`)}
-                          </Badge>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge
+                              variant={
+                                account.status === "ACTIVE"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {tCommon(`status.${account.status.toLowerCase()}`)}
+                            </Badge>
+                            {account.isDefault && (
+                              <Badge variant="outline">{t("card.defaultBadge")}</Badge>
+                            )}
+                          </div>
                         </CardContent>
                       </Card>
                     );

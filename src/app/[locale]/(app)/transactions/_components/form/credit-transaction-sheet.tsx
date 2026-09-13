@@ -135,6 +135,7 @@ export function CreditTransactionSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId ?? null}
               onSubmit={onSubmitBatch}
               onSuccess={(count) => {
                 onBatchSuccess(count);

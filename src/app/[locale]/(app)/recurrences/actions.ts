@@ -225,8 +225,31 @@ export async function getRecurrenceFormOptions() {
   ]);
 
   const defaultPersonId = await computeDefaultPersonId(userId);
+  // Same split/reasoning as transactions/actions.ts's own
+  // getTransactionFormOptions — one Account.isDefault flag, resolved
+  // against whichever type each form's own picker actually accepts
+  // (CREDIT_CARD/INVESTMENT/POCKET are all rejected by the debit forms
+  // below, see their own account guards).
+  const defaultDebitAccountId =
+    accounts.find(
+      (account) =>
+        account.isDefault &&
+        (account.type === "CHECKING" ||
+          account.type === "SAVINGS" ||
+          account.type === "CASH"),
+    )?.id ?? null;
+  const defaultCreditAccountId =
+    accounts.find((account) => account.isDefault && account.type === "CREDIT_CARD")?.id ??
+    null;
 
-  return { accounts, categories, people, defaultPersonId };
+  return {
+    accounts,
+    categories,
+    people,
+    defaultPersonId,
+    defaultDebitAccountId,
+    defaultCreditAccountId,
+  };
 }
 
 // Steps one occurrence date forward by `frequency`, pinned to

@@ -14,6 +14,8 @@ export default async function RecurrencesPage() {
       categories={options.categories}
       initialPeople={options.people}
       initialDefaultPersonId={options.defaultPersonId}
+      defaultDebitAccountId={options.defaultDebitAccountId}
+      defaultCreditAccountId={options.defaultCreditAccountId}
     />
   );
 }

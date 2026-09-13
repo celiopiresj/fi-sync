@@ -68,9 +68,12 @@ export function BatchTransactionMobile({
 
   // Applied to every row on submit (see rowsForSubmit) rather than
   // written into each row as it changes — one source of truth, so a row
-  // added before the account was picked can't keep a stale one.
+  // added before the account was picked can't keep a stale one. Prefers
+  // whichever account is flagged Account.isDefault (see its own comment
+  // in prisma/schema.prisma) over just picking the alphabetically-first
+  // one.
   const [accountId, setAccountId] = useState(
-    () => debitAccounts[0]?.id ?? "",
+    () => debitAccounts.find((account) => account.isDefault)?.id ?? debitAccounts[0]?.id ?? "",
   );
   const [date, setDate] = useState(() => todayCalendarDate());
 

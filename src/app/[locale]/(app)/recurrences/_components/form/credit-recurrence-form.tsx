@@ -75,6 +75,7 @@ type CreditRecurrenceCreateFormProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (
     values: CreditRecurrenceCreateFormValues,
   ) => Promise<{ error: string | null }>;
@@ -86,6 +87,7 @@ export function CreditRecurrenceCreateForm({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSuccess,
 }: CreditRecurrenceCreateFormProps) {
@@ -111,6 +113,7 @@ export function CreditRecurrenceCreateForm({
       ...emptyCreditRecurrenceCreateValues,
       startDate: todayCalendarDate(),
       personId: defaultPersonId ?? "",
+      accountId: defaultAccountId ?? "",
     },
     onSubmit: async ({ value }) => {
       setServerError(null);

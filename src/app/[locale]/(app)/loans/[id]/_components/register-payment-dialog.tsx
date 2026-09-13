@@ -60,6 +60,7 @@ export function RegisterPaymentDialog({
       // edits it from here, not a separate field (see the schema's own
       // comment on why).
       paidAmount: installment.amount.toFixed(2).replace(".", ","),
+      accountId: accounts.find((account) => account.isDefault)?.id ?? "",
     },
     onSubmit: async ({ value }) => {
       setServerError(null);

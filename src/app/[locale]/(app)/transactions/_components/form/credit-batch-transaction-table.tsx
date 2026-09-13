@@ -40,13 +40,17 @@ import { ChipSelect, DateChipSelect } from "./chip-select";
 import { CreatePersonInline } from "./create-person-inline";
 import { PastInstallmentsDialog } from "./past-installments-dialog";
 
-// A fresh row defaulting to today and to `defaultPersonId` — same
-// reasoning as debit's own makeEmptyRow in batch-transaction-table.tsx.
-function makeEmptyRow(defaultPersonId: string | null): CreditBatchRowFormValues {
+// A fresh row defaulting to today, `defaultPersonId`, and `defaultAccountId`
+// — same reasoning as debit's own makeEmptyRow in batch-transaction-table.tsx.
+function makeEmptyRow(
+  defaultPersonId: string | null,
+  defaultAccountId: string | null,
+): CreditBatchRowFormValues {
   return {
     ...emptyCreditBatchRow,
     date: todayCalendarDate(),
     personId: defaultPersonId ?? "",
+    accountId: defaultAccountId ?? "",
   };
 }
 
@@ -64,6 +68,7 @@ type CreditBatchTransactionTableProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (
     rows: CreditBatchRowFormValues[],
   ) => Promise<{ error: string | null; rowIndex: number | null }>;
@@ -75,6 +80,7 @@ export function CreditBatchTransactionTable({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSuccess,
 }: CreditBatchTransactionTableProps) {
@@ -82,7 +88,7 @@ export function CreditBatchTransactionTable({
   const format = useFormatter();
 
   const [draft, setDraft] = useState<CreditBatchRowFormValues>(() =>
-    makeEmptyRow(defaultPersonId),
+    makeEmptyRow(defaultPersonId, defaultAccountId),
   );
   const [draftError, setDraftError] = useState<string | null>(null);
   // Index into `queue` while editing an existing item (pencil icon) —

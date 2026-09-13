@@ -167,6 +167,22 @@ model Account {
   createdAt DateTime      @default(now()) @db.Timestamptz(3)
   updatedAt DateTime      @updatedAt @db.Timestamptz(3)
 
+  // Preselected wherever a form asks the user to pick an account — the
+  // debit/credit transaction forms, recurrences, paying an invoice,
+  // registering a loan payment/disbursement, an investment movement's
+  // transfer account — so a user who always uses the same account for
+  // most of these doesn't have to reselect it every time. At most one
+  // true per userId, enforced in application code (toggleDefaultAccount,
+  // accounts/actions.ts), not a DB constraint, same reasoning as
+  // Person.isSelf's own comment. Unlike isSelf, this is user-changeable
+  // at any time (toggled from the accounts list), not fixed at sign-up —
+  // a checking account marked default has no effect on a form whose
+  // picker only offers CREDIT_CARD accounts (or vice versa), it simply
+  // isn't among that picker's own candidates; each form only ever
+  // preselects it when it actually appears in that form's own filtered
+  // account list.
+  isDefault Boolean @default(false)
+
   transactions      Transaction[]
   recurrences       Recurrence[]
   creditCardDetails CreditCardDetails?

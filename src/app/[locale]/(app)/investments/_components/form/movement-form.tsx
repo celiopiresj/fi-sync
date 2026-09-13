@@ -80,6 +80,7 @@ export function MovementForm({
       ...emptyInvestmentMovementFormValues,
       kind: initialKind,
       date: todayCalendarDate(),
+      transferAccountId: transferAccounts.find((account) => account.isDefault)?.id ?? "",
     } as InvestmentMovementFormValues,
     onSubmit: async ({ value }) => {
       setServerError(null);

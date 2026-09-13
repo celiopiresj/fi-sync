@@ -23,8 +23,11 @@ import type {
 } from "../../_types/types";
 import { PastInstallmentsDialog } from "./past-installments-dialog";
 
-function toFormValues(loan: LoanFormPrefill | null): LoanFormValues {
-  if (!loan) return emptyLoanFormValues;
+function toFormValues(
+  loan: LoanFormPrefill | null,
+  defaultAccountId: string,
+): LoanFormValues {
+  if (!loan) return { ...emptyLoanFormValues, receivedAccountId: defaultAccountId };
 
   return {
     personId: loan.personId,
@@ -33,7 +36,7 @@ function toFormValues(loan: LoanFormPrefill | null): LoanFormValues {
     installments: String(loan.installmentCount),
     dueDate: dateOnlyKey(loan.dueDate),
     receivedAmount: "",
-    receivedAccountId: "",
+    receivedAccountId: defaultAccountId,
   };
 }
 
@@ -90,7 +93,10 @@ export function LoanForm({
   }
 
   const form = useZodForm(schema, {
-    defaultValues: toFormValues(initialValues),
+    defaultValues: toFormValues(
+      initialValues,
+      accounts.find((account) => account.isDefault)?.id ?? "",
+    ),
     onSubmit: async ({ value }) => {
       const installmentCount = Number(value.installments || "1");
       const dueDate = value.dueDate ? parseCalendarDate(value.dueDate) : null;

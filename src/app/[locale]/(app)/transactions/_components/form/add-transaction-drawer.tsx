@@ -262,6 +262,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                   categories={options.categories}
                   people={options.people}
                   defaultPersonId={options.defaultPersonId}
+                  defaultAccountId={options.defaultDebitAccountId}
                   onSubmit={submitDebit}
                   onSuccess={() => handleOpenChange(false)}
                 />
@@ -273,6 +274,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                   categories={options.categories}
                   people={options.people}
                   defaultPersonId={options.defaultPersonId}
+                  defaultAccountId={options.defaultCreditAccountId ?? undefined}
                   onSubmit={submitCredit}
                   onSuccess={() => handleOpenChange(false)}
                 />

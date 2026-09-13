@@ -160,8 +160,39 @@ export async function getTransactionFormOptions() {
   ]);
 
   const defaultPersonId = await computeDefaultPersonId(userId);
+  // Account.isDefault (see its own comment in prisma/schema.prisma) is
+  // one flag shared by every account type, but the debit and credit
+  // forms each only ever offer one type of account — split here into
+  // "whichever default is a debit-eligible account" vs "...a card" so
+  // each form's own create-mode defaultValues can pick the one that
+  // actually applies to it (the other stays null when the flagged
+  // account is the other kind, same as no default being set at all).
+  // Derived from `accounts` itself (already fetched with every scalar
+  // column) rather than a second query.
+  // Exactly the same three types createDebitTransaction's own account
+  // guard accepts (CREDIT_CARD/INVESTMENT/POCKET are all rejected there)
+  // — a default flagged on an investment/pocket account must never leak
+  // into the debit form as a "default" it can't actually select.
+  const defaultDebitAccountId =
+    accounts.find(
+      (account) =>
+        account.isDefault &&
+        (account.type === "CHECKING" ||
+          account.type === "SAVINGS" ||
+          account.type === "CASH"),
+    )?.id ?? null;
+  const defaultCreditAccountId =
+    accounts.find((account) => account.isDefault && account.type === "CREDIT_CARD")?.id ??
+    null;
 
-  return { accounts, categories, people, defaultPersonId };
+  return {
+    accounts,
+    categories,
+    people,
+    defaultPersonId,
+    defaultDebitAccountId,
+    defaultCreditAccountId,
+  };
 }
 
 export type TransactionFilters = {

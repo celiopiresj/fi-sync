@@ -87,6 +87,8 @@ type RecurrencesViewProps = {
   categories: CategoryOption[];
   initialPeople: PersonOption[];
   initialDefaultPersonId: string | null;
+  defaultDebitAccountId: string | null;
+  defaultCreditAccountId: string | null;
 };
 
 // Maps a chip's kind to the RecurrenceSheetFilters key it clears — same
@@ -120,6 +122,8 @@ export function RecurrencesView({
   categories,
   initialPeople,
   initialDefaultPersonId,
+  defaultDebitAccountId,
+  defaultCreditAccountId,
 }: RecurrencesViewProps) {
   const t = useTranslations("scrn-recurrences");
   const format = useFormatter();
@@ -600,6 +604,7 @@ export function RecurrencesView({
         categories={categories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultDebitAccountId}
         onSubmitCreate={handleSubmitCreateDebit}
         onSubmitEdit={handleSubmitEditDebit}
       />
@@ -615,6 +620,7 @@ export function RecurrencesView({
         categories={categories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultCreditAccountId}
         onSubmitCreate={handleSubmitCreateCredit}
         onSubmitEdit={handleSubmitEditCredit}
       />

@@ -42,6 +42,8 @@ export default async function PersonDetailPage({ params }: PersonDetailPageProps
       transactionCategories={transactionFormOptions.categories}
       initialTransactionPeople={transactionFormOptions.people}
       initialDefaultPersonId={transactionFormOptions.defaultPersonId}
+      defaultDebitAccountId={transactionFormOptions.defaultDebitAccountId}
+      defaultCreditAccountId={transactionFormOptions.defaultCreditAccountId}
     />
   );
 }

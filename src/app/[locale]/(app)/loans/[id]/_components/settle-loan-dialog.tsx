@@ -70,6 +70,7 @@ export function SettleLoanDialog({
       // Prefilled to the nominal remaining balance — same reasoning as
       // RegisterPaymentDialog's own default.
       paidAmount: remainingTotal.toFixed(2).replace(".", ","),
+      accountId: accounts.find((account) => account.isDefault)?.id ?? "",
     },
     onSubmit: async ({ value }) => {
       setServerError(null);

@@ -44,9 +44,15 @@
 
   "menu": {
     "edit": "Edit",
+    "setDefault": "Set as default",
+    "unsetDefault": "Unset as default",
     "archive": "Archive",
     "reactivate": "Reactivate",
     "delete": "Delete"
+  },
+
+  "card": {
+    "defaultBadge": "Default"
   },
 
   "detail": {
@@ -101,6 +107,8 @@
     "archived": "Account archived",
     "reactivated": "Account reactivated",
     "deleted": "Account deleted",
+    "defaultSet": "Account set as default",
+    "defaultUnset": "Account unset as default",
     "error": "Couldn't complete the action"
   },
 

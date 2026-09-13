@@ -80,6 +80,8 @@ type PersonDetailViewProps = {
   transactionCategories: CategoryOption[];
   initialTransactionPeople: PersonOption[];
   initialDefaultPersonId: string | null;
+  defaultDebitAccountId: string | null;
+  defaultCreditAccountId: string | null;
 };
 
 // Same create/edit union transactions-view.tsx's own dialogState uses,
@@ -100,6 +102,8 @@ export function PersonDetailView({
   transactionCategories,
   initialTransactionPeople,
   initialDefaultPersonId,
+  defaultDebitAccountId,
+  defaultCreditAccountId,
 }: PersonDetailViewProps) {
   const t = useTranslations("scrn-people");
   const tCommon = useTranslations("common");
@@ -587,6 +591,7 @@ export function PersonDetailView({
         categories={transactionCategories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultDebitAccountId}
         onSubmit={handleSubmitDebit}
         onSubmitBatch={handleSubmitDebitBatch}
         onBatchSuccess={handleBatchSuccess}
@@ -603,6 +608,7 @@ export function PersonDetailView({
         categories={transactionCategories}
         people={people}
         defaultPersonId={defaultPersonId}
+        defaultAccountId={defaultCreditAccountId ?? undefined}
         onSubmit={handleSubmitCredit}
         onSubmitBatch={handleSubmitCreditBatch}
         onBatchSuccess={handleBatchSuccess}

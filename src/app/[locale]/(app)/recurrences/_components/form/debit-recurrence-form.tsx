@@ -93,6 +93,7 @@ type DebitRecurrenceCreateFormProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (
     values: DebitRecurrenceCreateFormValues,
   ) => Promise<{ error: string | null }>;
@@ -104,6 +105,7 @@ export function DebitRecurrenceCreateForm({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSuccess,
 }: DebitRecurrenceCreateFormProps) {
@@ -135,6 +137,7 @@ export function DebitRecurrenceCreateForm({
       ...emptyDebitRecurrenceCreateValues,
       startDate: todayCalendarDate(),
       personId: defaultPersonId ?? "",
+      accountId: defaultAccountId ?? "",
     },
     onSubmit: async ({ value }) => {
       setServerError(null);

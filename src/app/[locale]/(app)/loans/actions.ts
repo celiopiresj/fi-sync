@@ -85,7 +85,14 @@ export async function getLoanFormOptions() {
     }),
     prisma.account.findMany({
       where: { userId, type: { in: ["CHECKING", "SAVINGS", "CASH"] } },
-      select: { id: true, name: true },
+      // isDefault (see its own comment in prisma/schema.prisma) rides
+      // along on each account rather than a separately computed
+      // defaultAccountId — every consumer here (loan-form.tsx,
+      // register-payment-dialog.tsx, settle-loan-dialog.tsx) already
+      // shares this one exact same account list/type filter, so each
+      // just looks up `accounts.find((a) => a.isDefault)` itself instead
+      // of threading a second id through three components.
+      select: { id: true, name: true, isDefault: true },
       orderBy: { name: "asc" },
     }),
   ]);

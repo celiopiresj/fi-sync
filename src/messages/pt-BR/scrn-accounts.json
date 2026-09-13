@@ -44,9 +44,15 @@
 
   "menu": {
     "edit": "Editar",
+    "setDefault": "Marcar como padrão",
+    "unsetDefault": "Remover como padrão",
     "archive": "Arquivar",
     "reactivate": "Reativar",
     "delete": "Excluir"
+  },
+
+  "card": {
+    "defaultBadge": "Padrão"
   },
 
   "detail": {
@@ -101,6 +107,8 @@
     "archived": "Conta arquivada",
     "reactivated": "Conta reativada",
     "deleted": "Conta excluída",
+    "defaultSet": "Conta marcada como padrão",
+    "defaultUnset": "Conta removida como padrão",
     "error": "Não foi possível concluir a ação"
   },
 

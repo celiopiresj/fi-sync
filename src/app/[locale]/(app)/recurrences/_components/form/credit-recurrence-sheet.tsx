@@ -29,6 +29,7 @@ type CreditRecurrenceSheetProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmitCreate: (
     values: CreditRecurrenceCreateFormValues,
   ) => Promise<{ error: string | null }>;
@@ -46,6 +47,7 @@ export function CreditRecurrenceSheet({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmitCreate,
   onSubmitEdit,
 }: CreditRecurrenceSheetProps) {
@@ -86,6 +88,7 @@ export function CreditRecurrenceSheet({
               categories={categories}
               people={people}
               defaultPersonId={defaultPersonId}
+              defaultAccountId={defaultAccountId}
               onSubmit={onSubmitCreate}
               onSuccess={() => onOpenChange(false)}
             />

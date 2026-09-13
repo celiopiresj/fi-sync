@@ -85,7 +85,11 @@ export async function getPayableAccounts() {
 
   return prisma.account.findMany({
     where: { userId, type: { in: ["CHECKING", "SAVINGS", "CASH"] } },
-    select: { id: true, name: true },
+    // isDefault (see its own comment in prisma/schema.prisma) rides
+    // along on each account — PayInvoiceDialog looks it up itself
+    // (`accounts.find((a) => a.isDefault)`) rather than a separately
+    // threaded defaultAccountId.
+    select: { id: true, name: true, isDefault: true },
     orderBy: { name: "asc" },
   });
 }

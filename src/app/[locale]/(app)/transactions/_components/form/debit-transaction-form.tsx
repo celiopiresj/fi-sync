@@ -73,6 +73,7 @@ function centsToAmountString(cents: number): string {
 function toFormValues(
   row: TransactionRow | null,
   defaultPersonId: string | null,
+  defaultAccountId: string | null,
 ): DebitTransactionFormValues {
   // Computed fresh per call (not baked into the static
   // emptyDebitTransactionFormValues) so a form left open across midnight
@@ -82,6 +83,7 @@ function toFormValues(
       ...emptyDebitTransactionFormValues,
       date: todayCalendarDate(),
       personId: defaultPersonId ?? "",
+      accountId: defaultAccountId ?? "",
     };
   }
 
@@ -125,6 +127,7 @@ type DebitTransactionFormProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultPersonId: string | null;
+  defaultAccountId: string | null;
   onSubmit: (values: DebitTransactionFormValues) => Promise<{ error: string | null }>;
   onSuccess: () => void;
 };
@@ -136,6 +139,7 @@ export function DebitTransactionForm({
   categories,
   people,
   defaultPersonId,
+  defaultAccountId,
   onSubmit,
   onSuccess,
 }: DebitTransactionFormProps) {
@@ -188,7 +192,7 @@ export function DebitTransactionForm({
   );
 
   const form = useZodForm(schema, {
-    defaultValues: toFormValues(initialValues, defaultPersonId),
+    defaultValues: toFormValues(initialValues, defaultPersonId, defaultAccountId),
     onSubmit: async ({ value }) => {
       setServerError(null);
       try {

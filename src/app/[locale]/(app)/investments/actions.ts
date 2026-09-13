@@ -73,7 +73,11 @@ export async function listTransferAccounts() {
   const userId = await requireUserId();
   return prisma.account.findMany({
     where: { userId, type: { in: [...TRANSFERABLE_ACCOUNT_TYPES] } },
-    select: { id: true, name: true, type: true },
+    // isDefault (see its own comment in prisma/schema.prisma) rides
+    // along on each account — MovementForm looks it up itself
+    // (`accounts.find((a) => a.isDefault)`) rather than a separately
+    // threaded defaultAccountId.
+    select: { id: true, name: true, type: true, isDefault: true },
     orderBy: { name: "asc" },
   });
 }
