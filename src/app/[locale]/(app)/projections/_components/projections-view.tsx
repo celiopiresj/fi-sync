@@ -41,7 +41,11 @@ export function ProjectionsView({ initialProjections }: ProjectionsViewProps) {
   // the period selector recomputes them for free instead of needing a
   // separate summary endpoint.
   const kpis = useMemo(() => {
-    const currentBalance = projections[0]?.initialBalance ?? 0;
+    // Not initialBalance — that's the balance BEFORE the current month
+    // even starts (see computeMonthSeries' own comment in actions.ts),
+    // so it never reflected anything that's already happened this
+    // month. currentBalance folds that back in.
+    const currentBalance = projections[0]?.currentBalance ?? 0;
     const lowest = projections.reduce<ProjectionEntry | null>(
       (min, entry) =>
         !min || entry.projectedBalance < min.projectedBalance ? entry : min,

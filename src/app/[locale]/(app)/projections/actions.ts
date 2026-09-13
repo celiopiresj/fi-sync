@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
-import { dateOnlyKey, parseCalendarDate, toAppZoned } from "@/lib/date";
+import { dateOnlyKey, parseCalendarDate, toAppZoned, todayCalendarDate } from "@/lib/date";
 import {
   addMonths,
   monthFirstDay,
@@ -52,6 +52,20 @@ type MonthSeriesEntry = {
   fromDate: Date;
   toDate: Date;
   initialBalance: number;
+  // Same as initialBalance for every future month (nothing in a month
+  // that hasn't started yet can have "already happened"), but for the
+  // current month it's initialBalance PLUS whatever of this month's own
+  // real transactions are already dated <= today — see its own comment
+  // where it's computed. This, not initialBalance, is "Saldo Atual":
+  // initialBalance is deliberately the balance BEFORE the current month
+  // even starts (see this file's own comment on why the current month
+  // covers its full calendar span), so showing it under a "current
+  // balance" label would leave out everything that's already happened
+  // this month (a salary already received, bills already paid) —
+  // verified, real bug: a user's real Sept-1-through-today activity
+  // (salário, card invoice payments, ...) never moved the KPI at all,
+  // even days into the month.
+  currentBalance: number;
   projectedBalance: number;
   incomeForecast: number;
   accountExpenses: number;
@@ -96,6 +110,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // where the split between "starting balance" and "this month's
   // forecast" falls changes.
   const currentMonthStartDate = parseCalendarDate(monthFirstDay(currentMonth));
+  const todayDate = parseCalendarDate(todayCalendarDate());
   const horizonEndDate = parseCalendarDate(
     monthLastDay(addMonths(currentMonth, MAX_MONTHS_AHEAD - 1)),
   );
@@ -185,12 +200,28 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // into it as it's found, alongside the still-unpaid invoices' own
   // contribution further down.
   const cardExpenseByMonth = new Map<string, number>();
+  // Self-share of this month's own transactions already dated <= today —
+  // real money that's already moved, as opposed to the rest of the
+  // month's forecast, which hasn't happened yet. Only ever non-zero for
+  // the current month (every other month in futureTransactions is
+  // entirely in the future relative to today by construction), added to
+  // that one entry's initialBalance below to get currentBalance. An
+  // unpaid invoice due today or earlier is deliberately NOT included
+  // here even though its dueDate has passed — no real money has left the
+  // account for it yet, only payInvoice actually moving it (as a
+  // transaction landing in this same loop, tagged invoicePayment) makes
+  // it "realized".
+  let realizedThisMonth = 0;
+
   for (const transaction of futureTransactions) {
     const key = dateOnlyKey(transaction.date).slice(0, 7);
     const amount = selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
     );
+    if (transaction.date <= todayDate) {
+      realizedThisMonth += amount;
+    }
     if (amount >= 0) {
       incomeByMonth.set(key, (incomeByMonth.get(key) ?? 0) + amount);
     } else if (transaction.invoicePayment) {
@@ -277,6 +308,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
       fromDate: parseCalendarDate(monthFirstDay(month)),
       toDate: parseCalendarDate(monthLastDay(month)),
       initialBalance,
+      currentBalance: isCurrentMonth ? initialBalance + realizedThisMonth : initialBalance,
       projectedBalance: runningBalance,
       incomeForecast,
       accountExpenses,
@@ -311,6 +343,7 @@ export async function getProjections(monthsAhead: number) {
     monthKey: entry.monthKey,
     isCurrentMonth: entry.isCurrentMonth,
     initialBalance: entry.initialBalance,
+    currentBalance: entry.currentBalance,
     projectedBalance: entry.projectedBalance,
     incomeForecast: entry.incomeForecast,
     accountExpenses: entry.accountExpenses,
