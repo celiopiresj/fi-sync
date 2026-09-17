@@ -1,6 +1,6 @@
 "use server";
 
-import { addDays, addMonths, addWeeks } from "date-fns";
+import { addDays, addMonths, addWeeks, startOfMonth } from "date-fns";
 import { getTranslations } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +10,7 @@ import {
   todayCalendarDate,
   toAppZoned,
   fromAppZoned,
+  dateOnlyKey,
 } from "@/lib/date";
 import { resolveInvoiceForDate } from "@/lib/invoice-resolution";
 import {
@@ -533,6 +534,8 @@ export async function updateDebitRecurrence(
   const signedAmount = value.type === "expense" ? -value.amount : value.amount;
   const todayDate = parseCalendarDate(todayCalendarDate());
   const endDate = value.endDate ? parseCalendarDate(value.endDate) : null;
+  const newStartDate = parseCalendarDate(value.startDate);
+  const startDateChanged = dateOnlyKey(existing.startDate) !== value.startDate;
 
   const occurrenceValue: OccurrenceContent = {
     accountId: value.accountId,
@@ -553,6 +556,7 @@ export async function updateDebitRecurrence(
     cardId: null,
     paymentMethod: value.paymentMethod || null,
     endDate,
+    startDate: newStartDate,
   };
 
   // Splits template: replace wholesale, same delete-then-nested-create
@@ -583,6 +587,20 @@ export async function updateDebitRecurrence(
     occurrenceValue,
     signedAmount,
   });
+
+  if (startDateChanged) {
+    await cascadeRecurrenceDateShift({
+      id,
+      userId,
+      todayDate,
+      newStartDate,
+      frequency: existing.frequency,
+      endDate,
+      occurrenceValue,
+      signedAmount,
+      account: { ...account, creditCardDetails: null },
+    });
+  }
 
   revalidateAll();
   return { error: null, updatedCount };
@@ -706,6 +724,8 @@ export async function updateCreditRecurrence(
   const signedAmount = value.type === "expense" ? -value.amount : value.amount;
   const todayDate = parseCalendarDate(todayCalendarDate());
   const endDate = value.endDate ? parseCalendarDate(value.endDate) : null;
+  const newStartDate = parseCalendarDate(value.startDate);
+  const startDateChanged = dateOnlyKey(existing.startDate) !== value.startDate;
 
   const occurrenceValue: OccurrenceContent = {
     accountId: value.accountId,
@@ -726,6 +746,7 @@ export async function updateCreditRecurrence(
     cardId: value.cardId,
     paymentMethod: null,
     endDate,
+    startDate: newStartDate,
   };
 
   await prisma.recurrenceSplit.deleteMany({ where: { recurrenceId: id } });
@@ -752,6 +773,20 @@ export async function updateCreditRecurrence(
     occurrenceValue,
     signedAmount,
   });
+
+  if (startDateChanged) {
+    await cascadeRecurrenceDateShift({
+      id,
+      userId,
+      todayDate,
+      newStartDate,
+      frequency: existing.frequency,
+      endDate,
+      occurrenceValue,
+      signedAmount,
+      account,
+    });
+  }
 
   revalidateAll();
   return { error: null, updatedCount };
@@ -837,6 +872,97 @@ async function cascadeRecurrenceEdit(params: {
   }
 
   return cascadedIds.length;
+}
+
+// Moves which day future occurrences land on, after the user edits the
+// rule's startDate — called from update*Recurrence below, ONLY when
+// value.startDate actually differs from the stored one (a no-op edit
+// shouldn't churn any rows). Deliberately scoped to strictly-future
+// months: the current month's own occurrence (whatever its status —
+// already COMPLETED, or still PENDING because its day hasn't come up
+// yet) is left exactly as-is, never deleted, moved, or duplicated — the
+// user explicitly asked for the already-underway month to stay
+// untouched, with no extra occurrence added for it either. Everything
+// dated after this month is fair game: delete whatever's still PENDING
+// there and regenerate from the new anchor, same generation loop
+// create*Recurrence itself uses (frequency alone still can't change —
+// see debitRecurrenceCreateSchema's doc comment — so stepping the new
+// anchor by the rule's existing frequency is enough to know where every
+// future occurrence lands).
+async function cascadeRecurrenceDateShift(params: {
+  id: string;
+  userId: string;
+  todayDate: Date;
+  newStartDate: Date;
+  frequency: RecurrenceFrequencyValue;
+  endDate: Date | null;
+  occurrenceValue: OccurrenceContent;
+  signedAmount: number;
+  account: {
+    id: string;
+    type: string;
+    creditCardDetails: { closingDay: number; dueDay: number } | null;
+  };
+}) {
+  const {
+    id,
+    userId,
+    todayDate,
+    newStartDate,
+    frequency,
+    endDate,
+    occurrenceValue,
+    signedAmount,
+    account,
+  } = params;
+
+  // The first day of the month AFTER todayDate, midnight-anchored in
+  // APP_TIME_ZONE — same construction as every other date this file
+  // writes/compares (parseCalendarDate, stepOccurrenceDate), deliberately
+  // NOT date-fns' own `endOfMonth` (23:59:59.999): that lands 3 hours
+  // into the next UTC calendar day (APP_TIME_ZONE is UTC-3), which a
+  // `@db.Date` column's comparison — Postgres compares by calendar date,
+  // dropping the time-of-day (verified empirically against the real DB:
+  // `date: { gte: parseCalendarDate("2026-09-02") }` DOES match a row
+  // actually dated 2026-09-02, even though the instants themselves
+  // differ by 3 hours) — would silently read as "day 1 of next month,"
+  // one full day later than intended, and exclude that first future
+  // occurrence from the shift.
+  const nextMonthStart = fromAppZoned(
+    startOfMonth(addMonths(toAppZoned(todayDate), 1)),
+  );
+
+  await prisma.transaction.deleteMany({
+    where: {
+      recurrenceId: id,
+      userId,
+      status: "PENDING",
+      date: { gte: nextMonthStart },
+    },
+  });
+
+  let occurrenceDate = newStartDate;
+  while (occurrenceDate < nextMonthStart) {
+    occurrenceDate = stepOccurrenceDate(occurrenceDate, frequency);
+  }
+
+  const windowEnd = fromAppZoned(
+    addMonths(toAppZoned(todayDate), GENERATION_WINDOW_MONTHS),
+  );
+  const generateUntil = endDate && endDate < windowEnd ? endDate : windowEnd;
+
+  while (occurrenceDate <= generateUntil) {
+    await createRecurrenceOccurrence({
+      userId,
+      value: occurrenceValue,
+      amount: signedAmount,
+      date: occurrenceDate,
+      recurrenceId: id,
+      account,
+      todayDate,
+    });
+    occurrenceDate = stepOccurrenceDate(occurrenceDate, frequency);
+  }
 }
 
 // ---------------------------------------------------------------------

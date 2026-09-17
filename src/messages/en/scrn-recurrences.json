@@ -156,7 +156,8 @@
       "label": "Frequency"
     },
     "startDate": {
-      "label": "Start date"
+      "label": "Start date",
+      "editHelp": "Changing the date only affects future occurrences that haven't been generated yet. This month's occurrence stays the same."
     },
     "endDate": {
       "toggleLabel": "Set an end date",
@@ -177,7 +178,7 @@
     "remove": "Remove person",
     "mismatch": "The split total must match the recurrence amount"
   },
-  "scheduleSummary": "Repeats {frequency}, starting {start}. Frequency and start date can't be changed after creation — delete and create a new one to change the schedule.",
+  "scheduleSummary": "Repeats {frequency}. Frequency can't be changed after creation — delete and create a new one to change it.",
   "toast": {
     "created": "Recurrence created",
     "updated": "Recurrence updated",

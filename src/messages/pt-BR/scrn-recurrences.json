@@ -156,7 +156,8 @@
       "label": "Frequência"
     },
     "startDate": {
-      "label": "Data de início"
+      "label": "Data de início",
+      "editHelp": "Alterar a data afeta só as próximas ocorrências ainda não geradas. A ocorrência deste mês não muda."
     },
     "endDate": {
       "toggleLabel": "Definir data de término",
@@ -177,7 +178,7 @@
     "remove": "Remover pessoa",
     "mismatch": "A soma da divisão precisa bater com o valor da recorrência"
   },
-  "scheduleSummary": "Repete {frequency}, a partir de {start}. Frequência e data de início não podem ser alteradas depois de criada — exclua e crie uma nova para mudar o agendamento.",
+  "scheduleSummary": "Repete {frequency}. A frequência não pode ser alterada depois de criada — exclua e crie uma nova para mudar.",
   "toast": {
     "created": "Recorrência criada",
     "updated": "Recorrência atualizada",

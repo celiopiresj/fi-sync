@@ -100,13 +100,21 @@ export const debitRecurrenceContentSchema = z.object({
   splits: z.array(splitSchema),
   // "" = no end date (recurs indefinitely) — see the Recurrence.endDate
   // doc comment in prisma/schema.prisma. Editable after creation (unlike
-  // frequency/startDate below): shortening it cascades to delete any
+  // frequency below): shortening it cascades to delete any
   // already-generated future/PENDING occurrences dated past the new
   // cutoff (see updateDebitRecurrence in actions.ts); lengthening it, or
   // clearing it back to indefinite, just lifts the ceiling for the next
   // extendRecurrenceGeneration call — nothing is generated immediately
   // by the edit itself.
   endDate: z.string(),
+  // Editable after creation too, unlike frequency (still locked — see
+  // debitRecurrenceCreateSchema below). Changing it shifts which day
+  // future occurrences land on: cascadeRecurrenceDateShift (actions.ts)
+  // deletes and regenerates every not-yet-generated-for-this-month
+  // occurrence from the new anchor, but never touches the current
+  // month's own occurrence (whatever its status) or anything already
+  // past — only strictly future months move.
+  startDate: z.string().min(1),
 });
 
 export type DebitRecurrenceContentFormValues = z.input<
@@ -116,16 +124,13 @@ export type DebitRecurrenceContentValues = z.output<
   typeof debitRecurrenceContentSchema
 >;
 
-// Schedule fields, only ever asked for at creation. Frequency/startDate
-// stay immutable once occurrences are generated — changing them after
-// the fact would mean reconciling an already-materialized batch of
-// Transaction rows against a new shape, which is out of scope here
-// (endDate doesn't have this problem — see the comment on it above — so
-// it lives on debitRecurrenceContentSchema instead, editable). To get a
-// different frequency/startDate, delete the rule and create a new one.
+// Frequency alone stays immutable once occurrences are generated —
+// changing the cadence itself (not just which day it lands on) would
+// mean reconciling an already-materialized batch of Transaction rows
+// against a fundamentally different shape, which is out of scope here.
+// To get a different frequency, delete the rule and create a new one.
 export const debitRecurrenceCreateSchema = debitRecurrenceContentSchema.extend({
   frequency: z.enum(recurrenceFrequencyValues),
-  startDate: z.string().min(1),
 });
 
 export type DebitRecurrenceCreateFormValues = z.input<
@@ -145,12 +150,12 @@ export const emptyDebitRecurrenceContentValues: DebitRecurrenceContentFormValues
   personId: "",
   splits: [],
   endDate: "",
+  startDate: "",
 };
 
 export const emptyDebitRecurrenceCreateValues: DebitRecurrenceCreateFormValues = {
   ...emptyDebitRecurrenceContentValues,
   frequency: "MONTHLY",
-  startDate: "",
 };
 
 // Cross-field checks that can't live in the static schema above — called
@@ -215,6 +220,9 @@ export const creditRecurrenceContentSchema = z.object({
   personId: z.string().min(1),
   splits: z.array(splitSchema),
   endDate: z.string(),
+  // Same "editable after creation, unlike frequency" rule as
+  // debitRecurrenceContentSchema's own startDate above.
+  startDate: z.string().min(1),
 });
 
 export type CreditRecurrenceContentFormValues = z.input<
@@ -226,7 +234,6 @@ export type CreditRecurrenceContentValues = z.output<
 
 export const creditRecurrenceCreateSchema = creditRecurrenceContentSchema.extend({
   frequency: z.enum(recurrenceFrequencyValues),
-  startDate: z.string().min(1),
 });
 
 export type CreditRecurrenceCreateFormValues = z.input<
@@ -246,12 +253,12 @@ export const emptyCreditRecurrenceContentValues: CreditRecurrenceContentFormValu
   personId: "",
   splits: [],
   endDate: "",
+  startDate: "",
 };
 
 export const emptyCreditRecurrenceCreateValues: CreditRecurrenceCreateFormValues = {
   ...emptyCreditRecurrenceContentValues,
   frequency: "MONTHLY",
-  startDate: "",
 };
 
 // Cross-field checks for the credit form — just the splits-total check,

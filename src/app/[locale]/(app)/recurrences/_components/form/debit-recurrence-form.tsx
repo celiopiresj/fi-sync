@@ -27,11 +27,7 @@ import {
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
-import {
-  todayCalendarDate,
-  dateOnlyKey,
-  DATE_ONLY_FORMAT_OPTIONS,
-} from "@/lib/date";
+import { todayCalendarDate, dateOnlyKey } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import type {
   AccountOption,
@@ -619,6 +615,10 @@ function toEditFormValues(row: RecurrenceRow): DebitRecurrenceContentFormValues 
     // `new Date(...)` local read would be safe here — see the file-level
     // comment in @/lib/date.ts.
     endDate: row.endDate ? dateOnlyKey(row.endDate) : "",
+    // Same dateOnlyKey round-trip as endDate above — now editable (see
+    // debitRecurrenceContentSchema's own startDate doc comment), unlike
+    // frequency, which stays a read-only display value below.
+    startDate: dateOnlyKey(row.startDate),
   };
 }
 
@@ -803,9 +803,8 @@ export function DebitRecurrenceEditForm({
     }
   }
 
-  const scheduleSummary = t("scheduleSummary", {
+  const frequencySummary = t("scheduleSummary", {
     frequency: t(`table.frequency.${initialValues.frequency}`).toLowerCase(),
-    start: format.dateTime(initialValues.startDate, DATE_ONLY_FORMAT_OPTIONS),
   });
 
   return (
@@ -904,13 +903,29 @@ export function DebitRecurrenceEditForm({
         </form.AppField>
       </ItemGroup>
 
-      {/* Read-only — frequency/startDate can't be edited after creation,
-          see debitRecurrenceCreateSchema's doc comment in _schema/schema.ts.
-          Shown here so editing the amount/category still has the
-          schedule in view for context. */}
+      {/* Frequency stays read-only — see debitRecurrenceCreateSchema's
+          doc comment in _schema/schema.ts. startDate, below, IS editable
+          here (unlike frequency): changing it only shifts which day
+          future, not-yet-generated occurrences land on — see
+          cascadeRecurrenceDateShift in actions.ts. */}
       <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
-        {scheduleSummary}
+        {frequencySummary}
       </p>
+
+      <ItemGroup className="gap-0 divide-y rounded-md border border-border">
+        <form.AppField name="startDate">
+          {(field) => (
+            <field.DatePickerRowField
+              label={t("fields.startDate.label")}
+              placeholder={t("fields.choosePlaceholder")}
+              formatDisplay={(value) =>
+                format.dateTime(value, { dateStyle: "long" })
+              }
+            />
+          )}
+        </form.AppField>
+      </ItemGroup>
+      <p className="text-xs text-muted-foreground">{t("fields.startDate.editHelp")}</p>
 
       <div className="flex flex-col gap-3 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-3">
