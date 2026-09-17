@@ -72,6 +72,10 @@
   },
   "detail": {
     "back": "Back",
+    "nav": {
+      "previous": "Previous invoice",
+      "next": "Next invoice"
+    },
     "summary": {
       "period": "Closes {closing} · Due {due}",
       "total": "Invoice total",

@@ -6,7 +6,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { subDays } from "date-fns";
-import { ArrowLeftIcon, PencilSimpleIcon, PlusIcon, ReceiptIcon } from "@phosphor-icons/react";
+import {
+  ArrowLeftIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
+  PencilSimpleIcon,
+  PlusIcon,
+  ReceiptIcon,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -598,13 +605,48 @@ export function InvoiceDetailView({
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <Link
-        href="/invoices"
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeftIcon className="size-4" />
-        {t("detail.back")}
-      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          href="/invoices"
+          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-4" />
+          {t("detail.back")}
+        </Link>
+
+        {(invoice.previousInvoiceId || invoice.nextInvoiceId) && (
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon-sm" asChild disabled={!invoice.previousInvoiceId}>
+              {invoice.previousInvoiceId ? (
+                <Link
+                  href={`/invoices/${invoice.previousInvoiceId}`}
+                  aria-label={t("detail.nav.previous")}
+                >
+                  <CaretLeftIcon className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden>
+                  <CaretLeftIcon className="size-4" />
+                </span>
+              )}
+            </Button>
+            <Button variant="outline" size="icon-sm" asChild disabled={!invoice.nextInvoiceId}>
+              {invoice.nextInvoiceId ? (
+                <Link
+                  href={`/invoices/${invoice.nextInvoiceId}`}
+                  aria-label={t("detail.nav.next")}
+                >
+                  <CaretRightIcon className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden>
+                  <CaretRightIcon className="size-4" />
+                </span>
+              )}
+            </Button>
+          </div>
+        )}
+      </div>
 
       <div className="flex flex-col gap-4 rounded-lg bg-surface-1 p-4">
         <div className="flex items-start justify-between gap-3">

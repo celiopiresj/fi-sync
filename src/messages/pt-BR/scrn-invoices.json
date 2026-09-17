@@ -72,6 +72,10 @@
   },
   "detail": {
     "back": "Voltar",
+    "nav": {
+      "previous": "Fatura anterior",
+      "next": "Próxima fatura"
+    },
     "summary": {
       "period": "Fechamento {closing} · Vencimento {due}",
       "total": "Total da fatura",

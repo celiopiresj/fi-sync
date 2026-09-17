@@ -214,6 +214,27 @@ export async function getInvoiceDetail(id: string) {
   });
   if (!invoice) return null;
 
+  // Adjacent invoices for the same card, one closing cycle away — the
+  // prev/next navigation buttons on the detail header. closingDate (not
+  // dueDate) is the ordering key since it's the field with the
+  // `@@unique([accountId, closingDate])` constraint, so "immediately
+  // before/after" is unambiguous. Invoices are created lazily per cycle
+  // (see computeInvoiceCycle), so a neighboring cycle may simply not
+  // exist yet — findFirst returning null is the normal "doesn't exist"
+  // case, not an error, and the button is hidden for it.
+  const [previousInvoice, nextInvoice] = await Promise.all([
+    prisma.invoice.findFirst({
+      where: { accountId: invoice.accountId, closingDate: { lt: invoice.closingDate } },
+      orderBy: { closingDate: "desc" },
+      select: { id: true },
+    }),
+    prisma.invoice.findFirst({
+      where: { accountId: invoice.accountId, closingDate: { gt: invoice.closingDate } },
+      orderBy: { closingDate: "asc" },
+      select: { id: true },
+    }),
+  ]);
+
   const total = sumInvoiceTransactionsTotal(invoice.transactionInvoices);
   const creditApplied = invoice.creditsReceived.reduce(
     (sum, credit) => sum + credit.amount.toNumber(),
@@ -227,6 +248,8 @@ export async function getInvoiceDetail(id: string) {
     account: invoice.account,
     closingDate: invoice.closingDate,
     dueDate: invoice.dueDate,
+    previousInvoiceId: previousInvoice?.id ?? null,
+    nextInvoiceId: nextInvoice?.id ?? null,
     displayStatus: deriveDisplayStatus(invoice, todayDate),
     paidAmount,
     paidAt: invoice.paidAt,
