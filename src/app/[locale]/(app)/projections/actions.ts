@@ -1,5 +1,6 @@
 "use server";
 
+import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
 import { sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
@@ -30,6 +31,36 @@ function toSplitInputs(
     amount: split.amount.toNumber(),
     person: split.person,
   }));
+}
+
+// Self-attributed loan installments still unpaid — the same "still-owed
+// obligation" a recurring PENDING transaction already contributes to
+// this series, except a LoanInstallment has no Transaction row at all
+// until it's actually paid (registerLoanPayment, loans/actions.ts), so
+// it's invisible to the futureTransactions query below unless fetched
+// separately here. `loan.person.isSelf` stands in for selfShareAmount's
+// splits check — a LoanInstallment has no splits of its own, just the
+// one Loan.personId, so a loan "with" someone else (isSelf: false) is
+// left out entirely, same as a transaction whose only split belongs to
+// a non-self Person. `installment.amount` is already the plain positive
+// nominal amount (loanSchema's own decimalString) — never negative the
+// way a posted payment Transaction's `amount` is, so callers add it
+// straight into an expense total without an extra Math.abs.
+async function fetchUnpaidSelfLoanInstallments(userId: string, throughDate: Date) {
+  return prisma.loanInstallment.findMany({
+    where: {
+      transactionId: null,
+      dueDate: { lte: throughDate },
+      loan: { userId, person: { isSelf: true } },
+    },
+    select: {
+      id: true,
+      dueDate: true,
+      amount: true,
+      loan: { select: { description: true } },
+    },
+    orderBy: { dueDate: "asc" },
+  });
 }
 
 async function requireUserId() {
@@ -143,7 +174,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // days included, not just what's still ahead of today (see the comment
   // above) — so anything dated before pastTransactions' own cutoff isn't
   // double-counted here.
-  const [futureTransactions, futureInvoices] = await Promise.all([
+  const [futureTransactions, unpaidLoanInstallments, futureInvoices] = await Promise.all([
     prisma.transaction.findMany({
       where: {
         userId,
@@ -165,6 +196,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
         invoicePayment: { select: { id: true } },
       },
     }),
+    fetchUnpaidSelfLoanInstallments(userId, horizonEndDate),
     prisma.invoice.findMany({
       where: {
         account: { userId, type: "CREDIT_CARD" },
@@ -246,6 +278,26 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
         (accountExpenseByMonth.get(key) ?? 0) + Math.abs(amount),
       );
     }
+  }
+
+  // Unpaid, not yet due-and-completed — never contributes to
+  // realizedThisMonth the way a real transaction dated <= today does
+  // (see the comment on that variable above): no money has actually
+  // left the account for an unpaid installment yet, only registerLoanPayment
+  // does that. An installment overdue from before this window even
+  // started is clamped into the current month's own bucket instead of
+  // silently falling off the edge of the series — it's still owed, and
+  // will land on some real payment once it's finally made.
+  for (const installment of unpaidLoanInstallments) {
+    const bucketDate =
+      installment.dueDate < currentMonthStartDate
+        ? currentMonthStartDate
+        : installment.dueDate;
+    const key = dateOnlyKey(bucketDate).slice(0, 7);
+    accountExpenseByMonth.set(
+      key,
+      (accountExpenseByMonth.get(key) ?? 0) + installment.amount.toNumber(),
+    );
   }
 
   for (const invoice of futureInvoices) {
@@ -359,11 +411,12 @@ export async function getProjections(monthsAhead: number) {
 // key getProjections' entries already carry.
 export async function getProjectionDetail(monthId: string) {
   const userId = await requireUserId();
+  const t = await getTranslations("scrn-projections");
   const series = await computeMonthSeries(userId);
   const month = series.find((entry) => entry.monthKey === monthId);
   if (!month) return null;
 
-  const [selfPerson, invoices, transactions] = await Promise.all([
+  const [selfPerson, invoices, transactions, loanInstallments] = await Promise.all([
     // Only feeds the detail page's "Ver extrato completo" link — it
     // passes `?person=` too, so what opens on the transactions screen
     // matches exactly the self-share this page already summed, not
@@ -420,6 +473,30 @@ export async function getProjectionDetail(monthId: string) {
         invoicePayment: { select: { id: true } },
       },
       orderBy: { date: "asc" },
+    }),
+    // Same clamping computeMonthSeries' own bucketing loop applies: the
+    // current month's detail page also pulls in anything overdue from
+    // before this window (`dueDate <= month.toDate`, no lower bound) so
+    // its accountsBreakdown total matches month.accountExpenses exactly;
+    // any other (future) month only shows what's actually due within its
+    // own bounds — nothing can be "overdue" relative to a month that
+    // hasn't started yet, since an overdue installment is always
+    // bucketed into the CURRENT month instead, never a later one.
+    prisma.loanInstallment.findMany({
+      where: {
+        transactionId: null,
+        loan: { userId, person: { isSelf: true } },
+        dueDate: month.isCurrentMonth
+          ? { lte: month.toDate }
+          : { gte: month.fromDate, lte: month.toDate },
+      },
+      select: {
+        id: true,
+        dueDate: true,
+        amount: true,
+        loan: { select: { description: true } },
+      },
+      orderBy: { dueDate: "asc" },
     }),
   ]);
 
@@ -500,15 +577,31 @@ export async function getProjectionDetail(monthId: string) {
     (a, b) => a.dueDate.getTime() - b.dueDate.getTime(),
   );
 
-  const accountsBreakdown = transactionsWithSelfShare
-    .filter((transaction) => transaction.selfShare < 0 && !transaction.isInvoicePayment)
-    .map((transaction) => ({
-      id: transaction.id,
-      name: transaction.name,
-      categoryName: transaction.categoryName,
-      date: transaction.date,
-      amount: Math.abs(transaction.selfShare),
-    }));
+  // Unpaid installments have no Transaction row to read a real category
+  // from (see fetchUnpaidSelfLoanInstallments' own comment) — every row
+  // here gets the same fixed "Empréstimo" label instead, same as how
+  // registerLoanPayment always files the eventual payment under the
+  // seeded "Empréstimo" category once it's actually made.
+  const loanInstallmentsBreakdown = loanInstallments.map((installment) => ({
+    id: installment.id,
+    name: installment.loan.description,
+    categoryName: t("detail.sections.accounts.loanCategoryLabel"),
+    date: installment.dueDate,
+    amount: installment.amount.toNumber(),
+  }));
+
+  const accountsBreakdown = [
+    ...transactionsWithSelfShare
+      .filter((transaction) => transaction.selfShare < 0 && !transaction.isInvoicePayment)
+      .map((transaction) => ({
+        id: transaction.id,
+        name: transaction.name,
+        categoryName: transaction.categoryName,
+        date: transaction.date,
+        amount: Math.abs(transaction.selfShare),
+      })),
+    ...loanInstallmentsBreakdown,
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const receivablesBreakdown = transactionsWithSelfShare
     .filter((transaction) => transaction.selfShare > 0)

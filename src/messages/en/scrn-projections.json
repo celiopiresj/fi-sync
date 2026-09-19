@@ -83,7 +83,8 @@
       "accounts": {
         "title": "Fixed / Recurring Bills",
         "empty": "No expenses expected this month.",
-        "dueDate": "Date: {date}"
+        "dueDate": "Date: {date}",
+        "loanCategoryLabel": "Loan"
       },
       "receivables": {
         "title": "Expected Income",

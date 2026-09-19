@@ -83,7 +83,8 @@
       "accounts": {
         "title": "Contas Fixas / Recorrentes",
         "empty": "Nenhuma saída prevista neste mês.",
-        "dueDate": "Data: {date}"
+        "dueDate": "Data: {date}",
+        "loanCategoryLabel": "Empréstimo"
       },
       "receivables": {
         "title": "Receitas e Entradas Esperadas",
