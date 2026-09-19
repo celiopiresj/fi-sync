@@ -341,8 +341,41 @@ export async function createLoan(
   return { error: null };
 }
 
-// Only reachable while every installment is still unpaid (see the
-// errors.cannotEditPaid check below) — the whole schedule is deleted
+// Reschedules the still-unpaid installments of a loan that already has
+// SOME paid ones — the narrower sibling of the full recreate below,
+// same "already-real payments can't be recomputed away, but what's
+// still ahead can still move" rule recurrences' own
+// cascadeRecurrenceDateShift (recurrences/actions.ts) follows. Only the
+// DATE moves: description/amount/installment count/person are locked
+// the moment any installment is paid (loan-form.tsx renders them
+// read-only in that state), so there's no other content to cascade —
+// unlike a recurrence, which keeps cascading content edits indefinitely.
+// Paid installments (wherever they fall — registerLoanPayment doesn't
+// require paying in order) keep their own dueDate/amount/installmentNumber
+// exactly as they are; only the unpaid ones' dueDate is rewritten, in
+// installmentNumber order, from computeLoanInstallmentDates anchored at
+// the newly edited date — same month-spacing helper create/full-edit
+// already use. Loan.dueDate itself ("the first installment's due date")
+// is deliberately left untouched here: it's a historical fact about
+// when the loan started, not the schedule being edited.
+async function cascadeLoanDateShift(params: {
+  newAnchor: Date;
+  unpaidInstallmentIds: string[];
+}) {
+  const { newAnchor, unpaidInstallmentIds } = params;
+  const dueDates = computeLoanInstallmentDates(newAnchor, unpaidInstallmentIds.length);
+
+  await prisma.$transaction(
+    unpaidInstallmentIds.map((installmentId, index) =>
+      prisma.loanInstallment.update({
+        where: { id: installmentId },
+        data: { dueDate: dueDates[index] },
+      }),
+    ),
+  );
+}
+
+// While EVERY installment is still unpaid, the whole schedule is deleted
 // and regenerated from scratch, same "recompute isn't safe once real
 // payments exist" reasoning credit-card installment editing has in
 // transactions/actions.ts. Delete-then-recreate inside a $transaction,
@@ -351,7 +384,11 @@ export async function createLoan(
 // loan with zero installments. Never touches the one-time "valor
 // recebido" transaction createLoan may have posted — that's a
 // create-only action, not part of the recurring schedule being edited
-// here.
+// here. Once SOME (but not all) installments are paid, this instead
+// defers to cascadeLoanDateShift above — description/amount/count/person
+// can no longer change, only the remaining schedule's date. Once ALL
+// installments are paid (fully settled), there's nothing left to
+// reschedule either, so that's still the original hard block.
 export async function updateLoan(
   id: string,
   data: LoanFormValues,
@@ -367,14 +404,32 @@ export async function updateLoan(
 
   const existing = await prisma.loan.findFirst({
     where: { id, userId },
-    include: { installments: { select: { transactionId: true } } },
+    include: {
+      installments: {
+        orderBy: { installmentNumber: "asc" },
+        select: { id: true, transactionId: true },
+      },
+    },
   });
   if (!existing) {
     return { error: "Not found" };
   }
 
-  if (existing.installments.some((installment) => installment.transactionId !== null)) {
-    return { error: t("errors.cannotEditPaid") };
+  const unpaidInstallments = existing.installments.filter(
+    (installment) => installment.transactionId === null,
+  );
+
+  if (unpaidInstallments.length !== existing.installments.length) {
+    if (unpaidInstallments.length === 0) {
+      return { error: t("errors.cannotEditPaid") };
+    }
+    await cascadeLoanDateShift({
+      newAnchor: parseCalendarDate(value.dueDate),
+      unpaidInstallmentIds: unpaidInstallments.map((installment) => installment.id),
+    });
+    revalidatePath("/loans");
+    revalidatePath(`/loans/${id}`);
+    return { error: null };
   }
 
   const person = await prisma.person.findUnique({

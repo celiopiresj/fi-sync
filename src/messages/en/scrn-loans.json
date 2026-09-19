@@ -42,11 +42,13 @@
       "label": "Installment amount"
     },
     "dueDate": {
-      "label": "Due date"
+      "label": "Due date",
+      "labelNextUnpaid": "Next installment date"
     },
     "person": {
       "label": "Person"
     },
+    "lockedNotice": "This loan already has paid installments — those stay as they are. Name, amount, installment count, and person can no longer change either. Only the remaining installments' date can move.",
     "receivedAmount": {
       "label": "Amount received",
       "hint": "Optional. If you received this amount now, enter it here and we'll post the deposit to the chosen account."

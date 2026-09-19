@@ -34,7 +34,16 @@ function toFormValues(
     description: loan.description,
     installmentAmount: loan.installmentAmount.toFixed(2).replace(".", ","),
     installments: String(loan.installmentCount),
-    dueDate: dateOnlyKey(loan.dueDate),
+    // Once some installments are already paid, `loan.dueDate` (the
+    // FIRST installment's date) may already be history — the field
+    // means "when should the next unpaid installment fall" in that
+    // state instead, so it defaults from `nextDueDate` (the first still-
+    // unpaid one, per listLoans) rather than the loan's own origin date.
+    // nextDueDate is only ever null for a fully-settled loan, which
+    // never reaches this form (loans-view.tsx doesn't offer editing for
+    // it) — falling back to loan.dueDate here is just type-level
+    // defensiveness, not an expected runtime path.
+    dueDate: dateOnlyKey(loan.nextDueDate ?? loan.dueDate),
     receivedAmount: "",
     receivedAccountId: defaultAccountId,
   };
@@ -68,6 +77,22 @@ export function LoanForm({
   const [pastInstallmentsValue, setPastInstallmentsValue] =
     useState<LoanFormValues | null>(null);
 
+  // Some (but not all) installments are already paid — description/
+  // amount/installment count/person are locked in this state (see
+  // cascadeLoanDateShift's doc comment in actions.ts), only the
+  // remaining schedule's date can move. `nextDueDate !== null` rules out
+  // the fully-settled edge case (nothing left to reschedule), which
+  // keeps going through the form's original full-edit UI below and
+  // still gets rejected server-side by updateLoan's `cannotEditPaid`
+  // check, exactly like before this feature existed — loans-view.tsx
+  // doesn't hide "Editar" for a settled loan, so that path still needs
+  // to render something.
+  const hasPartialPayments =
+    isEditing &&
+    initialValues !== null &&
+    initialValues.paidInstallmentCount > 0 &&
+    initialValues.nextDueDate !== null;
+
   const schema = loanSchema.superRefine((value: LoanValues, ctx) =>
     refineLoanReceived(value, ctx, {
       accountRequired: tValidation("required"),
@@ -98,13 +123,22 @@ export function LoanForm({
       accounts.find((account) => account.isDefault)?.id ?? "",
     ),
     onSubmit: async ({ value }) => {
-      const installmentCount = Number(value.installments || "1");
-      const dueDate = value.dueDate ? parseCalendarDate(value.dueDate) : null;
-      if (dueDate && installmentCount > 0) {
-        const [firstDueDate] = computeLoanInstallmentDates(dueDate, 1);
-        if (firstDueDate < parseCalendarDate(todayCalendarDate())) {
-          setPastInstallmentsValue(value);
-          return;
+      // The past-installments dialog only matters when a full schedule
+      // is about to be (re)created from scratch (create, or full edit
+      // with nothing paid yet) — a reschedule of already-existing unpaid
+      // rows doesn't materialize anything new, so a past-dated anchor
+      // here just means "this loan is now overdue," an already-supported
+      // state (see listLoans' own overdueCount), not something to warn
+      // about.
+      if (!hasPartialPayments) {
+        const installmentCount = Number(value.installments || "1");
+        const dueDate = value.dueDate ? parseCalendarDate(value.dueDate) : null;
+        if (dueDate && installmentCount > 0) {
+          const [firstDueDate] = computeLoanInstallmentDates(dueDate, 1);
+          if (firstDueDate < parseCalendarDate(todayCalendarDate())) {
+            setPastInstallmentsValue(value);
+            return;
+          }
         }
       }
       await performSubmit(value);
@@ -143,38 +177,50 @@ export function LoanForm({
       }}
       className="flex flex-col gap-4"
     >
-      <form.AppField name="description">
-        {(field) => (
-          <field.TextField
-            label={t("fields.description.label")}
-            placeholder={t("fields.description.placeholder")}
-          />
-        )}
-      </form.AppField>
+      {hasPartialPayments ? (
+        <p className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+          {t("fields.lockedNotice")}
+        </p>
+      ) : (
+        <>
+          <form.AppField name="description">
+            {(field) => (
+              <field.TextField
+                label={t("fields.description.label")}
+                placeholder={t("fields.description.placeholder")}
+              />
+            )}
+          </form.AppField>
 
-      <form.AppField name="installments">
-        {(field) => (
-          <field.TextField
-            label={t("fields.installments.label")}
-            placeholder={t("fields.installments.placeholder")}
-          />
-        )}
-      </form.AppField>
+          <form.AppField name="installments">
+            {(field) => (
+              <field.TextField
+                label={t("fields.installments.label")}
+                placeholder={t("fields.installments.placeholder")}
+              />
+            )}
+          </form.AppField>
 
-      <form.AppField name="installmentAmount">
-        {(field) => (
-          <field.AmountField
-            label={t("fields.installmentAmount.label")}
-            placeholder="0,00"
-          />
-        )}
-      </form.AppField>
+          <form.AppField name="installmentAmount">
+            {(field) => (
+              <field.AmountField
+                label={t("fields.installmentAmount.label")}
+                placeholder="0,00"
+              />
+            )}
+          </form.AppField>
+        </>
+      )}
 
       <ItemGroup className="gap-0 divide-y rounded-md border border-border">
         <form.AppField name="dueDate">
           {(field) => (
             <field.DatePickerRowField
-              label={t("fields.dueDate.label")}
+              label={t(
+                hasPartialPayments
+                  ? "fields.dueDate.labelNextUnpaid"
+                  : "fields.dueDate.label",
+              )}
               placeholder={t("fields.choosePlaceholder")}
               formatDisplay={(date) =>
                 format.dateTime(date, { dateStyle: "long" })
@@ -183,18 +229,20 @@ export function LoanForm({
           )}
         </form.AppField>
 
-        <form.AppField name="personId">
-          {(field) => (
-            <field.PickerRowField
-              label={t("fields.person.label")}
-              placeholder={t("fields.choosePlaceholder")}
-              options={people.map((person) => ({
-                value: person.id,
-                label: person.name,
-              }))}
-            />
-          )}
-        </form.AppField>
+        {!hasPartialPayments && (
+          <form.AppField name="personId">
+            {(field) => (
+              <field.PickerRowField
+                label={t("fields.person.label")}
+                placeholder={t("fields.choosePlaceholder")}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.name,
+                }))}
+              />
+            )}
+          </form.AppField>
+        )}
       </ItemGroup>
 
       {/* Only relevant when creating — the disbursement, if any, already

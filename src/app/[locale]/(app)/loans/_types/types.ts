@@ -14,7 +14,10 @@ export type LoanAccountOption = LoanFormOptions["accounts"][number];
 // The subset of fields LoanForm needs to prefill an edit — LoanRow
 // (list screen, the only place editing is offered) satisfies this shape
 // structurally, so it can be passed straight through without a mapping
-// step.
+// step. paidInstallmentCount/nextDueDate drive the "some installments
+// already paid" locked-fields mode (see loan-form.tsx's own
+// hasPaidInstallments) — 0 and installmentCount respectively for a loan
+// with nothing paid yet, matching createLoan/updateLoan's full-edit path.
 export type LoanFormPrefill = {
   id: string;
   personId: string;
@@ -22,4 +25,6 @@ export type LoanFormPrefill = {
   dueDate: Date;
   installmentAmount: number;
   installmentCount: number;
+  paidInstallmentCount: number;
+  nextDueDate: Date | null;
 };

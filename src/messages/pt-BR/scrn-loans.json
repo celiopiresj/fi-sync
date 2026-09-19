@@ -42,11 +42,13 @@
       "label": "Valor da parcela"
     },
     "dueDate": {
-      "label": "Data de vencimento"
+      "label": "Data de vencimento",
+      "labelNextUnpaid": "Data da próxima parcela"
     },
     "person": {
       "label": "Pessoa"
     },
+    "lockedNotice": "Este empréstimo já tem parcelas pagas — elas não mudam. Nome, valor, número de parcelas e pessoa também não podem mais ser alterados. Só a data das parcelas restantes pode mudar.",
     "receivedAmount": {
       "label": "Valor recebido",
       "hint": "Opcional. Se você recebeu esse valor agora, informe aqui e nós lançamos a entrada na conta escolhida."
