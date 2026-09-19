@@ -229,20 +229,24 @@ export function LoanForm({
           )}
         </form.AppField>
 
-        {!hasPartialPayments && (
-          <form.AppField name="personId">
-            {(field) => (
-              <field.PickerRowField
-                label={t("fields.person.label")}
-                placeholder={t("fields.choosePlaceholder")}
-                options={people.map((person) => ({
-                  value: person.id,
-                  label: person.name,
-                }))}
-              />
-            )}
-          </form.AppField>
-        )}
+        {/* Unlike description/installments/installmentAmount above,
+            person stays editable even with paid installments — changing
+            it retroactively relabels every real Transaction this loan
+            has already produced (see syncLoanPersonToTransactions,
+            actions.ts), not just future payments, so there's no "can't
+            recompute what already happened" reason to lock it here. */}
+        <form.AppField name="personId">
+          {(field) => (
+            <field.PickerRowField
+              label={t("fields.person.label")}
+              placeholder={t("fields.choosePlaceholder")}
+              options={people.map((person) => ({
+                value: person.id,
+                label: person.name,
+              }))}
+            />
+          )}
+        </form.AppField>
       </ItemGroup>
 
       {/* Only relevant when creating — the disbursement, if any, already

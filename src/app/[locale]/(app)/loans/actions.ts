@@ -351,10 +351,12 @@ export async function createLoan(
 // same "already-real payments can't be recomputed away, but what's
 // still ahead can still move" rule recurrences' own
 // cascadeRecurrenceDateShift (recurrences/actions.ts) follows. Only the
-// DATE moves: description/amount/installment count/person are locked
-// the moment any installment is paid (loan-form.tsx renders them
-// read-only in that state), so there's no other content to cascade —
-// unlike a recurrence, which keeps cascading content edits indefinitely.
+// DATE moves: description/amount/installment count are locked the
+// moment any installment is paid (loan-form.tsx renders them read-only
+// in that state), so there's no other content to cascade — unlike a
+// recurrence, which keeps cascading content edits indefinitely. Person
+// is the one exception (see syncLoanPersonToTransactions below), edited
+// separately from this function since it isn't a schedule concern.
 // Paid installments (wherever they fall — registerLoanPayment doesn't
 // require paying in order) keep their own dueDate/amount/installmentNumber
 // exactly as they are; only the unpaid ones' dueDate is rewritten, in
@@ -380,6 +382,29 @@ async function cascadeLoanDateShift(params: {
   );
 }
 
+// Unlike description/amount/installment count, `personId` stays
+// editable no matter how many installments are already paid (loan-form.tsx
+// keeps rendering it) — but "who this loan is with" is also baked as a
+// TransactionSplit.personId snapshot into every real Transaction the
+// loan has ever produced (the one-time "valor recebido" from createLoan,
+// and each already-paid installment's own settlement from
+// registerLoanPayment), taken once at the time each was created and
+// never re-read since. Editing the Loan's own personId alone would only
+// affect payments made AFTER the edit (registerLoanPayment reads
+// `loan.personId` fresh every time) — this is what makes the edit
+// actually change "em tudo": every already-materialized split for this
+// loan gets rewritten to match, not just the ones still to come.
+async function syncLoanPersonToTransactions(loanId: string, personId: string) {
+  await prisma.transactionSplit.updateMany({
+    where: {
+      transaction: {
+        OR: [{ loanId }, { loanInstallment: { loanId } }],
+      },
+    },
+    data: { personId },
+  });
+}
+
 // While EVERY installment is still unpaid, the whole schedule is deleted
 // and regenerated from scratch, same "recompute isn't safe once real
 // payments exist" reasoning credit-card installment editing has in
@@ -389,11 +414,13 @@ async function cascadeLoanDateShift(params: {
 // loan with zero installments. Never touches the one-time "valor
 // recebido" transaction createLoan may have posted — that's a
 // create-only action, not part of the recurring schedule being edited
-// here. Once SOME (but not all) installments are paid, this instead
-// defers to cascadeLoanDateShift above — description/amount/count/person
-// can no longer change, only the remaining schedule's date. Once ALL
-// installments are paid (fully settled), there's nothing left to
-// reschedule either, so that's still the original hard block.
+// here (personId aside — see syncLoanPersonToTransactions, called from
+// both branches below regardless). Once SOME (but not all) installments
+// are paid, this instead defers to cascadeLoanDateShift above —
+// description/amount/count can no longer change, only the remaining
+// schedule's date (and person, same as full edit). Once ALL installments
+// are paid (fully settled), there's nothing left to reschedule either,
+// so that's still the original hard block.
 export async function updateLoan(
   id: string,
   data: LoanFormValues,
@@ -420,6 +447,14 @@ export async function updateLoan(
     return { error: "Not found" };
   }
 
+  const person = await prisma.person.findUnique({
+    where: { id: value.personId, userId },
+  });
+  if (!person) {
+    return { error: "Invalid person" };
+  }
+  const personChanged = value.personId !== existing.personId;
+
   const unpaidInstallments = existing.installments.filter(
     (installment) => installment.transactionId === null,
   );
@@ -432,16 +467,17 @@ export async function updateLoan(
       newAnchor: parseCalendarDate(value.dueDate),
       unpaidInstallmentIds: unpaidInstallments.map((installment) => installment.id),
     });
+    if (personChanged) {
+      await prisma.loan.update({ where: { id }, data: { personId: value.personId } });
+      await syncLoanPersonToTransactions(id, value.personId);
+    }
     revalidatePath("/loans");
     revalidatePath(`/loans/${id}`);
+    if (personChanged) {
+      revalidatePath("/transactions");
+      revalidatePath("/people");
+    }
     return { error: null };
-  }
-
-  const person = await prisma.person.findUnique({
-    where: { id: value.personId, userId },
-  });
-  if (!person) {
-    return { error: "Invalid person" };
   }
 
   const firstDueDate = parseCalendarDate(value.dueDate);
@@ -477,8 +513,19 @@ export async function updateLoan(
     }),
   ]);
 
+  // No paid installment can exist on this path (see the branch above),
+  // so the only real Transaction this could possibly touch is the
+  // one-time "valor recebido" — a no-op where there isn't one.
+  if (personChanged) {
+    await syncLoanPersonToTransactions(id, value.personId);
+  }
+
   revalidatePath("/loans");
   revalidatePath(`/loans/${id}`);
+  if (personChanged) {
+    revalidatePath("/transactions");
+    revalidatePath("/people");
+  }
   return { error: null };
 }
 
