@@ -413,8 +413,19 @@ export async function getProjectionDetail(monthId: string) {
   const userId = await requireUserId();
   const t = await getTranslations("scrn-projections");
   const series = await computeMonthSeries(userId);
-  const month = series.find((entry) => entry.monthKey === monthId);
+  const monthIndex = series.findIndex((entry) => entry.monthKey === monthId);
+  const month = series[monthIndex];
   if (!month) return null;
+
+  // Adjacent months' own nav buttons on the detail header — the whole
+  // horizon is already computed above, so this is just an index lookup,
+  // unlike invoices' own previous/next (a separate query, since invoices
+  // aren't generated for a fixed-size window the way this series is).
+  // null at either edge: the earliest month IS the current month (no
+  // "previous" to project before today), and the last one is capped by
+  // MAX_MONTHS_AHEAD.
+  const previousMonthId = series[monthIndex - 1]?.monthKey ?? null;
+  const nextMonthId = series[monthIndex + 1]?.monthKey ?? null;
 
   const [selfPerson, invoices, transactions, loanInstallments] = await Promise.all([
     // Only feeds the detail page's "Ver extrato completo" link — it
@@ -615,6 +626,8 @@ export async function getProjectionDetail(monthId: string) {
 
   return {
     monthKey: month.monthKey,
+    previousMonthId,
+    nextMonthId,
     selfPersonId: selfPerson?.id ?? null,
     isCurrentMonth: month.isCurrentMonth,
     initialBalance: month.initialBalance,

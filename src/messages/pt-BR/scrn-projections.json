@@ -57,6 +57,10 @@
     "title": "Detalhamento: {month}",
     "subtitle": "Composição completa de receitas e saídas projetadas para este mês",
     "back": "Voltar",
+    "nav": {
+      "previous": "Mês anterior",
+      "next": "Próximo mês"
+    },
     "viewStatement": "Ver extrato completo",
     "notFound": {
       "title": "Mês não encontrado",

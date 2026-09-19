@@ -3,6 +3,8 @@
 import { useFormatter, useTranslations } from "next-intl";
 import {
   ArrowLeftIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
   CheckCircleIcon,
   CreditCardIcon,
   ReceiptIcon,
@@ -48,33 +50,68 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-center gap-3">
-        <Button asChild variant="ghost" size="icon-sm">
-          <Link href="/projections" aria-label={t("detail.back")}>
-            <ArrowLeftIcon />
-          </Link>
-        </Button>
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold">
-              {t("detail.title", { month: monthLabel })}
-            </h1>
-            <Badge
-              variant="outline"
-              className={cn("w-fit", RISK_BADGE_CLASS[detail.status])}
-            >
-              {detail.status === "ok" ? (
-                <CheckCircleIcon />
-              ) : (
-                <WarningCircleIcon />
-              )}
-              {t(`detail.statusBadge.${detail.status}`)}
-            </Badge>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button asChild variant="ghost" size="icon-sm">
+            <Link href="/projections" aria-label={t("detail.back")}>
+              <ArrowLeftIcon />
+            </Link>
+          </Button>
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-semibold">
+                {t("detail.title", { month: monthLabel })}
+              </h1>
+              <Badge
+                variant="outline"
+                className={cn("w-fit", RISK_BADGE_CLASS[detail.status])}
+              >
+                {detail.status === "ok" ? (
+                  <CheckCircleIcon />
+                ) : (
+                  <WarningCircleIcon />
+                )}
+                {t(`detail.statusBadge.${detail.status}`)}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("detail.subtitle")}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {t("detail.subtitle")}
-          </p>
         </div>
+
+        {(detail.previousMonthId || detail.nextMonthId) && (
+          <div className="flex shrink-0 items-center gap-1">
+            <Button variant="outline" size="icon-sm" asChild disabled={!detail.previousMonthId}>
+              {detail.previousMonthId ? (
+                <Link
+                  href={`/projections/${detail.previousMonthId}`}
+                  aria-label={t("detail.nav.previous")}
+                >
+                  <CaretLeftIcon className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden>
+                  <CaretLeftIcon className="size-4" />
+                </span>
+              )}
+            </Button>
+            <Button variant="outline" size="icon-sm" asChild disabled={!detail.nextMonthId}>
+              {detail.nextMonthId ? (
+                <Link
+                  href={`/projections/${detail.nextMonthId}`}
+                  aria-label={t("detail.nav.next")}
+                >
+                  <CaretRightIcon className="size-4" />
+                </Link>
+              ) : (
+                <span aria-hidden>
+                  <CaretRightIcon className="size-4" />
+                </span>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

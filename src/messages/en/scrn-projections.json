@@ -57,6 +57,10 @@
     "title": "Breakdown: {month}",
     "subtitle": "Full breakdown of projected income and expenses for this month",
     "back": "Back",
+    "nav": {
+      "previous": "Previous month",
+      "next": "Next month"
+    },
     "viewStatement": "View full statement",
     "notFound": {
       "title": "Month not found",
