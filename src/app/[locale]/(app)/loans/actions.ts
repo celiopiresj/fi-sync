@@ -69,18 +69,18 @@ function buildLoanPaymentDescription(
   return parts.filter(Boolean).join(" · ");
 }
 
-// People a loan can be tied to — never the user themselves (a loan is
-// never "with myself"), same isSelf exclusion transactions/actions.ts's
-// own person-attribution logic is careful about elsewhere, just applied
-// as a straight filter here instead. Accounts are the checking/savings/
-// cash set both the optional "valor recebido" disbursement and every
-// installment payment can post to.
+// People a loan can be tied to — includes "Eu" (isSelf), unlike some
+// other person pickers in the app: a loan someone else registered on
+// your behalf, or one you're tracking against yourself for bookkeeping,
+// is a real case the picker needs to allow, not a mistake to filter out.
+// Accounts are the checking/savings/cash set both the optional "valor
+// recebido" disbursement and every installment payment can post to.
 export async function getLoanFormOptions() {
   const userId = await requireUserId();
 
   const [people, accounts] = await Promise.all([
     prisma.person.findMany({
-      where: { userId, isSelf: false },
+      where: { userId },
       orderBy: { name: "asc" },
     }),
     prisma.account.findMany({
