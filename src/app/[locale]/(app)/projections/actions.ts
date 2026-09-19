@@ -101,6 +101,14 @@ type MonthSeriesEntry = {
   incomeForecast: number;
   accountExpenses: number;
   cardExpenses: number;
+  // Loan installments — paid ones (a real Transaction, tagged via its
+  // own loanInstallment relation) and unpaid ones (fetched separately,
+  // see fetchUnpaidSelfLoanInstallments) both land here, never in
+  // accountExpenses, even though a loan payment posts to the same kind
+  // of checking/savings/cash account a "conta" expense does — shown in
+  // its own "Empréstimo" card, not lumped into "Contas Fixas /
+  // Recorrentes", so the two totals don't need untangling by eye.
+  loanExpenses: number;
   totalExpenses: number;
   status: "ok" | "warning" | "danger";
 };
@@ -194,6 +202,12 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
         // invoice it belongs to is actually paid (see the comment on
         // that branch).
         invoicePayment: { select: { id: true } },
+        // Same idea, for a loan installment's own settlement
+        // (registerLoanPayment, loans/actions.ts) — keeps it counted as
+        // loanExpenses instead of accountExpenses once it's actually
+        // paid, same as fetchUnpaidSelfLoanInstallments' rows are before
+        // that happens.
+        loanInstallment: { select: { id: true } },
       },
     }),
     fetchUnpaidSelfLoanInstallments(userId, horizonEndDate),
@@ -232,6 +246,11 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // into it as it's found, alongside the still-unpaid invoices' own
   // contribution further down.
   const cardExpenseByMonth = new Map<string, number>();
+  // Same "declared early, an in-loop tag routes straight into it" shape
+  // as cardExpenseByMonth above — a paid loan installment's own
+  // settlement Transaction is tagged via its loanInstallment relation,
+  // an unpaid one is added separately just below this loop.
+  const loanExpenseByMonth = new Map<string, number>();
   // Self-share of this month's own transactions already dated <= today —
   // real money that's already moved, as opposed to the rest of the
   // month's forecast, which hasn't happened yet. Only ever non-zero for
@@ -272,6 +291,11 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
         key,
         (cardExpenseByMonth.get(key) ?? 0) + Math.abs(amount),
       );
+    } else if (transaction.loanInstallment) {
+      loanExpenseByMonth.set(
+        key,
+        (loanExpenseByMonth.get(key) ?? 0) + Math.abs(amount),
+      );
     } else {
       accountExpenseByMonth.set(
         key,
@@ -294,9 +318,9 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
         ? currentMonthStartDate
         : installment.dueDate;
     const key = dateOnlyKey(bucketDate).slice(0, 7);
-    accountExpenseByMonth.set(
+    loanExpenseByMonth.set(
       key,
-      (accountExpenseByMonth.get(key) ?? 0) + installment.amount.toNumber(),
+      (loanExpenseByMonth.get(key) ?? 0) + installment.amount.toNumber(),
     );
   }
 
@@ -345,7 +369,8 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     const incomeForecast = incomeByMonth.get(key) ?? 0;
     const accountExpenses = accountExpenseByMonth.get(key) ?? 0;
     const cardExpenses = cardExpenseByMonth.get(key) ?? 0;
-    const totalExpenses = accountExpenses + cardExpenses;
+    const loanExpenses = loanExpenseByMonth.get(key) ?? 0;
+    const totalExpenses = accountExpenses + cardExpenses + loanExpenses;
 
     const initialBalance = runningBalance;
     runningBalance = runningBalance + incomeForecast - totalExpenses;
@@ -365,6 +390,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
       incomeForecast,
       accountExpenses,
       cardExpenses,
+      loanExpenses,
       totalExpenses,
       status: riskStatusFor(runningBalance, totalExpenses),
     });
@@ -400,6 +426,7 @@ export async function getProjections(monthsAhead: number) {
     incomeForecast: entry.incomeForecast,
     accountExpenses: entry.accountExpenses,
     cardExpenses: entry.cardExpenses,
+    loanExpenses: entry.loanExpenses,
     totalExpenses: entry.totalExpenses,
     status: entry.status,
   }));
@@ -482,6 +509,10 @@ export async function getProjectionDetail(monthId: string) {
         // of accountsBreakdown, matching how it's already counted in
         // month.cardExpenses/accountExpenses.
         invoicePayment: { select: { id: true } },
+        // Same idea for a paid loan installment's own settlement — sorts
+        // it into loansBreakdown instead of accountsBreakdown, matching
+        // month.loanExpenses.
+        loanInstallment: { select: { id: true } },
       },
       orderBy: { date: "asc" },
     }),
@@ -559,6 +590,7 @@ export async function getProjectionDetail(monthId: string) {
     categoryName: transaction.category?.name ?? null,
     date: transaction.date,
     isInvoicePayment: transaction.invoicePayment !== null,
+    isLoanInstallment: transaction.loanInstallment !== null,
     selfShare: selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
@@ -588,31 +620,47 @@ export async function getProjectionDetail(monthId: string) {
     (a, b) => a.dueDate.getTime() - b.dueDate.getTime(),
   );
 
-  // Unpaid installments have no Transaction row to read a real category
-  // from (see fetchUnpaidSelfLoanInstallments' own comment) — every row
-  // here gets the same fixed "Empréstimo" label instead, same as how
-  // registerLoanPayment always files the eventual payment under the
-  // seeded "Empréstimo" category once it's actually made.
-  const loanInstallmentsBreakdown = loanInstallments.map((installment) => ({
-    id: installment.id,
-    name: installment.loan.description,
-    categoryName: t("detail.sections.accounts.loanCategoryLabel"),
-    date: installment.dueDate,
-    amount: installment.amount.toNumber(),
-  }));
-
-  const accountsBreakdown = [
+  // Own card, own breakdown, never accountsBreakdown — see computeMonthSeries'
+  // loanExpenseByMonth comment for why loans get pulled out of "Contas
+  // Fixas / Recorrentes" instead of blending into it. Unpaid installments
+  // have no Transaction row to read a real category from (see
+  // fetchUnpaidSelfLoanInstallments' own comment), so every row here gets
+  // the same fixed "Empréstimo" label instead, whether it's still owed or
+  // already paid (a paid one's real category is always the seeded
+  // "Empréstimo" category anyway, via registerLoanPayment).
+  const loansBreakdown = [
+    ...loanInstallments.map((installment) => ({
+      id: installment.id,
+      name: installment.loan.description,
+      categoryName: t("detail.sections.loans.categoryLabel"),
+      date: installment.dueDate,
+      amount: installment.amount.toNumber(),
+    })),
     ...transactionsWithSelfShare
-      .filter((transaction) => transaction.selfShare < 0 && !transaction.isInvoicePayment)
+      .filter((transaction) => transaction.selfShare < 0 && transaction.isLoanInstallment)
       .map((transaction) => ({
         id: transaction.id,
         name: transaction.name,
-        categoryName: transaction.categoryName,
+        categoryName: t("detail.sections.loans.categoryLabel"),
         date: transaction.date,
         amount: Math.abs(transaction.selfShare),
       })),
-    ...loanInstallmentsBreakdown,
   ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const accountsBreakdown = transactionsWithSelfShare
+    .filter(
+      (transaction) =>
+        transaction.selfShare < 0 &&
+        !transaction.isInvoicePayment &&
+        !transaction.isLoanInstallment,
+    )
+    .map((transaction) => ({
+      id: transaction.id,
+      name: transaction.name,
+      categoryName: transaction.categoryName,
+      date: transaction.date,
+      amount: Math.abs(transaction.selfShare),
+    }));
 
   const receivablesBreakdown = transactionsWithSelfShare
     .filter((transaction) => transaction.selfShare > 0)
@@ -635,10 +683,12 @@ export async function getProjectionDetail(monthId: string) {
     incomeForecast: month.incomeForecast,
     accountExpenses: month.accountExpenses,
     cardExpenses: month.cardExpenses,
+    loanExpenses: month.loanExpenses,
     totalExpenses: month.totalExpenses,
     status: month.status,
     cardsBreakdown,
     accountsBreakdown,
+    loansBreakdown,
     receivablesBreakdown,
   };
 }

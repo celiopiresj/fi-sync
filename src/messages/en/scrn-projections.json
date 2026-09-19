@@ -48,6 +48,7 @@
     "projectedBalance": "Projected Balance",
     "cardExpenses": "Card spending",
     "accountExpenses": "Account spending",
+    "loanExpenses": "Loan",
     "totalExpenses": "Total spending",
     "incomeForecast": "Expected income",
     "viewDetail": "View details"
@@ -87,8 +88,13 @@
       "accounts": {
         "title": "Fixed / Recurring Bills",
         "empty": "No expenses expected this month.",
-        "dueDate": "Date: {date}",
-        "loanCategoryLabel": "Loan"
+        "dueDate": "Date: {date}"
+      },
+      "loans": {
+        "title": "Loans",
+        "empty": "No loan installment expected this month.",
+        "dueDate": "Due: {date}",
+        "categoryLabel": "Loan"
       },
       "receivables": {
         "title": "Expected Income",

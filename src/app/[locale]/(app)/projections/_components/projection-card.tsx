@@ -78,6 +78,12 @@ export function ProjectionCard({ entry }: ProjectionCardProps) {
           </span>
           <span className="tabular-nums">{money(entry.accountExpenses)}</span>
         </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-muted-foreground">
+            {t("card.loanExpenses")}
+          </span>
+          <span className="tabular-nums">{money(entry.loanExpenses)}</span>
+        </div>
         <div className="flex items-center justify-between gap-2 font-medium">
           <span>{t("card.totalExpenses")}</span>
           <span className="tabular-nums text-negative">

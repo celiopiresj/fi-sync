@@ -7,6 +7,7 @@ import {
   CaretRightIcon,
   CheckCircleIcon,
   CreditCardIcon,
+  HandCoinsIcon,
   ReceiptIcon,
   TrendUpIcon,
   WarningCircleIcon,
@@ -164,7 +165,7 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card>
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
@@ -252,7 +253,49 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        <Card>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
+              <span className="flex items-center gap-2 text-sm font-semibold">
+                <HandCoinsIcon className="size-4 text-muted-foreground" />
+                {t("detail.sections.loans.title")}
+              </span>
+              <span className="text-sm font-semibold tabular-nums">
+                {money(detail.loanExpenses)}
+              </span>
+            </div>
+            {detail.loansBreakdown.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {t("detail.sections.loans.empty")}
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {detail.loansBreakdown.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3"
+                  >
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-xs font-semibold">
+                        {item.name}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {t("detail.sections.loans.dueDate", {
+                          date: shortDate(item.date),
+                        })}
+                      </span>
+                    </div>
+                    <span className="shrink-0 text-xs font-semibold tabular-nums">
+                      {money(item.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3">
           <CardContent className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
               <span className="flex items-center gap-2 text-sm font-semibold">

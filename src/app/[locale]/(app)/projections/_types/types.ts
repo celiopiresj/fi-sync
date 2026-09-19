@@ -8,3 +8,4 @@ export type ProjectionDetail = NonNullable<
 >;
 export type CardExpenseItem = ProjectionDetail["cardsBreakdown"][number];
 export type AccountExpenseItem = ProjectionDetail["accountsBreakdown"][number];
+export type LoanExpenseItem = ProjectionDetail["loansBreakdown"][number];

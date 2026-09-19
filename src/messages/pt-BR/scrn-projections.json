@@ -48,6 +48,7 @@
     "projectedBalance": "Saldo Previsto",
     "cardExpenses": "Gasto no cartão",
     "accountExpenses": "Gasto em conta",
+    "loanExpenses": "Empréstimo",
     "totalExpenses": "Total gasto",
     "incomeForecast": "Previsão a receber",
     "viewDetail": "Ver detalhes"
@@ -87,8 +88,13 @@
       "accounts": {
         "title": "Contas Fixas / Recorrentes",
         "empty": "Nenhuma saída prevista neste mês.",
-        "dueDate": "Data: {date}",
-        "loanCategoryLabel": "Empréstimo"
+        "dueDate": "Data: {date}"
+      },
+      "loans": {
+        "title": "Empréstimos",
+        "empty": "Nenhuma parcela de empréstimo prevista neste mês.",
+        "dueDate": "Vencimento: {date}",
+        "categoryLabel": "Empréstimo"
       },
       "receivables": {
         "title": "Receitas e Entradas Esperadas",
