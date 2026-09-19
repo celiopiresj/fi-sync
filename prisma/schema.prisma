@@ -519,6 +519,17 @@ model Transaction {
   // The reverse of LoanInstallment.transaction — set only when this
   // Transaction *is* the settlement for one specific loan installment.
   loanInstallment LoanInstallment?
+  // Set only when this Transaction IS a loan's one-time "valor recebido"
+  // income Transaction (createLoan, loans/actions.ts) — the opposite
+  // ownership from loanInstallment above: there, Transaction is the
+  // CHILD (LoanInstallment owns the FK, SetNull, so deleting the payment
+  // just un-pays the installment instead of losing the schedule slot);
+  // here Transaction itself belongs to the Loan and has no meaning
+  // without it, so it's Cascade — deleting the loan (deleteLoan) deletes
+  // this Transaction (and its own splits) right along with it, same as
+  // "delete the loan and everything about it" is meant to work.
+  loanId String? @unique
+  loan   Loan?   @relation(fields: [loanId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now()) @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
@@ -752,6 +763,10 @@ model Loan {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
 
   installments LoanInstallment[]
+  // The reverse of Transaction.loanId below — the one-time "valor
+  // recebido" income Transaction createLoan optionally posts when this
+  // loan starts, if any (never set when the user left that field empty).
+  receivedTransaction Transaction?
 
   @@index([userId])
   @@index([personId])

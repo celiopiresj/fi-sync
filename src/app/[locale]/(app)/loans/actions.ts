@@ -292,7 +292,7 @@ export async function createLoan(
   }
 
   await prisma.$transaction(async (tx) => {
-    await tx.loan.create({
+    const loan = await tx.loan.create({
       data: {
         userId,
         personId: value.personId,
@@ -314,6 +314,10 @@ export async function createLoan(
     // today (not the first installment's due date, which can land a
     // month or more later) and attributed to the same person via a
     // split, same shape every other person-attributed Transaction uses.
+    // Tagged with loanId (Transaction's own onDelete: Cascade to Loan,
+    // prisma/schema.prisma) so deleteLoan below takes this Transaction
+    // (and its split) down with it instead of leaving it orphaned —
+    // there was no way to even find it again before this field existed.
     if (hasReceived) {
       const receivedAmount = Number(value.receivedAmount.replace(",", "."));
       await tx.transaction.create({
@@ -325,6 +329,7 @@ export async function createLoan(
           }),
           amount: receivedAmount,
           date: parseCalendarDate(todayCalendarDate()),
+          loanId: loan.id,
           splits: {
             create: [{ personId: value.personId, amount: receivedAmount }],
           },
@@ -481,6 +486,11 @@ export async function updateLoan(
 // "archive/keep history, don't silently lose it" principle
 // accounts/cards follow, except a loan has no archive state of its own
 // (v1 scope, tasks/017-emprestimos.md) so this is a hard block instead.
+// The one-time "valor recebido" Transaction (createLoan above), if this
+// loan has one, is deleted right along with it — Transaction.loanId's
+// own onDelete: Cascade (prisma/schema.prisma) handles that (and its
+// split, TransactionSplit's own Cascade off Transaction) at the DB
+// level, nothing extra to do here.
 export async function deleteLoan(id: string) {
   const userId = await requireUserId();
 
