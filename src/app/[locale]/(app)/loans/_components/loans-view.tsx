@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PageHeader } from "@/components/screen/page-header";
 import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
 import { SearchInput } from "@/components/screen/search-input";
@@ -51,6 +52,14 @@ const ALL_VALUE = "__all__";
 
 type DialogState = { mode: "create" } | { mode: "edit"; row: LoanRow } | null;
 
+// Which half of the list is on screen. A quitado has nothing left to do
+// — no next due date, no remaining amount — so keeping it mixed in with
+// the loans still being paid only pushes those down the grid. Client-side
+// (like `searchText`, unlike the Pessoa filter) on purpose: the KPI row
+// above counts across BOTH tabs, so the screen needs every loan loaded
+// either way.
+type StatusTab = "active" | "settled";
+
 type LoansViewProps = {
   initialLoans: LoanRow[];
   people: LoanPersonOption[];
@@ -66,6 +75,7 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [personId, setPersonId] = useState<string | undefined>(undefined);
   const [searchText, setSearchText] = useState("");
+  const [statusTab, setStatusTab] = useState<StatusTab>("active");
 
   function money(value: number) {
     return format.number(value, { style: "currency", currency: "BRL" });
@@ -90,15 +100,30 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
     [loans],
   );
 
+  // Split before the search so the empty state below can tell "this tab
+  // has nothing in it" from "the search/filter found nothing", which are
+  // different situations with different ways out.
+  const tabLoans = useMemo(
+    () =>
+      loans.filter(
+        (loan) => (loan.status === "SETTLED") === (statusTab === "settled"),
+      ),
+    [loans, statusTab],
+  );
+
   const filteredLoans = useMemo(() => {
     const query = searchText.trim().toLowerCase();
-    if (!query) return loans;
-    return loans.filter(
+    if (!query) return tabLoans;
+    return tabLoans.filter(
       (loan) =>
         loan.description.toLowerCase().includes(query) ||
         loan.person.name.toLowerCase().includes(query),
     );
-  }, [loans, searchText]);
+  }, [tabLoans, searchText]);
+
+  // A narrowed list that comes back empty is the user's own doing, so it
+  // gets "ajuste a busca" rather than the tab's own "não há nenhum".
+  const isNarrowed = Boolean(searchText.trim()) || Boolean(personId);
 
   async function handleSubmit(
     values: LoanFormValues,
@@ -183,31 +208,48 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
       ) : (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <SearchInput
-              value={searchText}
-              onChange={setSearchText}
-              placeholder={t("search.placeholder")}
-              clearLabel={t("search.clear")}
-            />
-
-            <Select
-              value={personId ?? ALL_VALUE}
-              onValueChange={(value) =>
-                setPersonId(value === ALL_VALUE ? undefined : value)
-              }
+            <ToggleGroup
+              type="single"
+              variant="tabs"
+              size="sm"
+              value={statusTab}
+              onValueChange={(value) => {
+                if (value) setStatusTab(value as StatusTab);
+              }}
             >
-              <SelectTrigger className="h-8 w-55">
-                <SelectValue placeholder={t("filters.person")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_VALUE}>{t("filters.allPeople")}</SelectItem>
-                {people.map((person) => (
-                  <SelectItem key={person.id} value={person.id}>
-                    {person.name}
+              <ToggleGroupItem value="active">{t("tabs.active")}</ToggleGroupItem>
+              <ToggleGroupItem value="settled">{t("tabs.settled")}</ToggleGroupItem>
+            </ToggleGroup>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <SearchInput
+                value={searchText}
+                onChange={setSearchText}
+                placeholder={t("search.placeholder")}
+                clearLabel={t("search.clear")}
+              />
+
+              <Select
+                value={personId ?? ALL_VALUE}
+                onValueChange={(value) =>
+                  setPersonId(value === ALL_VALUE ? undefined : value)
+                }
+              >
+                <SelectTrigger className="h-8 w-55">
+                  <SelectValue placeholder={t("filters.person")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_VALUE}>
+                    {t("filters.allPeople")}
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {people.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {filteredLoans.length === 0 ? (
@@ -217,9 +259,15 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
                   <EmptyMedia variant="icon">
                     <HandCoinsIcon />
                   </EmptyMedia>
-                  <EmptyTitle>{t("search.empty.title")}</EmptyTitle>
+                  <EmptyTitle>
+                    {isNarrowed
+                      ? t("search.empty.title")
+                      : t(`empty.${statusTab}.title`)}
+                  </EmptyTitle>
                   <EmptyDescription>
-                    {t("search.empty.description")}
+                    {isNarrowed
+                      ? t("search.empty.description")
+                      : t(`empty.${statusTab}.description`)}
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>

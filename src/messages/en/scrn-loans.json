@@ -14,7 +14,19 @@
   "empty": {
     "title": "No loans yet",
     "description": "Register a loan to track its installments.",
-    "button": "New loan"
+    "button": "New loan",
+    "active": {
+      "title": "No outstanding loans",
+      "description": "Everything you lent out has been paid off."
+    },
+    "settled": {
+      "title": "No settled loans",
+      "description": "Loans show up here once their last installment is paid."
+    }
+  },
+  "tabs": {
+    "active": "Current",
+    "settled": "Settled"
   },
   "search": {
     "placeholder": "Search by person or description",

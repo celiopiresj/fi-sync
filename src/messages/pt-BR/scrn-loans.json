@@ -14,7 +14,19 @@
   "empty": {
     "title": "Nenhum empréstimo cadastrado",
     "description": "Registre um empréstimo para acompanhar as parcelas.",
-    "button": "Novo empréstimo"
+    "button": "Novo empréstimo",
+    "active": {
+      "title": "Nenhum empréstimo em aberto",
+      "description": "Tudo que você emprestou já foi quitado."
+    },
+    "settled": {
+      "title": "Nenhum empréstimo quitado",
+      "description": "Os empréstimos aparecem aqui quando a última parcela é paga."
+    }
+  },
+  "tabs": {
+    "active": "Atuais",
+    "settled": "Quitados"
   },
   "search": {
     "placeholder": "Buscar por pessoa ou descrição",
