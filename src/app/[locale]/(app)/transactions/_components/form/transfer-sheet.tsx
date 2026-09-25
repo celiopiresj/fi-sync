@@ -8,7 +8,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { TransferFormValues } from "../../_schema/schema";
+import type {
+  TransferFormValues,
+  TransferTarget,
+} from "../../_schema/schema";
 import type {
   AccountOption,
   CategoryOption,
@@ -23,6 +26,7 @@ type TransferSheetProps = {
   categories: CategoryOption[];
   people: PersonOption[];
   defaultAccountId: string | null;
+  initialTarget?: TransferTarget;
   onSubmit: (values: TransferFormValues) => Promise<{ error: string | null }>;
 };
 
@@ -38,6 +42,7 @@ export function TransferSheet({
   categories,
   people,
   defaultAccountId,
+  initialTarget,
   onSubmit,
 }: TransferSheetProps) {
   const t = useTranslations("scrn-transactions");
@@ -60,6 +65,7 @@ export function TransferSheet({
             categories={categories}
             people={people}
             defaultAccountId={defaultAccountId}
+            initialTarget={initialTarget}
             onSubmit={onSubmit}
             onSuccess={() => onOpenChange(false)}
           />

@@ -56,6 +56,7 @@
   },
 
   "detail": {
+    "transferBalance": "Transferir saldo",
     "back": "Voltar para contas",
     "notFound": {
       "title": "Conta não encontrada",

@@ -29,6 +29,7 @@ import {
 } from "@/lib/recurrence-window";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import { TRANSFERABLE_ACCOUNT_TYPES } from "@/lib/transfer-accounts";
+import { getAccountPeopleBalances } from "@/lib/account-balance";
 import { parseStatement } from "@/lib/statement-import/parse";
 import {
   ACCEPTED_IMPORT_MEDIA_TYPES,
@@ -47,6 +48,7 @@ import {
   creditBatchRowSchema,
   transferSchema,
   refineTransfer,
+  parseAmountInput,
   transactionFormStatusValues,
   type TransferFormValues,
   type BatchRowFormValues,
@@ -954,6 +956,42 @@ export async function createDebitTransaction(data: DebitTransactionFormValues) {
   return { error: null };
 }
 
+// What a balance transfer would move: the source account's current
+// balance and how much of it belongs to each person, so the form can
+// show the figure and offer only the people who actually have a share
+// there. Read-only — createTransfer reads the same numbers again when it
+// posts, from the same helper, so a stale preview can never decide what
+// actually moves.
+export async function getAccountBalanceBreakdown(accountId: string) {
+  const userId = await requireUserId();
+
+  const account = await prisma.account.findFirst({
+    where: {
+      id: accountId,
+      userId,
+      type: { in: [...TRANSFERABLE_ACCOUNT_TYPES] },
+    },
+    select: { id: true },
+  });
+  if (!account) return null;
+
+  const { balance, people } = await getAccountPeopleBalances(userId, accountId);
+
+  return {
+    balance,
+    // Only real, attributable people with something on this account —
+    // the unattributed bucket can't be picked (it has no id to pick).
+    people: people
+      .filter((person) => person.personId !== null && person.balance !== 0)
+      .map((person) => ({
+        personId: person.personId as string,
+        name: person.name,
+        isSelf: person.isSelf,
+        balance: person.balance,
+      })),
+  };
+}
+
 // Transferência — see transferSchema's own comment for the two shapes.
 export async function createTransfer(data: TransferFormValues) {
   const userId = await requireUserId();
@@ -965,6 +1003,7 @@ export async function createTransfer(data: TransferFormValues) {
       refineTransfer(value, ctx, {
         required: tValidation("required"),
         sameAccount: t("transfer.errors.sameAccount"),
+        amountRequired: tValidation("required"),
       }),
     )
     .safeParse(data);
@@ -1013,8 +1052,10 @@ export async function createTransfer(data: TransferFormValues) {
     });
   }
 
-  // Both ends re-checked server-side (the pickers only offer these, but a
-  // stale client could submit an account since archived or deleted).
+  // Both remaining targets move money between two of the user's own
+  // accounts, so they share the same destination checks. Re-checked
+  // server-side (the pickers only offer these, but a stale client could
+  // submit an account since archived or deleted).
   const accounts = await prisma.account.findMany({
     where: {
       id: { in: [value.accountId, value.toAccountId] },
@@ -1040,18 +1081,75 @@ export async function createTransfer(data: TransferFormValues) {
   const date = parseCalendarDate(value.date);
   const paymentMethod = value.paymentMethod || undefined;
 
+  // How much moves, and whose it is. In both shapes the source leg is
+  // -amount and the destination +amount; what differs is where the
+  // number comes from and whether it carries a rateio.
+  let amount: number;
+  // Each person's share as seen FROM THE SOURCE — the source leg negates
+  // it, the destination leg keeps it, so every person's global balance is
+  // untouched while their share moves accounts.
+  let shares: { personId: string; amount: number }[] = [];
+
+  if (value.target === "balance") {
+    const { balance, people } = await getAccountPeopleBalances(userId, from.id);
+    // A named person moves only their slice and leaves the rest behind;
+    // no person ("todas") empties the account.
+    const selected = value.personId
+      ? people.filter((person) => person.personId === value.personId)
+      : people;
+    amount = value.personId
+      ? (selected[0]?.balance ?? 0)
+      : balance;
+
+    // Zero would post two empty legs and still read as "transferred".
+    // Also covers a personId with nothing on this account.
+    if (amount === 0) {
+      return { error: t("transfer.errors.nothingToTransfer") };
+    }
+
+    // Money nobody is attributed to (`personId: null`, only reachable
+    // when the self Person is somehow missing) can't become a split —
+    // it stays unattributed on the other side, which is what it is.
+    shares = selected
+      .filter(
+        (person): person is typeof person & { personId: string } =>
+          person.personId !== null && person.balance !== 0,
+      )
+      .map((person) => ({ personId: person.personId, amount: person.balance }));
+  } else {
+    // Raw string on this schema (the balance target has no amount field
+    // — see transferSchema), already checked positive by refineTransfer.
+    amount = parseAmountInput(value.amount) ?? 0;
+  }
+
+  const isBalanceTransfer = value.target === "balance";
+
   await prisma.$transaction([
     prisma.transaction.create({
       data: {
         userId,
         accountId: from.id,
         description:
-          customDescription || t("transfer.descriptionTo", { name: to.name }),
-        amount: -value.amount,
+          customDescription ||
+          t(
+            isBalanceTransfer
+              ? "transfer.balanceDescriptionTo"
+              : "transfer.descriptionTo",
+            { name: to.name },
+          ),
+        amount: -amount,
         date,
         status: "COMPLETED",
         paymentMethod,
         transferGroupId,
+        splits: shares.length
+          ? {
+              create: shares.map((share) => ({
+                personId: share.personId,
+                amount: -share.amount,
+              })),
+            }
+          : undefined,
       },
     }),
     prisma.transaction.create({
@@ -1059,12 +1157,21 @@ export async function createTransfer(data: TransferFormValues) {
         userId,
         accountId: to.id,
         description:
-          customDescription || t("transfer.descriptionFrom", { name: from.name }),
-        amount: value.amount,
+          customDescription ||
+          t(
+            isBalanceTransfer
+              ? "transfer.balanceDescriptionFrom"
+              : "transfer.descriptionFrom",
+            { name: from.name },
+          ),
+        amount,
         date,
         status: "COMPLETED",
         paymentMethod,
         transferGroupId,
+        splits: shares.length
+          ? { create: shares.map((share) => ({ ...share })) }
+          : undefined,
       },
     }),
   ]);

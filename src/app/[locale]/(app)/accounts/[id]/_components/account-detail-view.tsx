@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   ArrowLeftIcon,
   BankIcon,
   CaretRightIcon,
+  SwapIcon,
   UsersIcon,
 } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
@@ -24,6 +27,9 @@ import {
   getPersonColorClasses,
   getPersonInitial,
 } from "../../../people/_lib/person-avatar";
+import { useQuickAddTransactionOptions } from "@/hooks/use-quick-add-transaction-options";
+import { useQuickAddTransactionMutations } from "@/hooks/use-quick-add-transaction-mutations";
+import { TransferSheet } from "../../../transactions/_components/form/transfer-sheet";
 import type { AccountDetail, AccountPersonBalance } from "../_types/types";
 
 type AccountDetailViewProps = {
@@ -34,6 +40,14 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
   const t = useTranslations("scrn-accounts");
   const tCommon = useTranslations("common");
   const format = useFormatter();
+
+  const [transferOpen, setTransferOpen] = useState(false);
+  // Fetched as soon as the screen loads, not on click: this is the screen
+  // you come to in order to DO something with an account, and the sheet
+  // reads its pickers from these — waiting for the query after the click
+  // would open it empty for a beat.
+  const { data: transferOptions } = useQuickAddTransactionOptions(true);
+  const { submitTransfer } = useQuickAddTransactionMutations();
 
   function money(value: number) {
     return format.number(value, { style: "currency", currency: "BRL" });
@@ -68,9 +82,22 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
             </span>
           </div>
         </div>
-        <Badge variant={account.status === "ACTIVE" ? "default" : "secondary"}>
-          {tCommon(`status.${account.status.toLowerCase()}`)}
-        </Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant={account.status === "ACTIVE" ? "default" : "secondary"}>
+            {tCommon(`status.${account.status.toLowerCase()}`)}
+          </Badge>
+          {/* Nothing in the account means nothing to move. */}
+          {account.balance !== 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTransferOpen(true)}
+            >
+              <SwapIcon />
+              {t("detail.transferBalance")}
+            </Button>
+          )}
+        </div>
       </div>
 
       <KpiGrid columns={2}>
@@ -121,6 +148,20 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
           </div>
         )}
       </div>
+      {transferOptions && (
+        // Opens straight on "saldo da conta" with this account as the
+        // source — the two typed shapes are still one toggle away.
+        <TransferSheet
+          open={transferOpen}
+          onOpenChange={setTransferOpen}
+          accounts={transferOptions.accounts}
+          categories={transferOptions.categories}
+          people={transferOptions.people}
+          defaultAccountId={account.id}
+          initialTarget="balance"
+          onSubmit={submitTransfer}
+        />
+      )}
     </div>
   );
 }

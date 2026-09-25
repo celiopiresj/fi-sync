@@ -84,14 +84,22 @@ const decimalString = z
 // invalid result (non-expression garbage, zero, negative) surfaces
 // through the same built-in issue the errorMap already knows how to
 // translate — no new message plumbing needed here.
+// The one place a typed amount becomes a number: tries the safe
+// expression evaluator first (so "120+35" resolves to 155), falling back
+// to a plain decimal parse. Exported because the transfer schema has to
+// check the same thing conditionally (its amount field is unused when
+// the form is moving an account's whole balance), and a second parser
+// would be a second set of rules about what counts as a valid amount.
+export function parseAmountInput(value: string): number | null {
+  const evaluated = evaluateExpression(value);
+  const parsed = evaluated ?? Number(value.replace(",", "."));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 const amountString = z
   .string()
   .min(1)
-  .transform((value) => {
-    const evaluated = evaluateExpression(value);
-    if (evaluated !== null) return evaluated;
-    return Number(value.replace(",", "."));
-  })
+  .transform((value) => parseAmountInput(value) ?? Number.NaN)
   .pipe(z.number().positive());
 
 const splitSchema = z.object({
@@ -329,6 +337,11 @@ export function refineCreditTransaction(
 //    expense/income, attributed to the person (it's what moves their
 //    balance on /people), so it goes out through createDebitTransaction
 //    like any other lançamento — this form is just the obvious way in.
+//  - "balance": empties an account into another one. Two legs like
+//    "account", except the amount isn't typed — the server reads the
+//    account's current balance (or one person's share of it) and moves
+//    exactly that, so the source lands on zero. A negative balance moves
+//    too: -100 here becomes -100 there, and here becomes 0.
 //
 // Fields that only apply to one target stay plain strings (not
 // `.min(1)`) and are checked in refineTransfer instead, with already-
@@ -336,7 +349,7 @@ export function refineCreditTransaction(
 // the debit schema above.
 // ---------------------------------------------------------------------
 
-export const transferTargetValues = ["account", "person"] as const;
+export const transferTargetValues = ["account", "person", "balance"] as const;
 export type TransferTarget = (typeof transferTargetValues)[number];
 
 export const transferDirectionValues = ["send", "receive"] as const;
@@ -354,7 +367,10 @@ export const transferSchema = z.object({
   personId: z.string(),
   direction: z.enum(transferDirectionValues),
   categoryId: z.string(),
-  amount: amountString,
+  // Raw, not `amountString`: the "balance" target has no amount field at
+  // all (the server computes it), so the positive-number check is
+  // conditional and lives in refineTransfer below.
+  amount: z.string(),
   date: z.string().min(1),
   paymentMethod: z.enum(["", ...paymentMethodValues]),
   // Optional — left blank, the server writes "Transferência para/de
@@ -383,7 +399,7 @@ export const emptyTransferFormValues: TransferFormValues = {
 export function refineTransfer(
   data: TransferValues,
   ctx: z.RefinementCtx,
-  messages: { required: string; sameAccount: string },
+  messages: { required: string; sameAccount: string; amountRequired: string },
 ) {
   if (!data.paymentMethod) {
     ctx.addIssue({
@@ -393,7 +409,9 @@ export function refineTransfer(
     });
   }
 
-  if (data.target === "account") {
+  // Both account-to-account shapes need a destination that isn't the
+  // source; only the typed one needs an amount.
+  if (data.target === "account" || data.target === "balance") {
     if (!data.toAccountId) {
       ctx.addIssue({
         code: "custom",
@@ -407,7 +425,26 @@ export function refineTransfer(
         message: messages.sameAccount,
       });
     }
+    // The amount comes from the account's own balance — nothing typed to
+    // validate, and the server refuses a balance of zero (there would be
+    // nothing to move). An empty personId means "todas as pessoas".
+    if (data.target === "balance") return;
+    if ((parseAmountInput(data.amount) ?? 0) <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["amount"],
+        message: messages.amountRequired,
+      });
+    }
     return;
+  }
+
+  if ((parseAmountInput(data.amount) ?? 0) <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["amount"],
+      message: messages.amountRequired,
+    });
   }
 
   if (!data.personId) {
