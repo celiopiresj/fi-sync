@@ -46,14 +46,22 @@ type SummaryCardsProps = {
 function sumIncomeExpenses(transactions: TransactionRow[]) {
   let income = 0;
   let expenses = 0; // stays <= 0, same sign convention as Transaction.amount
+  // A transfer between the user's own accounts moves money without
+  // earning or spending it, so its legs stay out of Receitas/Despesas —
+  // but still count toward the balance: with one account selected, money
+  // that left it for another account really did leave. Across every
+  // account the two legs cancel out on their own.
+  let transfers = 0;
   for (const transaction of transactions) {
-    if (transaction.amount >= 0) {
+    if (transaction.transferGroupId) {
+      transfers += transaction.amount;
+    } else if (transaction.amount >= 0) {
       income += transaction.amount;
     } else {
       expenses += transaction.amount;
     }
   }
-  return { income, expenses, balance: income + expenses };
+  return { income, expenses, balance: income + expenses + transfers };
 }
 
 export function SummaryCards({

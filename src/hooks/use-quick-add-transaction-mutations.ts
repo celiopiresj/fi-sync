@@ -10,6 +10,7 @@ import {
   createCreditTransactionsBatch,
   createDebitTransaction,
   createTransactionsBatch,
+  createTransfer,
 } from "@/app/[locale]/(app)/transactions/actions";
 
 // Mirrors transactions-view.tsx's own handleSubmitDebit/handleSubmitCredit
@@ -86,5 +87,27 @@ export function useQuickAddTransactionMutations() {
     [invalidate],
   );
 
-  return { submitDebit, submitCredit, submitBatch, submitCreditBatch };
+  // A transfer moves two accounts' balances at once (or one account and a
+  // person's balance), so it needs the same full invalidation — and its
+  // own toast, since "transação criada" undersells a movement between
+  // two places.
+  const submitTransfer = useCallback(
+    async (values: Parameters<typeof createTransfer>[0]) => {
+      const result = await createTransfer(values);
+      if (!result.error) {
+        invalidate();
+        toast.success(t("toast.transferCreated"));
+      }
+      return result;
+    },
+    [invalidate, t],
+  );
+
+  return {
+    submitDebit,
+    submitCredit,
+    submitBatch,
+    submitCreditBatch,
+    submitTransfer,
+  };
 }

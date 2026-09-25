@@ -20,7 +20,8 @@
       "description": "Add a manual entry",
       "debit": "Debit transaction",
       "credit": "Card expense",
-    "import": "Import statement or invoice"
+    "import": "Import statement or invoice",
+      "transfer": "Transfer"
     },
     "import": {
       "title": "Import",
@@ -218,6 +219,10 @@
     "importOption": {
       "title": "Import statement or invoice",
       "subtitle": "PDF or photo — rows come pre-filled"
+    },
+    "transferOption": {
+      "title": "Transfer",
+      "subtitle": "Between your accounts or with a person"
     }
   },
 
@@ -310,6 +315,40 @@
       "notConfigured": "Automatic reading is not configured in this environment.",
       "rateLimited": "Too many reads in a row. Try again in {seconds}s.",
       "failed": "Could not read this file. Try again or send another one."
+    }
+  },
+
+  "transfer": {
+    "title": "Transfer",
+    "description": "Move money between your accounts, or record money sent to or received from a person",
+    "target": {
+      "label": "Type",
+      "account": "Between my accounts",
+      "person": "With a person"
+    },
+    "direction": {
+      "label": "Direction",
+      "send": "Send",
+      "receive": "Receive"
+    },
+    "fields": {
+      "from": "From",
+      "to": "To",
+      "account": "Account",
+      "person": "Person",
+      "descriptionOptional": "Optional"
+    },
+    "hint": {
+      "account": "Not counted as income or expense: the money only changes accounts.",
+      "person": "Counted as an expense or income attributed to the person, and changes their balance."
+    },
+    "confirm": "Transfer",
+    "descriptionTo": "Transfer to {name}",
+    "descriptionFrom": "Transfer from {name}",
+    "errors": {
+      "sameAccount": "Pick a destination account different from the source",
+      "invalidAccount": "Invalid account for a transfer",
+      "invalidPerson": "Person not found"
     }
   },
 
@@ -467,6 +506,10 @@
         "description": "This transaction is a card invoice payment — it's managed from the invoice's own screen, not as a regular transaction.",
         "goTo": "Go to the invoice"
       },
+      "transfer": {
+        "title": "Transfer between accounts",
+        "description": "This transaction is one of the two ends of a transfer between your accounts. So one end is never left without the other, it isn't edited like a regular entry — delete it and record the transfer again; both ends are removed together."
+      },
       "close": "Close"
     }
   },
@@ -480,7 +523,8 @@
     "bulkCategorized": "{count, plural, one {# transaction categorized} other {# transactions categorized}}",
     "bulkStatusChanged": "{count, plural, one {# transaction updated} other {# transactions updated}}",
     "bulkDeleted": "{count, plural, one {# transaction deleted} other {# transactions deleted}}",
-    "markedCompleted": "Transaction marked as completed"
+    "markedCompleted": "Transaction marked as completed",
+    "transferCreated": "Transfer recorded"
   },
 
   "tabs": {

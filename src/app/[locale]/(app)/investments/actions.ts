@@ -13,13 +13,9 @@ import {
   type InvestmentAccountFormValues,
   type InvestmentMovementFormValues,
 } from "./_schema/schema";
-
-// Checking/savings/cash — the only account types that make sense as the
-// "other side" of an aporte/resgate transfer (never a credit card or
-// another investment/pocket account). Same values as accounts/
-// actions.ts's own accountTypeValues, duplicated per this route's
-// self-containment convention rather than importing cross-route.
-const TRANSFERABLE_ACCOUNT_TYPES = ["CHECKING", "SAVINGS", "CASH"] as const;
+// Shared with /transactions' own account-to-account transfer, via
+// src/lib rather than importing across routes.
+import { TRANSFERABLE_ACCOUNT_TYPES } from "@/lib/transfer-accounts";
 
 async function requireUserId() {
   const { data: session } = await auth.getSession();

@@ -28,6 +28,7 @@ import {
   stepDate,
 } from "@/lib/recurrence-window";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
+import { TRANSFERABLE_ACCOUNT_TYPES } from "@/lib/transfer-accounts";
 import { parseStatement } from "@/lib/statement-import/parse";
 import {
   ACCEPTED_IMPORT_MEDIA_TYPES,
@@ -44,7 +45,10 @@ import {
   refineCreditTransaction,
   batchRowSchema,
   creditBatchRowSchema,
+  transferSchema,
+  refineTransfer,
   transactionFormStatusValues,
+  type TransferFormValues,
   type BatchRowFormValues,
   type BatchRowValues,
   type CreditBatchRowFormValues,
@@ -446,6 +450,11 @@ export async function getCategoryExpenseBreakdown(
   const where: Record<string, unknown> = {
     userId,
     amount: { lt: 0 },
+    // A transfer's outgoing leg is money moving between the user's own
+    // accounts, not spending — kept out of every income/expense figure
+    // (see transferSchema's own comment). Without this it lands here as
+    // an uncategorized "expense".
+    transferGroupId: null,
     ...accountFilterWhere(filters.accountId),
     // Unlike getHomeOverview's own categoryBreakdown query ((home)/
     // actions.ts), which sums every account together and so has to
@@ -942,6 +951,126 @@ export async function createDebitTransaction(data: DebitTransactionFormValues) {
   });
 
   revalidateTransactions();
+  return { error: null };
+}
+
+// Transferência — see transferSchema's own comment for the two shapes.
+export async function createTransfer(data: TransferFormValues) {
+  const userId = await requireUserId();
+  const t = await getTranslations("scrn-transactions");
+  const tValidation = await getTranslations("common.validation");
+
+  const result = transferSchema
+    .superRefine((value, ctx) =>
+      refineTransfer(value, ctx, {
+        required: tValidation("required"),
+        sameAccount: t("transfer.errors.sameAccount"),
+      }),
+    )
+    .safeParse(data);
+  if (!result.success) {
+    return { error: result.error.issues[0]?.message ?? "Invalid data" };
+  }
+  const value = result.data;
+  const customDescription = value.description.trim();
+
+  if (value.target === "person") {
+    // Checked here rather than left to createDebitTransaction because the
+    // name is needed for the default description anyway — and it keeps a
+    // stale client from attributing money to someone else's Person.
+    const person = await prisma.person.findFirst({
+      where: { id: value.personId, userId },
+      select: { name: true },
+    });
+    if (!person) {
+      return { error: t("transfer.errors.invalidPerson") };
+    }
+
+    // An ordinary lançamento attributed to the person, through the same
+    // action (validation, split resolution, revalidation) the debit form
+    // uses — the transfer form only picks the sign from `direction`.
+    // `data.amount`, not `value.amount`: createDebitTransaction parses the
+    // raw form string itself.
+    return createDebitTransaction({
+      accountId: value.accountId,
+      categoryId: value.categoryId,
+      description:
+        customDescription ||
+        t(
+          value.direction === "send"
+            ? "transfer.descriptionTo"
+            : "transfer.descriptionFrom",
+          { name: person.name },
+        ),
+      type: value.direction === "send" ? "expense" : "income",
+      amount: data.amount,
+      date: value.date,
+      status: "COMPLETED",
+      paymentMethod: value.paymentMethod,
+      recurrence: "none",
+      personId: value.personId,
+      splits: [],
+    });
+  }
+
+  // Both ends re-checked server-side (the pickers only offer these, but a
+  // stale client could submit an account since archived or deleted).
+  const accounts = await prisma.account.findMany({
+    where: {
+      id: { in: [value.accountId, value.toAccountId] },
+      userId,
+      status: "ACTIVE",
+      type: { in: [...TRANSFERABLE_ACCOUNT_TYPES] },
+    },
+    select: { id: true, name: true },
+  });
+  const from = accounts.find((account) => account.id === value.accountId);
+  const to = accounts.find((account) => account.id === value.toAccountId);
+  if (!from || !to) {
+    return { error: t("transfer.errors.invalidAccount") };
+  }
+
+  // Two legs sharing a transferGroupId — the schema's own documented
+  // transfer convention (one negative, one positive), same shape the
+  // Investments screen's aporte/resgate already posts. No category and no
+  // splits on either: neither leg is spending or earning, and neither
+  // belongs to any Person — which is exactly what keeps them out of the
+  // category reports and out of every person's balance.
+  const transferGroupId = crypto.randomUUID();
+  const date = parseCalendarDate(value.date);
+  const paymentMethod = value.paymentMethod || undefined;
+
+  await prisma.$transaction([
+    prisma.transaction.create({
+      data: {
+        userId,
+        accountId: from.id,
+        description:
+          customDescription || t("transfer.descriptionTo", { name: to.name }),
+        amount: -value.amount,
+        date,
+        status: "COMPLETED",
+        paymentMethod,
+        transferGroupId,
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        userId,
+        accountId: to.id,
+        description:
+          customDescription || t("transfer.descriptionFrom", { name: from.name }),
+        amount: value.amount,
+        date,
+        status: "COMPLETED",
+        paymentMethod,
+        transferGroupId,
+      },
+    }),
+  ]);
+
+  revalidateTransactions();
+  revalidatePath("/accounts");
   return { error: null };
 }
 
@@ -1872,13 +2001,27 @@ export async function deleteTransaction(
 
   const existing = await prisma.transaction.findUnique({
     where: { id, userId },
-    select: { installmentGroupId: true },
+    select: { installmentGroupId: true, transferGroupId: true },
   });
   if (!existing) {
     return { error: "Not found" };
   }
 
   let idsToDelete = [id];
+
+  // A transfer is one movement recorded as two legs — deleting one alone
+  // would leave money leaving an account with nowhere to go (or arriving
+  // from nowhere), and both balances wrong. Both legs always go
+  // together. A leg is never an installment or a card purchase (only
+  // checking/savings/cash accounts transfer), so neither branch below
+  // ever widens this further.
+  if (existing.transferGroupId) {
+    const legs = await prisma.transaction.findMany({
+      where: { userId, transferGroupId: existing.transferGroupId },
+      select: { id: true },
+    });
+    idsToDelete = legs.map((leg) => leg.id);
+  }
 
   if (existing.installmentGroupId) {
     // Ordered desc (last installment first) up front — reused as-is for
@@ -2003,10 +2146,35 @@ export async function deleteTransactionsBulk(ids: string[]) {
     return { error: t("delete.someAlreadyPaid", { count: paidCount }), count: 0 };
   }
 
+  // Same "both legs of a transfer go together" rule as deleteTransaction:
+  // a selection holding only one leg still deletes its counterpart.
+  const selectedTransferGroupIds = (
+    await prisma.transaction.findMany({
+      where: { id: { in: ids }, userId, transferGroupId: { not: null } },
+      select: { transferGroupId: true },
+    })
+  ).map((row) => row.transferGroupId as string);
+  const idsToDelete =
+    selectedTransferGroupIds.length === 0
+      ? ids
+      : [
+          ...new Set([
+            ...ids,
+            ...(
+              await prisma.transaction.findMany({
+                where: { userId, transferGroupId: { in: selectedTransferGroupIds } },
+                select: { id: true },
+              })
+            ).map((row) => row.id),
+          ]),
+        ];
+
   const result = await prisma.$transaction(
     async (tx) => {
-      const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, ids);
-      const deleteResult = await tx.transaction.deleteMany({ where: { id: { in: ids }, userId } });
+      const affectedInvoiceIds = await invoiceIdsAffectedByDeleting(tx, userId, idsToDelete);
+      const deleteResult = await tx.transaction.deleteMany({
+        where: { id: { in: idsToDelete }, userId },
+      });
       await recomputeAffectedInvoices(tx, affectedInvoiceIds);
       return deleteResult;
     },

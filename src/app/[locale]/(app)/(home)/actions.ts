@@ -89,6 +89,10 @@ export async function getHomeOverview() {
         const where = {
           userId,
           account: { type: { notIn: [...CASH_FLOW_ACCOUNT_TYPES] } },
+          // A transfer between the user's own accounts is neither income
+          // nor expense — its two legs would otherwise show up here as
+          // one of each, inflating both bars by the amount moved.
+          transferGroupId: null,
           date: {
             gte: parseCalendarDate(from),
             lte: isCurrentMonth ? todayDate : parseCalendarDate(to),
@@ -122,6 +126,9 @@ export async function getHomeOverview() {
         amount: { lt: 0 },
         date: { gte: monthStartDate, lte: todayDate },
         invoicePayment: { is: null },
+        // Same reason as the trend above: a transfer's outgoing leg isn't
+        // spending, and would land here as an uncategorized slice.
+        transferGroupId: null,
       },
       _sum: { amount: true },
     }),

@@ -71,6 +71,7 @@ import {
   createCreditTransactionsBatch,
   createDebitTransaction,
   createTransactionsBatch,
+  createTransfer,
   deleteTransaction,
   deleteTransactionsBulk,
   updateCreditTransaction,
@@ -87,6 +88,7 @@ import { BulkActionsBar } from "./table/bulk-actions-bar";
 import { getTransactionColumns } from "./table/columns";
 import { FiltersSheet } from "./table/filters-sheet";
 import { ImportStatementSheet } from "./import/import-statement-sheet";
+import { TransferSheet } from "./form/transfer-sheet";
 import { SpecialTransactionDialog } from "./special-transaction-dialog";
 import { SummaryCards } from "./table/summary-cards";
 import { TransactionMobileList } from "./table/transaction-mobile-list";
@@ -234,6 +236,10 @@ export function TransactionsView({
   // would make every `dialogState.kind === "debit"` check upstream carry
   // a case that can never apply to it.
   const [importOpen, setImportOpen] = useState(false);
+  // Same "own flag, not a DialogState kind" reasoning as importOpen: a
+  // transfer is create-only, and its legs never reopen in this sheet
+  // (they're special rows — see resolveSpecialTransactionKind).
+  const [transferOpen, setTransferOpen] = useState(false);
   const [deletingTransaction, setDeletingTransaction] =
     useState<TransactionRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -605,6 +611,17 @@ export function TransactionsView({
     const result = await createCreditTransactionsBatch(rows);
     if (!result.error) {
       invalidate();
+    }
+    return result;
+  }
+
+  async function handleSubmitTransfer(
+    values: Parameters<typeof createTransfer>[0],
+  ) {
+    const result = await createTransfer(values);
+    if (!result.error) {
+      invalidate();
+      toast.success(t("toast.transferCreated"));
     }
     return result;
   }
@@ -1005,6 +1022,9 @@ export function TransactionsView({
                 }>
                 {t("buttons.add.credit")}
               </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setTransferOpen(true)}>
+                {t("buttons.add.transfer")}
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setImportOpen(true)}>
                 {t("buttons.add.import")}
               </DropdownMenuItem>
@@ -1139,6 +1159,18 @@ export function TransactionsView({
         onSubmit={handleSubmitDebit}
         onSubmitBatch={handleSubmitBatch}
         onBatchSuccess={handleBatchSuccess}
+      />
+
+      <TransferSheet
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        // Full list: the form keeps only active checking/savings/cash
+        // itself, from the same constant createTransfer checks against.
+        accounts={accounts}
+        categories={categories}
+        people={people}
+        defaultAccountId={defaultDebitAccountId}
+        onSubmit={handleSubmitTransfer}
       />
 
       <ImportStatementSheet

@@ -823,7 +823,14 @@ export function createFiSyncTools(userId: string) {
       execute: async ({ month }) => {
         const target = month ?? currentMonth();
         const { from, to } = monthRange(target);
-        const where = { userId, ...effectiveDateWhere(from, to) };
+        // Transfers between the user's own accounts are neither income nor
+        // expense — same exclusion the home screen and /transactions apply,
+        // so "quanto gastei" here agrees with what the app shows.
+        const where = {
+          userId,
+          transferGroupId: null,
+          ...effectiveDateWhere(from, to),
+        };
 
         const [byCategory, categories] = await Promise.all([
           prisma.transaction.groupBy({

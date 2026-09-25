@@ -34,6 +34,9 @@ export function SpecialTransactionDialog({
 
   if (!special) return null;
 
+  // Null for a transfer leg — no screen owns it (see
+  // resolveSpecialTransactionKind's own comment), so the dialog only
+  // explains and closes.
   const href =
     special.kind === "initialBalance"
       ? "/accounts"
@@ -41,7 +44,9 @@ export function SpecialTransactionDialog({
         ? `/investments/${special.accountId}`
         : special.kind === "loanInstallment"
           ? `/loans/${special.loanId}`
-          : `/invoices/${special.invoiceId}`;
+          : special.kind === "invoicePayment"
+            ? `/invoices/${special.invoiceId}`
+            : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -57,9 +62,11 @@ export function SpecialTransactionDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("close")}
           </Button>
-          <Button asChild onClick={() => onOpenChange(false)}>
-            <Link href={href}>{t(`${special.kind}.goTo`)}</Link>
-          </Button>
+          {href && (
+            <Button asChild onClick={() => onOpenChange(false)}>
+              <Link href={href}>{t(`${special.kind}.goTo`)}</Link>
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

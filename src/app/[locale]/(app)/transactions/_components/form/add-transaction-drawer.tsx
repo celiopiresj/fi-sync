@@ -19,6 +19,7 @@ import {
   FileArrowUpIcon,
   ListChecksIcon,
   SpinnerIcon,
+  SwapIcon,
   XIcon,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
@@ -28,8 +29,9 @@ import { DebitTransactionForm } from "./debit-transaction-form";
 import { CreditTransactionForm } from "./credit-transaction-form";
 import { BatchTransactionMobile } from "./batch-transaction-mobile";
 import { ImportStatementScreen } from "../import/import-statement-screen";
+import { TransferForm } from "./transfer-form";
 
-type Step = "choose" | "debit" | "credit" | "batch" | "import";
+type Step = "choose" | "debit" | "credit" | "transfer" | "batch" | "import";
 
 type AddTransactionDrawerProps = {
   open: boolean;
@@ -46,8 +48,13 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
   const t = useTranslations("scrn-transactions");
   const [step, setStep] = useState<Step>("choose");
   const { data: options, isLoading } = useQuickAddTransactionOptions(open);
-  const { submitDebit, submitCredit, submitBatch, submitCreditBatch } =
-    useQuickAddTransactionMutations();
+  const {
+    submitDebit,
+    submitCredit,
+    submitBatch,
+    submitCreditBatch,
+    submitTransfer,
+  } = useQuickAddTransactionMutations();
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) setStep("choose");
@@ -150,6 +157,24 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
               </button>
               <button
                 type="button"
+                onClick={() => setStep("transfer")}
+                className="flex items-center gap-3 rounded-lg border border-border p-3.5 text-left"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+                  <SwapIcon className="size-5" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-sm font-medium">
+                    {t("quickAdd.transferOption.title")}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {t("quickAdd.transferOption.subtitle")}
+                  </span>
+                </div>
+                <CaretRightIcon className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+              <button
+                type="button"
                 onClick={() => setStep("batch")}
                 className="flex items-center gap-3 rounded-lg border border-border p-3.5 text-left"
               >
@@ -236,7 +261,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
             </>
           ))}
 
-        {(step === "debit" || step === "credit") && (
+        {(step === "debit" || step === "credit" || step === "transfer") && (
           <div className="flex flex-1 flex-col overflow-hidden">
             <DrawerHeader className="flex-row items-center gap-2 space-y-0 pb-2">
               <DrawerClose asChild>
@@ -245,7 +270,13 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                 </Button>
               </DrawerClose>
               <DrawerTitle>
-                {t(step === "debit" ? "dialog.create.title" : "dialog.createCredit.title")}
+                {t(
+                  step === "debit"
+                    ? "dialog.create.title"
+                    : step === "credit"
+                      ? "dialog.createCredit.title"
+                      : "transfer.title",
+                )}
               </DrawerTitle>
             </DrawerHeader>
 
@@ -266,7 +297,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                   onSubmit={submitDebit}
                   onSuccess={() => handleOpenChange(false)}
                 />
-              ) : (
+              ) : step === "credit" ? (
                 <CreditTransactionForm
                   isEditing={false}
                   initialValues={null}
@@ -276,6 +307,15 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                   defaultPersonId={options.defaultPersonId}
                   defaultAccountId={options.defaultCreditAccountId ?? undefined}
                   onSubmit={submitCredit}
+                  onSuccess={() => handleOpenChange(false)}
+                />
+              ) : (
+                <TransferForm
+                  accounts={options.accounts}
+                  categories={options.categories}
+                  people={options.people}
+                  defaultAccountId={options.defaultDebitAccountId}
+                  onSubmit={submitTransfer}
                   onSuccess={() => handleOpenChange(false)}
                 />
               )}

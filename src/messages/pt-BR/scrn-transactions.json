@@ -20,7 +20,8 @@
       "description": "Adicionar um lançamento manual",
       "debit": "Transação no débito",
       "credit": "Despesa no cartão",
-    "import": "Importar fatura ou extrato"
+    "import": "Importar fatura ou extrato",
+      "transfer": "Transferência"
     },
     "import": {
       "title": "Importar",
@@ -218,6 +219,10 @@
     "importOption": {
       "title": "Importar fatura ou extrato",
       "subtitle": "PDF ou foto — as linhas vêm preenchidas"
+    },
+    "transferOption": {
+      "title": "Transferência",
+      "subtitle": "Entre suas contas ou com uma pessoa"
     }
   },
 
@@ -310,6 +315,40 @@
       "notConfigured": "A leitura automática não está configurada neste ambiente.",
       "rateLimited": "Muitas leituras seguidas. Tente de novo em {seconds}s.",
       "failed": "Não consegui ler esse arquivo. Tente de novo ou envie outro."
+    }
+  },
+
+  "transfer": {
+    "title": "Transferência",
+    "description": "Mova dinheiro entre suas contas, ou registre um envio ou recebimento com uma pessoa",
+    "target": {
+      "label": "Tipo",
+      "account": "Entre minhas contas",
+      "person": "Com uma pessoa"
+    },
+    "direction": {
+      "label": "Sentido",
+      "send": "Enviar",
+      "receive": "Receber"
+    },
+    "fields": {
+      "from": "De",
+      "to": "Para",
+      "account": "Conta",
+      "person": "Pessoa",
+      "descriptionOptional": "Opcional"
+    },
+    "hint": {
+      "account": "Não entra em receitas nem despesas: o dinheiro só muda de conta.",
+      "person": "Entra como despesa ou receita atribuída à pessoa, e muda o saldo dela."
+    },
+    "confirm": "Transferir",
+    "descriptionTo": "Transferência para {name}",
+    "descriptionFrom": "Transferência de {name}",
+    "errors": {
+      "sameAccount": "Escolha uma conta de destino diferente da de origem",
+      "invalidAccount": "Conta inválida para transferência",
+      "invalidPerson": "Pessoa não encontrada"
     }
   },
 
@@ -467,6 +506,10 @@
         "description": "Esta transação é o pagamento de uma fatura de cartão — ela é controlada pela tela da fatura, não como um lançamento comum.",
         "goTo": "Ir para a fatura"
       },
+      "transfer": {
+        "title": "Transferência entre contas",
+        "description": "Esta transação é uma das duas pontas de uma transferência entre suas contas. Para não deixar uma ponta sem a outra, ela não é editada como um lançamento comum — exclua e registre de novo; as duas pontas saem juntas."
+      },
       "close": "Fechar"
     }
   },
@@ -480,7 +523,8 @@
     "bulkCategorized": "{count, plural, one {# transação categorizada} other {# transações categorizadas}}",
     "bulkStatusChanged": "{count, plural, one {# transação atualizada} other {# transações atualizadas}}",
     "bulkDeleted": "{count, plural, one {# transação excluída} other {# transações excluídas}}",
-    "markedCompleted": "Transação marcada como concluída"
+    "markedCompleted": "Transação marcada como concluída",
+    "transferCreated": "Transferência registrada"
   },
 
   "tabs": {

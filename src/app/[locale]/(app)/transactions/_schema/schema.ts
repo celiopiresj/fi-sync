@@ -317,6 +317,117 @@ export function refineCreditTransaction(
   }
 }
 
+// ---------------------------------------------------------------------
+// Transferência — two shapes behind one form, picked by `target`:
+//
+//  - "account": money moving between two of the user's own accounts.
+//    Posted as two linked legs sharing a transferGroupId (see
+//    createTransfer in actions.ts), and kept OUT of income/expense
+//    totals everywhere — moving money between banks isn't earning or
+//    spending it.
+//  - "person": money sent to / received from someone. That IS a real
+//    expense/income, attributed to the person (it's what moves their
+//    balance on /people), so it goes out through createDebitTransaction
+//    like any other lançamento — this form is just the obvious way in.
+//
+// Fields that only apply to one target stay plain strings (not
+// `.min(1)`) and are checked in refineTransfer instead, with already-
+// translated messages — same reasoning as categoryId/paymentMethod on
+// the debit schema above.
+// ---------------------------------------------------------------------
+
+export const transferTargetValues = ["account", "person"] as const;
+export type TransferTarget = (typeof transferTargetValues)[number];
+
+export const transferDirectionValues = ["send", "receive"] as const;
+export type TransferDirection = (typeof transferDirectionValues)[number];
+
+export const transferSchema = z.object({
+  target: z.enum(transferTargetValues),
+  // Always one of the user's own accounts: the source for an
+  // account-to-account transfer, and the account the money leaves from
+  // (send) or lands in (receive) when the other side is a person.
+  accountId: z.string().min(1),
+  // "account" target only.
+  toAccountId: z.string(),
+  // "person" target only.
+  personId: z.string(),
+  direction: z.enum(transferDirectionValues),
+  categoryId: z.string(),
+  amount: amountString,
+  date: z.string().min(1),
+  paymentMethod: z.enum(["", ...paymentMethodValues]),
+  // Optional — left blank, the server writes "Transferência para/de
+  // {nome}" per leg (see createTransfer).
+  description: z.string(),
+});
+
+export type TransferFormValues = z.input<typeof transferSchema>;
+export type TransferValues = z.output<typeof transferSchema>;
+
+export const emptyTransferFormValues: TransferFormValues = {
+  target: "account",
+  accountId: "",
+  toAccountId: "",
+  personId: "",
+  direction: "send",
+  categoryId: "",
+  amount: "",
+  date: "",
+  // Almost every transfer in Brazil today is a Pix — prefilled so the
+  // common case is one field fewer, still changeable.
+  paymentMethod: "PIX",
+  description: "",
+};
+
+export function refineTransfer(
+  data: TransferValues,
+  ctx: z.RefinementCtx,
+  messages: { required: string; sameAccount: string },
+) {
+  if (!data.paymentMethod) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["paymentMethod"],
+      message: messages.required,
+    });
+  }
+
+  if (data.target === "account") {
+    if (!data.toAccountId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["toAccountId"],
+        message: messages.required,
+      });
+    } else if (data.toAccountId === data.accountId) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["toAccountId"],
+        message: messages.sameAccount,
+      });
+    }
+    return;
+  }
+
+  if (!data.personId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["personId"],
+      message: messages.required,
+    });
+  }
+  // A transfer with a person is an ordinary lançamento, so it carries a
+  // category like every other one (refineDebitTransaction's own rule).
+  if (!data.categoryId) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["categoryId"],
+      message: messages.required,
+    });
+  }
+}
+
 // One row of the debit "modo em lote" table (tasks/006-transacoes-
 // recursos-avancados.md) — a plain debit transaction, no card/
 // installments/recurrence. Each row picks its own type, unlike the
