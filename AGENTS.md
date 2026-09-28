@@ -149,6 +149,13 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   itself. Same enforcement as the form-field-primitive rule below: this is
   a bug to fix, not a style preference, including in existing code you
   happen to be touching for something else.
+- **Every screen requires a logged-in user.** No session → redirect to
+  `/auth/sign-in` (the only public pages are sign-in/sign-up/forgot/reset
+  password). `proxy.ts` enforces this, and each layout/page that reads the
+  session repeats it as a page-level guard instead of silently rendering
+  with no user. `/onboarding` is for users who are logged in but have no
+  financial `Account` yet: no session → sign-in, already has an `Account`
+  → `/`. The `(app)` layout sends account-less users to `/onboarding`.
 - Keep styling in Tailwind utility classes; avoid introducing a second styling
   system (CSS-in-JS, separate CSS modules) unless there's a specific need.
 - **A breakpoint override on a Radix-based primitive (Sheet, Drawer, and

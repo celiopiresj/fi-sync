@@ -9,6 +9,7 @@ import { AppSidebar } from "@/components/nav/app-sidebar";
 import { AccountMenu } from "@/components/nav/account-menu";
 import { MobileNavShell } from "@/components/nav/mobile-nav-shell";
 import { auth } from "@/lib/auth/server";
+import { ensureUserSynced } from "@/lib/auth/sync-user";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "@/i18n/navigation";
 
@@ -16,20 +17,30 @@ import { redirect } from "@/i18n/navigation";
 // Account to exist. proxy.ts already guarantees an authenticated session
 // reaches this layout (unauthenticated requests are redirected to sign-in
 // before this ever renders), so `session` here should always be present;
-// the `?.` is defensive rather than an expected path. /onboarding itself
-// lives outside this route group (see its own directory), so it never
-// loops back through this check.
+// the sign-in redirect below is the page-level guard for the same rule.
+// /onboarding itself lives outside this route group (see its own
+// directory), so it never loops back through this check.
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const { data: session } = await auth.getSession();
   const userId = session?.user?.id;
+  const locale = await getLocale();
 
-  if (userId) {
-    const hasAccount = await prisma.account.findFirst({
-      where: { userId },
-      select: { id: true },
-    });
+  if (!userId) {
+    redirect({ href: "/auth/sign-in", locale });
+  } else {
+    const [user, hasAccount] = await Promise.all([
+      prisma.user.findUnique({ where: { id: userId }, select: { id: true } }),
+      prisma.account.findFirst({ where: { userId }, select: { id: true } }),
+    ]);
+    // Sign-in/sign-up/callback sync the user, but the OAuth callback can
+    // render before the new session cookie is readable, and a still-valid
+    // session cookie never passes through any of them again — so a session
+    // whose `public.User` row is missing gets it created on entry instead
+    // of failing later on a `userId` foreign key.
+    if (!user) {
+      await ensureUserSynced(userId);
+    }
     if (!hasAccount) {
-      const locale = await getLocale();
       redirect({ href: "/onboarding", locale });
     }
   }
