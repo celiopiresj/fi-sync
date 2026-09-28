@@ -75,6 +75,18 @@ export const investmentMovementSchema = z.object({
   // as required for CONTRIBUTION/WITHDRAWAL by refineInvestmentMovement
   // below rather than a conditional shape here.
   transferAccountId: z.string(),
+  // Whose slice of the account this movement is. Empty means "not
+  // attributed", which the rest of the app already reads as the user's
+  // own (a Transaction with no splits is implicitly 100% theirs — see
+  // src/lib/account-balance.ts), so leaving it blank keeps the movement
+  // exactly as it behaved before this field existed.
+  //
+  // For an aporte/resgate the attribution is written on BOTH legs, one
+  // negative and one positive, so the person's overall balance doesn't
+  // move — only which account their slice sits in. A rendimento has a
+  // single leg, so attributing one does raise that person's balance:
+  // it's new money, not money changing places.
+  personId: z.string(),
 });
 
 export type InvestmentMovementFormValues = z.input<typeof investmentMovementSchema>;
@@ -86,6 +98,7 @@ export const emptyInvestmentMovementFormValues: InvestmentMovementFormValues = {
   date: "",
   description: "",
   transferAccountId: "",
+  personId: "",
 };
 
 // Shared between the form's own live validation (movement-form.tsx) and

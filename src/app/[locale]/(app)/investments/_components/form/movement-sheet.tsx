@@ -13,7 +13,10 @@ import type {
   InvestmentMovementFormValues,
   InvestmentMovementKind,
 } from "../../_schema/schema";
-import type { TransferAccountOption } from "../../_types/types";
+import type {
+  MovementPersonOption,
+  TransferAccountOption,
+} from "../../_types/types";
 
 type MovementSheetProps = {
   open: boolean;
@@ -24,6 +27,7 @@ type MovementSheetProps = {
   accountId: string;
   accountBalance: number;
   transferAccounts: TransferAccountOption[];
+  people: MovementPersonOption[];
   // Which action opened the sheet — CONTRIBUTION for "Aportar", WITHDRAWAL
   // for "Resgatar". YIELD is only ever reached by switching the field
   // inside the form itself, not its own top-level button (see
@@ -40,6 +44,7 @@ export function MovementSheet({
   accountId,
   accountBalance,
   transferAccounts,
+  people,
   initialKind,
   onSubmit,
 }: MovementSheetProps) {
@@ -70,6 +75,7 @@ export function MovementSheet({
             initialKind={initialKind}
             accountBalance={accountBalance}
             transferAccounts={transferAccounts}
+            people={people}
             onSubmit={onSubmit}
             onSuccess={() => onOpenChange(false)}
           />

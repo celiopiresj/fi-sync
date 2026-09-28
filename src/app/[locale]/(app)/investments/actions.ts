@@ -16,6 +16,7 @@ import {
 // Shared with /transactions' own account-to-account transfer, via
 // src/lib rather than importing across routes.
 import { TRANSFERABLE_ACCOUNT_TYPES } from "@/lib/transfer-accounts";
+import { getAccountPeopleBalances } from "@/lib/account-balance";
 
 async function requireUserId() {
   const { data: session } = await auth.getSession();
@@ -74,6 +75,18 @@ export async function listTransferAccounts() {
     // (`accounts.find((a) => a.isDefault)`) rather than a separately
     // threaded defaultAccountId.
     select: { id: true, name: true, type: true, isDefault: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+// Everyone a movement can be attributed to. Same shape the transaction
+// forms' own person pickers use — `isSelf` so the form can preselect the
+// user themselves, which is what most movements are.
+export async function listMovementPeople() {
+  const userId = await requireUserId();
+  return prisma.person.findMany({
+    where: { userId },
+    select: { id: true, name: true, isSelf: true },
     orderBy: { name: "asc" },
   });
 }
@@ -247,6 +260,12 @@ export async function createInvestmentMovement(
         amount,
         date,
         investmentMovementKind: value.kind,
+        // Single leg, so this one DOES move the person's balance — a
+        // rendimento is new money, and it belongs to whoever owns that
+        // slice of the account (see the personId comment on the schema).
+        splits: value.personId
+          ? { create: [{ personId: value.personId, amount }] }
+          : undefined,
       },
     });
 
@@ -288,6 +307,9 @@ export async function createInvestmentMovement(
         date,
         investmentMovementKind: value.kind,
         transferGroupId,
+        splits: value.personId
+          ? { create: [{ personId: value.personId, amount: investmentAmount }] }
+          : undefined,
       },
     }),
     prisma.transaction.create({
@@ -300,6 +322,12 @@ export async function createInvestmentMovement(
         amount: -investmentAmount,
         date,
         transferGroupId,
+        // Mirrors the investment leg's own split, which is what keeps the
+        // person's overall balance still: their slice moves between the
+        // two accounts instead of appearing or vanishing.
+        splits: value.personId
+          ? { create: [{ personId: value.personId, amount: -investmentAmount }] }
+          : undefined,
       },
     }),
   ]);
@@ -363,7 +391,16 @@ export async function getInvestmentAccountDetail(id: string) {
     }),
     prisma.transaction.findMany({
       where: { userId, accountId: id, investmentMovementKind: { not: null } },
-      select: { id: true, description: true, amount: true, date: true, investmentMovementKind: true },
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        date: true,
+        investmentMovementKind: true,
+        // At most one per movement — the form attributes a whole
+        // movement to one person, it has no split editor.
+        splits: { select: { person: { select: { id: true, name: true } } } },
+      },
       orderBy: { date: "desc" },
     }),
     prisma.transaction.aggregate({
@@ -381,11 +418,16 @@ export async function getInvestmentAccountDetail(id: string) {
     }),
   ]);
 
+  // How much of the pot is whose — the same calculation /accounts/[id]
+  // and the balance transfer read, so all three agree.
+  const { people } = await getAccountPeopleBalances(userId, id);
+
   return {
     id: account.id,
     name: account.name,
     type: account.type,
     status: account.status,
+    people,
     balance: balanceSum._sum.amount?.toNumber() ?? 0,
     yieldLastMonth: yieldLastMonthSum._sum.amount?.toNumber() ?? 0,
     yieldTotal: yieldTotalSum._sum.amount?.toNumber() ?? 0,
@@ -397,6 +439,11 @@ export async function getInvestmentAccountDetail(id: string) {
       // Guaranteed present: the query above only pulled rows where
       // investmentMovementKind is not null.
       kind: movement.investmentMovementKind!,
+      // Whose movement it is, or null when it was never attributed —
+      // which every other screen reads as the user's own. At most one,
+      // since the movement form attributes a whole movement to one
+      // person and has no split editor.
+      person: movement.splits[0]?.person ?? null,
     })),
   };
 }

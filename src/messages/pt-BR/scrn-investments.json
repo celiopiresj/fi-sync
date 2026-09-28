@@ -110,6 +110,12 @@
         "labelContribution": "De qual conta saiu",
         "labelWithdrawal": "Para qual conta volta",
         "placeholder": "Selecione a conta"
+      },
+      "person": {
+        "label": "De quem é",
+        "placeholder": "Selecione a pessoa",
+        "hintTransfer": "Marca de quem é essa fatia. Não muda o saldo da pessoa — só de qual conta ela é.",
+        "hintYield": "O rendimento é dinheiro novo, então ele aumenta o saldo dessa pessoa."
       }
     },
     "errors": {
@@ -137,6 +143,11 @@
     "kpis": {
       "yieldLastMonth": "Rendeu no último mês",
       "yieldTotal": "Rendimento total"
+    },
+    "people": {
+      "title": "De quem é o dinheiro",
+      "description": "Quanto do saldo desta conta é de cada pessoa",
+      "unattributed": "Sem atribuição"
     },
     "movements": {
       "title": "Movimentações",

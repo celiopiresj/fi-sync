@@ -15,7 +15,11 @@ import {
   type InvestmentMovementFormValues,
   type InvestmentMovementKind,
 } from "../../_schema/schema";
-import type { TransferAccountOption } from "../../_types/types";
+import { formatPersonName } from "@/lib/format-person-name";
+import type {
+  MovementPersonOption,
+  TransferAccountOption,
+} from "../../_types/types";
 
 type MovementFormProps = {
   initialKind: InvestmentMovementKind;
@@ -28,6 +32,11 @@ type MovementFormProps = {
   // transfer (see the transferAccountId field below) — CONTRIBUTION and
   // WITHDRAWAL need one, YIELD never shows the picker at all.
   transferAccounts: TransferAccountOption[];
+  // Everyone the movement can be attributed to. The picker only shows up
+  // once there's more than just the user — with a single self Person
+  // every movement is implicitly theirs, so a picker with nothing to
+  // choose would be noise (same gating as the transaction forms').
+  people: MovementPersonOption[];
   onSubmit: (
     values: InvestmentMovementFormValues,
   ) => Promise<{ error: string | null }>;
@@ -38,6 +47,7 @@ export function MovementForm({
   initialKind,
   accountBalance,
   transferAccounts,
+  people,
   onSubmit,
   onSuccess,
 }: MovementFormProps) {
@@ -81,6 +91,10 @@ export function MovementForm({
       kind: initialKind,
       date: todayCalendarDate(),
       transferAccountId: transferAccounts.find((account) => account.isDefault)?.id ?? "",
+      // Most movements are the user's own money, so the self Person is
+      // where the picker starts — same default every other person field
+      // in the app uses.
+      personId: people.find((person) => person.isSelf)?.id ?? "",
     } as InvestmentMovementFormValues,
     onSubmit: async ({ value }) => {
       setServerError(null);
@@ -181,6 +195,31 @@ export function MovementForm({
             />
           )}
         </form.AppField>
+      )}
+
+      {people.length > 1 && (
+        <form.AppField name="personId">
+          {(field) => (
+            <field.SelectField
+              label={t("movement.fields.person.label")}
+              placeholder={t("movement.fields.person.placeholder")}
+              options={people.map((person) => ({
+                value: person.id,
+                label: formatPersonName(person.name),
+              }))}
+            />
+          )}
+        </form.AppField>
+      )}
+
+      {people.length > 1 && (
+        <p className="-mt-2 text-xs text-muted-foreground">
+          {t(
+            isYield
+              ? "movement.fields.person.hintYield"
+              : "movement.fields.person.hintTransfer",
+          )}
+        </p>
       )}
 
       <form.AppField name="date">

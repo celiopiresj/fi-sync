@@ -21,9 +21,11 @@ import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
 import { MovementSheet } from "../../_components/form/movement-sheet";
 import { createInvestmentMovement } from "../../actions";
 import { getAccountColorClasses } from "../../_lib/account-color";
+import { formatPersonName } from "@/lib/format-person-name";
 import type {
   InvestmentAccountDetail,
   InvestmentMovementRow,
+  MovementPersonOption,
   TransferAccountOption,
 } from "../../_types/types";
 import type {
@@ -36,11 +38,13 @@ type MovementDialogState = { kind: InvestmentMovementKind } | null;
 type InvestmentAccountDetailViewProps = {
   account: InvestmentAccountDetail;
   transferAccounts: TransferAccountOption[];
+  people: MovementPersonOption[];
 };
 
 export function InvestmentAccountDetailView({
   account,
   transferAccounts,
+  people,
 }: InvestmentAccountDetailViewProps) {
   const t = useTranslations("scrn-investments");
   const tCommon = useTranslations("common");
@@ -138,6 +142,45 @@ export function InvestmentAccountDetailView({
         />
       </KpiGrid>
 
+      {/* Only worth a block once the money is actually divided — with
+          everything attributed to one person (the usual case) the figure
+          would just repeat the balance card above. */}
+      {account.people.length > 1 && (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-0.5">
+            <h2 className="text-sm font-medium">{t("detail.people.title")}</h2>
+            <p className="text-xs text-muted-foreground">
+              {t("detail.people.description")}
+            </p>
+          </div>
+
+          <div className="rounded-md border border-border">
+            <div className="divide-y divide-border">
+              {account.people.map((person) => (
+                <div
+                  key={person.personId ?? "unattributed"}
+                  className="flex items-center justify-between gap-3 px-3 py-2.5"
+                >
+                  <span className="min-w-0 truncate text-sm">
+                    {person.personId
+                      ? formatPersonName(person.name)
+                      : t("detail.people.unattributed")}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 text-sm font-medium tabular-nums",
+                      person.balance < 0 ? "text-negative" : "text-positive",
+                    )}
+                  >
+                    {money(person.balance)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col gap-3">
         <h2 className="text-sm font-medium">{t("detail.movements.title")}</h2>
 
@@ -170,6 +213,7 @@ export function InvestmentAccountDetailView({
         accountId={account.id}
         accountBalance={account.balance}
         transferAccounts={transferAccounts}
+        people={people}
         initialKind={movementDialog?.kind ?? "CONTRIBUTION"}
         onSubmit={handleMovementSubmit}
       />
@@ -200,6 +244,14 @@ function MovementRow({
           <span className="text-xs text-muted-foreground">
             {format.dateTime(movement.date, DATE_ONLY_FORMAT_OPTIONS)}
           </span>
+          {/* At most one — a movement is attributed to a single person
+              (the form has no split editor). Left out entirely when it's
+              unattributed, which reads as "yours" everywhere else. */}
+          {movement.person && (
+            <span className="min-w-0 truncate text-xs text-muted-foreground">
+              · {formatPersonName(movement.person.name)}
+            </span>
+          )}
         </div>
       </div>
       <span

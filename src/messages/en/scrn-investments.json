@@ -106,6 +106,12 @@
       "description": {
         "label": "Description (optional)"
       },
+      "person": {
+        "label": "Whose it is",
+        "placeholder": "Select the person",
+        "hintTransfer": "Marks whose slice this is. It doesn't change the person's balance — only which account their slice sits in.",
+        "hintYield": "A yield is new money, so it does raise that person's balance."
+      },
       "transferAccount": {
         "labelContribution": "Which account it came from",
         "labelWithdrawal": "Which account it goes back to",
@@ -137,6 +143,11 @@
     "kpis": {
       "yieldLastMonth": "Yielded last month",
       "yieldTotal": "Total yield"
+    },
+    "people": {
+      "title": "Whose money it is",
+      "description": "How much of this account's balance belongs to each person",
+      "unattributed": "Unattributed"
     },
     "movements": {
       "title": "Movements",

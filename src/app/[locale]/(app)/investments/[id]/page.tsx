@@ -1,7 +1,11 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { getInvestmentAccountDetail, listTransferAccounts } from "../actions";
+import {
+  getInvestmentAccountDetail,
+  listMovementPeople,
+  listTransferAccounts,
+} from "../actions";
 import { InvestmentAccountDetailView } from "./_components/investment-account-detail-view";
 
 type InvestmentAccountDetailPageProps = {
@@ -12,9 +16,10 @@ export default async function InvestmentAccountDetailPage({
   params,
 }: InvestmentAccountDetailPageProps) {
   const { id } = await params;
-  const [account, transferAccounts] = await Promise.all([
+  const [account, transferAccounts, people] = await Promise.all([
     getInvestmentAccountDetail(id),
     listTransferAccounts(),
+    listMovementPeople(),
   ]);
 
   if (!account) {
@@ -33,6 +38,10 @@ export default async function InvestmentAccountDetailPage({
   }
 
   return (
-    <InvestmentAccountDetailView account={account} transferAccounts={transferAccounts} />
+    <InvestmentAccountDetailView
+      account={account}
+      transferAccounts={transferAccounts}
+      people={people}
+    />
   );
 }
