@@ -10,6 +10,7 @@ import { AccountMenu } from "@/components/nav/account-menu";
 import { MobileNavShell } from "@/components/nav/mobile-nav-shell";
 import { auth } from "@/lib/auth/server";
 import { ensureUserSynced } from "@/lib/auth/sync-user";
+import { completePastPendingCardPurchases } from "@/lib/complete-past-purchases";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "@/i18n/navigation";
 
@@ -40,6 +41,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     if (!user) {
       await ensureUserSynced(userId);
     }
+    await completePastPendingCardPurchases(userId);
     if (!hasAccount) {
       redirect({ href: "/onboarding", locale });
     }

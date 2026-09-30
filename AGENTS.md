@@ -156,6 +156,13 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   with no user. `/onboarding` is for users who are logged in but have no
   financial `Account` yet: no session → sign-in, already has an `Account`
   → `/`. The `(app)` layout sends account-less users to `/onboarding`.
+- **A card purchase stops being PENDING once its date arrives.**
+  `completePastPendingCardPurchases` (`src/lib/complete-past-purchases.ts`)
+  flips every credit-card transaction with `status: PENDING` and
+  `date <= today` to COMPLETED — run from the `(app)` layout and
+  `listTransactions`. Debit accounts are deliberately excluded (a
+  past-dated pending bill may really be unpaid). Any new screen that
+  shows card purchases' status should rely on this, not re-derive it.
 - **Changing a transaction's account or date must move its invoice
   link.** `TransactionInvoice` is written at creation; any edit that
   rewrites `accountId`/`date` in place calls `relinkTransactionInvoices`

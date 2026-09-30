@@ -24,6 +24,7 @@ import {
 // the note in that file for why it isn't local to this screen anymore.
 import { effectiveDateWhere, type DateBasis } from "@/lib/transaction-period";
 import { relinkTransactionInvoices } from "@/lib/invoice-relink";
+import { completePastPendingCardPurchases } from "@/lib/complete-past-purchases";
 import { resolveSplitsCreateInput } from "@/lib/transaction-splits";
 import {
   RECURRENCE_GENERATION_WINDOW_MONTHS,
@@ -231,6 +232,10 @@ function purchaseKindWhere(
 
 export async function listTransactions(filters: TransactionFilters = {}) {
   const userId = await requireUserId();
+  // The (app) layout already runs this, but it renders in parallel with
+  // the page's own data fetch — repeated here so this list never shows a
+  // card purchase as "Pendente" after its date.
+  await completePastPendingCardPurchases(userId);
 
   const where: Record<string, unknown> = { userId, ...accountFilterWhere(filters.accountId) };
   // Independent "at least one of these" conditions (personId's own OR,
