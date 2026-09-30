@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth/server";
 import {
+  dateOnlyKey,
   parseCalendarDate,
   toAppZoned,
   fromAppZoned,
@@ -22,6 +23,7 @@ import {
 // getCategoryExpenseBreakdown) and by the Telegram bot's own reads — see
 // the note in that file for why it isn't local to this screen anymore.
 import { effectiveDateWhere, type DateBasis } from "@/lib/transaction-period";
+import { relinkTransactionInvoices } from "@/lib/invoice-relink";
 import { resolveSplitsCreateInput } from "@/lib/transaction-splits";
 import {
   RECURRENCE_GENERATION_WINDOW_MONTHS,
@@ -1675,6 +1677,17 @@ export async function updateCreditTransaction(
     update: { cardId: value.cardId },
     create: { transactionId: id, cardId: value.cardId },
   });
+
+  // Moving the purchase to another card, or to a date in another billing
+  // cycle, has to move its invoice link too — see relinkTransactionInvoices.
+  if (
+    existing.accountId !== value.accountId ||
+    // `existing.date` is a DB-read `@db.Date` (UTC midnight) and
+    // `editedDate` is APP_TIME_ZONE-pinned — compared as calendar days.
+    dateOnlyKey(existing.date) !== value.date
+  ) {
+    await relinkTransactionInvoices([id]);
+  }
 
   if (isConvertingToRecurrence && newRecurrenceId) {
     const account = await prisma.account.findUnique({

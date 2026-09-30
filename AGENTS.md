@@ -156,6 +156,10 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   with no user. `/onboarding` is for users who are logged in but have no
   financial `Account` yet: no session → sign-in, already has an `Account`
   → `/`. The `(app)` layout sends account-less users to `/onboarding`.
+- **Changing a transaction's account or date must move its invoice
+  link.** `TransactionInvoice` is written at creation; any edit that
+  rewrites `accountId`/`date` in place calls `relinkTransactionInvoices`
+  (`src/lib/invoice-relink.ts`) for the rows that actually changed.
 - Keep styling in Tailwind utility classes; avoid introducing a second styling
   system (CSS-in-JS, separate CSS modules) unless there's a specific need.
 - **A breakpoint override on a Radix-based primitive (Sheet, Drawer, and

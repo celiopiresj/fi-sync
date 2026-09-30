@@ -13,6 +13,7 @@ import {
   dateOnlyKey,
 } from "@/lib/date";
 import { resolveInvoiceForDate } from "@/lib/invoice-resolution";
+import { relinkTransactionInvoices } from "@/lib/invoice-relink";
 import {
   debitRecurrenceContentSchema,
   debitRecurrenceCreateSchema,
@@ -795,12 +796,9 @@ export async function updateCreditRecurrence(
 // Shared cascade step for both updateDebitRecurrence and
 // updateCreditRecurrence above — shortens future/PENDING occurrences past
 // a newly-shortened endDate, then rewrites the remaining ones (content +
-// splits) to match the just-saved template. Same v1 limitation
-// updateTransaction documents for a single transaction: a card or
-// account-type change here only takes effect for occurrences generated
-// AFTER this edit (createRecurrenceOccurrence / extendRecurrenceGeneration),
-// not ones already materialized — so this never touches TransactionCard/
-// TransactionInvoice on the cascaded rows.
+// splits) to match the just-saved template. Rows whose account changed
+// also get their TransactionCard and TransactionInvoice moved along with
+// it (relinkTransactionInvoices).
 async function cascadeRecurrenceEdit(params: {
   id: string;
   userId: string;
@@ -839,9 +837,12 @@ async function cascadeRecurrenceEdit(params: {
 
   const cascadedRows = await prisma.transaction.findMany({
     where: cascadeWhere,
-    select: { id: true },
+    select: { id: true, accountId: true },
   });
   const cascadedIds = cascadedRows.map((row) => row.id);
+  const movedIds = cascadedRows
+    .filter((row) => row.accountId !== content.accountId)
+    .map((row) => row.id);
 
   await prisma.transaction.updateMany({
     where: { id: { in: cascadedIds } },
@@ -853,6 +854,26 @@ async function cascadeRecurrenceEdit(params: {
       paymentMethod: content.paymentMethod,
     },
   });
+
+  // Occurrences moved to another account also need their card and
+  // invoice link to follow — otherwise they keep counting toward the old
+  // card's invoices (see relinkTransactionInvoices). Sequential, per this
+  // file's one-row-at-a-time discipline against Neon's driver.
+  if (movedIds.length > 0) {
+    const cardId = params.occurrenceValue.cardId;
+    for (const transactionId of movedIds) {
+      if (cardId) {
+        await prisma.transactionCard.upsert({
+          where: { transactionId },
+          update: { cardId },
+          create: { transactionId, cardId },
+        });
+      } else {
+        await prisma.transactionCard.deleteMany({ where: { transactionId } });
+      }
+    }
+    await relinkTransactionInvoices(movedIds);
+  }
 
   // Splits cascade the same way the rule's own template does above:
   // delete and recreate from the just-saved template, rather than diff.
