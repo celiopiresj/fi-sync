@@ -430,6 +430,17 @@
     "period": "Período",
     "periodFrom": "De",
     "periodTo": "Até",
+    "dateBasis": {
+      "label": "Período por",
+      "due": "Vencimento",
+      "purchase": "Data da compra"
+    },
+    "purchaseKind": {
+      "label": "Tipo de compra",
+      "all": "Todas",
+      "single": "À vista",
+      "installment": "Parcelada"
+    },
     "clear": "Limpar filtros",
     "clearAll": "Limpar tudo",
     "apply": "Aplicar filtros",
@@ -439,6 +450,8 @@
       "person": "Pessoa: {value}",
       "dateRange": "Data: {value}",
       "type": "Tipo: {value}",
+      "dateBasis": "Período por: {value}",
+      "purchaseKind": "Compra: {value}",
       "remove": "Remover filtro {value}"
     }
   },

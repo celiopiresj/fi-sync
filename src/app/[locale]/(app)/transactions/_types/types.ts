@@ -32,9 +32,12 @@ export type CardOption = AccountOption["cards"][number];
 // named type (rather than each file redeclaring its own ad-hoc shape)
 // is what keeps the sheet's props and the parent's state from drifting
 // apart.
+// `dateBasis`/`purchaseKind` only mean anything on the Crédito tab — the
+// sheet only renders them there, and transactions-view.tsx only forwards
+// them to the query while that tab is active.
 export type SheetFilters = Pick<
   TransactionFilters,
-  "accountId" | "categoryId" | "personId" | "type"
+  "accountId" | "categoryId" | "personId" | "type" | "dateBasis" | "purchaseKind"
 > & {
   dateFrom?: string;
   dateTo?: string;

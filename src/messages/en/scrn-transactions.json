@@ -430,6 +430,17 @@
     "period": "Period",
     "periodFrom": "From",
     "periodTo": "To",
+    "dateBasis": {
+      "label": "Period by",
+      "due": "Due date",
+      "purchase": "Purchase date"
+    },
+    "purchaseKind": {
+      "label": "Purchase type",
+      "all": "All",
+      "single": "Single payment",
+      "installment": "Installments"
+    },
     "clear": "Clear filters",
     "clearAll": "Clear all",
     "apply": "Apply filters",
@@ -439,6 +450,8 @@
       "person": "Person: {value}",
       "dateRange": "Date: {value}",
       "type": "Type: {value}",
+      "dateBasis": "Period by: {value}",
+      "purchaseKind": "Purchase: {value}",
       "remove": "Remove filter {value}"
     }
   },

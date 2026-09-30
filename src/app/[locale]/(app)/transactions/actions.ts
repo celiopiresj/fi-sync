@@ -21,7 +21,7 @@ import {
 // (listTransactions, getTransactionById, getMonthlyBalances,
 // getCategoryExpenseBreakdown) and by the Telegram bot's own reads — see
 // the note in that file for why it isn't local to this screen anymore.
-import { effectiveDateWhere } from "@/lib/transaction-period";
+import { effectiveDateWhere, type DateBasis } from "@/lib/transaction-period";
 import { resolveSplitsCreateInput } from "@/lib/transaction-splits";
 import {
   RECURRENCE_GENERATION_WINDOW_MONTHS,
@@ -209,7 +209,23 @@ export type TransactionFilters = {
   from?: string;
   to?: string;
   type?: "all" | "income" | "expenses";
+  // Crédito-tab-only refinements (transactions-view.tsx only sends them
+  // while that tab is active). `dateBasis` picks which date `from`/`to`
+  // scope — the invoice's due date (default) or the purchase's own date;
+  // `purchaseKind` splits one-off purchases from installment ones.
+  dateBasis?: DateBasis;
+  purchaseKind?: "all" | "single" | "installment";
 };
+
+// Installment rows are the only ones with an installmentGroupId (see
+// createCreditTransaction below — a single purchase never gets one).
+function purchaseKindWhere(
+  purchaseKind: TransactionFilters["purchaseKind"],
+): Record<string, unknown> | null {
+  if (purchaseKind === "single") return { installmentGroupId: null };
+  if (purchaseKind === "installment") return { installmentGroupId: { not: null } };
+  return null;
+}
 
 export async function listTransactions(filters: TransactionFilters = {}) {
   const userId = await requireUserId();
@@ -241,8 +257,10 @@ export async function listTransactions(filters: TransactionFilters = {}) {
     });
   }
   if (filters.from || filters.to) {
-    andConditions.push(effectiveDateWhere(filters.from, filters.to));
+    andConditions.push(effectiveDateWhere(filters.from, filters.to, filters.dateBasis));
   }
+  const purchaseKindCondition = purchaseKindWhere(filters.purchaseKind);
+  if (purchaseKindCondition) andConditions.push(purchaseKindCondition);
   if (filters.type === "income") where.amount = { gt: 0 };
   if (filters.type === "expenses") where.amount = { lt: 0 };
   if (andConditions.length > 0) where.AND = andConditions;
@@ -288,13 +306,17 @@ export async function listTransactions(filters: TransactionFilters = {}) {
   // `effectiveDate` in JS after mapping, since Prisma can't express "sort
   // by date, except by a joined table's date for some rows" in a single
   // `orderBy` — the list is one month's worth of rows at a time, small
-  // enough that this costs nothing measurable.
+  // enough that this costs nothing measurable. With `dateBasis:
+  // "purchase"` the list is scoped by `date`, so it's grouped by it too.
+  const byPurchaseDate = filters.dateBasis === "purchase";
   return transactions
     .map((transaction) => ({
       ...transaction,
       amount: transaction.amount.toNumber(),
       effectiveDate:
-        transaction.account.type === "CREDIT_CARD" && transaction.transactionInvoice
+        !byPurchaseDate &&
+        transaction.account.type === "CREDIT_CARD" &&
+        transaction.transactionInvoice
           ? transaction.transactionInvoice.invoice.dueDate
           : transaction.date,
       splits: transaction.splits.map((split) => ({
@@ -444,7 +466,14 @@ type CategoryGroupRow = {
 export async function getCategoryExpenseBreakdown(
   filters: Pick<
     TransactionFilters,
-    "accountId" | "categoryId" | "personId" | "search" | "from" | "to"
+    | "accountId"
+    | "categoryId"
+    | "personId"
+    | "search"
+    | "from"
+    | "to"
+    | "dateBasis"
+    | "purchaseKind"
   > = {},
 ): Promise<CategoryBreakdown> {
   const userId = await requireUserId();
@@ -492,8 +521,10 @@ export async function getCategoryExpenseBreakdown(
     });
   }
   if (filters.from || filters.to) {
-    andConditions.push(effectiveDateWhere(filters.from, filters.to));
+    andConditions.push(effectiveDateWhere(filters.from, filters.to, filters.dateBasis));
   }
+  const purchaseKindCondition = purchaseKindWhere(filters.purchaseKind);
+  if (purchaseKindCondition) andConditions.push(purchaseKindCondition);
   if (andConditions.length > 0) where.AND = andConditions;
 
   // { total, count } per category, keyed by categoryId (or

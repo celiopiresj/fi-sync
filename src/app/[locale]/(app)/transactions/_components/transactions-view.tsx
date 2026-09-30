@@ -134,6 +134,8 @@ const CHIP_FIELD = {
   person: "personId",
   dateRange: "dateFrom",
   type: "type",
+  dateBasis: "dateBasis",
+  purchaseKind: "purchaseKind",
 } as const;
 
 // True when `value` has no filter actually applied, for the chip row's
@@ -155,7 +157,9 @@ function hasActiveSheetFilters(value: SheetFilters): boolean {
       value.personId ||
       value.dateFrom ||
       value.dateTo ||
-      (value.type && value.type !== "all"),
+      (value.type && value.type !== "all") ||
+      value.dateBasis === "purchase" ||
+      (value.purchaseKind && value.purchaseKind !== "all"),
   );
 }
 
@@ -221,7 +225,16 @@ export function TransactionsView({
   // FiltersSheet had narrowed to.
   const accountKind = resolveAccountKind(sheetFilters.accountId, accounts);
   function handleAccountKindChange(kind: typeof accountKind) {
-    setSheetFilters((current) => ({ ...current, accountId: accountIdForKind(kind) }));
+    setSheetFilters((current) => {
+      const next = { ...current, accountId: accountIdForKind(kind) };
+      // Crédito-only refinements (see SheetFilters) — dropped on leaving
+      // that tab so they don't linger as hidden chips on Débito.
+      if (kind !== "credit") {
+        delete next.dateBasis;
+        delete next.purchaseKind;
+      }
+      return next;
+    });
   }
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
@@ -277,6 +290,8 @@ export function TransactionsView({
       categoryId: sheetFilters.categoryId,
       personId: sheetFilters.personId,
       type: sheetFilters.type,
+      dateBasis: sheetFilters.dateBasis,
+      purchaseKind: sheetFilters.purchaseKind,
       search: searchText.trim() || undefined,
       from: sheetFilters.dateFrom || from,
       to: sheetFilters.dateTo || to,
@@ -319,6 +334,8 @@ export function TransactionsView({
       categoryId: sheetFilters.categoryId,
       personId: sheetFilters.personId,
       type: sheetFilters.type,
+      dateBasis: sheetFilters.dateBasis,
+      purchaseKind: sheetFilters.purchaseKind,
       search: searchText.trim() || undefined,
       from: previousRange.from,
       to: previousRange.to,
@@ -829,6 +846,18 @@ export function TransactionsView({
     if (kind === "type" && sheetFilters.type && sheetFilters.type !== "all") {
       return t("filters.chips.type", { value: t(`tabs.${sheetFilters.type}`) });
     }
+    if (kind === "dateBasis" && sheetFilters.dateBasis === "purchase") {
+      return t("filters.chips.dateBasis", { value: t("filters.dateBasis.purchase") });
+    }
+    if (
+      kind === "purchaseKind" &&
+      sheetFilters.purchaseKind &&
+      sheetFilters.purchaseKind !== "all"
+    ) {
+      return t("filters.chips.purchaseKind", {
+        value: t(`filters.purchaseKind.${sheetFilters.purchaseKind}`),
+      });
+    }
     return null;
   }
 
@@ -855,6 +884,8 @@ export function TransactionsView({
         delete next.dateTo;
       }
       if (kind === "type") delete next.type;
+      if (kind === "dateBasis") delete next.dateBasis;
+      if (kind === "purchaseKind") delete next.purchaseKind;
       return next;
     });
   }

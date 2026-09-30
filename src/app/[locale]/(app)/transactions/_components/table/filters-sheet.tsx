@@ -75,6 +75,8 @@ function countActiveFilters(value: SheetFilters) {
   if (value.personId) count++;
   if (value.dateFrom || value.dateTo) count++;
   if (value.type && value.type !== "all") count++;
+  if (value.dateBasis === "purchase") count++;
+  if (value.purchaseKind && value.purchaseKind !== "all") count++;
   return count;
 }
 
@@ -253,6 +255,39 @@ export function FiltersSheet({
 
             <div className="flex flex-col gap-3">
               <Label>{t("filters.period")}</Label>
+              {/* A card purchase normally counts in the month its invoice
+                  is due; this lets the period (the header stepper's and
+                  the custom range below) scope by the purchase's own date
+                  instead. Débito rows only have the one date, so there's
+                  nothing to choose there. */}
+              {accountKind === "credit" && (
+                <div className="flex flex-col gap-1.5">
+                  <Label className="text-xs font-normal text-muted-foreground">
+                    {t("filters.dateBasis.label")}
+                  </Label>
+                  <ToggleGroup
+                    type="single"
+                    variant="tabs"
+                    value={draft.dateBasis ?? "due"}
+                    onValueChange={(value) => {
+                      if (value) {
+                        setDraft({
+                          ...draft,
+                          dateBasis: value === "due" ? undefined : (value as SheetFilters["dateBasis"]),
+                        });
+                      }
+                    }}
+                    className="w-full justify-start"
+                  >
+                    <ToggleGroupItem value="due" className="flex-1">
+                      {t("filters.dateBasis.due")}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="purchase" className="flex-1">
+                      {t("filters.dateBasis.purchase")}
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="filter-date-from" className="text-xs font-normal text-muted-foreground">
                   {t("filters.periodFrom")}
@@ -304,6 +339,36 @@ export function FiltersSheet({
                 <ToggleGroupItem value="expenses" className="flex-1">{t("tabs.expenses")}</ToggleGroupItem>
               </ToggleGroup>
             </div>
+
+            {accountKind === "credit" && (
+              <div className="flex flex-col gap-1.5">
+                <Label>{t("filters.purchaseKind.label")}</Label>
+                <ToggleGroup
+                  type="single"
+                  variant="tabs"
+                  value={draft.purchaseKind ?? "all"}
+                  onValueChange={(value) => {
+                    if (value) {
+                      setDraft({
+                        ...draft,
+                        purchaseKind: value as SheetFilters["purchaseKind"],
+                      });
+                    }
+                  }}
+                  className="w-full justify-start"
+                >
+                  <ToggleGroupItem value="all" className="flex-1">
+                    {t("filters.purchaseKind.all")}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="single" className="flex-1">
+                    {t("filters.purchaseKind.single")}
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="installment" className="flex-1">
+                    {t("filters.purchaseKind.installment")}
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+            )}
           </div>
 
           <SheetFooter className="flex-row gap-2">
