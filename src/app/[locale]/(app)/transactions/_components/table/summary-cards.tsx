@@ -61,7 +61,16 @@ function sumIncomeExpenses(transactions: TransactionRow[]) {
       expenses += transaction.amount;
     }
   }
-  return { income, expenses, balance: income + expenses + transfers };
+  return {
+    income,
+    expenses,
+    balance: income + expenses + transfers,
+    // Card "Total gasto": purchases net of whatever came back onto the
+    // card (an "Estorno" refund, a cashback credit) — a positive row
+    // lowers what's owed, so it has to be subtracted rather than ignored.
+    // Positive = net spend; negative only if refunds outweigh purchases.
+    spent: -(income + expenses),
+  };
 }
 
 export function SummaryCards({
@@ -78,7 +87,7 @@ export function SummaryCards({
   const t = useTranslations("scrn-transactions");
   const format = useFormatter();
 
-  const { income, expenses, balance } = useMemo(
+  const { income, expenses, balance, spent } = useMemo(
     () => sumIncomeExpenses(transactions),
     [transactions],
   );
@@ -116,7 +125,7 @@ export function SummaryCards({
       const previousSums = sumIncomeExpenses(previousTransactions);
       const diff =
         accountKind === "credit"
-          ? Math.abs(expenses) - Math.abs(previousSums.expenses)
+          ? spent - previousSums.spent
           : balance - previousSums.balance;
       if (Math.abs(diff) < 0.005) {
         comparisonText = t("summary.comparisonEqual", {
@@ -147,12 +156,14 @@ export function SummaryCards({
             className={cn(
               "text-[26px] font-medium tabular-nums",
               accountKind === "credit"
-                ? "text-negative"
+                ? spent > 0
+                  ? "text-negative"
+                  : "text-positive"
                 : balance >= 0
                   ? "text-positive"
                   : "text-negative",
             )}>
-            {accountKind === "credit" ? money(Math.abs(expenses)) : money(balance)}
+            {accountKind === "credit" ? money(spent) : money(balance)}
           </span>
           {/* Reserves its line even while loading, so the card's height
               doesn't jump once the comparison query resolves. */}
