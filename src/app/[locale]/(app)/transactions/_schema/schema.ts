@@ -333,10 +333,12 @@ export function refineCreditTransaction(
 //    createTransfer in actions.ts), and kept OUT of income/expense
 //    totals everywhere — moving money between banks isn't earning or
 //    spending it.
-//  - "person": money sent to / received from someone. That IS a real
-//    expense/income, attributed to the person (it's what moves their
-//    balance on /people), so it goes out through createDebitTransaction
-//    like any other lançamento — this form is just the obvious way in.
+//  - "person": moves a typed amount from one person's share of one
+//    account to a person's share of another (De: pessoa + conta → Para:
+//    pessoa + conta). Two linked legs like "account", but each carries a
+//    split for its own person — so it moves balances between people on
+//    /people (or just between banks, when it's the same person) while
+//    still staying out of income/expense totals.
 //  - "balance": empties an account into another one. Two legs like
 //    "account", except the amount isn't typed — the server reads the
 //    account's current balance (or one person's share of it) and moves
@@ -363,8 +365,12 @@ export const transferSchema = z.object({
   accountId: z.string().min(1),
   // "account" target only.
   toAccountId: z.string(),
-  // "person" target only.
+  // "person" target: the source person (paired with accountId). "balance"
+  // target: whose share to move ("" = everyone).
   personId: z.string(),
+  // "person" target only: the destination person (paired with
+  // toAccountId).
+  toPersonId: z.string(),
   direction: z.enum(transferDirectionValues),
   categoryId: z.string(),
   // Raw, not `amountString`: the "balance" target has no amount field at
@@ -386,6 +392,7 @@ export const emptyTransferFormValues: TransferFormValues = {
   accountId: "",
   toAccountId: "",
   personId: "",
+  toPersonId: "",
   direction: "send",
   categoryId: "",
   amount: "",
@@ -399,7 +406,12 @@ export const emptyTransferFormValues: TransferFormValues = {
 export function refineTransfer(
   data: TransferValues,
   ctx: z.RefinementCtx,
-  messages: { required: string; sameAccount: string; amountRequired: string },
+  messages: {
+    required: string;
+    sameAccount: string;
+    samePersonAccount: string;
+    amountRequired: string;
+  },
 ) {
   if (!data.paymentMethod) {
     ctx.addIssue({
@@ -447,20 +459,24 @@ export function refineTransfer(
     });
   }
 
-  if (!data.personId) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["personId"],
-      message: messages.required,
-    });
+  // "person": both ends are a person + an account. Either may repeat
+  // (same person between banks, or two people on the same bank), just
+  // not both at once — that would move nothing.
+  for (const path of ["personId", "toPersonId", "toAccountId"] as const) {
+    if (!data[path]) {
+      ctx.addIssue({ code: "custom", path: [path], message: messages.required });
+    }
   }
-  // A transfer with a person is an ordinary lançamento, so it carries a
-  // category like every other one (refineDebitTransaction's own rule).
-  if (!data.categoryId) {
+  if (
+    data.toAccountId &&
+    data.toPersonId &&
+    data.toAccountId === data.accountId &&
+    data.toPersonId === data.personId
+  ) {
     ctx.addIssue({
       code: "custom",
-      path: ["categoryId"],
-      message: messages.required,
+      path: ["toPersonId"],
+      message: messages.samePersonAccount,
     });
   }
 }

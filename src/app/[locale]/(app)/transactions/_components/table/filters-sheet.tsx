@@ -77,6 +77,7 @@ function countActiveFilters(value: SheetFilters) {
   if (value.type && value.type !== "all") count++;
   if (value.dateBasis === "purchase") count++;
   if (value.purchaseKind && value.purchaseKind !== "all") count++;
+  if (value.recurrence && value.recurrence !== "all") count++;
   return count;
 }
 
@@ -337,6 +338,34 @@ export function FiltersSheet({
                 <ToggleGroupItem value="all" className="flex-1">{t("tabs.all")}</ToggleGroupItem>
                 <ToggleGroupItem value="income" className="flex-1">{t("tabs.income")}</ToggleGroupItem>
                 <ToggleGroupItem value="expenses" className="flex-1">{t("tabs.expenses")}</ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("filters.recurrence.label")}</Label>
+              <ToggleGroup
+                type="single"
+                variant="tabs"
+                value={draft.recurrence ?? "all"}
+                onValueChange={(value) => {
+                  if (value) {
+                    setDraft({
+                      ...draft,
+                      recurrence: value as SheetFilters["recurrence"],
+                    });
+                  }
+                }}
+                className="w-full justify-start"
+              >
+                <ToggleGroupItem value="all" className="flex-1">
+                  {t("filters.recurrence.all")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="recurring" className="flex-1">
+                  {t("filters.recurrence.recurring")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="oneOff" className="flex-1">
+                  {t("filters.recurrence.oneOff")}
+                </ToggleGroupItem>
               </ToggleGroup>
             </div>
 

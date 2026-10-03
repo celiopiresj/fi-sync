@@ -337,12 +337,16 @@
       "to": "Para",
       "account": "Conta",
       "person": "Pessoa",
+      "fromPerson": "De (pessoa)",
+      "fromAccount": "De (conta)",
+      "toPerson": "Para (pessoa)",
+      "toAccount": "Para (conta)",
       "descriptionOptional": "Opcional",
       "allPeople": "Todas"
     },
     "hint": {
       "account": "Não entra em receitas nem despesas: o dinheiro só muda de conta.",
-      "person": "Entra como despesa ou receita atribuída à pessoa, e muda o saldo dela.",
+      "person": "Move o valor da pessoa e conta de origem para a pessoa e conta de destino. Não entra em receitas nem despesas, mas muda o saldo de cada pessoa.",
       "balance": "Esvazia a conta de origem e leva o saldo para a outra, inclusive se for negativo. Escolhendo uma pessoa, move só a parte dela."
     },
     "confirm": "Transferir",
@@ -350,6 +354,10 @@
     "descriptionFrom": "Transferência de {name}",
     "balanceDescriptionTo": "Saldo transferido para {name}",
     "balanceDescriptionFrom": "Saldo recebido de {name}",
+    "currentBalance": {
+      "person": "Saldo de {name} em {account}",
+      "account": "Saldo em {account}"
+    },
     "balancePreview": {
       "label": "Vai transferir",
       "empty": "Nada a transferir nessa conta",
@@ -358,6 +366,7 @@
     },
     "errors": {
       "sameAccount": "Escolha uma conta de destino diferente da de origem",
+      "samePersonAccount": "Escolha outra pessoa ou outra conta de destino",
       "invalidAccount": "Conta inválida para transferência",
       "invalidPerson": "Pessoa não encontrada",
       "nothingToTransfer": "Não há saldo para transferir"
@@ -441,6 +450,12 @@
       "single": "À vista",
       "installment": "Parcelada"
     },
+    "recurrence": {
+      "label": "Recorrência",
+      "all": "Todas",
+      "recurring": "Recorrentes",
+      "oneOff": "Avulsas"
+    },
     "clear": "Limpar filtros",
     "clearAll": "Limpar tudo",
     "apply": "Aplicar filtros",
@@ -452,6 +467,7 @@
       "type": "Tipo: {value}",
       "dateBasis": "Período por: {value}",
       "purchaseKind": "Compra: {value}",
+      "recurrence": "Recorrência: {value}",
       "remove": "Remover filtro {value}"
     }
   },

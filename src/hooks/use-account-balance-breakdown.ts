@@ -3,10 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAccountBalanceBreakdown } from "@/app/[locale]/(app)/transactions/actions";
 
-// Backs the balance transfer's preview: how much the chosen source
-// account holds and whose it is. Only fetches once an account is picked
-// and the form is actually on that target, so the two typed transfer
-// shapes never pay for a query they don't use.
+// Backs the transfer form's balance figures: how much the chosen source
+// account holds and whose it is — the balance target's preview, and the
+// typed targets' "saldo atual" line. Only fetches once an account is
+// picked (and `enabled` allows it).
 //
 // Shared-hooks folder rather than a route's own `_hooks/` because the
 // form behind it is mounted from three places (the FAB, /transactions and

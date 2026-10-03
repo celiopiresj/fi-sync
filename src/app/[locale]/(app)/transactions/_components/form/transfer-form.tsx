@@ -19,7 +19,6 @@ import {
   emptyTransferFormValues,
   paymentMethodFormValues,
   refineTransfer,
-  transferDirectionValues,
   transferSchema,
   transferTargetValues,
   type TransferFormValues,
@@ -53,7 +52,6 @@ type TransferFormProps = {
 // choose between up front.
 export function TransferForm({
   accounts,
-  categories,
   people,
   defaultAccountId,
   initialTarget = "account",
@@ -79,12 +77,9 @@ export function TransferForm({
     [accounts],
   );
 
-  // You can't send money to yourself — the self Person ("Eu") is the
-  // implicit owner of every account, not someone on the other end.
-  const otherPeople = useMemo(
-    () => people.filter((person) => !person.isSelf),
-    [people],
-  );
+  // "Com uma pessoa" starts from your own share — the common case is
+  // sending your money to someone else.
+  const selfPersonId = people.find((person) => person.isSelf)?.id ?? "";
 
   const schema = useMemo(
     () =>
@@ -92,6 +87,7 @@ export function TransferForm({
         refineTransfer(value, ctx, {
           required: tValidation("required"),
           sameAccount: t("transfer.errors.sameAccount"),
+          samePersonAccount: t("transfer.errors.samePersonAccount"),
           amountRequired: tValidation("required"),
         }),
       ),
@@ -126,19 +122,40 @@ export function TransferForm({
   });
 
   const target = useStore(form.store, (state) => state.values.target);
-  const direction = useStore(form.store, (state) => state.values.direction);
   const accountId = useStore(form.store, (state) => state.values.accountId);
   const toAccountId = useStore(form.store, (state) => state.values.toAccountId);
   const personId = useStore(form.store, (state) => state.values.personId);
-  const categoryId = useStore(form.store, (state) => state.values.categoryId);
+  const toPersonId = useStore(form.store, (state) => state.values.toPersonId);
   const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
 
   const isBalance = target === "balance";
+  const isPerson = target === "person";
 
-  // Only asked for once the form is actually on the balance target — the
-  // two typed shapes never pay for this query.
-  const balanceQuery = useAccountBalanceBreakdown(accountId, isBalance);
+  // Every target reads the source account's breakdown: "balance" to
+  // preview what will move, "account"/"person" to show what's there
+  // before typing an amount (currentBalance below).
+  const balanceQuery = useAccountBalanceBreakdown(accountId, true);
   const breakdown = balanceQuery.data ?? null;
+
+  // The typed shapes' "how much is there" line: the chosen person's own
+  // share of the chosen account ("com uma pessoa"), or the account's
+  // whole balance ("entre minhas contas", which has no person). A person
+  // missing from the breakdown simply has nothing on this account.
+  const sourceAccountName = transferAccounts.find(
+    (account) => account.id === accountId,
+  )?.name;
+  const selectedPersonName = people.find(
+    (person) => person.id === personId,
+  )?.name;
+  const showCurrentBalance =
+    !isBalance &&
+    Boolean(sourceAccountName) &&
+    (target === "account" || Boolean(selectedPersonName));
+  const currentBalance =
+    target === "person"
+      ? (breakdown?.people.find((person) => person.personId === personId)
+          ?.balance ?? 0)
+      : (breakdown?.balance ?? 0);
 
   // What the server will move if this is submitted now. It reads the same
   // numbers again from the same helper when it posts, so this is a
@@ -151,62 +168,44 @@ export function TransferForm({
       : (breakdown?.balance ?? 0);
   const balanceLeftBehind = (breakdown?.balance ?? 0) - balanceShare;
 
-  // Enviar is an expense and Receber an income, so the category picker
-  // follows the direction — same "only categories of the row's own type"
-  // rule every other picker in this screen follows.
-  const categoryType = direction === "send" ? "EXPENSE" : "INCOME";
-  const filteredCategories = categories.filter(
-    (category) => category.type === categoryType,
-  );
-
-  // Dependent-field resets: flipping the direction can orphan the chosen
-  // category, and picking as "De" the account already chosen as "Para"
-  // would make the transfer go nowhere. Cleared rather than left for the
-  // refine to flag — the stale value is never what the user meant.
+  // Picking as "De" the account already chosen as "Para" would make an
+  // account-to-account transfer go nowhere — cleared rather than left for
+  // the refine to flag. Not for "person": the same account twice is valid
+  // there, between two different people.
   useEffect(() => {
-    const category = categories.find((item) => item.id === categoryId);
-    if (category && category.type !== categoryType) {
-      form.setFieldValue("categoryId", "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryType]);
-
-  useEffect(() => {
-    if (toAccountId && toAccountId === accountId) {
+    if (!isPerson && toAccountId && toAccountId === accountId) {
       form.setFieldValue("toAccountId", "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountId]);
+  }, [accountId, isPerson]);
 
-  // The two person pickers draw from different lists (everyone but you
-  // vs. only who has a share on this account), so a name carried across
+  // The person pickers mean different things per target (whose share to
+  // empty vs. the source of a person transfer), so a name carried across
   // the Tipo toggle is rarely still a valid answer.
   useEffect(() => {
-    form.setFieldValue("personId", "");
+    form.setFieldValue("personId", isPerson ? selfPersonId : "");
+    form.setFieldValue("toPersonId", "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target]);
 
   // The description the server writes when this field is left blank —
   // shown as the placeholder so an empty field reads as "this is what it
-  // will say", not as something missing.
-  const counterpartName =
-    target === "person"
-      ? otherPeople.find((person) => person.id === personId)?.name
-      : transferAccounts.find((account) => account.id === toAccountId)?.name;
+  // will say", not as something missing. For "person" it names whichever
+  // side differs (the other person, or the other bank for one person
+  // moving banks) — same rule as createTransfer.
+  const toAccountName = transferAccounts.find(
+    (account) => account.id === toAccountId,
+  )?.name;
+  const toPersonName = people.find((person) => person.id === toPersonId)?.name;
+  const counterpartName = isPerson
+    ? toPersonId && toPersonId === personId
+      ? toAccountName
+      : toPersonName && formatPersonName(toPersonName)
+    : toAccountName;
   const descriptionPlaceholder = counterpartName
-    ? t(
-        isBalance
-          ? "transfer.balanceDescriptionTo"
-          : target === "person" && direction === "receive"
-            ? "transfer.descriptionFrom"
-            : "transfer.descriptionTo",
-        {
-          name:
-            target === "person"
-              ? formatPersonName(counterpartName)
-              : counterpartName,
-        },
-      )
+    ? t(isBalance ? "transfer.balanceDescriptionTo" : "transfer.descriptionTo", {
+        name: counterpartName,
+      })
     : t("transfer.fields.descriptionOptional");
 
   return (
@@ -229,20 +228,6 @@ export function TransferForm({
           />
         )}
       </form.AppField>
-
-      {target === "person" && (
-        <form.AppField name="direction">
-          {(field) => (
-            <field.ToggleGroupField
-              label={t("transfer.direction.label")}
-              options={transferDirectionValues.map((value) => ({
-                value,
-                label: t(`transfer.direction.${value}`),
-              }))}
-            />
-          )}
-        </form.AppField>
-      )}
 
       {isBalance ? (
         // No amount field: the figure is the account's own balance, so it
@@ -311,14 +296,26 @@ export function TransferForm({
           )}
         </form.AppField>
 
+        {isPerson && (
+          <form.AppField name="personId">
+            {(field) => (
+              <field.PickerRowField
+                label={t("transfer.fields.fromPerson")}
+                placeholder={t("fields.choosePlaceholder")}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.name,
+                }))}
+                formatDisplay={formatPersonName}
+              />
+            )}
+          </form.AppField>
+        )}
+
         <form.AppField name="accountId">
           {(field) => (
             <field.PickerRowField
-              label={t(
-                target === "person"
-                  ? "transfer.fields.account"
-                  : "transfer.fields.from",
-              )}
+              label={t(isPerson ? "transfer.fields.fromAccount" : "transfer.fields.from")}
               placeholder={t("fields.choosePlaceholder")}
               options={transferAccounts.map((account) => ({
                 value: account.id,
@@ -328,24 +325,48 @@ export function TransferForm({
           )}
         </form.AppField>
 
-        {target !== "person" ? (
-          <form.AppField name="toAccountId">
+        {isPerson && (
+          <form.AppField name="toPersonId">
             {(field) => (
               <field.PickerRowField
-                label={t("transfer.fields.to")}
+                label={t("transfer.fields.toPerson")}
                 placeholder={t("fields.choosePlaceholder")}
-                // "De" is never a valid "Para" — left out rather than
-                // offered and then rejected.
-                options={transferAccounts
-                  .filter((account) => account.id !== accountId)
-                  .map((account) => ({
-                    value: account.id,
-                    label: account.name,
-                  }))}
+                options={people.map((person) => ({
+                  value: person.id,
+                  label: person.name,
+                }))}
+                formatDisplay={formatPersonName}
+                footer={
+                  <div className="flex flex-col gap-1.5 border-t border-border p-1.5 pt-2">
+                    <CreatePersonInline
+                      label={t("splits.newPerson")}
+                      triggerClassName="px-1.5"
+                      onCreated={(person) => field.handleChange(person.id)}
+                    />
+                  </div>
+                }
               />
             )}
           </form.AppField>
-        ) : null}
+        )}
+
+        <form.AppField name="toAccountId">
+          {(field) => (
+            <field.PickerRowField
+              label={t(isPerson ? "transfer.fields.toAccount" : "transfer.fields.to")}
+              placeholder={t("fields.choosePlaceholder")}
+              // Between accounts "De" is never a valid "Para" — left out
+              // rather than offered and then rejected. A person transfer
+              // may stay on the same account (between two people).
+              options={transferAccounts
+                .filter((account) => isPerson || account.id !== accountId)
+                .map((account) => ({
+                  value: account.id,
+                  label: account.name,
+                }))}
+            />
+          )}
+        </form.AppField>
 
         {isBalance && (
           <form.AppField name="personId">
@@ -369,46 +390,6 @@ export function TransferForm({
           </form.AppField>
         )}
 
-        {target === "person" && (
-          <>
-            <form.AppField name="personId">
-              {(field) => (
-                <field.PickerRowField
-                  label={t("transfer.fields.person")}
-                  placeholder={t("fields.choosePlaceholder")}
-                  options={otherPeople.map((person) => ({
-                    value: person.id,
-                    label: person.name,
-                  }))}
-                  formatDisplay={formatPersonName}
-                  footer={
-                    <div className="flex flex-col gap-1.5 border-t border-border p-1.5 pt-2">
-                      <CreatePersonInline
-                        label={t("splits.newPerson")}
-                        triggerClassName="px-1.5"
-                        onCreated={(person) => field.handleChange(person.id)}
-                      />
-                    </div>
-                  }
-                />
-              )}
-            </form.AppField>
-
-            <form.AppField name="categoryId">
-              {(field) => (
-                <field.PickerRowField
-                  label={t("fields.category.label")}
-                  placeholder={t("fields.choosePlaceholder")}
-                  options={filteredCategories.map((category) => ({
-                    value: category.id,
-                    label: category.name,
-                  }))}
-                />
-              )}
-            </form.AppField>
-          </>
-        )}
-
         <form.AppField name="paymentMethod">
           {(field) => (
             <field.PickerRowField
@@ -422,6 +403,38 @@ export function TransferForm({
           )}
         </form.AppField>
       </ItemGroup>
+
+      {showCurrentBalance && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2">
+          <span className="min-w-0 truncate text-xs text-muted-foreground">
+            {target === "person" && selectedPersonName
+              ? t("transfer.currentBalance.person", {
+                  name: formatPersonName(selectedPersonName),
+                  account: sourceAccountName ?? "",
+                })
+              : t("transfer.currentBalance.account", {
+                  account: sourceAccountName ?? "",
+                })}
+          </span>
+          {balanceQuery.isPending ? (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {t("transfer.balancePreview.loading")}
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "shrink-0 text-sm font-semibold tabular-nums",
+                currentBalance < 0 && "text-negative",
+              )}
+            >
+              {format.number(currentBalance, {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </span>
+          )}
+        </div>
+      )}
 
       <form.AppField name="description">
         {(field) => (

@@ -337,12 +337,16 @@
       "to": "To",
       "account": "Account",
       "person": "Person",
+      "fromPerson": "From (person)",
+      "fromAccount": "From (account)",
+      "toPerson": "To (person)",
+      "toAccount": "To (account)",
       "descriptionOptional": "Optional",
       "allPeople": "Everyone"
     },
     "hint": {
       "account": "Not counted as income or expense: the money only changes accounts.",
-      "person": "Counted as an expense or income attributed to the person, and changes their balance.",
+      "person": "Moves the amount from the source person and account to the destination person and account. It doesn't count as income or expense, but it changes each person's balance.",
       "balance": "Empties the source account into the other one, negative balances included. Pick a person to move only their share."
     },
     "confirm": "Transfer",
@@ -350,6 +354,10 @@
     "descriptionFrom": "Transfer from {name}",
     "balanceDescriptionTo": "Balance transferred to {name}",
     "balanceDescriptionFrom": "Balance received from {name}",
+    "currentBalance": {
+      "person": "{name}'s balance at {account}",
+      "account": "Balance at {account}"
+    },
     "balancePreview": {
       "label": "Will transfer",
       "empty": "Nothing to transfer from this account",
@@ -358,6 +366,7 @@
     },
     "errors": {
       "sameAccount": "Pick a destination account different from the source",
+      "samePersonAccount": "Pick a different destination person or account",
       "invalidAccount": "Invalid account for a transfer",
       "invalidPerson": "Person not found",
       "nothingToTransfer": "There is no balance to transfer"
@@ -441,6 +450,12 @@
       "single": "Single payment",
       "installment": "Installments"
     },
+    "recurrence": {
+      "label": "Recurrence",
+      "all": "All",
+      "recurring": "Recurring",
+      "oneOff": "One-off"
+    },
     "clear": "Clear filters",
     "clearAll": "Clear all",
     "apply": "Apply filters",
@@ -452,6 +467,7 @@
       "type": "Type: {value}",
       "dateBasis": "Period by: {value}",
       "purchaseKind": "Purchase: {value}",
+      "recurrence": "Recurrence: {value}",
       "remove": "Remove filter {value}"
     }
   },

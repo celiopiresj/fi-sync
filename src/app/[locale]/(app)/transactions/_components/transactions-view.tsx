@@ -136,6 +136,7 @@ const CHIP_FIELD = {
   type: "type",
   dateBasis: "dateBasis",
   purchaseKind: "purchaseKind",
+  recurrence: "recurrence",
 } as const;
 
 // True when `value` has no filter actually applied, for the chip row's
@@ -159,7 +160,8 @@ function hasActiveSheetFilters(value: SheetFilters): boolean {
       value.dateTo ||
       (value.type && value.type !== "all") ||
       value.dateBasis === "purchase" ||
-      (value.purchaseKind && value.purchaseKind !== "all"),
+      (value.purchaseKind && value.purchaseKind !== "all") ||
+      (value.recurrence && value.recurrence !== "all"),
   );
 }
 
@@ -292,6 +294,7 @@ export function TransactionsView({
       type: sheetFilters.type,
       dateBasis: sheetFilters.dateBasis,
       purchaseKind: sheetFilters.purchaseKind,
+      recurrence: sheetFilters.recurrence,
       search: searchText.trim() || undefined,
       from: sheetFilters.dateFrom || from,
       to: sheetFilters.dateTo || to,
@@ -336,6 +339,7 @@ export function TransactionsView({
       type: sheetFilters.type,
       dateBasis: sheetFilters.dateBasis,
       purchaseKind: sheetFilters.purchaseKind,
+      recurrence: sheetFilters.recurrence,
       search: searchText.trim() || undefined,
       from: previousRange.from,
       to: previousRange.to,
@@ -858,6 +862,15 @@ export function TransactionsView({
         value: t(`filters.purchaseKind.${sheetFilters.purchaseKind}`),
       });
     }
+    if (
+      kind === "recurrence" &&
+      sheetFilters.recurrence &&
+      sheetFilters.recurrence !== "all"
+    ) {
+      return t("filters.chips.recurrence", {
+        value: t(`filters.recurrence.${sheetFilters.recurrence}`),
+      });
+    }
     return null;
   }
 
@@ -886,6 +899,7 @@ export function TransactionsView({
       if (kind === "type") delete next.type;
       if (kind === "dateBasis") delete next.dateBasis;
       if (kind === "purchaseKind") delete next.purchaseKind;
+      if (kind === "recurrence") delete next.recurrence;
       return next;
     });
   }

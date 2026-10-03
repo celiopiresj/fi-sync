@@ -37,7 +37,13 @@ export type CardOption = AccountOption["cards"][number];
 // them to the query while that tab is active.
 export type SheetFilters = Pick<
   TransactionFilters,
-  "accountId" | "categoryId" | "personId" | "type" | "dateBasis" | "purchaseKind"
+  | "accountId"
+  | "categoryId"
+  | "personId"
+  | "type"
+  | "dateBasis"
+  | "purchaseKind"
+  | "recurrence"
 > & {
   dateFrom?: string;
   dateTo?: string;
