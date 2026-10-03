@@ -15,6 +15,10 @@
     "projections": {
       "title": "Projections"
     },
+    "cardPayoff": {
+      "title": "Card payoff",
+      "subtitle": "What's left to pay on your cards"
+    },
     "spending": {
       "title": "Spending by category"
     },

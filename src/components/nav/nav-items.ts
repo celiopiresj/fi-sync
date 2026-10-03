@@ -5,6 +5,7 @@ import {
   UsersThreeIcon,
   ReceiptIcon,
   BankIcon,
+  CalculatorIcon,
   ArrowsClockwiseIcon,
   CreditCardIcon,
   ChartPieSliceIcon,
@@ -37,7 +38,8 @@ export type NavItem = {
     | "categories"
     | "budgets"
     | "projections"
-    | "spending";
+    | "spending"
+    | "cardPayoff";
   icon: ComponentType<IconProps>;
 };
 
@@ -100,6 +102,14 @@ export const navSections: NavSection[] = [
         href: "/spending",
         labelKey: "spending",
         icon: ChartBarIcon,
+      },
+      // Nested under /cards in the URL (it's about card debt), but a
+      // planning tool in purpose — resolveActiveHref's longest-prefix
+      // match keeps "Cartões" from lighting up alongside it.
+      {
+        href: "/cards/payoff",
+        labelKey: "cardPayoff",
+        icon: CalculatorIcon,
       },
     ],
   },

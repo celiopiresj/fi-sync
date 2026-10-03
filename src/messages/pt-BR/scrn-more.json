@@ -15,6 +15,10 @@
     "projections": {
       "title": "Projeções"
     },
+    "cardPayoff": {
+      "title": "Quitar cartão",
+      "subtitle": "Quanto falta pagar nos cartões"
+    },
     "spending": {
       "title": "Gastos por categoria"
     },

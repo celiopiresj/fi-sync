@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  CalculatorIcon,
   CaretRightIcon,
   ChartBarIcon,
   ChartPieSliceIcon,
@@ -123,6 +124,12 @@ export function MoreView({ overview }: MoreViewProps) {
           />
           <NavRow icon={TrendUpIcon} title={t("rows.projections.title")} href="/projections" />
           <NavRow icon={ChartBarIcon} title={t("rows.spending.title")} href="/spending" />
+          <NavRow
+            icon={CalculatorIcon}
+            title={t("rows.cardPayoff.title")}
+            subtitle={t("rows.cardPayoff.subtitle")}
+            href="/cards/payoff"
+          />
           <NavRow
             icon={ArrowsClockwiseIcon}
             title={t("rows.recurrences.title")}

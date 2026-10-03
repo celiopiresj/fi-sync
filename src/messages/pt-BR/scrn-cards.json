@@ -9,6 +9,7 @@
 
   "buttons": {
     "add": "Novo cartão",
+    "payoff": "Quitar cartão",
     "edit": "Editar",
     "viewInvoice": "Ver Fatura",
     "payInvoice": "Pagar Fatura",

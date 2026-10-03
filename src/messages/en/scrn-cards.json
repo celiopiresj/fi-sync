@@ -9,6 +9,7 @@
 
   "buttons": {
     "add": "New card",
+    "payoff": "Card payoff",
     "edit": "Edit",
     "viewInvoice": "View Invoice",
     "payInvoice": "Pay Invoice",

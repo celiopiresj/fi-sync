@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { CalculatorIcon } from "@phosphor-icons/react";
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/screen/page-header";
 import type { CardsSummary } from "../_types/types";
@@ -23,7 +25,19 @@ export function CardsHeader({ summary, onCreate }: CardsHeaderProps) {
           {t("cards.count", { count: summary.physicalCardsCount })}
         </>
       }
-      right={<Button onClick={onCreate}>{t("buttons.add")}</Button>}
+      right={
+        <div className="flex items-center gap-2">
+          {/* Icon-only below `sm` so it fits beside "Novo cartão" on a
+              phone; the label stays as the accessible name either way. */}
+          <Button variant="outline" asChild>
+            <Link href="/cards/payoff" aria-label={t("buttons.payoff")}>
+              <CalculatorIcon />
+              <span className="hidden sm:inline">{t("buttons.payoff")}</span>
+            </Link>
+          </Button>
+          <Button onClick={onCreate}>{t("buttons.add")}</Button>
+        </div>
+      }
     />
   );
 }
