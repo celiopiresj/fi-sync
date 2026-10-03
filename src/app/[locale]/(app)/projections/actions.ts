@@ -13,6 +13,7 @@ import {
   type ProjectionMonth,
 } from "./_lib/projection-month";
 import { selfShareAmount } from "./_lib/self-share";
+import { neutralTransferGroupIds } from "./_lib/neutral-transfers";
 import { MAX_MONTHS_AHEAD } from "./_constants/constants";
 
 // Shared by every query below that needs to compute a transaction's
@@ -24,17 +25,6 @@ const SPLITS_SELECT = {
   },
 } as const;
 
-// Transfers (transactions/actions.ts's createTransfer, investments'
-// aporte/resgate) post two legs sharing a transferGroupId, always both on
-// non-card accounts. Counted leg by leg they'd inflate the month's
-// "Receitas" with the incoming leg and "Contas" with the outgoing one (a
-// "Saldo transferido para…" showing up as a forecast expense), so they
-// never land in either bucket — the detail page's line items leave them
-// out entirely (NOT_TRANSFER). The running balance still takes their
-// self-share NET, though: between the user's own accounts that's zero,
-// but a "com uma pessoa" transfer from "Eu" to someone else really does
-// shrink the user's own share (see computeMonthSeries' transferNetByMonth).
-const NOT_TRANSFER = { transferGroupId: null } as const;
 
 function toSplitInputs(
   splits: { amount: { toNumber(): number }; person: { isSelf: boolean } }[],
@@ -205,8 +195,8 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
       select: {
         date: true,
         amount: true,
-        // See NOT_TRANSFER's comment — a transfer leg only moves the
-        // running balance (transferNetByMonth), never income/expenses.
+        // A transfer leg only counts toward income/expenses when its
+        // group changes the user's own share — see neutralTransferGroupIds.
         transferGroupId: true,
         splits: SPLITS_SELECT,
         // Non-null exactly for an invoice-payment settlement Transaction
@@ -278,21 +268,28 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // transaction landing in this same loop, tagged invoicePayment) makes
   // it "realized".
   let realizedThisMonth = 0;
-  // Self-share net of each month's transfer legs — see NOT_TRANSFER.
-  const transferNetByMonth = new Map<string, number>();
-
-  for (const transaction of futureTransactions) {
-    const key = dateOnlyKey(transaction.date).slice(0, 7);
-    const amount = selfShareAmount(
+  const futureWithSelfShare = futureTransactions.map((transaction) => ({
+    transaction,
+    transferGroupId: transaction.transferGroupId,
+    selfShare: selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
-    );
+    ),
+  }));
+  // Legs of a transfer that nets to zero in the user's own share would
+  // only inflate "Receitas" with one leg and "Contas" with the other —
+  // skipped below (their net is zero, so the balance is unaffected).
+  const neutralTransfers = neutralTransferGroupIds(futureWithSelfShare);
+
+  for (const { transaction, selfShare: amount } of futureWithSelfShare) {
+    const key = dateOnlyKey(transaction.date).slice(0, 7);
     if (transaction.date <= todayDate) {
       realizedThisMonth += amount;
     }
-    if (transaction.transferGroupId) {
-      transferNetByMonth.set(key, (transferNetByMonth.get(key) ?? 0) + amount);
-    } else if (amount >= 0) {
+    if (transaction.transferGroupId && neutralTransfers.has(transaction.transferGroupId)) {
+      continue;
+    }
+    if (amount >= 0) {
       incomeByMonth.set(key, (incomeByMonth.get(key) ?? 0) + amount);
     } else if (transaction.invoicePayment) {
       // Paying off a card invoice is card spending, however you slice
@@ -392,8 +389,7 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     const totalExpenses = accountExpenses + cardExpenses + loanExpenses;
 
     const initialBalance = runningBalance;
-    runningBalance =
-      runningBalance + incomeForecast - totalExpenses + (transferNetByMonth.get(key) ?? 0);
+    runningBalance = runningBalance + incomeForecast - totalExpenses;
 
     entries.push({
       monthKey: key,
@@ -516,7 +512,6 @@ export async function getProjectionDetail(monthId: string) {
         status: { not: "FAILED" },
         date: { gte: month.fromDate, lte: month.toDate },
         account: { type: { not: "CREDIT_CARD" } },
-        ...NOT_TRANSFER,
       },
       select: {
         id: true,
@@ -535,6 +530,7 @@ export async function getProjectionDetail(monthId: string) {
         // it into loansBreakdown instead of accountsBreakdown, matching
         // month.loanExpenses.
         loanInstallment: { select: { id: true } },
+        transferGroupId: true,
       },
       orderBy: { date: "asc" },
     }),
@@ -607,7 +603,7 @@ export async function getProjectionDetail(monthId: string) {
     })
     .filter((item) => item.amount > 0);
 
-  const transactionsWithSelfShare = transactions.map((transaction) => ({
+  const allWithSelfShare = transactions.map((transaction) => ({
     id: transaction.id,
     name: transaction.description,
     categoryName: transaction.category?.name ?? null,
@@ -615,11 +611,19 @@ export async function getProjectionDetail(monthId: string) {
     isInvoicePayment: transaction.invoicePayment !== null,
     paidInvoiceId: transaction.invoicePayment?.invoiceId ?? null,
     isLoanInstallment: transaction.loanInstallment !== null,
+    transferGroupId: transaction.transferGroupId,
     selfShare: selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
     ),
   }));
+  // Same rule as computeMonthSeries: a transfer that doesn't change the
+  // user's own share isn't a line item; one between different people is.
+  const neutralTransfers = neutralTransferGroupIds(allWithSelfShare);
+  const transactionsWithSelfShare = allWithSelfShare.filter(
+    (transaction) =>
+      !transaction.transferGroupId || !neutralTransfers.has(transaction.transferGroupId),
+  );
 
   // An invoice-payment settlement is card spending, not a "conta"
   // expense (see computeMonthSeries' own comment on the exact same
