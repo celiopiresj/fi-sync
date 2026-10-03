@@ -75,5 +75,9 @@
   "aria": {
     "primaryNavigation": "Primary navigation",
     "addTransaction": "New transaction"
+  },
+  "auth": {
+    "googleRedirecting": "Redirecting to Google…",
+    "signingIn": "Signing you in…"
   }
 }

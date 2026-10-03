@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
+import { AuthLoadingScreen } from "./auth-loading-screen";
 
 type Props = {
   label: string;
@@ -37,20 +40,38 @@ function GoogleGlyph() {
 // finishes syncing the user row and redirects into the app — see
 // src/app/[locale]/auth/callback/page.tsx.
 export function GoogleSignInButton({ label }: Props) {
+  const t = useTranslations("common.auth");
+  // Stays true on success — the page is about to navigate away to
+  // Google, so the overlay should remain until it does. Only an error
+  // (no redirect happened) brings the button back.
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  async function handleClick() {
+    setIsRedirecting(true);
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/auth/callback",
+      });
+      if (result?.error) setIsRedirecting(false);
+    } catch {
+      setIsRedirecting(false);
+    }
+  }
+
   return (
-    <Button
-      type="button"
-      variant="outline"
-      className="h-11 w-full"
-      onClick={() =>
-        authClient.signIn.social({
-          provider: "google",
-          callbackURL: "/auth/callback",
-        })
-      }
-    >
-      <GoogleGlyph />
-      {label}
-    </Button>
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11 w-full"
+        disabled={isRedirecting}
+        onClick={handleClick}
+      >
+        <GoogleGlyph />
+        {label}
+      </Button>
+      {isRedirecting && <AuthLoadingScreen label={t("googleRedirecting")} />}
+    </>
   );
 }
