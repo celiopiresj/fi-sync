@@ -184,9 +184,12 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
             ) : (
               <div className="flex flex-col gap-2">
                 {detail.cardsBreakdown.map((item) => (
-                  <div
+                  // Each row opens the invoice it belongs to — an open
+                  // invoice, or the one a settlement payment paid off.
+                  <Link
                     key={item.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3"
+                    href={`/invoices/${item.invoiceId}`}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 transition-colors hover:bg-muted"
                   >
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate text-xs font-semibold">
@@ -201,10 +204,11 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
                         })}
                       </span>
                     </div>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums">
+                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold tabular-nums">
                       {money(item.amount)}
+                      <CaretRightIcon className="size-3.5 text-muted-foreground" />
                     </span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

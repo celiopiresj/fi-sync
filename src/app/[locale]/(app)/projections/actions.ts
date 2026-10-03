@@ -24,6 +24,18 @@ const SPLITS_SELECT = {
   },
 } as const;
 
+// Transfers (transactions/actions.ts's createTransfer, investments'
+// aporte/resgate) post two legs sharing a transferGroupId, always both on
+// non-card accounts. Counted leg by leg they'd inflate the month's
+// "Receitas" with the incoming leg and "Contas" with the outgoing one (a
+// "Saldo transferido para…" showing up as a forecast expense), so they
+// never land in either bucket — the detail page's line items leave them
+// out entirely (NOT_TRANSFER). The running balance still takes their
+// self-share NET, though: between the user's own accounts that's zero,
+// but a "com uma pessoa" transfer from "Eu" to someone else really does
+// shrink the user's own share (see computeMonthSeries' transferNetByMonth).
+const NOT_TRANSFER = { transferGroupId: null } as const;
+
 function toSplitInputs(
   splits: { amount: { toNumber(): number }; person: { isSelf: boolean } }[],
 ) {
@@ -193,6 +205,9 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
       select: {
         date: true,
         amount: true,
+        // See NOT_TRANSFER's comment — a transfer leg only moves the
+        // running balance (transferNetByMonth), never income/expenses.
+        transferGroupId: true,
         splits: SPLITS_SELECT,
         // Non-null exactly for an invoice-payment settlement Transaction
         // (invoices/actions.ts's payInvoice) — real money on a real
@@ -263,6 +278,8 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
   // transaction landing in this same loop, tagged invoicePayment) makes
   // it "realized".
   let realizedThisMonth = 0;
+  // Self-share net of each month's transfer legs — see NOT_TRANSFER.
+  const transferNetByMonth = new Map<string, number>();
 
   for (const transaction of futureTransactions) {
     const key = dateOnlyKey(transaction.date).slice(0, 7);
@@ -273,7 +290,9 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     if (transaction.date <= todayDate) {
       realizedThisMonth += amount;
     }
-    if (amount >= 0) {
+    if (transaction.transferGroupId) {
+      transferNetByMonth.set(key, (transferNetByMonth.get(key) ?? 0) + amount);
+    } else if (amount >= 0) {
       incomeByMonth.set(key, (incomeByMonth.get(key) ?? 0) + amount);
     } else if (transaction.invoicePayment) {
       // Paying off a card invoice is card spending, however you slice
@@ -373,7 +392,8 @@ async function computeMonthSeries(userId: string): Promise<MonthSeriesEntry[]> {
     const totalExpenses = accountExpenses + cardExpenses + loanExpenses;
 
     const initialBalance = runningBalance;
-    runningBalance = runningBalance + incomeForecast - totalExpenses;
+    runningBalance =
+      runningBalance + incomeForecast - totalExpenses + (transferNetByMonth.get(key) ?? 0);
 
     entries.push({
       monthKey: key,
@@ -496,6 +516,7 @@ export async function getProjectionDetail(monthId: string) {
         status: { not: "FAILED" },
         date: { gte: month.fromDate, lte: month.toDate },
         account: { type: { not: "CREDIT_CARD" } },
+        ...NOT_TRANSFER,
       },
       select: {
         id: true,
@@ -508,7 +529,8 @@ export async function getProjectionDetail(monthId: string) {
         // an invoice-payment settlement into cardsBreakdown below instead
         // of accountsBreakdown, matching how it's already counted in
         // month.cardExpenses/accountExpenses.
-        invoicePayment: { select: { id: true } },
+        // invoiceId lets that row link straight to the invoice it paid.
+        invoicePayment: { select: { id: true, invoiceId: true } },
         // Same idea for a paid loan installment's own settlement — sorts
         // it into loansBreakdown instead of accountsBreakdown, matching
         // month.loanExpenses.
@@ -576,6 +598,7 @@ export async function getProjectionDetail(monthId: string) {
 
       return {
         id: invoice.id,
+        invoiceId: invoice.id,
         name: invoice.account.name,
         cardLastFourDigits: invoice.account.cards[0]?.lastFourDigits ?? null,
         dueDate: invoice.dueDate,
@@ -590,6 +613,7 @@ export async function getProjectionDetail(monthId: string) {
     categoryName: transaction.category?.name ?? null,
     date: transaction.date,
     isInvoicePayment: transaction.invoicePayment !== null,
+    paidInvoiceId: transaction.invoicePayment?.invoiceId ?? null,
     isLoanInstallment: transaction.loanInstallment !== null,
     selfShare: selfShareAmount(
       transaction.amount.toNumber(),
@@ -607,9 +631,13 @@ export async function getProjectionDetail(monthId: string) {
   // remains). No cardLastFourDigits: it settles the whole invoice, not
   // one specific physical card on the account.
   const paidCardsBreakdown = transactionsWithSelfShare
-    .filter((transaction) => transaction.selfShare < 0 && transaction.isInvoicePayment)
+    .filter(
+      (transaction): transaction is typeof transaction & { paidInvoiceId: string } =>
+        transaction.selfShare < 0 && transaction.paidInvoiceId !== null,
+    )
     .map((transaction) => ({
       id: transaction.id,
+      invoiceId: transaction.paidInvoiceId,
       name: transaction.name,
       cardLastFourDigits: null,
       dueDate: transaction.date,
