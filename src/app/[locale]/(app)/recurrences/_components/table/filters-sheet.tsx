@@ -24,13 +24,33 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { RecurrenceSheetFilters } from "../../_schema/schema";
-import type { AccountOption, CategoryOption } from "../../_types/types";
+import type {
+  AccountOption,
+  CategoryOption,
+  PersonOption,
+} from "../../_types/types";
+import {
+  ALL_CARDS_ACCOUNT_FILTER,
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+  isAccountGroupFilter,
+} from "../../_constants/constants";
+import {
+  accountIdForKind,
+  resolveAccountKind,
+  type AccountKind,
+} from "../../_lib/account-kind";
 
 type FiltersSheetProps = {
   filters: RecurrenceSheetFilters;
   onChange: (filters: RecurrenceSheetFilters) => void;
   accounts: AccountOption[];
   categories: CategoryOption[];
+  people: PersonOption[];
+  // Which Débito/Crédito tab (recurrences-view.tsx) is active — the sheet
+  // only shows the ONE account select matching it, same as transactions'
+  // own filters-sheet.tsx: the tab decides "which universe," this sheet
+  // only narrows within it.
+  accountKind: AccountKind;
 };
 
 const ALL_VALUE = "__all__";
@@ -41,8 +61,11 @@ const ALL_VALUE = "__all__";
 // actions.ts). Mirrors transactions' filters-sheet.tsx countActiveFilters.
 function countActiveFilters(value: RecurrenceSheetFilters) {
   let count = 0;
-  if (value.accountId) count++;
+  // A group sentinel is just the active Débito/Crédito tab, not a real
+  // narrowing — only a specific account counts.
+  if (value.accountId && !isAccountGroupFilter(value.accountId)) count++;
   if (value.categoryId) count++;
+  if (value.personId) count++;
   if (value.type && value.type !== "all") count++;
   if (value.status && value.status !== "active") count++;
   return count;
@@ -53,6 +76,8 @@ export function FiltersSheet({
   onChange,
   accounts,
   categories,
+  people,
+  accountKind,
 }: FiltersSheetProps) {
   const t = useTranslations("scrn-recurrences");
   const [open, setOpen] = useState(false);
@@ -65,6 +90,11 @@ export function FiltersSheet({
   const activeCount = countActiveFilters(filters);
   const hasDraftFilters = countActiveFilters(draft) > 0;
   const hasChanges = JSON.stringify(draft) !== JSON.stringify(filters);
+
+  // Separate "Conta"/"Cartão" selects (only one renders, per accountKind)
+  // — both still write into the same `accountId` value.
+  const cardAccounts = accounts.filter((account) => account.type === "CREDIT_CARD");
+  const nonCardAccounts = accounts.filter((account) => account.type !== "CREDIT_CARD");
 
   function handleOpenChange(next: boolean) {
     if (next) setDraft(filters);
@@ -98,30 +128,63 @@ export function FiltersSheet({
 
         <form onSubmit={handleApply} className="flex flex-1 flex-col">
           <div className="flex flex-1 flex-col gap-5 px-6 pb-6">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="filter-account">{t("filters.account")}</Label>
-              <Select
-                value={draft.accountId ?? ALL_VALUE}
-                onValueChange={(value) =>
-                  setDraft({
-                    ...draft,
-                    accountId: value === ALL_VALUE ? undefined : value,
-                  })
-                }
-              >
-                <SelectTrigger id="filter-account" className="w-full">
-                  <SelectValue placeholder={t("filters.account")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ALL_VALUE}>{t("filters.allAccounts")}</SelectItem>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name}
+            {accountKind === "debit" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="filter-account">{t("filters.account")}</Label>
+                <Select
+                  value={
+                    draft.accountId === ALL_NON_CARD_ACCOUNTS_FILTER ||
+                    nonCardAccounts.some((account) => account.id === draft.accountId)
+                      ? draft.accountId
+                      : ""
+                  }
+                  onValueChange={(value) => setDraft({ ...draft, accountId: value })}
+                >
+                  <SelectTrigger id="filter-account" className="w-full">
+                    <SelectValue placeholder={t("filters.account")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_NON_CARD_ACCOUNTS_FILTER}>
+                      {t("filters.allNonCardAccounts")}
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    {nonCardAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {accountKind === "credit" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="filter-card">{t("filters.card")}</Label>
+                <Select
+                  value={
+                    draft.accountId === ALL_CARDS_ACCOUNT_FILTER ||
+                    cardAccounts.some((account) => account.id === draft.accountId)
+                      ? draft.accountId
+                      : ""
+                  }
+                  onValueChange={(value) => setDraft({ ...draft, accountId: value })}
+                >
+                  <SelectTrigger id="filter-card" className="w-full">
+                    <SelectValue placeholder={t("filters.card")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ALL_CARDS_ACCOUNT_FILTER}>
+                      {t("filters.allCards")}
+                    </SelectItem>
+                    {cardAccounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="filter-category">{t("filters.category")}</Label>
@@ -142,6 +205,31 @@ export function FiltersSheet({
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="filter-person">{t("filters.person")}</Label>
+              <Select
+                value={draft.personId ?? ALL_VALUE}
+                onValueChange={(value) =>
+                  setDraft({
+                    ...draft,
+                    personId: value === ALL_VALUE ? undefined : value,
+                  })
+                }
+              >
+                <SelectTrigger id="filter-person" className="w-full">
+                  <SelectValue placeholder={t("filters.person")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL_VALUE}>{t("filters.allPeople")}</SelectItem>
+                  {people.map((person) => (
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -206,7 +294,12 @@ export function FiltersSheet({
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => setDraft({})}
+              // Broadens back to "every account of this kind" instead of
+              // wiping accountId — clearing narrows back to the active tab,
+              // it doesn't leave it (same as transactions' own sheet).
+              onClick={() =>
+                setDraft({ accountId: accountIdForKind(resolveAccountKind(draft.accountId, accounts)) })
+              }
               disabled={!hasDraftFilters}
             >
               {t("filters.clear")}

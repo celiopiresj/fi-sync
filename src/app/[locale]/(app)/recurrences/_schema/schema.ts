@@ -294,6 +294,7 @@ export function refineCreditRecurrence(
 export type RecurrenceSheetFilters = {
   accountId?: string;
   categoryId?: string;
+  personId?: string;
   type?: "all" | "income" | "expenses";
   status?: "active" | "finished" | "all";
 };

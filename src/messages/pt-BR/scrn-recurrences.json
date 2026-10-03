@@ -19,8 +19,13 @@
     "description": "Refine a lista de recorrências.",
     "account": "Conta",
     "allAccounts": "Todas as contas",
+    "allNonCardAccounts": "Todas as contas",
+    "card": "Cartão",
+    "allCards": "Todos os cartões",
     "category": "Categoria",
     "allCategories": "Todas as categorias",
+    "person": "Pessoa",
+    "allPeople": "Todas as pessoas",
     "status": "Status",
     "clear": "Limpar",
     "apply": "Aplicar",
@@ -28,6 +33,7 @@
     "chips": {
       "account": "Conta: {value}",
       "category": "Categoria: {value}",
+      "person": "Pessoa: {value}",
       "type": "Tipo: {value}",
       "status": "Status: {value}",
       "remove": "Remover filtro {value}"
@@ -36,7 +42,11 @@
   "tabs": {
     "all": "Todas",
     "income": "Receitas",
-    "expenses": "Despesas"
+    "expenses": "Despesas",
+    "accountKind": {
+      "debit": "Débito",
+      "credit": "Crédito"
+    }
   },
   "status": {
     "active": "Ativas",

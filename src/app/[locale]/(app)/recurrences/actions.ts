@@ -28,6 +28,10 @@ import {
   type RecurrenceFrequencyValue,
   type PaymentMethodOption,
 } from "./_schema/schema";
+import {
+  ALL_CARDS_ACCOUNT_FILTER,
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+} from "./_constants/constants";
 
 async function requireUserId() {
   const { data: session } = await auth.getSession();
@@ -63,8 +67,11 @@ const GENERATION_WINDOW_MONTHS = 12;
 const LOW_RUNWAY_MONTHS = 1;
 
 export type RecurrenceFilters = {
+  // A real account id, or one of the Débito/Crédito group sentinels from
+  // _constants/constants.ts — see accountFilterWhere below.
   accountId?: string;
   categoryId?: string;
+  personId?: string;
   search?: string;
   type?: "all" | "income" | "expenses";
   // Defaults to "active" wherever omitted (listRecurrences below) — see
@@ -73,6 +80,23 @@ export type RecurrenceFilters = {
   // available as an explicit filter choice, never the default.
   status?: "active" | "finished" | "all";
 };
+
+// Resolves the "Conta"/"Cartão" filter's value — a real account id, or
+// one of the two group sentinels (every card / every non-card account)
+// — to its Prisma where-clause fragment. Same rule as transactions' own
+// accountFilterWhere.
+function accountFilterWhere(accountId: string | undefined) {
+  if (accountId === ALL_CARDS_ACCOUNT_FILTER) {
+    return { account: { type: "CREDIT_CARD" as const } };
+  }
+  if (accountId === ALL_NON_CARD_ACCOUNTS_FILTER) {
+    return { account: { type: { not: "CREDIT_CARD" as const } } };
+  }
+  if (accountId) {
+    return { accountId };
+  }
+  return {};
+}
 
 // A recurrence counts as "active" when it still has at least one linked
 // occurrence dated today or later — deliberately NOT derived from
@@ -96,8 +120,14 @@ export async function listRecurrences(filters: RecurrenceFilters = {}) {
   const recurrences = await prisma.recurrence.findMany({
     where: {
       userId,
-      ...(filters.accountId ? { accountId: filters.accountId } : {}),
+      ...accountFilterWhere(filters.accountId),
       ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
+      // Every recurrence carries at least one split (its "who paid"
+      // person — see the Recurrence model), so unlike transactions there
+      // are no unattributed rows to also match for the isSelf person.
+      ...(filters.personId
+        ? { splits: { some: { personId: filters.personId } } }
+        : {}),
       ...(filters.search
         ? { description: { contains: filters.search, mode: "insensitive" } }
         : {}),
@@ -379,6 +409,14 @@ async function createRecurrenceOccurrence(params: {
 function revalidateAll() {
   revalidatePath("/recurrences");
   revalidatePath("/transactions");
+  // Every create/edit/delete here also creates/rewrites/deletes the
+  // rule's generated Transaction rows — which the projections screen
+  // (and person balances, card invoices) read directly. Missing these
+  // left an edited salary recurrence's old occurrences on /projections.
+  revalidatePath("/projections");
+  revalidatePath("/people");
+  revalidatePath("/invoices");
+  revalidatePath("/cards");
 }
 
 // ---------------------------------------------------------------------
@@ -1121,8 +1159,7 @@ export async function extendRecurrenceGeneration(id: string) {
     occurrenceDate = stepOccurrenceDate(occurrenceDate, recurrence.frequency);
   }
 
-  revalidatePath("/recurrences");
-  revalidatePath("/transactions");
+  revalidateAll();
   return { error: null, generatedCount };
 }
 
@@ -1162,7 +1199,6 @@ export async function advanceRecurrenceOccurrence(id: string) {
     },
   });
 
-  revalidatePath("/recurrences");
-  revalidatePath("/transactions");
+  revalidateAll();
   return { error: null };
 }

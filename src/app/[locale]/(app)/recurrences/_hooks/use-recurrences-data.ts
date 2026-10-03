@@ -43,6 +43,8 @@ export function useRecurrencesData(
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["monthly-balances"] });
     queryClient.invalidateQueries({ queryKey: ["category-breakdown"] });
+    // Projections are summed straight from those same Transaction rows.
+    queryClient.invalidateQueries({ queryKey: ["projections"] });
   }, [queryClient]);
 
   return { recurrences, invalidate };

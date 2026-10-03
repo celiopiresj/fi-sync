@@ -9,6 +9,7 @@ import {
   XIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +51,11 @@ import { useRecurrencesData } from "../_hooks/use-recurrences-data";
 import { useRecurrenceFormOptions } from "../_hooks/use-recurrence-form-options";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
+import { accountIdForKind, resolveAccountKind } from "../_lib/account-kind";
+import {
+  ALL_NON_CARD_ACCOUNTS_FILTER,
+  isAccountGroupFilter,
+} from "../_constants/constants";
 import type {
   DebitRecurrenceContentFormValues,
   DebitRecurrenceCreateFormValues,
@@ -98,6 +104,7 @@ type RecurrencesViewProps = {
 const CHIP_FIELD = {
   account: "accountId",
   category: "categoryId",
+  person: "personId",
   type: "type",
   status: "status",
 } as const;
@@ -107,10 +114,14 @@ const CHIP_FIELD = {
 // view.tsx's hasActiveSheetFilters (FiltersSheet's Selects clear a filter
 // by setting it to `undefined`, not by removing the key). "status" only
 // counts once it differs from the screen's own default ("active").
+// `accountId` excludes the two group sentinels — the Débito/Crédito tabs
+// always keep one of those set, so counting it would leave the chip row
+// permanently visible (same rule as transactions-view.tsx).
 function hasActiveSheetFilters(value: RecurrenceSheetFilters): boolean {
   return Boolean(
-    value.accountId ||
+    (value.accountId && !isAccountGroupFilter(value.accountId)) ||
       value.categoryId ||
+      value.personId ||
       (value.type && value.type !== "all") ||
       (value.status && value.status !== "active"),
   );
@@ -131,8 +142,21 @@ export function RecurrencesView({
   // Search lives outside FiltersSheet (same split as transactions-view.tsx)
   // so "Limpar filtros" inside the sheet can't wipe out text the user typed
   // directly into the header search box.
-  const [sheetFilters, setSheetFilters] = useState<RecurrenceSheetFilters>({});
+  // Débito is the screen's default tab — page.tsx's own initial fetch
+  // passes this exact same accountId so the cache seed stays valid.
+  const [sheetFilters, setSheetFilters] = useState<RecurrenceSheetFilters>({
+    accountId: ALL_NON_CARD_ACCOUNTS_FILTER,
+  });
   const [searchText, setSearchText] = useState("");
+
+  // Derived from `sheetFilters.accountId` (never its own state) so the
+  // Débito/Crédito tabs and FiltersSheet's Conta/Cartão selects can never
+  // disagree — same as transactions-view.tsx. Clicking a tab broadens
+  // back to "every account of this kind."
+  const accountKind = resolveAccountKind(sheetFilters.accountId, accounts);
+  function handleAccountKindChange(kind: typeof accountKind) {
+    setSheetFilters((current) => ({ ...current, accountId: accountIdForKind(kind) }));
+  }
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const [deletingRecurrence, setDeletingRecurrence] = useState<RecurrenceRow | null>(
@@ -154,7 +178,10 @@ export function RecurrencesView({
   // page.tsx fetches exactly this default (no filters, no search) for
   // `initialRecurrences` — mirrors transactions-view.tsx's isDefaultFilters,
   // just without a period to also compare.
-  const isDefaultFilters = !hasActiveSheetFilters(sheetFilters) && searchText === "";
+  const isDefaultFilters =
+    !hasActiveSheetFilters(sheetFilters) &&
+    sheetFilters.accountId === ALL_NON_CARD_ACCOUNTS_FILTER &&
+    searchText === "";
 
   const { recurrences, invalidate } = useRecurrencesData(
     filters,
@@ -422,7 +449,13 @@ export function RecurrencesView({
   const hasChipFilters = hasActiveSheetFilters(sheetFilters);
 
   function chipLabel(kind: keyof typeof CHIP_FIELD): string | null {
-    if (kind === "account" && sheetFilters.accountId) {
+    // A group sentinel is just the active Débito/Crédito tab — only a
+    // specific account earns a removable chip.
+    if (
+      kind === "account" &&
+      sheetFilters.accountId &&
+      !isAccountGroupFilter(sheetFilters.accountId)
+    ) {
       const name =
         accounts.find((account) => account.id === sheetFilters.accountId)?.name ??
         "";
@@ -433,6 +466,11 @@ export function RecurrencesView({
         categories.find((category) => category.id === sheetFilters.categoryId)
           ?.name ?? "";
       return t("filters.chips.category", { value: name });
+    }
+    if (kind === "person" && sheetFilters.personId) {
+      const name =
+        people.find((person) => person.id === sheetFilters.personId)?.name ?? "";
+      return t("filters.chips.person", { value: name });
     }
     if (kind === "type" && sheetFilters.type && sheetFilters.type !== "all") {
       return t("filters.chips.type", { value: t(`tabs.${sheetFilters.type}`) });
@@ -446,8 +484,14 @@ export function RecurrencesView({
   function removeChip(kind: keyof typeof CHIP_FIELD) {
     setSheetFilters((current) => {
       const next = { ...current };
-      if (kind === "account") delete next.accountId;
+      // Broadens back to "every account of this kind" rather than
+      // deleting the key — an unset accountId would mix both kinds,
+      // which the Débito/Crédito tabs no longer make reachable.
+      if (kind === "account") {
+        next.accountId = accountIdForKind(resolveAccountKind(current.accountId, accounts));
+      }
       if (kind === "category") delete next.categoryId;
+      if (kind === "person") delete next.personId;
       if (kind === "type") delete next.type;
       if (kind === "status") delete next.status;
       return next;
@@ -479,7 +523,10 @@ export function RecurrencesView({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-3">
+          {/* Same grouping as transactions-view.tsx: search + filters +
+              Débito/Crédito tab wrap together before pushing the
+              "Nova recorrência" button off its spot on narrow screens. */}
+          <div className="flex flex-wrap items-center gap-3">
             <SearchInput
               value={searchText}
               onChange={setSearchText}
@@ -491,7 +538,24 @@ export function RecurrencesView({
               onChange={setSheetFilters}
               accounts={accounts}
               categories={categories}
+              people={people}
+              accountKind={accountKind}
             />
+            <ToggleGroup
+              type="single"
+              variant="tabs"
+              value={accountKind}
+              onValueChange={(value) => {
+                if (value) handleAccountKindChange(value as typeof accountKind);
+              }}
+            >
+              <ToggleGroupItem value="debit">
+                {t("tabs.accountKind.debit")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="credit">
+                {t("tabs.accountKind.credit")}
+              </ToggleGroupItem>
+            </ToggleGroup>
           </div>
           <div className="flex-1" />
           <DropdownMenu>
@@ -540,7 +604,9 @@ export function RecurrencesView({
             })}
             <button
               type="button"
-              onClick={() => setSheetFilters({})}
+              // Keeps the active Débito/Crédito tab — same as removeChip's
+              // own "account" case above.
+              onClick={() => setSheetFilters({ accountId: accountIdForKind(accountKind) })}
               className="text-xs text-muted-foreground underline-offset-2 hover:underline"
             >
               {t("filters.clearAll")}

@@ -19,8 +19,13 @@
     "description": "Refine the recurrences list.",
     "account": "Account",
     "allAccounts": "All accounts",
+    "allNonCardAccounts": "All accounts",
+    "card": "Card",
+    "allCards": "All cards",
     "category": "Category",
     "allCategories": "All categories",
+    "person": "Person",
+    "allPeople": "All people",
     "status": "Status",
     "clear": "Clear",
     "apply": "Apply",
@@ -28,6 +33,7 @@
     "chips": {
       "account": "Account: {value}",
       "category": "Category: {value}",
+      "person": "Person: {value}",
       "type": "Type: {value}",
       "status": "Status: {value}",
       "remove": "Remove {value} filter"
@@ -36,7 +42,11 @@
   "tabs": {
     "all": "All",
     "income": "Income",
-    "expenses": "Expenses"
+    "expenses": "Expenses",
+    "accountKind": {
+      "debit": "Debit",
+      "credit": "Credit"
+    }
   },
   "status": {
     "active": "Active",
