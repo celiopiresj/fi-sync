@@ -1,0 +1,73 @@
+{
+  "title": "Card payoff",
+  "description": "How much is left to pay off your card purchases",
+
+  "filters": {
+    "card": "Card",
+    "allCards": "All cards",
+    "person": "Person",
+    "allPeople": "All people",
+    "peopleCount": "{count, plural, one {# person} other {# people}}",
+    "scope": {
+      "label": "What counts",
+      "all": "Everything",
+      "installments": "Installments only"
+    },
+    "from": {
+      "label": "Pay off starting with the invoice of",
+      "previous": "Previous invoice",
+      "next": "Next invoice"
+    }
+  },
+
+  "hint": {
+    "all": "Adds up what was already bought on open invoices plus every installment still to come, minus what was already paid. Future recurring charges don't count: they haven't been billed yet.",
+    "installments": "Adds up only the installments still to come, minus what was already paid."
+  },
+
+  "kpis": {
+    "total": "Total to pay off",
+    "totalPerson": "{name}'s total",
+    "totalSelected": "{count, plural, one {Total for # person} other {Total for # people}}",
+    "totalLegend": "{count, plural, =0 {No purchases} one {# purchase} other {# purchases}}",
+    "self": "Your share",
+    "selfLegend": "What's yours in this total",
+    "others": "Other people's",
+    "othersLegend": "{count, plural, =0 {Nobody else} one {# person} other {# people}}",
+    "parcels": "Installments left",
+    "parcelsLegend": "Last one in {month}",
+    "parcelsNone": "No installments"
+  },
+
+  "months": {
+    "title": "By invoice",
+    "description": "What lands each month if you don't pay off earlier"
+  },
+
+  "breakdown": {
+    "people": "By person",
+    "cards": "By card"
+  },
+
+  "table": {
+    "title": "Purchases",
+    "columns": {
+      "purchase": "Purchase",
+      "people": "People",
+      "installments": "Installments",
+      "installmentAmount": "Installment",
+      "lastMonth": "Last",
+      "remaining": "Left"
+    },
+    "installmentRange": "{first} to {last} of {count}",
+    "installmentSingle": "{number} of {count}",
+    "remainingCount": "{count, plural, one {# installment left} other {# installments left}}",
+    "mobileSummary": "{count, plural, one {# installment} other {# installments}} of {amount} · until {month}",
+    "oneOff": "Single payment",
+    "paidAdjustment": "Already paid on the {month} invoice",
+    "empty": {
+      "title": "Nothing to pay off",
+      "description": "No open card purchases for the selected filters."
+    }
+  }
+}

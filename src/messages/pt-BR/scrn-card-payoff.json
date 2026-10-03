@@ -1,0 +1,73 @@
+{
+  "title": "Quitar cartão",
+  "description": "Quanto falta para quitar as compras no cartão",
+
+  "filters": {
+    "card": "Cartão",
+    "allCards": "Todos os cartões",
+    "person": "Pessoa",
+    "allPeople": "Todas as pessoas",
+    "peopleCount": "{count, plural, one {# pessoa} other {# pessoas}}",
+    "scope": {
+      "label": "O que entra",
+      "all": "Tudo",
+      "installments": "Só parcelas"
+    },
+    "from": {
+      "label": "Quitar a partir da fatura de",
+      "previous": "Fatura anterior",
+      "next": "Próxima fatura"
+    }
+  },
+
+  "hint": {
+    "all": "Soma o que já foi comprado nas faturas em aberto e todas as parcelas que ainda vão vencer, descontando o que já foi pago. Recorrências futuras não entram: ainda não foram cobradas.",
+    "installments": "Soma só as parcelas que ainda vão vencer, descontando o que já foi pago."
+  },
+
+  "kpis": {
+    "total": "Total para quitar",
+    "totalPerson": "Total de {name}",
+    "totalSelected": "{count, plural, one {Total de # pessoa} other {Total de # pessoas}}",
+    "totalLegend": "{count, plural, =0 {Nenhuma compra} one {# compra} other {# compras}}",
+    "self": "Sua parte",
+    "selfLegend": "O que é seu nesse total",
+    "others": "De outras pessoas",
+    "othersLegend": "{count, plural, =0 {Ninguém mais} one {# pessoa} other {# pessoas}}",
+    "parcels": "Parcelas restantes",
+    "parcelsLegend": "Última em {month}",
+    "parcelsNone": "Nenhuma parcela"
+  },
+
+  "months": {
+    "title": "Por fatura",
+    "description": "Quanto cai em cada mês se você não quitar antes"
+  },
+
+  "breakdown": {
+    "people": "Por pessoa",
+    "cards": "Por cartão"
+  },
+
+  "table": {
+    "title": "Compras",
+    "columns": {
+      "purchase": "Compra",
+      "people": "Pessoas",
+      "installments": "Parcelas",
+      "installmentAmount": "Valor da parcela",
+      "lastMonth": "Última",
+      "remaining": "Falta"
+    },
+    "installmentRange": "{first} a {last} de {count}",
+    "installmentSingle": "{number} de {count}",
+    "remainingCount": "{count, plural, one {falta # parcela} other {faltam # parcelas}}",
+    "mobileSummary": "{count, plural, one {# parcela} other {# parcelas}} de {amount} · até {month}",
+    "oneOff": "À vista",
+    "paidAdjustment": "Já pago na fatura de {month}",
+    "empty": {
+      "title": "Nada para quitar",
+      "description": "Nenhuma compra em aberto nos cartões para os filtros escolhidos."
+    }
+  }
+}

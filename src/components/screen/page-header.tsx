@@ -54,6 +54,10 @@ type PeriodStepperProps = {
   onNext: () => void;
   previousLabel: string;
   nextLabel: string;
+  // For a stepper with a bounded range (e.g. card payoff can't start
+  // before the first invoice still owing anything) — unbounded otherwise.
+  previousDisabled?: boolean;
+  nextDisabled?: boolean;
   className?: string;
 };
 
@@ -63,6 +67,8 @@ export function PeriodStepper({
   onNext,
   previousLabel,
   nextLabel,
+  previousDisabled = false,
+  nextDisabled = false,
   className,
 }: PeriodStepperProps) {
   return (
@@ -71,6 +77,7 @@ export function PeriodStepper({
         variant="ghost"
         size="icon-sm"
         onClick={onPrevious}
+        disabled={previousDisabled}
         aria-label={previousLabel}
       >
         <CaretLeftIcon />
@@ -85,6 +92,7 @@ export function PeriodStepper({
         variant="ghost"
         size="icon-sm"
         onClick={onNext}
+        disabled={nextDisabled}
         aria-label={nextLabel}
       >
         <CaretRightIcon />
