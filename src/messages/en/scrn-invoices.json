@@ -129,6 +129,7 @@
       "transactionDescription": "Invoice payment {card}",
       "allocations": {
         "toggleLabel": "Split between people",
+      "infoAria": "How the split works",
         "hint": "The amount entered differs from what's due — select who this payment covers.",
         "overflowHint": "The excess of {value} becomes credit on the next invoice(s).",
         "personLabel": "Person",
@@ -136,7 +137,12 @@
         "addPerson": "Add person",
         "remove": "Remove person",
         "empty": "No one has a charge on this invoice",
-        "mismatch": "The split total must match the amount this payment covers"
+        "mismatch": "The split total must match the amount this payment covers",
+      "summary": "{allocated} of {total} split",
+      "missing": "{value} left to split",
+      "excess": "Split over by {value}",
+      "noneSelected": "Select who this payment covers",
+      "autoHint": "The amount is split automatically among the selected people, in proportion to what each one owes. If you change someone's amount, the rest adjusts."
       },
       "confirm": "Confirm payment",
       "cancel": "Cancel"

@@ -129,6 +129,7 @@
       "transactionDescription": "Pagamento fatura {card}",
       "allocations": {
         "toggleLabel": "Dividir entre pessoas",
+      "infoAria": "Como funciona a divisão",
         "hint": "O valor digitado é diferente do saldo devedor — selecione quem esse pagamento cobre.",
         "overflowHint": "O excedente de {value} vira crédito na(s) próxima(s) fatura(s).",
         "personLabel": "Pessoa",
@@ -136,7 +137,12 @@
         "addPerson": "Adicionar pessoa",
         "remove": "Remover pessoa",
         "empty": "Nenhuma pessoa com gasto nesta fatura",
-        "mismatch": "A soma da divisão precisa bater com o valor coberto pelo pagamento"
+        "mismatch": "A soma da divisão precisa bater com o valor coberto pelo pagamento",
+      "summary": "Distribuído {allocated} de {total}",
+      "missing": "Falta distribuir {value}",
+      "excess": "Distribuído a mais: {value}",
+      "noneSelected": "Selecione quem esse pagamento cobre",
+      "autoHint": "O valor é dividido automaticamente entre as pessoas marcadas, na proporção do que cada uma deve. Se você mudar o valor de alguém, o restante se ajusta."
       },
       "confirm": "Confirmar pagamento",
       "cancel": "Cancelar"
