@@ -38,6 +38,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useTransactionFormOptions } from "../_hooks/use-transaction-form-options";
 import { useTransactionsData } from "../_hooks/use-transactions-data";
+import { scopeRowsToPerson } from "../_lib/scope-to-person";
 import { formatGroupDateHeader } from "../_lib/format-group-date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
 import { accountIdForKind, resolveAccountKind } from "../_lib/account-kind";
@@ -371,6 +372,36 @@ export function TransactionsView({
     initialDefaultPersonId,
   );
 
+  // With a person filter on, every split row shows only that person and
+  // their share (scopeRowsToPerson) — the list, day totals and summary
+  // cards read these. Edit/duplicate/delete go through `originalRow`
+  // instead, so a form never opens (or saves) the reduced amount.
+  const filteredPersonId = sheetFilters.personId;
+  const filteredPersonIsSelf =
+    people.find((person) => person.id === filteredPersonId)?.isSelf ?? false;
+  const visibleTransactions = useMemo(
+    () =>
+      filteredPersonId
+        ? scopeRowsToPerson(transactions, filteredPersonId, filteredPersonIsSelf)
+        : transactions,
+    [transactions, filteredPersonId, filteredPersonIsSelf],
+  );
+  const visiblePreviousTransactions = useMemo(
+    () =>
+      filteredPersonId && previousTransactions
+        ? scopeRowsToPerson(previousTransactions, filteredPersonId, filteredPersonIsSelf)
+        : previousTransactions,
+    [previousTransactions, filteredPersonId, filteredPersonIsSelf],
+  );
+  const originalById = useMemo(
+    () => new Map(transactions.map((transaction) => [transaction.id, transaction])),
+    [transactions],
+  );
+  const originalRow = useCallback(
+    (row: TransactionRow) => originalById.get(row.id) ?? row,
+    [originalById],
+  );
+
   // Per-day total AND running/accumulated total over whatever's
   // currently loaded (respects `filters`) — this app doesn't store an
   // absolute Account.balance to anchor against, so "Acum." is relative
@@ -380,7 +411,7 @@ export function TransactionsView({
   // Both maps are needed to label it correctly below.
   const { dailyTotalByDateKey, accumulatedByDateKey } = useMemo(() => {
     const dailyTotalByDateKey = new Map<string, number>();
-    for (const transaction of transactions) {
+    for (const transaction of visibleTransactions) {
       const key = dateOnlyKey(transaction.effectiveDate);
       dailyTotalByDateKey.set(
         key,
@@ -395,7 +426,7 @@ export function TransactionsView({
       accumulatedByDateKey.set(key, running);
     }
     return { dailyTotalByDateKey, accumulatedByDateKey };
-  }, [transactions]);
+  }, [visibleTransactions]);
 
   // The transaction forms/batch table should only offer active accounts
   // (tasks/007: archived accounts disappear from transaction pickers) —
@@ -514,14 +545,18 @@ export function TransactionsView({
   // which has no idea how to edit an opening balance, an investment
   // movement, a loan installment, or an invoice payment without
   // desyncing whatever screen actually owns it.
-  const handleEditRow = useCallback((row: TransactionRow) => {
-    const special = resolveSpecialTransactionKind(row);
-    if (special) {
-      setSpecialTransaction(special);
-      return;
-    }
-    setDialogState({ mode: "edit", kind: kindForRow(row), row });
-  }, []);
+  const handleEditRow = useCallback(
+    (visibleRow: TransactionRow) => {
+      const row = originalRow(visibleRow);
+      const special = resolveSpecialTransactionKind(row);
+      if (special) {
+        setSpecialTransaction(special);
+        return;
+      }
+      setDialogState({ mode: "edit", kind: kindForRow(row), row });
+    },
+    [originalRow],
+  );
 
   const columns = useMemo(
     () =>
@@ -559,9 +594,9 @@ export function TransactionsView({
             setDialogState({
               mode: "create",
               kind: kindForRow(row),
-              prefillFrom: row,
+              prefillFrom: originalRow(row),
             }),
-          onDelete: (row) => setDeletingTransaction(row),
+          onDelete: (row) => setDeletingTransaction(originalRow(row)),
           onMarkCompleted: handleMarkCompleted,
         },
         // Filtering to one SPECIFIC account makes an Account column
@@ -573,7 +608,15 @@ export function TransactionsView({
         // purchase date — see columns.tsx's dateColumn comment.
         true,
       ),
-    [t, tCommon, format, sheetFilters.accountId, handleMarkCompleted, handleEditRow],
+    [
+      t,
+      tCommon,
+      format,
+      sheetFilters.accountId,
+      handleMarkCompleted,
+      handleEditRow,
+      originalRow,
+    ],
   );
 
   // Dispatches to the create/update action matching whichever sheet is
@@ -992,8 +1035,8 @@ export function TransactionsView({
       />
 
       <SummaryCards
-        transactions={transactions}
-        previousTransactions={previousTransactions}
+        transactions={visibleTransactions}
+        previousTransactions={visiblePreviousTransactions}
         previousPeriodDate={previousPeriodStartDate}
         accountId={sheetFilters.accountId}
         period={period}
@@ -1124,7 +1167,7 @@ export function TransactionsView({
         <div className="hidden min-[700px]:block">
           <DataTable
             columns={columns}
-            data={transactions}
+            data={visibleTransactions}
             groupBy="date"
             renderGroupHeader={renderGroupHeader}
             renderSubRows={renderSubRows}
@@ -1135,7 +1178,7 @@ export function TransactionsView({
         </div>
         <div className="block min-[700px]:hidden">
           <TransactionMobileList
-            transactions={transactions}
+            transactions={visibleTransactions}
             formatGroupHeader={formatGroupHeaderParts}
             getDateKey={(row) => dateOnlyKey(row.effectiveDate)}
             formatAmount={(amount) =>
@@ -1167,9 +1210,9 @@ export function TransactionsView({
                 setDialogState({
                   mode: "create",
                   kind: kindForRow(row),
-                  prefillFrom: row,
+                  prefillFrom: originalRow(row),
                 }),
-              onDelete: (row) => setDeletingTransaction(row),
+              onDelete: (row) => setDeletingTransaction(originalRow(row)),
               onMarkCompleted: handleMarkCompleted,
             }}
             emptyState={emptyStateNode}
