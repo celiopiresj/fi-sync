@@ -120,6 +120,11 @@ export function PayInvoiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* DialogContent caps its height (max-h-[85vh]); with many people
+          owing on the invoice the "Dividir entre pessoas" list used to
+          spill past it, hiding the confirm button. The min-h-0 chain
+          below lets only that list shrink and scroll, keeping the
+          fields and the footer always in view. */}
       <DialogContent closeLabel={t("aria.close")}>
         <DialogHeader>
           <DialogTitle>{t("detail.markPaid.title")}</DialogTitle>
@@ -132,7 +137,7 @@ export function PayInvoiceDialog({
             e.stopPropagation();
             form.handleSubmit();
           }}
-          className="flex flex-col gap-4"
+          className="flex min-h-0 flex-col gap-4"
         >
           <form.AppField name="paidAmount">
             {(field) => (
@@ -163,7 +168,7 @@ export function PayInvoiceDialog({
           </form.AppField>
 
           {needsAllocation && (
-            <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+            <div className="flex min-h-0 flex-col gap-3 rounded-md border border-border p-3">
               <div>
                 <p className="text-sm font-medium">
                   {t("detail.markPaid.allocations.toggleLabel")}
@@ -186,7 +191,7 @@ export function PayInvoiceDialog({
                   {t("detail.markPaid.allocations.empty")}
                 </p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="-mr-1 flex min-h-0 flex-col gap-2 overflow-y-auto pr-1">
                   {peopleOwed.map((person) => {
                     const index = allocations.findIndex(
                       (allocation) => allocation.personId === person.personId,
