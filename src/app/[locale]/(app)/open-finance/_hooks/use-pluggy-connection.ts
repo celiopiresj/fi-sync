@@ -6,7 +6,8 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { createOpenFinanceConnectToken, getOpenFinanceOverview, registerOpenFinanceWidgetConnection } from "../actions";
 import { widgetSuccessSchema } from "@/lib/open-finance/schema";
-import type { Overview } from "../_types/types";
+import type { Overview, WidgetFailure } from "../_types/types";
+import { failureFromWidgetEvent, widgetFailure } from "../_lib/widget-errors";
 
 function usePluggyConnection() {
   const queryClient = useQueryClient();
@@ -14,6 +15,7 @@ function usePluggyConnection() {
   const [connectToken, setConnectToken] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
   const [syncing, setSyncing] = useState(false);
+  const [failure, setFailure] = useState<WidgetFailure | null>(null);
   useEffect(() => {
     if (!syncing) return;
     const timeout = setTimeout(() => setSyncing(false), 60000);
@@ -21,6 +23,7 @@ function usePluggyConnection() {
   }, [syncing]);
   const opening = useMutation({
     mutationFn: createOpenFinanceConnectToken,
+    onMutate: () => setFailure(null),
     onSuccess: (result) => {
       if (result.error || !result.accessToken) { toast.error(result.error ?? t("errors.widget.description")); return; }
       setConnectToken(result.accessToken);
@@ -43,6 +46,7 @@ function usePluggyConnection() {
     const parsed = widgetSuccessSchema.safeParse(input);
     if (!parsed.success) { toast.error(t("errors.widget.description")); return; }
     setConnectToken(null);
+    setFailure(null);
     setPendingItemId(parsed.data.item.id);
     setSyncing(true);
     registration.mutate(parsed.data.item.id);
@@ -52,15 +56,28 @@ function usePluggyConnection() {
     setSyncing(true);
     void queryClient.invalidateQueries({ queryKey: ["open-finance-overview"] });
   }
-  function onError() {
+  function onError(input: unknown) {
+    const next = widgetFailure(input);
+    setFailure((previous) => next.code || !previous ? next : previous);
+    if (!next.keepOpen) setConnectToken(null);
+    // Keep the iframe mounted: Pluggy owns its error/retry screen, and
+    // unmounting here also destroys the failed response in DevTools.
+    setSyncing(next.reason === "widgetAuthorization");
+  }
+  function onLoadError(input: unknown) {
+    const next = widgetFailure(input, "load");
+    setFailure(next);
     setConnectToken(null);
-    setSyncing(true);
-    toast.error(t("errors.widget.description"));
+    toast.error(t("errors.widgetLoad.description"));
+  }
+  function onEvent(input: unknown) {
+    const next = failureFromWidgetEvent(input);
+    if (next) setFailure(next);
   }
   return {
-    connectToken, pendingItemId, syncing, opening: opening.isPending, saving: registration.isPending,
+    connectToken, pendingItemId, syncing, failure, opening: opening.isPending, saving: registration.isPending,
     open: () => opening.mutate(), retry: () => { if (pendingItemId) registration.mutate(pendingItemId); },
-    onSuccess, onClose, onError,
+    onSuccess, onClose, onError, onLoadError, onEvent,
   };
 }
 

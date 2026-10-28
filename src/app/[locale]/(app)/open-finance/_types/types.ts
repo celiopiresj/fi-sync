@@ -12,3 +12,8 @@ export type TransactionTableProps = { source: Source };
 export type ReviewSheetProps = { source: Source; row: PreviewRow | null; onClose: () => void };
 export type ReviewFormProps = { source: Source; row: PreviewRow; review: Review; onClose: () => void };
 export type ConnectControlProps = { connection: ReturnType<typeof useOpenFinanceScreen>["connection"] };
+export type WidgetFailure = {
+  reason: "widget" | "widgetLoad" | "widgetDuplicate" | "widgetCredentials" | "widgetAuthorization" | "widgetToken" | "widgetConnector";
+  code: string | null;
+  keepOpen: boolean;
+};

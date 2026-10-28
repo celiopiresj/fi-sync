@@ -5,6 +5,7 @@ import { createPluggyClient } from "../src/lib/open-finance/pluggy";
 import { connectionSchema, mappingSchema, pluggyTransactionSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
 import { assertOwnedWidgetItem, pluggyWebhookSecret, publicAppOrigin, validPluggyWebhook, WEBHOOK_HEADER } from "../src/lib/open-finance/widget";
 import { makeErrorMap } from "../src/lib/zod/zod-error-map";
+import { failureFromWidgetEvent, widgetFailure } from "../src/app/[locale]/(app)/open-finance/_lib/widget-errors";
 
 const accountId = "00000000-0000-4000-8000-000000000001";
 const id = "00000000-0000-4000-8000-000000000002";
@@ -19,6 +20,20 @@ async function main() {
   const previousVercelEnv = process.env.VERCEL_ENV;
   const previousVercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   try {
+    const duplicateFailure = widgetFailure({ message: "Connection failed", data: { codeDescription: "ITEM_USER_ALREADY_EXISTS" } });
+    assert.equal(duplicateFailure.reason, "widgetDuplicate");
+    assert.equal(duplicateFailure.keepOpen, true);
+    assert.equal(widgetFailure({ data: { item: { error: { code: "INVALID_CREDENTIALS" } } } }).reason, "widgetCredentials");
+    assert.equal(widgetFailure({ response: { data: { codeDescription: "CONNECTOR_NOT_SUPPORTED" } } }).reason, "widgetConnector");
+    assert.equal(widgetFailure({ code: 401 }).reason, "widgetToken");
+    assert.equal(widgetFailure(undefined).keepOpen, true);
+    assert.equal(widgetFailure(new Error("load failure"), "load").keepOpen, false);
+    const privateFailure = widgetFailure({ message: "secret-password https://example.com/?token=secret-token", code: "eyJhbGci.payload.signature" });
+    assert.equal(privateFailure.code, null);
+    assert.equal(JSON.stringify(privateFailure).includes("secret"), false);
+    assert.equal(failureFromWidgetEvent({ event: "ITEM_RESPONSE", item: { error: { code: "USER_AUTHORIZATION_PENDING" } } })?.reason, "widgetAuthorization");
+    assert.equal(failureFromWidgetEvent({ event: "ITEM_RESPONSE", item: { error: null } }), null);
+    assert.equal(failureFromWidgetEvent({ event: "LOGIN_SUCCESS", item: {} }), null);
     delete process.env.OPEN_FINANCE_USER_ID;
     assert.equal(isOpenFinanceOwner("owner"), false);
     process.env.OPEN_FINANCE_USER_ID = "owner";
@@ -121,7 +136,7 @@ async function main() {
     await assert.rejects(client.page(accountId, "2026-10-01", null));
     await assert.rejects(client.transaction(accountId, id));
     assert.equal(requests.every((path) => ["/auth", "/v2/transactions", "/connect_token", "/webhooks"].includes(path) || path.startsWith("/webhooks/")), true);
-    console.log("Open Finance checks passed: owner isolation, widget tokens, signed callbacks, idempotent webhooks, translated validation, money and pagination.");
+    console.log("Open Finance checks passed: widget error/retry lifecycle, safe diagnostics, owner isolation, tokens, callbacks, webhooks, money and pagination.");
   } finally {
     globalThis.fetch = originalFetch;
     if (previousOrigin === undefined) delete process.env.OPEN_FINANCE_APP_URL; else process.env.OPEN_FINANCE_APP_URL = previousOrigin;

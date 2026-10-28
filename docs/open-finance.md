@@ -58,6 +58,13 @@ habilitar esses retornos. Sem URL pública (por exemplo, em localhost),
 o retorno direto do widget funciona, mas os webhooks e o retorno OAuth
 para dispositivos móveis não são configurados.
 
+Se a conexão falhar dentro da janela, ela permanece aberta para mostrar
+o erro e permitir nova tentativa. Ao fechá-la, a tela do fi-sync mantém
+uma explicação traduzida e o código de erro informado pelo provedor,
+quando disponível. Falhas de carregamento inicial têm um tratamento
+separado. Mensagens livres do SDK, URLs e credenciais não são exibidas
+nem registradas nos diagnósticos do app.
+
 Os webhooks usam um segredo derivado da chave privada da Pluggy e do id
 do proprietário, enviado em um header, sem uma variável adicional. A
 identidade e o conector de cada item são consultados novamente na API

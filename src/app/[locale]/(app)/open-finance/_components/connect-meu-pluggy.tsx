@@ -24,6 +24,11 @@ export function ConnectMeuPluggy({ connection }: ConnectControlProps) {
     </Button>
     {connection.pendingItemId && !connection.saving && <Button type="button" variant="outline" onClick={connection.retry}>{t("cards.connect.retry")}</Button>}
     {connection.syncing && <p role="status" className="text-sm text-muted-foreground">{t("cards.connect.syncing")}</p>}
+    {connection.failure && <div role="alert" className="flex flex-col gap-1 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
+      <span className="font-medium">{t(`errors.${connection.failure.reason}.title`)}</span>
+      <p>{t(`errors.${connection.failure.reason}.description`)}</p>
+      {connection.failure.code && <p className="font-mono text-xs wrap-break-word">{t("errors.widget.code", { code: connection.failure.code })}</p>}
+    </div>}
     {connection.connectToken && <PluggyConnect
       connectToken={connection.connectToken}
       connectorIds={[200]}
@@ -35,7 +40,8 @@ export function ConnectMeuPluggy({ connection }: ConnectControlProps) {
       onSuccess={connection.onSuccess}
       onClose={connection.onClose}
       onError={connection.onError}
-      onLoadError={connection.onError}
+      onLoadError={connection.onLoadError}
+      onEvent={connection.onEvent}
     />}
     <Button type="button" variant="ghost" aria-expanded={manual} onClick={() => setManual((value) => !value)}>{t("cards.connect.manual")}</Button>
     {manual && <ConnectionForm />}

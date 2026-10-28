@@ -121,6 +121,11 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   connector metadata with the provider before accepting widget/webhook
   results. Webhooks must authenticate before reading their payload and
   must never reactivate a connection the user disabled.
+  A Pluggy connection `onError` must keep the widget mounted so its own
+  error/retry screen and diagnostics remain available. Only initial
+  `onLoadError`, explicit close or successful completion may unmount it.
+  Display translated messages and sanitized provider error codes; never
+  echo arbitrary SDK messages, tokens, credentials or request URLs.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.
