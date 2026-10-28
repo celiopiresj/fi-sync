@@ -50,9 +50,10 @@ async function main() {
     }
     assert.equal(reviewEditsSchema.safeParse({ ...edits, description: "  " }).success, false);
     assert.equal(reviewEditsSchema.safeParse({ ...edits, date: "2026-02-30" }).success, false);
-    const original = { sourceId: "source", transactionId: id, existingTransactionId: "", closingDate: "", dueDate: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original" };
+    const original = { sourceId: "source", transactionId: id, existingTransactionId: "", closingDate: "", dueDate: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original", expectedDestination: { accountId: "account", cardId: "", fromDate: "2026-10-01" } };
     assert.equal(processSchema.safeParse({ ...original, mode: "create" }).success, false);
     const request = processSchema.parse({ ...original, mode: "create", edits });
+    assert.equal(processSchema.safeParse({ ...original, expectedDestination: undefined, mode: "create", edits }).success, false);
     assert.equal(request.expectedAmount, "-19.99");
     assert.equal(request.expectedDescription, "bank original");
     assert.equal(processSchema.safeParse({ ...original, mode: "ignore" }).success, true);

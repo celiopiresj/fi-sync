@@ -38,7 +38,7 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
    pelo retorno do widget e pelas notificações da Pluggy. A lista é
    atualizada durante um minuto após o retorno, para incluir conexões
    que terminarem de ser preparadas em segundo plano.
-7. Selecione uma origem em **De onde importar?**, vincule à conta correspondente no fi-sync,
+7. Selecione uma origem em **De onde importar?**, escolha a conta de destino no fi-sync,
    escolha o cartão físico quando aplicável e informe a data inicial
    que deseja importar. Os destinos devem estar cadastrados e ativos.
 
@@ -48,25 +48,24 @@ revisão à direita. **Contas bancárias** (`BANK`) e **Cartões de crédito**
 Em telas menores os painéis se empilham e a tabela vira uma lista.
 O resumo mostra a conta do fi-sync e, quando
 aplicável, o cartão. **Alterar destino ou período** abre a configuração;
-a prévia fica recolhida enquanto o vínculo é editado, inclusive após um
-erro. Só volta ao salvar com sucesso ou manter explicitamente o vínculo
-atual. Alterações ainda não salvas não são usadas para importar.
+a prévia fica recolhida enquanto o destino é editado, inclusive após um
+erro. Só volta ao salvar com sucesso ou cancelar a alteração.
+Alterações ainda não salvas não são usadas para importar.
 
-**Gerenciar bancos** reúne a conexão de novos bancos e os vínculos de cada
+**Gerenciar bancos** reúne a conexão de novos bancos e o destino de cada
 origem. Conexões desativadas ficam recolhidas e não aparecem na seleção.
-Se um destino já estiver ocupado por outra origem, a mensagem identifica
-a conta e a origem em conflito. **Remover vínculo** libera um destino
-escolhido por engano quando ainda não existem lançamentos processados;
-essa ação não remove a conexão com o banco. Vínculos com importações não
-podem ser removidos nem transferidos para outra conta.
+Destinos de importação são preferências editáveis, não vínculos bancários
+exclusivos: uma mesma conta do fi-sync pode receber lançamentos de múltiplos
+bancos ou cartões, e o usuário pode alterar o destino a qualquer momento,
+mesmo após realizar importações. Alterações afetam apenas importações
+futuras: transações já salvas nunca são movidas e os comprovantes de
+importação são preservados para prevenir duplicatas. **Limpar destino**
+desassocia o destino da origem sem remover a conexão bancária.
 
-Quando houver apenas um vínculo conflitante e as duas origens ainda não
-tiverem registros processados, **Corrigir vínculo e buscar** oferece uma
-confirmação com a conta, a origem atual e a nova origem. Ao confirmar, o
-servidor bloqueia e valida novamente as duas origens, libera o vínculo
-anterior e salva o novo na mesma transação. Nenhum lançamento é criado
-nessa correção. Se já houver importações, outra pessoa for dona da origem
-ou surgirem conflitos adicionais, a troca é bloqueada.
+Durante a revisão de lançamentos, o fi-sync valida se o destino conferido no
+início da revisão continua o mesmo ao salvar. Caso o destino ou o período
+tenham sido alterados enquanto a revisão estava aberta, o salvamento é
+bloqueado para evitar redirecionamento silencioso de lançamentos.
 
 A prévia tem busca por descrição e filtros de entradas/saídas na página
 atual. Alterar um filtro limpa a seleção; somente itens visíveis selecionados
@@ -130,7 +129,7 @@ confirmá-lo.
   Os não selecionados permanecem disponíveis para outra revisão.
 - **Revisar e editar** mostra os dados originais do banco e permite alterar
   descrição, data, valor, tipo (receita/despesa) e categoria para o fi-sync.
-  O destino é a conta/cartão escolhido no vínculo. As alterações não são
+  O destino é a conta/cartão configurado para a origem. As alterações não são
   enviadas ao banco; só a confirmação salva o lançamento no fi-sync.
 - **Salvar este lançamento** (ou **Salvar e revisar próximo**) cria um
   lançamento confirmado com os campos revisados no fi-sync.

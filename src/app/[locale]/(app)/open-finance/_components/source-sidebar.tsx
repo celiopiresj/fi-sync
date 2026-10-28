@@ -13,7 +13,7 @@ export function SourceSidebar({ overview, sources, source, onSelect, onManage, o
   const t = useTranslations("scrn-open-finance");
   const { disable } = useOpenFinanceMutations();
   const count = overview.connections.filter((connection) => connection.active).length;
-  return <Card className="h-fit py-5 xl:sticky xl:top-4 xl:max-h-[calc(100dvh-2rem)] xl:overflow-y-auto">
+  return <Card className="h-fit py-5">
     <CardHeader className="gap-3 px-5"><div className="flex items-center justify-between"><CardTitle>{t("cards.sidebar.title")}</CardTitle><span className="text-xs text-muted-foreground">{t("cards.sidebar.capacity", { count })}</span></div>
       <div role="progressbar" aria-valuemin={0} aria-valuemax={5} aria-valuenow={Math.min(count, 5)} aria-label={t("cards.sidebar.capacity", { count })} className="flex gap-1">{Array.from({ length: 5 }, (_, index) => <span key={index} className={cn("h-1.5 flex-1 rounded-full bg-muted", index < count && "bg-primary")} />)}</div>
       <p className="text-xs/relaxed text-muted-foreground">{t("cards.sidebar.description")}</p>

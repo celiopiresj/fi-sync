@@ -15,6 +15,8 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
   });
   if (!source || !source.accountId || source.accountId !== mapping.accountId || source.cardId !== mapping.cardId ||
     !source.importFromDate || dateOnlyKey(source.importFromDate) !== mapping.fromDate) throw new OpenFinanceError("mapping");
+  if (value.expectedDestination.accountId !== source.accountId || value.expectedDestination.cardId !== (source.cardId ?? "") ||
+    value.expectedDestination.fromDate !== dateOnlyKey(source.importFromDate)) throw new OpenFinanceError("mappingChanged");
   if (row.accountId !== source.externalAccountId || row.id !== value.transactionId) throw new OpenFinanceError("access");
   const externalKey = transactionKey(row);
   if (await tx.openFinanceImport.findUnique({ where: { sourceId_externalKey: { sourceId: source.id, externalKey } } })) return;

@@ -136,6 +136,13 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   and keep duplicate prevention and import receipts effective after edits.
   Show bank accounts and credit cards in separate groups based on the
   provider's `BANK`/`CREDIT` type, never guessed from a bank/card name.
+  Use the shared app background for this screen, without an additional
+  tinted wrapper around the page content.
+  Import destinations are editable preferences, not exclusive bank bindings.
+  The owner may use one account for multiple sources and change destinations
+  after imports. Changes affect future imports only: never move saved
+  transactions or reset receipts. Check the destination shown during review
+  again at save time so a changed preference cannot silently reroute a draft.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.

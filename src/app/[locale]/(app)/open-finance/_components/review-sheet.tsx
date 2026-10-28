@@ -9,7 +9,7 @@ import type { ReviewSheetProps } from "../_types/types";
 export function ReviewSheet({ source, row, remaining, onClose, onProcessed }: ReviewSheetProps) {
   const t = useTranslations("scrn-open-finance");
   const common = useTranslations("common");
-  const review = useOpenFinanceReview(source.id, row?.id ?? null);
+  const review = useOpenFinanceReview(source, row?.id ?? null);
   return (
     <Sheet open={Boolean(row)} onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent className="overflow-y-auto data-[side=right]:sm:max-w-lg" closeLabel={t("aria.close")}>

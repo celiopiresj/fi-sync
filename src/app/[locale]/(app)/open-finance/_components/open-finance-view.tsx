@@ -22,14 +22,14 @@ export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
   const workspace = useOpenFinanceWorkspace(overview);
   const { source } = workspace;
   return (
-    <div className="mx-auto flex max-w-350 flex-col gap-6 rounded-xl bg-muted/40 p-4 sm:p-5">
+    <div className="mx-auto flex max-w-350 flex-col gap-6">
       <div className="flex flex-col gap-1"><span className="text-xs text-muted-foreground">{t("breadcrumb.section")}</span><PageHeader title={t("title")} subtitle={t("subtitle")} className="flex-col items-start gap-4 xl:flex-row xl:items-end [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:tracking-tight" right={
         overview.configured ? <ConnectMeuPluggy connection={connection} /> : <p className="text-sm text-warning">{t("cards.setup.description")}</p>
       } />
       </div>
       <ImportSteps connected={workspace.sources.length > 0} selected={Boolean(source)} ready={workspace.ready && !workspace.editing} />
       <BanksManagement overview={overview} open={workspace.manageOpen} onSelect={workspace.configure} />
-      <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[18rem_minmax(0,1fr)]">
+      <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[24rem_minmax(0,1fr)]">
         <SourceSidebar overview={overview} sources={workspace.sources} source={source} onSelect={workspace.select} onManage={workspace.toggleManage} onConnect={connection.open} />
         <div className="flex min-w-0 flex-col gap-5">
         {source && <Card>

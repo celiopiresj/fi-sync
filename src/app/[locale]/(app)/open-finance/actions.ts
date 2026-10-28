@@ -7,7 +7,7 @@ import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned } f
 import { computeInvoiceCycle } from "@/lib/invoice-resolution";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
-import { openFinanceError, mappingConflictInfo } from "@/lib/open-finance/errors";
+import { openFinanceError } from "@/lib/open-finance/errors";
 import { createPluggyClient } from "@/lib/open-finance/pluggy";
 import { savePluggyConnection } from "@/lib/open-finance/connections";
 import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-item";
@@ -15,7 +15,7 @@ import { processReviewedTransaction } from "@/lib/open-finance/process";
 import { saveSourceMapping, clearSourceMapping } from "@/lib/open-finance/mapping";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
-import { connectionSchema, mappingSchema, mappingResolutionSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
 
 export async function createOpenFinanceConnectToken() {
   const userId = await requireOpenFinanceOwner();
@@ -72,7 +72,7 @@ export async function getOpenFinanceOverview() {
   const userId = await requireOpenFinanceOwner();
   const [connections, accounts] = await Promise.all([
     prisma.openFinanceConnection.findMany({
-      where: { userId }, orderBy: { createdAt: "asc" }, include: { sources: { orderBy: { name: "asc" }, include: { _count: { select: { imports: true } } } } },
+      where: { userId }, orderBy: { createdAt: "asc" }, include: { sources: { orderBy: { name: "asc" } } },
     }),
     prisma.account.findMany({
       where: { userId, status: "ACTIVE", type: { in: ["CHECKING", "SAVINGS", "CREDIT_CARD"] } },
@@ -87,7 +87,6 @@ export async function getOpenFinanceOverview() {
       sources: connection.sources.map((source) => ({
         id: source.id, name: source.name, type: source.type, currency: source.currency,
         accountId: source.accountId, cardId: source.cardId,
-        hasImports: source._count.imports > 0,
         fromDate: source.importFromDate ? dateOnlyKey(source.importFromDate) : null,
       })),
     })),
@@ -129,18 +128,8 @@ export async function saveOpenFinanceMapping(input: unknown) {
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const value = parsed.data;
     await prisma.$transaction((tx) => saveSourceMapping(tx, userId, value));
-    return { error: null, conflict: null };
-  } catch (error) { return { error: await openFinanceError(error), conflict: mappingConflictInfo(error) }; }
-}
-
-export async function resolveOpenFinanceMapping(input: unknown) {
-  const userId = await requireOpenFinanceOwner();
-  try {
-    const parsed = mappingResolutionSchema.safeParse(input);
-    if (!parsed.success) throw new OpenFinanceError("invalid");
-    await prisma.$transaction((tx) => saveSourceMapping(tx, userId, parsed.data, parsed.data.replaceSourceId));
-    return { error: null, conflict: null };
-  } catch (error) { return { error: await openFinanceError(error), conflict: mappingConflictInfo(error) }; }
+    return { error: null };
+  } catch (error) { return { error: await openFinanceError(error) }; }
 }
 
 export async function clearOpenFinanceMapping(input: unknown) {
@@ -203,6 +192,7 @@ export async function getOpenFinanceReview(input: unknown) {
     }) : null;
     return { error: null, data: {
       matches, categories, destination: source.account!.name,
+      destinationSelection: { accountId: source.accountId!, cardId: source.cardId ?? "", fromDate: dateOnlyKey(source.importFromDate!) },
       credit: source.type === "CREDIT", pending: row.status === "PENDING", payment: isCardPayment(row, source.type),
       description: row.description, amount, date: row.date.slice(0, 10),
       // Computed dates are instants in APP_TIME_ZONE, unlike dates read

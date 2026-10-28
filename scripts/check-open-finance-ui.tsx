@@ -20,7 +20,7 @@ const source = { id: "fixture-source", name: "Fixture bank", type: "BANK", curre
 const row = { id: "00000000-0000-4000-8000-000000000002", description: "Bank fixture original", date: "2026-10-28", amount: "-19.99", status: "POSTED" as const, payment: false };
 const props: ReviewFormProps = {
   source, row, remaining: 2, onClose() {}, onProcessed() {},
-  review: { description: row.description, amount: row.amount, date: row.date, matches: [], categories: [], destination: "Fixture destination", credit: false, pending: false, payment: false, closingDate: "", dueDate: "" },
+  review: { description: row.description, amount: row.amount, date: row.date, matches: [], categories: [], destination: "Fixture destination", destinationSelection: { accountId: "fixture-account", cardId: "", fromDate: "2026-10-01" }, credit: false, pending: false, payment: false, closingDate: "", dueDate: "" },
 };
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 queryClient.setQueryData(["open-finance-transactions", source.id, null], { error: null, data: { rows: [row], next: null } });

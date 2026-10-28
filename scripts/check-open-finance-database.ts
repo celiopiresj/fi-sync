@@ -36,28 +36,24 @@ async function main() {
       const source = await tx.openFinanceSource.create({ data: {
         connectionId: connection.id, externalAccountId: randomUUID(), name: "fixture", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
       } });
-      const conflictingSource = await tx.openFinanceSource.create({ data: {
-        connectionId: connection.id, externalAccountId: randomUUID(), name: "Conflicting bank", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
+      const sharedDestinationSource = await tx.openFinanceSource.create({ data: {
+        connectionId: connection.id, externalAccountId: randomUUID(), name: "Other bank", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
       } });
       const mappingInput = { sourceId: source.id, accountId: account.id, cardId: "", fromDate: "2026-10-01" };
       const previousAccount = await tx.account.create({ data: { userId, name: "Previous wrong destination", type: "CHECKING" } });
       await tx.openFinanceSource.update({ where: { id: source.id }, data: { accountId: previousAccount.id } });
-      await assert.rejects(saveSourceMapping(tx, userId, mappingInput), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.account === account.name && Boolean(error.values?.source.includes("Conflicting bank")));
-      await assert.rejects(clearSourceMapping(tx, "not-the-owner", conflictingSource.id));
-      await assert.rejects(saveSourceMapping(tx, "not-the-owner", mappingInput, conflictingSource.id));
-      const extraConflict = await tx.openFinanceSource.create({ data: { connectionId: connection.id, externalAccountId: randomUUID(), name: "Another legacy mapping", type: "BANK", currency: "BRL", accountId: account.id } });
-      await assert.rejects(saveSourceMapping(tx, userId, mappingInput, conflictingSource.id), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.canReplace === "false");
-      await tx.openFinanceSource.delete({ where: { id: extraConflict.id } });
-      await tx.openFinanceImport.create({ data: { sourceId: conflictingSource.id, externalKey: "bank:locked-conflict" } });
-      await assert.rejects(saveSourceMapping(tx, userId, mappingInput, conflictingSource.id), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.canReplace === "false");
-      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: conflictingSource.id } })).accountId, account.id);
-      await tx.openFinanceImport.deleteMany({ where: { sourceId: conflictingSource.id } });
-      await saveSourceMapping(tx, userId, mappingInput, conflictingSource.id);
-      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: conflictingSource.id } })).accountId, null);
+      await assert.rejects(clearSourceMapping(tx, "not-the-owner", sharedDestinationSource.id));
+      await assert.rejects(saveSourceMapping(tx, "not-the-owner", mappingInput));
+      await saveSourceMapping(tx, userId, mappingInput);
+      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: sharedDestinationSource.id } })).accountId, account.id);
       assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: source.id } })).accountId, account.id);
       assert.equal(await tx.transaction.count({ where: { userId } }), 0);
-      await saveSourceMapping(tx, userId, mappingInput);
-      await tx.openFinanceSource.delete({ where: { id: conflictingSource.id } });
+      await tx.openFinanceImport.create({ data: { sourceId: sharedDestinationSource.id, externalKey: "bank:processed-other-source" } });
+      await saveSourceMapping(tx, userId, { ...mappingInput, sourceId: sharedDestinationSource.id, accountId: previousAccount.id });
+      await clearSourceMapping(tx, userId, sharedDestinationSource.id);
+      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: sharedDestinationSource.id } })).accountId, null);
+      assert.equal(await tx.openFinanceImport.count({ where: { sourceId: sharedDestinationSource.id } }), 1);
+      await tx.openFinanceSource.delete({ where: { id: sharedDestinationSource.id } });
       const providerAccount = { id: source.externalAccountId, itemId: connection.itemId, name: "updated fixture", type: "BANK" as const, currencyCode: "BRL" };
       await savePluggyConnection(userId, connection.itemId, "automatic label", [providerAccount], true, tx);
       await savePluggyConnection(userId, connection.itemId, "automatic label", [providerAccount], true, tx);
@@ -74,7 +70,11 @@ async function main() {
       assert.equal(dateOnlyKey(transaction.date), "2026-10-28");
       assert.equal((await tx.transaction.findFirst({ where: { userId, accountId: account.id, amount: "-19.99", date } }))?.id, transaction.id);
       await tx.openFinanceImport.create({ data: { sourceId: source.id, externalKey: "bank:fixture", transactionId: transaction.id } });
-      await assert.rejects(clearSourceMapping(tx, userId, source.id), (error) => error instanceof OpenFinanceError && error.code === "mappingLocked");
+      await saveSourceMapping(tx, userId, { ...mappingInput, accountId: previousAccount.id });
+      await clearSourceMapping(tx, userId, source.id);
+      assert.equal((await tx.transaction.findUniqueOrThrow({ where: { id: transaction.id } })).accountId, account.id);
+      assert.equal((await tx.openFinanceImport.findUniqueOrThrow({ where: { sourceId_externalKey: { sourceId: source.id, externalKey: "bank:fixture" } } })).transactionId, transaction.id);
+      await saveSourceMapping(tx, userId, mappingInput);
       const duplicate = await tx.openFinanceImport.createMany({ data: [{ sourceId: source.id, externalKey: "bank:fixture" }], skipDuplicates: true });
       assert.equal(duplicate.count, 0);
       assert.equal(await tx.openFinanceSource.findFirst({ where: { id: source.id, connection: { userId: "different-user" } } }), null);
@@ -93,6 +93,7 @@ async function main() {
       const value: Extract<ProcessValues, { mode: "create" }> = {
         sourceId: source.id, transactionId: bankRow.id, mode: "create", existingTransactionId: "", closingDate: "", dueDate: "",
         expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "Bank original",
+        expectedDestination: { accountId: account.id, cardId: "", fromDate: "2026-10-01" },
         edits: { description: "My edited purchase", date: "2026-10-30", amount: "25,10", type: "expense", categoryId: category.id },
       };
       const unchangedCount = await tx.transaction.count({ where: { userId } });
@@ -130,7 +131,7 @@ async function main() {
       } });
       const creditRow = { ...bankRow, id: randomUUID(), accountId: creditSource.externalAccountId, providerId: "reviewed-card", amount: 19.99 };
       const creditMapping = { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" };
-      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, closingDate: "2026-10-30", dueDate: "2026-11-10", edits: { ...value.edits, date: "2026-11-05" } };
+      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, closingDate: "2026-10-30", dueDate: "2026-11-10", edits: { ...value.edits, date: "2026-11-05" }, expectedDestination: { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" } };
       await assert.rejects(processReviewedTransaction(tx, userId, creditRow, creditMapping, creditValue), (error) => error instanceof OpenFinanceError && error.code === "invoice");
       assert.equal(await tx.invoice.count({ where: { accountId: creditAccount.id } }), 0);
       await processReviewedTransaction(tx, userId, creditRow, creditMapping, { ...creditValue, closingDate: "2026-11-10", dueDate: "2026-11-20" });
@@ -140,6 +141,21 @@ async function main() {
       assert.equal(cardTransaction.transactionCard!.cardId, card.id);
       const cardPayment = { ...creditRow, id: randomUUID(), providerId: "card-payment", operationType: "PAGAMENTO_FATURA" };
       await assert.rejects(processReviewedTransaction(tx, userId, cardPayment, creditMapping, { ...creditValue, transactionId: cardPayment.id }), (error) => error instanceof OpenFinanceError && error.code === "payment");
+      const foreignAccount = await tx.account.create({ data: { userId: other.id, name: "Private account", type: "CHECKING" } });
+      await assert.rejects(saveSourceMapping(tx, userId, { ...mappingInput, accountId: foreignAccount.id }));
+      await assert.rejects(saveSourceMapping(tx, userId, { ...mappingInput, accountId: creditAccount.id }));
+      await saveSourceMapping(tx, userId, { ...mappingInput, accountId: previousAccount.id });
+      const newDestination = { accountId: previousAccount.id, cardId: null, fromDate: "2026-10-01" };
+      await assert.rejects(processReviewedTransaction(tx, userId, bankRow, newDestination, value), (error) => error instanceof OpenFinanceError && error.code === "mappingChanged");
+      const futureValue = { ...value, expectedDestination: { accountId: previousAccount.id, cardId: "", fromDate: "2026-10-01" } };
+      await processReviewedTransaction(tx, userId, bankRow, newDestination, futureValue);
+      assert.equal(await tx.transaction.count({ where: { userId, accountId: previousAccount.id } }), 0);
+      assert.equal((await tx.transaction.findUniqueOrThrow({ where: { id: saved.id } })).accountId, account.id);
+      const futureRow = { ...bankRow, id: randomUUID(), providerId: "after-destination-change", amount: -7.77 };
+      await processReviewedTransaction(tx, userId, futureRow, newDestination, {
+        ...futureValue, transactionId: futureRow.id, expectedAmount: "-7.77", edits: { ...value.edits, amount: "7,77", description: "Imported to new destination" },
+      });
+      assert.equal((await tx.transaction.findFirstOrThrow({ where: { userId, description: "Imported to new destination" } })).accountId, previousAccount.id);
       await tx.openFinanceConnection.delete({ where: { id: connection.id } });
       assert.ok(await tx.transaction.findUnique({ where: { id: retained.id } }));
       throw rollback;
@@ -147,6 +163,6 @@ async function main() {
   } catch (error) {
     if (error !== rollback) throw error;
   }
-  console.log("Database checks passed and rolled back: edited fields persisted, private/wrong-type categories rejected, stale/pending rows blocked, original/edited duplicate prevention, unique receipts and transaction retention.");
+  console.log("Database checks passed and rolled back: shared/changeable destinations, retained history/receipts, stale destination protection, private account/category rejection, edited imports and invoice dates.");
 }
 void main().catch((error) => { console.error(error); process.exitCode = 1; }).finally(() => prisma.$disconnect());

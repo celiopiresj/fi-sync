@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { addOpenFinanceConnection, clearOpenFinanceMapping, getOpenFinanceTransactions, getOpenFinanceReview, processOpenFinanceTransaction, resolveOpenFinanceMapping, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
-import type { MappingValues, MappingResolutionValues, ProcessValues } from "@/lib/open-finance/schema";
+import { addOpenFinanceConnection, clearOpenFinanceMapping, getOpenFinanceTransactions, getOpenFinanceReview, processOpenFinanceTransaction, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
+import type { MappingValues, ProcessValues } from "@/lib/open-finance/schema";
+import type { Source } from "../_types/types";
 
 export function useOpenFinanceMutations() {
   const client = useQueryClient();
@@ -23,8 +24,7 @@ export function useOpenFinanceMutations() {
   const disable = useMutation({ mutationFn: (id: string) => setOpenFinanceConnectionActive(id), onSuccess, onError });
   const process = useMutation({ mutationFn: (value: ProcessValues) => processOpenFinanceTransaction(value), onSuccess, onError });
   const clearMapping = useMutation({ mutationFn: (id: string) => clearOpenFinanceMapping(id), onSuccess, onError });
-  const resolveMapping = useMutation({ mutationFn: (value: MappingResolutionValues) => resolveOpenFinanceMapping(value), onSuccess, onError });
-  return { add, mapping, disable, process, clearMapping, resolveMapping };
+  return { add, mapping, disable, process, clearMapping };
 }
 
 export function useOpenFinanceTransactions(sourceId: string, cursor: string | null) {
@@ -34,9 +34,9 @@ export function useOpenFinanceTransactions(sourceId: string, cursor: string | nu
   });
 }
 
-export function useOpenFinanceReview(sourceId: string, transactionId: string | null) {
+export function useOpenFinanceReview(source: Source, transactionId: string | null) {
   return useQuery({
-    queryKey: ["open-finance-review", sourceId, transactionId],
-    queryFn: () => getOpenFinanceReview({ sourceId, transactionId }), enabled: Boolean(transactionId), staleTime: 0,
+    queryKey: ["open-finance-review", source.id, source.accountId, source.cardId, source.fromDate, transactionId],
+    queryFn: () => getOpenFinanceReview({ sourceId: source.id, transactionId }), enabled: Boolean(transactionId), staleTime: 0,
   });
 }
