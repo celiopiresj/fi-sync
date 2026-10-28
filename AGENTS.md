@@ -82,6 +82,16 @@ pnpm lint     # eslint
 There is no test runner configured yet. If you add one, document the command
 here.
 
+Focused Open Finance checks (no live bank data or database writes):
+```bash
+pnpm exec tsx scripts/check-open-finance.ts
+```
+Database integration check (synthetic fixtures in an always-rolled-back
+transaction; requires the configured Neon database):
+```bash
+pnpm exec tsx scripts/check-open-finance-database.ts
+```
+
 Prisma (schema has no models yet — add them to `prisma/schema.prisma` first):
 ```bash
 pnpm prisma migrate dev   # create + apply a migration
@@ -97,6 +107,15 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
 
 ## Conventions
 
+- **Open Finance is restricted to the project owner's fi-sync user.**
+  Other users must not see or use bank connections or synchronization.
+  Enforce the restriction on the server using an explicitly configured
+  authenticated user id, not only by hiding UI; deny access when that
+  configuration is missing. Imported data belongs only to that user.
+  The personal Meu Pluggy integration lives at `/open-finance`; its
+  setup and import behavior are documented in `docs/open-finance.md`.
+  Import receipts survive deleting a local transaction, so fetching
+  again does not silently recreate a deliberately deleted entry.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.

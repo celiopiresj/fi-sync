@@ -17,9 +17,12 @@ import {
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import type { AppSidebarProps } from "@/components/nav/sidebar-types";
+import { BankIcon } from "@phosphor-icons/react";
 
-export function AppSidebar() {
+export function AppSidebar({ openFinanceEnabled = false }: AppSidebarProps) {
   const t = useTranslations("common");
+  const openFinance = useTranslations("scrn-open-finance");
 
   const pathname = usePathname();
 
@@ -75,6 +78,11 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {openFinanceEnabled && <SidebarGroup><SidebarGroupContent><SidebarMenu><SidebarMenuItem>
+          <SidebarMenuButton asChild isActive={pathname === "/open-finance"}>
+            <Link href="/open-finance"><BankIcon /><span>{openFinance("title")}</span></Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem></SidebarMenu></SidebarGroupContent></SidebarGroup>}
         {navSections.map((section) => (
           <SidebarGroup key={section.labelKey}>
             <SidebarGroupLabel className="text-[11px]">

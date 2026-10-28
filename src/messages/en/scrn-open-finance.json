@@ -1,0 +1,47 @@
+{
+  "title": "Open Finance",
+  "subtitle": "Your banks and cards, connected through Meu Pluggy.",
+  "description": "Authorize your banks in Meu Pluggy and connect the MeuPluggy connector in the Pluggy Dashboard. Add each bank's itemId here. The service refreshes data every 24 hours; fetching here reads the latest available update.",
+  "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Fetch transactions", "saveMapping": "Save mapping", "review": "Review", "import": "Import transaction", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close" },
+  "cards": {
+    "setup": { "title": "Server configuration pending", "description": "Configure PLUGGY_CLIENT_ID and PLUGGY_CLIENT_SECRET on the server. Never paste these credentials into a screen field." },
+    "connect": { "title": "Connect a bank", "description": "Use the itemId created by the MeuPluggy connector, which provides free access to your own data. Up to five personal connections at the provider." },
+    "connections": { "title": "Connections", "empty": "No connections added", "description": "Add your authorized banks to list available accounts and cards.", "inactive": "Disabled", "attention": "This connection needs attention in Meu Pluggy." },
+    "mapping": { "title": "Map an account or card", "description": "Choose the fi-sync destination and the import start date. Connecting does not change opening balances or generate future installments." },
+    "review": { "title": "Transactions to review", "description": "Review before importing. Transfers between your accounts should be linked to existing transfer transactions. Card payments are not imported as refunds; register payments on the invoices screen." }
+  },
+  "fields": {
+    "label": { "label": "Connection name", "placeholder": "Your bank's name" },
+    "itemId": { "label": "Meu Pluggy itemId", "placeholder": "Connection identifier from the Dashboard" },
+    "source": { "label": "Connected account or card", "placeholder": "Select a source", "option": "{bank} · {account}" },
+    "account": { "label": "fi-sync account", "placeholder": "Select a destination" },
+    "card": { "label": "fi-sync card", "placeholder": "Select a card" },
+    "from": { "label": "Import starting on" },
+    "closingDate": { "label": "Destination invoice closing date" },
+    "dueDate": { "label": "Destination invoice due date" },
+    "existing": { "label": "Existing transaction with the same date and amount", "placeholder": "Select a transaction to link" }
+  },
+  "table": {
+    "columns": { "date": "Date", "description": "Description", "amount": "Amount", "status": "Status", "actions": "Actions" },
+    "empty": { "title": "No new transactions", "description": "Previously imported or ignored transactions do not appear again. Available history depends on the bank." },
+    "selection": { "count": "{count, plural, one {# transaction on this page} other {# transactions on this page}}" },
+    "menu": { "payment": "Invoice payment", "pending": "Still pending at the bank" }
+  },
+  "dialog": { "create": { "title": "Review import", "description": "Check the transaction and, for card purchases, the invoice dates. Importing creates only this transaction. If it already exists, link it instead of creating another.", "confirm": "Import", "cancel": "Cancel" } },
+  "toast": { "saved": "Change saved.", "imported": "Transaction processed.", "refreshed": "Data updated." },
+  "aria": { "close": "Close review", "navigation": "Open Finance connections" },
+  "errors": {
+    "stale": { "title": "Transaction updated", "description": "The bank changed this transaction. Close the review, fetch the data again and check it before importing." },
+    "invalid": { "title": "Invalid input", "description": "Check the supplied fields." },
+    "configuration": { "title": "Incomplete configuration", "description": "Configure the Meu Pluggy credentials on the server." },
+    "provider": { "title": "Could not query Meu Pluggy", "description": "Check your connection and authorization in Meu Pluggy and try again." },
+    "access": { "title": "Access unavailable", "description": "This integration is only available to the authorized user." },
+    "mapping": { "title": "Invalid mapping", "description": "Choose an active account with the same currency and type, and an active card belonging to it." },
+    "duplicate": { "title": "Possible duplicate", "description": "A transaction with the same date and amount exists. Link it or ignore this record." },
+    "pending": { "title": "Pending transaction", "description": "Wait for confirmation from the bank before importing." },
+    "payment": { "title": "Invoice payment", "description": "Register the payment on the invoices screen or link an existing payment." },
+    "currency": { "title": "Unsupported currency", "description": "This initial integration only imports amounts in Brazilian reais, without currency conversion." },
+    "invoice": { "title": "Check the invoice", "description": "Provide valid closing and due dates for the destination invoice." },
+    "busy": { "title": "Import in progress", "description": "Wait a moment and try again." }
+  }
+}

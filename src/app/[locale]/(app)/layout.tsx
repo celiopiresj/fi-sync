@@ -13,6 +13,7 @@ import { ensureUserSynced } from "@/lib/auth/sync-user";
 import { completePastPendingCardPurchases } from "@/lib/complete-past-purchases";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "@/i18n/navigation";
+import { isOpenFinanceOwner } from "@/lib/open-finance/access";
 
 // Onboarding is mandatory — every screen under (app) requires at least one
 // Account to exist. proxy.ts already guarantees an authenticated session
@@ -49,7 +50,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <AppSidebar openFinanceEnabled={isOpenFinanceOwner(userId)} />
       <SidebarInset>
         {/* Desktop only. On a phone this bar held nothing but the account
             avatar (its SidebarTrigger is already `md:inline-flex`), and it

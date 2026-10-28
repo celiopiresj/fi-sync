@@ -113,6 +113,7 @@ model User {
   budgets          Budget[]
   loans            Loan[]
   telegramMessages TelegramMessage[]
+  openFinanceConnections OpenFinanceConnection[]
 }
 
 enum TelegramMessageRole {
@@ -188,6 +189,7 @@ model Account {
   creditCardDetails CreditCardDetails?
   cards             Card[]
   invoices          Invoice[]
+  openFinanceSources OpenFinanceSource[]
 
   @@index([userId])
 }
@@ -235,6 +237,8 @@ model Card {
   transactionCards TransactionCard[]
   // Recurrences that charge this specific card each time they generate.
   recurrences      Recurrence[]
+
+  openFinanceSources OpenFinanceSource[]
 
   @@index([accountId])
 }
@@ -516,6 +520,7 @@ model Transaction {
   // per settlement Transaction, enforced by InvoicePayment.transactionId's
   // own @unique.
   invoicePayment InvoicePayment?
+  openFinanceImports OpenFinanceImport[]
   // The reverse of LoanInstallment.transaction — set only when this
   // Transaction *is* the settlement for one specific loan installment.
   loanInstallment LoanInstallment?
@@ -581,6 +586,56 @@ model TransactionSplit {
   @@unique([transactionId, personId])
   @@index([transactionId])
   @@index([personId])
+}
+
+// Only the explicitly configured owner may access this integration.
+// Disabling a connection preserves these import receipts: even deleting a
+// local Transaction must not cause a subsequent fetch to recreate it.
+model OpenFinanceConnection {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId    String              @unique
+  label     String
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+  sources   OpenFinanceSource[]
+
+  @@index([userId])
+}
+
+model OpenFinanceSource {
+  id                String                @id @default(cuid())
+  connectionId      String
+  connection        OpenFinanceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  externalAccountId String
+  name              String
+  type              String
+  currency          String
+  accountId         String?
+  account           Account?              @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  cardId            String?
+  card              Card?                 @relation(fields: [cardId], references: [id], onDelete: SetNull)
+  importFromDate    DateTime?             @db.Date
+  imports           OpenFinanceImport[]
+
+  @@unique([connectionId, externalAccountId])
+  @@index([accountId])
+  @@index([cardId])
+}
+
+model OpenFinanceImport {
+  id            String            @id @default(cuid())
+  sourceId      String
+  source        OpenFinanceSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  // Bank-provided id when available, otherwise Pluggy's transaction id.
+  externalKey   String
+  transactionId String?
+  transaction   Transaction?      @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  createdAt     DateTime          @default(now()) @db.Timestamptz(3)
+
+  @@unique([sourceId, externalKey])
+  @@index([transactionId])
 }
 
 enum RecurrenceFrequency {

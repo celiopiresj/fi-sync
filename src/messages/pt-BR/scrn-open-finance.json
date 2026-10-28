@@ -1,0 +1,47 @@
+{
+  "title": "Open Finance",
+  "subtitle": "Seus bancos e cartões, conectados pelo Meu Pluggy.",
+  "description": "Autorize seus bancos no Meu Pluggy e conecte o conector MeuPluggy no Dashboard da Pluggy. Adicione aqui o itemId de cada banco. O serviço atualiza os dados a cada 24 horas; buscar aqui lê a última atualização disponível.",
+  "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Buscar lançamentos", "saveMapping": "Salvar vínculo", "review": "Revisar", "import": "Importar lançamento", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Fechar" },
+  "cards": {
+    "setup": { "title": "Configuração do servidor pendente", "description": "Configure PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET no servidor. Nunca cole essas credenciais em um campo da tela." },
+    "connect": { "title": "Conectar um banco", "description": "Use o itemId criado pelo conector MeuPluggy, que dá acesso gratuito aos seus próprios dados. Até cinco conexões pessoais no provedor." },
+    "connections": { "title": "Conexões", "empty": "Nenhuma conexão adicionada", "description": "Adicione seus bancos autorizados para listar as contas e os cartões disponíveis.", "inactive": "Desativada", "attention": "A conexão precisa de atenção no Meu Pluggy." },
+    "mapping": { "title": "Vincular conta ou cartão", "description": "Escolha o destino no fi-sync e a data inicial da importação. A conexão não altera saldos iniciais nem gera parcelas futuras." },
+    "review": { "title": "Lançamentos para revisão", "description": "Revise antes de importar. Transferências entre suas contas devem ser vinculadas aos lançamentos de transferência já cadastrados. Pagamentos recebidos no cartão não são importados como estorno; registre o pagamento pela tela de faturas." }
+  },
+  "fields": {
+    "label": { "label": "Nome da conexão", "placeholder": "Nome do seu banco" },
+    "itemId": { "label": "itemId do Meu Pluggy", "placeholder": "Identificador da conexão no Dashboard" },
+    "source": { "label": "Conta ou cartão conectado", "placeholder": "Selecione uma origem", "option": "{bank} · {account}" },
+    "account": { "label": "Conta no fi-sync", "placeholder": "Selecione o destino" },
+    "card": { "label": "Cartão no fi-sync", "placeholder": "Selecione o cartão" },
+    "from": { "label": "Importar a partir de" },
+    "closingDate": { "label": "Fechamento da fatura de destino" },
+    "dueDate": { "label": "Vencimento da fatura de destino" },
+    "existing": { "label": "Lançamento já cadastrado com mesma data e valor", "placeholder": "Selecione para vincular" }
+  },
+  "table": {
+    "columns": { "date": "Data", "description": "Descrição", "amount": "Valor", "status": "Situação", "actions": "Ações" },
+    "empty": { "title": "Nenhum lançamento novo", "description": "Os lançamentos já importados ou ignorados não aparecem novamente. A disponibilidade do histórico depende do banco." },
+    "selection": { "count": "{count, plural, one {# lançamento nesta página} other {# lançamentos nesta página}}" },
+    "menu": { "payment": "Pagamento de fatura", "pending": "Ainda pendente no banco" }
+  },
+  "dialog": { "create": { "title": "Revisar importação", "description": "Confira o lançamento e, em compras de cartão, as datas da fatura. Importar cria somente este lançamento. Se ele já existe, vincule-o em vez de criar outro.", "confirm": "Importar", "cancel": "Cancelar" } },
+  "toast": { "saved": "Alteração salva.", "imported": "Lançamento processado.", "refreshed": "Dados atualizados." },
+  "aria": { "close": "Fechar revisão", "navigation": "Conexões Open Finance" },
+  "errors": {
+    "stale": { "title": "Lançamento atualizado", "description": "O banco alterou este lançamento. Feche a revisão, busque os dados novamente e confira antes de importar." },
+    "invalid": { "title": "Dados inválidos", "description": "Confira os campos informados." },
+    "configuration": { "title": "Configuração incompleta", "description": "Configure as credenciais do Meu Pluggy no servidor." },
+    "provider": { "title": "Não foi possível consultar o Meu Pluggy", "description": "Confira a conexão e a autorização no Meu Pluggy e tente novamente." },
+    "access": { "title": "Acesso indisponível", "description": "Esta integração está disponível apenas para o usuário autorizado." },
+    "mapping": { "title": "Vínculo inválido", "description": "Escolha uma conta ativa, da mesma moeda e tipo, e um cartão ativo pertencente a ela." },
+    "duplicate": { "title": "Possível duplicata", "description": "Há um lançamento com a mesma data e valor. Vincule ao existente ou ignore este registro." },
+    "pending": { "title": "Lançamento pendente", "description": "Aguarde a confirmação do banco antes de importar." },
+    "payment": { "title": "Pagamento de fatura", "description": "Registre o pagamento pela tela de faturas ou vincule ao pagamento já cadastrado." },
+    "currency": { "title": "Moeda não suportada", "description": "Esta integração inicial importa somente valores em reais, sem conversão de moeda." },
+    "invoice": { "title": "Confira a fatura", "description": "Informe fechamento e vencimento válidos para a fatura de destino." },
+    "busy": { "title": "Importação em andamento", "description": "Aguarde um instante e tente novamente." }
+  }
+}

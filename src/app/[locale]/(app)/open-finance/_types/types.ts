@@ -1,0 +1,12 @@
+import type { getOpenFinanceOverview, getOpenFinanceTransactions, getOpenFinanceReview } from "../actions";
+
+export type Overview = Awaited<ReturnType<typeof getOpenFinanceOverview>>;
+export type Source = Overview["connections"][number]["sources"][number];
+export type Preview = NonNullable<Awaited<ReturnType<typeof getOpenFinanceTransactions>>["data"]>;
+export type PreviewRow = Preview["rows"][number];
+export type Review = NonNullable<Awaited<ReturnType<typeof getOpenFinanceReview>>["data"]>;
+export type ViewProps = { overview: Overview };
+export type MappingFormProps = { source: Source; accounts: Overview["accounts"] };
+export type TransactionTableProps = { source: Source };
+export type ReviewSheetProps = { source: Source; row: PreviewRow | null; onClose: () => void };
+export type ReviewFormProps = { source: Source; row: PreviewRow; review: Review; onClose: () => void };
