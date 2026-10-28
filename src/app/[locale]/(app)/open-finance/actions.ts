@@ -26,7 +26,7 @@ export async function createOpenFinanceConnectToken() {
       if (!signature) throw new OpenFinanceError("configuration");
       await client.ensureWebhooks(`${origin}/api/open-finance/pluggy`, signature);
     }
-    const token = await client.connectToken({ clientUserId: userId, avoidDuplicates: true,
+    const token = await client.meuPluggyConnectToken({ clientUserId: userId,
       ...(origin ? { oauthRedirectUri: `${origin}/${await getLocale()}/open-finance` } : {}),
     });
     return { error: null, accessToken: token.accessToken };

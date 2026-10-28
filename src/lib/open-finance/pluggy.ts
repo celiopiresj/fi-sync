@@ -42,8 +42,12 @@ export async function createPluggyClient() {
     return result.data;
   }
   return {
-    connectToken: (options: { clientUserId: string; avoidDuplicates: boolean; oauthRedirectUri?: string }) =>
-      post("/connect_token", { options }, z.object({ accessToken: z.string().min(1).max(16000) })),
+    meuPluggyConnectToken: (options: { clientUserId: string; oauthRedirectUri?: string }) =>
+      // MeuPluggy authorizes a separate proxy item for the app. A proxy made
+      // in the Dashboard can otherwise block the widget before authorization
+      // with ITEM_USER_ALREADY_EXISTS. This flag does not reuse that item:
+      // a new consent must still pass our provider-side owner/connector check.
+      post("/connect_token", { options: { ...options, avoidDuplicates: false } }, z.object({ accessToken: z.string().min(1).max(16000) })),
     ensureWebhooks: async (url: string, signature: string) => {
       const hookSchema = z.object({ id: z.uuid(), event: z.string(), url: z.string(), disabledAt: z.string().nullish(), headers: z.record(z.string(), z.string()).nullish() });
       const hooks = await get("/webhooks", z.object({ results: z.array(hookSchema) }).nullable().transform((value) => value ?? { results: [] }));

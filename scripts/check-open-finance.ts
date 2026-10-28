@@ -102,7 +102,10 @@ async function main() {
       if (url.pathname === "/connect_token") {
         const body = JSON.parse(String(init?.body));
         assert.equal(body.options.clientUserId, "owner");
-        assert.equal(body.options.avoidDuplicates, true);
+        // Existing Dashboard authorizations must not prevent this widget
+        // from starting its own owner-bound MeuPluggy authorization.
+        assert.equal(body.options.avoidDuplicates, false);
+        assert.equal(body.options.oauthRedirectUri, "https://app.example.com/pt-BR/open-finance");
         return Response.json({ accessToken: "fixture-connect-token" });
       }
       if (url.pathname === "/webhooks") {
@@ -123,7 +126,7 @@ async function main() {
       return Response.json({ results: [{ ...row, accountId: wrongAccount ? id : accountId }], next: null });
     };
     const client = await createPluggyClient();
-    assert.deepEqual(await client.connectToken({ clientUserId: "owner", avoidDuplicates: true }), { accessToken: "fixture-connect-token" });
+    assert.deepEqual(await client.meuPluggyConnectToken({ clientUserId: "owner", oauthRedirectUri: "https://app.example.com/pt-BR/open-finance" }), { accessToken: "fixture-connect-token" });
     await client.ensureWebhooks("https://app.example.com/api/open-finance/pluggy", signature);
     await client.ensureWebhooks("https://app.example.com/api/open-finance/pluggy", signature);
     assert.equal(webhooks.length, 2);

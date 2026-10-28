@@ -34,7 +34,7 @@
   "errors": {
     "widget": { "title": "A conexão não foi concluída", "description": "Confira a mensagem na janela do Meu Pluggy. Ela permanecerá aberta para você tentar novamente ou fechar.", "code": "Código informado pela Pluggy: {code}" },
     "widgetLoad": { "title": "A janela não carregou", "description": "Não foi possível carregar a janela da Pluggy. Confira sua conexão e tente novamente; se continuar, verifique se o navegador está bloqueando o conteúdo da Pluggy." },
-    "widgetDuplicate": { "title": "Já existe uma conexão", "description": "A Pluggy informou que já existe uma conexão com esses dados. Confira o código abaixo; não é necessário autorizar o banco novamente." },
+    "widgetDuplicate": { "title": "Já existe uma conexão", "description": "A Pluggy bloqueou esta tentativa porque já existe uma conexão. Feche a janela, atualize o fi-sync e abra o Meu Pluggy novamente para autorizar o acesso pelo aplicativo." },
     "widgetCredentials": { "title": "Confira o acesso ao Meu Pluggy", "description": "O Meu Pluggy não aceitou os dados de acesso informados. Você pode corrigi-los na janela aberta." },
     "widgetAuthorization": { "title": "Autorização pendente", "description": "Conclua a autorização na janela do Meu Pluggy. As conexões aparecerão após a confirmação." },
     "widgetToken": { "title": "A sessão de conexão expirou", "description": "Feche a janela da Pluggy e clique novamente em Conectar Meu Pluggy para iniciar uma nova sessão." },

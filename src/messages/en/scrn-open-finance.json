@@ -34,7 +34,7 @@
   "errors": {
     "widget": { "title": "Connection was not completed", "description": "Check the message in the Meu Pluggy window. It will stay open so you can retry or close it.", "code": "Code reported by Pluggy: {code}" },
     "widgetLoad": { "title": "The window did not load", "description": "Could not load the Pluggy window. Check your connection and try again; if it persists, check whether your browser is blocking Pluggy content." },
-    "widgetDuplicate": { "title": "A connection already exists", "description": "Pluggy reported that a connection with these credentials already exists. Check the code below; you do not need to authorize the bank again." },
+    "widgetDuplicate": { "title": "A connection already exists", "description": "Pluggy blocked this attempt because a connection already exists. Close the window, refresh fi-sync and open Meu Pluggy again to authorize access through the app." },
     "widgetCredentials": { "title": "Check your Meu Pluggy login", "description": "Meu Pluggy did not accept the supplied login details. You can correct them in the open window." },
     "widgetAuthorization": { "title": "Authorization pending", "description": "Complete authorization in the Meu Pluggy window. Connections will appear after confirmation." },
     "widgetToken": { "title": "The connection session expired", "description": "Close the Pluggy window and click Connect Meu Pluggy again to start a new session." },

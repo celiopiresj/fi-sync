@@ -50,6 +50,17 @@ recuperar conexões antigas criadas fora do app. O plano pessoal não
 permite listar itens por `GET /v2/items`; por isso, autorize pelo widget
 do fi-sync para capturar os ids automaticamente.
 
+O Connect Token do MeuPluggy usa `avoidDuplicates: false`: a opção `true`
+rejeita uma autorização já criada com `ITEM_USER_ALREADY_EXISTS`, em vez
+de recuperar a conexão. Isso pode bloquear a janela antes da autorização.
+Uma conexão feita no Dashboard não é assumida automaticamente pelo app:
+o usuário autoriza o acesso pelo widget, e o servidor continua exigindo
+`clientUserId` igual ao dono e conector 200 antes de salvar o novo item.
+Conexões locais repetidas com o mesmo item continuam sendo atualizadas
+sem duplicação. Um novo item exige revisar os vínculos e lançamentos.
+Depois de atualizar o app, feche qualquer janela antiga de conexão e
+abra **Conectar Meu Pluggy** novamente para receber um token novo.
+
 Na Vercel, o app identifica a URL pública por
 `VERCEL_PROJECT_PRODUCTION_URL`/`VERCEL_URL`, registra os webhooks
 `item/created` e `item/updated` e configura o retorno OAuth. Fora da
