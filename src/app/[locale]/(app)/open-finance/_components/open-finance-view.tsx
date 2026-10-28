@@ -52,7 +52,7 @@ export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
       {source && <MappingForm key={`${source.id}:${source.accountId}:${source.cardId}:${source.fromDate}`} source={source} accounts={overview.accounts} />}
       {source?.accountId && source.fromDate && overview.configured && <Card>
         <CardHeader><CardTitle>{t("cards.review.title")}</CardTitle><CardDescription>{t("cards.review.description")}</CardDescription></CardHeader>
-        <CardContent><TransactionTable key={`${source.id}:${source.fromDate}`} source={source} /></CardContent>
+        <CardContent><TransactionTable key={`${source.id}:${source.accountId}:${source.cardId}:${source.fromDate}`} source={source} /></CardContent>
       </Card>}
     </div>
   );

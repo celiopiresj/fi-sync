@@ -1,4 +1,5 @@
-import type { MappingFormProps, Overview, Source } from "../_types/types";
+import type { MappingFormProps, Overview, Review, Source } from "../_types/types";
+import { NO_CATEGORY } from "@/lib/open-finance/review";
 
 export function mappingAccountOptions(source: Source, accounts: MappingFormProps["accounts"]) {
   return accounts.filter((account) => account.currency === source.currency &&
@@ -10,4 +11,8 @@ export function mappingCardOptions(accountId: string, accounts: MappingFormProps
 }
 export function mappedSources(overview: Overview) {
   return overview.connections.filter((connection) => connection.active).flatMap((connection) => connection.sources);
+}
+export function reviewCategoryOptions(categories: Review["categories"], type: string, none: string) {
+  return [{ value: NO_CATEGORY, label: none }, ...categories.filter((category) => category.type === (type === "expense" ? "EXPENSE" : "INCOME"))
+    .map((category) => ({ value: category.id, label: category.name }))];
 }

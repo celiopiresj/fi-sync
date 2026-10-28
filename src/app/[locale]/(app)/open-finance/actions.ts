@@ -5,16 +5,16 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned } from "@/lib/date";
 import { computeInvoiceCycle } from "@/lib/invoice-resolution";
-import { recomputeInvoiceStatus } from "@/lib/invoice-total";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
 import { openFinanceError } from "@/lib/open-finance/errors";
 import { createPluggyClient } from "@/lib/open-finance/pluggy";
 import { savePluggyConnection } from "@/lib/open-finance/connections";
 import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-item";
+import { processReviewedTransaction } from "@/lib/open-finance/process";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
-import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
 
 export async function createOpenFinanceConnectToken() {
   const userId = await requireOpenFinanceOwner();
@@ -187,20 +187,27 @@ export async function getOpenFinanceTransactions(input: unknown) {
 export async function getOpenFinanceReview(input: unknown) {
   const userId = await requireOpenFinanceOwner();
   try {
-    const parsed = processSchema.pick({ sourceId: true, transactionId: true }).safeParse(input);
+    const parsed = reviewRequestSchema.safeParse(input);
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const { source, row, amount, date } = await readTransaction(userId, parsed.data.sourceId, parsed.data.transactionId);
-    const matches = await prisma.transaction.findMany({
-      where: { userId, accountId: source.accountId!, date, amount },
-      select: { id: true, description: true }, take: 30,
-    });
+    const [matches, categories] = await Promise.all([
+      prisma.transaction.findMany({
+        where: { userId, accountId: source.accountId!, date, amount },
+        select: { id: true, description: true }, take: 30,
+      }),
+      prisma.category.findMany({
+        where: { OR: [{ userId }, { userId: null }], type: { in: ["EXPENSE", "INCOME"] } },
+        select: { id: true, name: true, type: true }, orderBy: { name: "asc" },
+      }),
+    ]);
     const cycle = source.account?.creditCardDetails ? computeInvoiceCycle(date, source.account.creditCardDetails) : null;
     const existingInvoice = cycle ? await prisma.invoice.findUnique({
       where: { accountId_closingDate: { accountId: source.accountId!, closingDate: cycle.closingDate } },
       select: { closingDate: true, dueDate: true },
     }) : null;
     return { error: null, data: {
-      matches, credit: source.type === "CREDIT", pending: row.status === "PENDING", payment: isCardPayment(row, source.type),
+      matches, categories, destination: source.account!.name,
+      credit: source.type === "CREDIT", pending: row.status === "PENDING", payment: isCardPayment(row, source.type),
       description: row.description, amount, date: row.date.slice(0, 10),
       // Computed dates are instants in APP_TIME_ZONE, unlike dates read
       // back from Postgres. This representation keeps their calendar day.
@@ -216,61 +223,10 @@ export async function processOpenFinanceTransaction(input: unknown) {
     const parsed = processSchema.safeParse(input);
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const value = parsed.data;
-    const { source, row, amount, date } = await readTransaction(userId, value.sourceId, value.transactionId);
-    await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "OpenFinanceSource" WHERE "id" = ${source.id} FOR UPDATE`;
-      const current = await tx.openFinanceSource.findFirst({ where: { id: source.id, connection: { userId, active: true } } });
-      if (!current || current.accountId !== source.accountId || current.cardId !== source.cardId ||
-        current.importFromDate?.getTime() !== source.importFromDate?.getTime()) throw new OpenFinanceError("mapping");
-      const externalKey = transactionKey(row);
-      if (await tx.openFinanceImport.findUnique({ where: { sourceId_externalKey: { sourceId: source.id, externalKey } } })) return;
-      if (amount !== value.expectedAmount || row.date.slice(0, 10) !== value.expectedDate || row.description !== value.expectedDescription) {
-        throw new OpenFinanceError("stale");
-      }
-      let transactionId: string | null = null;
-      if (value.mode === "match") {
-        const existing = await tx.transaction.findFirst({ where: {
-          id: value.existingTransactionId, userId, accountId: source.accountId!, amount, date,
-        } });
-        if (!existing) throw new OpenFinanceError("invalid");
-        transactionId = existing.id;
-      } else if (value.mode === "create") {
-        if (row.status !== "POSTED") throw new OpenFinanceError("pending");
-        if (isCardPayment(row, source.type)) throw new OpenFinanceError("payment");
-        // Serialize duplicate checks across different sources mapped to
-        // one local account as well as concurrent requests for this source.
-        await tx.$queryRaw`SELECT "id" FROM "Account" WHERE "id" = ${source.accountId} FOR UPDATE`;
-        const destination = await tx.account.findFirst({ where: { id: source.accountId!, userId, status: "ACTIVE", currency: "BRL" } });
-        if (!destination || (source.type === "CREDIT" ? destination.type !== "CREDIT_CARD" : !["CHECKING", "SAVINGS"].includes(destination.type))) {
-          throw new OpenFinanceError("mapping");
-        }
-        if (await tx.transaction.findFirst({ where: { userId, accountId: source.accountId!, date, amount } })) throw new OpenFinanceError("duplicate");
-        let invoiceId: string | null = null;
-        if (source.type === "CREDIT") {
-          if (!source.card || source.card.status !== "ACTIVE" || source.card.accountId !== source.accountId || !value.closingDate || !value.dueDate ||
-            value.dueDate < value.closingDate || value.closingDate < row.date.slice(0, 10)) throw new OpenFinanceError("invoice");
-          const closingDate = parseCalendarDate(value.closingDate);
-          const dueDate = parseCalendarDate(value.dueDate);
-          const invoice = await tx.invoice.upsert({
-            where: { accountId_closingDate: { accountId: source.accountId!, closingDate } },
-            create: { accountId: source.accountId!, closingDate, dueDate }, update: {},
-          });
-          if (dateOnlyKey(invoice.dueDate) !== value.dueDate) throw new OpenFinanceError("invoice");
-          invoiceId = invoice.id;
-        }
-        const metadata = row.creditCardMetadata;
-        const transaction = await tx.transaction.create({ data: {
-          userId, accountId: source.accountId!, description: row.description, amount, date, status: "COMPLETED",
-          ...(metadata?.installmentNumber && metadata.totalInstallments && metadata.installmentNumber <= metadata.totalInstallments ? {
-            installmentNumber: metadata.installmentNumber, installmentCount: metadata.totalInstallments,
-          } : {}),
-          ...(invoiceId ? { transactionInvoice: { create: { invoiceId } }, transactionCard: { create: { cardId: source.cardId! } } } : {}),
-        } });
-        transactionId = transaction.id;
-        if (invoiceId) await recomputeInvoiceStatus(tx, invoiceId);
-      }
-      await tx.openFinanceImport.create({ data: { sourceId: source.id, externalKey, transactionId } });
-    }, { timeout: 20000 });
+    const { source, row } = await readTransaction(userId, value.sourceId, value.transactionId);
+    await prisma.$transaction((tx) => processReviewedTransaction(tx, userId, row, {
+      accountId: source.accountId, cardId: source.cardId, fromDate: source.importFromDate ? dateOnlyKey(source.importFromDate) : null,
+    }, value), { timeout: 20000 });
     const locale = await getLocale();
     revalidatePath(`/${locale}`, "layout");
     return { error: null };

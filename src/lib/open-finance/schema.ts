@@ -38,8 +38,16 @@ export const mappingSchema = z.object({
   sourceId: identifier, accountId: identifier, cardId: z.string().max(200), fromDate: calendarDateSchema,
 });
 export const previewSchema = z.object({ sourceId: identifier, cursor: z.string().max(8000).nullable() });
-export const processSchema = z.object({
-  sourceId: identifier, transactionId: z.uuid(), mode: z.enum(["create", "match", "ignore"]),
+export const reviewRequestSchema = z.object({ sourceId: identifier, transactionId: z.uuid() });
+export const reviewEditsSchema = z.object({
+  description: z.string().trim().min(1).max(2000),
+  date: calendarDateSchema,
+  // Positive magnitude; the explicit type supplies the sign through Dinero.
+  amount: z.string().regex(/^(?=.*[1-9])\d{1,10}(?:[.,]\d{1,2})?$/),
+  type: z.enum(["income", "expense"]),
+  categoryId: z.string().max(200),
+});
+const processBaseSchema = reviewRequestSchema.extend({
   existingTransactionId: z.string().max(200),
   closingDate: z.union([calendarDateSchema, z.literal("")]),
   dueDate: z.union([calendarDateSchema, z.literal("")]),
@@ -47,10 +55,15 @@ export const processSchema = z.object({
   expectedDate: calendarDateSchema,
   expectedDescription: z.string().max(2000),
 });
+export const processSchema = z.discriminatedUnion("mode", [
+  processBaseSchema.extend({ mode: z.literal("create"), edits: reviewEditsSchema }),
+  processBaseSchema.extend({ mode: z.enum(["match", "ignore"]) }),
+]);
 export type PluggyAccount = z.infer<typeof pluggyAccountSchema>;
 export type PluggyTransaction = z.infer<typeof pluggyTransactionSchema>;
 export type MappingValues = z.infer<typeof mappingSchema>;
 export type ProcessValues = z.infer<typeof processSchema>;
+export type ReviewEdits = z.infer<typeof reviewEditsSchema>;
 
 export class OpenFinanceError extends Error {
   constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget") {

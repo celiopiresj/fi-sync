@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { isOpenFinanceOwner } from "../src/lib/open-finance/access";
 import { checkedCursor, isCardPayment, isNegativeAmount, normalizedAmount, transactionKey } from "../src/lib/open-finance/normalize";
 import { createPluggyClient } from "../src/lib/open-finance/pluggy";
-import { connectionSchema, mappingSchema, pluggyTransactionSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, pluggyTransactionSchema, processSchema, reviewEditsSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
+import { NO_CATEGORY, reviewedTransaction } from "../src/lib/open-finance/review";
+import { dateOnlyKey } from "../src/lib/date";
 import { assertOwnedWidgetItem, pluggyWebhookSecret, publicAppOrigin, validPluggyWebhook, WEBHOOK_HEADER } from "../src/lib/open-finance/widget";
 import { makeErrorMap } from "../src/lib/zod/zod-error-map";
 import { failureFromWidgetEvent, widgetFailure } from "../src/app/[locale]/(app)/open-finance/_lib/widget-errors";
@@ -20,6 +22,27 @@ async function main() {
   const previousVercelEnv = process.env.VERCEL_ENV;
   const previousVercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   try {
+    const edits = { description: "  Edited locally  ", date: "2026-11-01", amount: "25,10", type: "expense" as const, categoryId: NO_CATEGORY };
+    const reviewed = reviewedTransaction(reviewEditsSchema.parse(edits));
+    assert.equal(reviewed.amount, "-25.10");
+    assert.equal(reviewed.description, "Edited locally");
+    assert.equal(dateOnlyKey(reviewed.date), "2026-11-01");
+    assert.equal(reviewed.categoryId, null);
+    assert.equal(reviewedTransaction({ ...edits, amount: "0.10", type: "income" }).amount, "0.10");
+    assert.equal(reviewedTransaction({ ...edits, amount: "9999999999.99" }).amount, "-9999999999.99");
+    assert.equal(reviewedTransaction({ ...edits, amount: "1.1" }).amount, "-1.10");
+    for (const invalid of ["", "0", "0,00", "-1.00", "1.005", "10000000000.00", "1e2", "NaN", "1,000.00"]) {
+      assert.equal(reviewEditsSchema.safeParse({ ...edits, amount: invalid }).success, false);
+    }
+    assert.equal(reviewEditsSchema.safeParse({ ...edits, description: "  " }).success, false);
+    assert.equal(reviewEditsSchema.safeParse({ ...edits, date: "2026-02-30" }).success, false);
+    const original = { sourceId: "source", transactionId: id, existingTransactionId: "", closingDate: "", dueDate: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original" };
+    assert.equal(processSchema.safeParse({ ...original, mode: "create" }).success, false);
+    const request = processSchema.parse({ ...original, mode: "create", edits });
+    assert.equal(request.expectedAmount, "-19.99");
+    assert.equal(request.expectedDescription, "bank original");
+    assert.equal(processSchema.safeParse({ ...original, mode: "ignore" }).success, true);
+    assert.equal(processSchema.safeParse({ ...original, mode: "match", existingTransactionId: "existing" }).success, true);
     const duplicateFailure = widgetFailure({ message: "Connection failed", data: { codeDescription: "ITEM_USER_ALREADY_EXISTS" } });
     assert.equal(duplicateFailure.reason, "widgetDuplicate");
     assert.equal(duplicateFailure.keepOpen, true);
@@ -139,7 +162,7 @@ async function main() {
     await assert.rejects(client.page(accountId, "2026-10-01", null));
     await assert.rejects(client.transaction(accountId, id));
     assert.equal(requests.every((path) => ["/auth", "/v2/transactions", "/connect_token", "/webhooks"].includes(path) || path.startsWith("/webhooks/")), true);
-    console.log("Open Finance checks passed: widget error/retry lifecycle, safe diagnostics, owner isolation, tokens, callbacks, webhooks, money and pagination.");
+    console.log("Open Finance checks passed: editable review, exact money/dates, required confirmation, original snapshots, widget lifecycle, owner isolation, callbacks, webhooks and pagination.");
   } finally {
     globalThis.fetch = originalFetch;
     if (previousOrigin === undefined) delete process.env.OPEN_FINANCE_APP_URL; else process.env.OPEN_FINANCE_APP_URL = previousOrigin;

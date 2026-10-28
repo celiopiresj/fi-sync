@@ -94,9 +94,20 @@ confirmá-lo.
 
 - A lista é paginada pelo endpoint atual `/v2/transactions`. A busca inclui
   somente a conta externa selecionada e a data inicial configurada.
-- **Importar lançamento** cria um lançamento confirmado no fi-sync.
+- A busca abre uma prévia com caixas de seleção. **Revisar selecionados**
+  abre somente os registros escolhidos, um por vez, sem salvá-los em lote.
+  Os não selecionados permanecem disponíveis para outra revisão.
+- **Revisar e editar** mostra os dados originais do banco e permite alterar
+  descrição, data, valor, tipo (receita/despesa) e categoria para o fi-sync.
+  O destino é a conta/cartão escolhido no vínculo. As alterações não são
+  enviadas ao banco; só a confirmação salva o lançamento no fi-sync.
+- **Salvar este lançamento** (ou **Salvar e revisar próximo**) cria um
+  lançamento confirmado com os campos revisados no fi-sync.
   Não altera o saldo inicial nem cria as parcelas futuras de uma compra.
   Os dados da parcela recebida do banco são preservados.
+- Fechar a revisão descarta as edições ainda não salvas. Um erro mantém
+  o formulário aberto; vincular ou ignorar não depende de preencher os
+  campos usados exclusivamente para criar um lançamento novo.
 - **Vincular ao existente** registra que um lançamento de mesma conta,
   data e valor já existe. As categorias, divisões por pessoa e demais
   informações do lançamento existente são preservadas.
@@ -105,6 +116,8 @@ confirmá-lo.
   permanecem mesmo que a transação local seja apagada depois.
 - Uma possível duplicata por conta, data e valor exige vincular ou ignorar;
   não é criada automaticamente uma segunda transação.
+  Essa verificação considera os dados originais e os editados. O comprovante
+  usa a identidade do banco, mesmo quando o valor ou a data foram alterados.
 - Para cartão, confira o fechamento e vencimento da fatura de destino.
   As datas sugeridas usam as configurações do cartão; a fatura real do
   banco pode ter datas diferentes. A importação não altera as datas de
@@ -143,11 +156,15 @@ revise e vincule os registros existentes para evitar duplicatas.
 
 ```bash
 pnpm exec tsx scripts/check-open-finance.ts
+pnpm exec tsx scripts/check-open-finance-ui.tsx
 pnpm exec tsx scripts/check-open-finance-database.ts
 pnpm lint
 pnpm build
 ```
 
+O teste de interface renderiza os componentes reais com dados fictícios,
+confere a seleção, os campos traduzidos e os valores iniciais editáveis,
+sem iniciar importações ou consultar o provedor.
 Os testes focados usam respostas fictícias: não acessam dados financeiros
 nem gravam no banco. O teste de banco usa apenas registros sintéticos
 isolados, em uma transação que sempre é revertida, e verifica datas,

@@ -2,14 +2,14 @@
   "title": "Open Finance",
   "subtitle": "Your banks and cards, connected through Meu Pluggy.",
   "description": "Connect your banks in Meu Pluggy and click Connect Meu Pluggy below. After you authorize access, connections are registered automatically. The service refreshes data every 24 hours; fetching here reads the latest available update.",
-  "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Fetch transactions", "saveMapping": "Save mapping", "review": "Review", "import": "Import transaction", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close" },
+  "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Refresh preview", "saveMapping": "Fetch transactions to review", "review": "Review and edit", "reviewSelected": "Review selected", "import": "Save this transaction", "saveNext": "Save and review next", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close without saving" },
   "tooltip": { "manual": "Manual registration for existing connections" },
   "cards": {
     "setup": { "title": "Server configuration pending", "description": "Configure PLUGGY_CLIENT_ID and PLUGGY_CLIENT_SECRET on the server. Never paste these credentials into a screen field." },
     "connect": { "title": "Connect your banks", "description": "Your authorized banks are registered through Meu Pluggy. Up to five personal connections at the provider.", "button": "Connect Meu Pluggy", "opening": "Opening Meu Pluggy…", "saving": "Registering connection…", "syncing": "Waiting for your Meu Pluggy connections. They will appear here automatically.", "retry": "Retry registration", "manual": "I already have an itemId", "automaticLabel": "Meu Pluggy connection {suffix}" },
     "connections": { "title": "Connections", "empty": "No connections added", "description": "Add your authorized banks to list available accounts and cards.", "inactive": "Disabled", "attention": "This connection needs attention in Meu Pluggy." },
-    "mapping": { "title": "Map an account or card", "description": "Choose the fi-sync destination and the import start date. Connecting does not change opening balances or generate future installments." },
-    "review": { "title": "Transactions to review", "description": "Review before importing. Transfers between your accounts should be linked to existing transfer transactions. Card payments are not imported as refunds; register payments on the invoices screen." }
+    "mapping": { "title": "Map an account or card", "description": "Choose the destination account and start date to fetch a preview. Fetching only saves this mapping and reads the data; no transaction is saved until you review and confirm it." },
+    "review": { "title": "Choose and review transactions", "description": "Select the transactions to bring in, or open Review and edit on any row. Adjust the data and confirm each transaction before saving. Unselected transactions stay available for later." }
   },
   "fields": {
     "label": { "label": "Connection name", "placeholder": "Your bank's name" },
@@ -18,6 +18,11 @@
     "account": { "label": "fi-sync account", "placeholder": "Select a destination" },
     "card": { "label": "fi-sync card", "placeholder": "Select a card" },
     "from": { "label": "Import starting on" },
+    "description": { "label": "Description" },
+    "date": { "label": "Transaction date" },
+    "amount": { "label": "Amount", "placeholder": "0.00" },
+    "type": { "label": "Type", "placeholder": "Select a type", "income": "Income", "expense": "Expense" },
+    "category": { "label": "Category", "placeholder": "Select a category", "none": "No category" },
     "closingDate": { "label": "Destination invoice closing date" },
     "dueDate": { "label": "Destination invoice due date" },
     "existing": { "label": "Existing transaction with the same date and amount", "placeholder": "Select a transaction to link" }
@@ -25,10 +30,10 @@
   "table": {
     "columns": { "date": "Date", "description": "Description", "amount": "Amount", "status": "Status", "actions": "Actions" },
     "empty": { "title": "No new transactions", "description": "Previously imported or ignored transactions do not appear again. Available history depends on the bank." },
-    "selection": { "count": "{count, plural, one {# transaction on this page} other {# transactions on this page}}" },
+    "selection": { "count": "{count, plural, one {# transaction on this page} other {# transactions on this page}}", "selected": "{count, plural, =0 {None selected} one {# selected} other {# selected}}", "all": "Select all on this page", "row": "Select {description}" },
     "menu": { "payment": "Invoice payment", "pending": "Still pending at the bank" }
   },
-  "dialog": { "create": { "title": "Review import", "description": "Check the transaction and, for card purchases, the invoice dates. Importing creates only this transaction. If it already exists, link it instead of creating another.", "confirm": "Import", "cancel": "Cancel" } },
+  "dialog": { "create": { "title": "Edit before saving", "description": "The bank data is shown below for reference. Edit the fields for fi-sync; your bank will not be changed. Confirming saves only this transaction.", "original": "Data received from the bank", "destination": "Destination: {account}", "remaining": "{count, plural, one {# transaction in this review} other {# transactions in this review}}", "confirm": "Save transaction", "cancel": "Cancel" } },
   "toast": { "saved": "Change saved.", "imported": "Transaction processed.", "refreshed": "Data updated." },
   "aria": { "close": "Close review", "navigation": "Open Finance connections" },
   "errors": {

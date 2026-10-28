@@ -85,7 +85,10 @@ here.
 Focused Open Finance checks (no live bank data or database writes):
 ```bash
 pnpm exec tsx scripts/check-open-finance.ts
+pnpm exec tsx scripts/check-open-finance-ui.tsx
 ```
+The UI check renders selection/review controls with synthetic cached data,
+without a browser session or live provider/database calls.
 Database integration check (synthetic fixtures in an always-rolled-back
 transaction; requires the configured Neon database):
 ```bash
@@ -126,6 +129,11 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   `onLoadError`, explicit close or successful completion may unmount it.
   Display translated messages and sanitized provider error codes; never
   echo arbitrary SDK messages, tokens, credentials or request URLs.
+  Importing requires explicit selection, review and confirmation. Fetching
+  a preview or saving a source mapping must never create transactions.
+  Let the owner edit the description, date, amount, type and category
+  before saving; retain the original bank values for freshness checks
+  and keep duplicate prevention and import receipts effective after edits.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.
