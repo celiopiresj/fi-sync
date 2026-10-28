@@ -42,7 +42,10 @@ const html = render(<><TransactionTable source={source} /><ReviewForm {...props}
 for (const key of ["description", "date", "type", "amount", "category"] as const) {
   assert.ok(html.includes(messages.fields[key].label), `Missing translated review control: ${key}`);
 }
-assert.ok(html.includes(messages.buttons.reviewSelected));
+assert.ok(html.includes(messages.table.selection.total));
+assert.ok(html.includes(messages.filters.search));
+assert.ok(html.includes(messages.cards.sidebar.accounts));
+assert.ok(html.includes(messages.cards.sidebar.cards));
 assert.ok(html.includes(messages.buttons.saveNext));
 assert.ok(html.includes(messages.buttons.close));
 assert.ok(html.includes(messages.dialog.create.original));
@@ -52,7 +55,7 @@ assert.ok(html.includes('value="2026-10-28"'));
 assert.ok(html.includes('role="checkbox"'));
 assert.ok(!html.includes("MISSING_MESSAGE"));
 assert.ok(html.includes(messages.tabs.manage));
-assert.ok(html.includes(messages.cards.source.title));
+assert.ok(html.includes(messages.cards.sidebar.title));
 assert.ok(html.includes(messages.cards.mapping.edit));
 assert.ok(html.includes("Visible fi-sync destination"));
 assert.ok(!html.includes("Old disabled institution"));
@@ -67,7 +70,7 @@ queryClient.setQueryData(["open-finance-overview"], unmappedOverview);
 const unmappedPage = render(<OpenFinanceView overview={unmappedOverview} />);
 assert.ok(unmappedPage.includes(messages.buttons.saveMapping));
 assert.ok(!unmappedPage.includes("Bank fixture original"));
-assert.ok(!unmappedPage.includes(messages.buttons.reviewSelected));
+assert.ok(!unmappedPage.includes(messages.table.selection.total));
 assert.equal(queryClient.isMutating(), 0);
 queryClient.clear();
 console.log("UI render checks passed: selection, editable translated fields, bank reference, exact amount/date defaults and no writes while previewing.");

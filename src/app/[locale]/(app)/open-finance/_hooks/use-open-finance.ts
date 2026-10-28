@@ -4,8 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { addOpenFinanceConnection, clearOpenFinanceMapping, getOpenFinanceTransactions, getOpenFinanceReview, processOpenFinanceTransaction, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
-import type { MappingValues, ProcessValues } from "@/lib/open-finance/schema";
+import { addOpenFinanceConnection, clearOpenFinanceMapping, getOpenFinanceTransactions, getOpenFinanceReview, processOpenFinanceTransaction, resolveOpenFinanceMapping, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
+import type { MappingValues, MappingResolutionValues, ProcessValues } from "@/lib/open-finance/schema";
 
 export function useOpenFinanceMutations() {
   const client = useQueryClient();
@@ -23,7 +23,8 @@ export function useOpenFinanceMutations() {
   const disable = useMutation({ mutationFn: (id: string) => setOpenFinanceConnectionActive(id), onSuccess, onError });
   const process = useMutation({ mutationFn: (value: ProcessValues) => processOpenFinanceTransaction(value), onSuccess, onError });
   const clearMapping = useMutation({ mutationFn: (id: string) => clearOpenFinanceMapping(id), onSuccess, onError });
-  return { add, mapping, disable, process, clearMapping };
+  const resolveMapping = useMutation({ mutationFn: (value: MappingResolutionValues) => resolveOpenFinanceMapping(value), onSuccess, onError });
+  return { add, mapping, disable, process, clearMapping, resolveMapping };
 }
 
 export function useOpenFinanceTransactions(sourceId: string, cursor: string | null) {

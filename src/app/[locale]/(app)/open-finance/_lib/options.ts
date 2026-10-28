@@ -10,7 +10,13 @@ export function mappingCardOptions(accountId: string, accounts: MappingFormProps
   return (accounts.find((account) => account.id === accountId)?.cards ?? []).map((card) => ({ value: card.id, label: card.name }));
 }
 export function mappedSources(overview: Overview) {
-  return overview.connections.filter((connection) => connection.active).flatMap((connection) => connection.sources.map((source) => ({ ...source, bankLabel: connection.label })));
+  return overview.connections.filter((connection) => connection.active).flatMap((connection) => connection.sources.map((source) => ({ ...source, bankLabel: connection.label, connectionId: connection.id })));
+}
+export function groupSources<T extends Pick<Source, "type">>(sources: T[]) {
+  return [
+    { type: "BANK", title: "accounts" as const, empty: "emptyAccounts" as const, sources: sources.filter((source) => source.type === "BANK") },
+    { type: "CREDIT", title: "cards" as const, empty: "emptyCards" as const, sources: sources.filter((source) => source.type === "CREDIT") },
+  ];
 }
 export function sourceDestination(source: Source, accounts: Overview["accounts"]) {
   const account = accounts.find((account) => account.id === source.accountId);

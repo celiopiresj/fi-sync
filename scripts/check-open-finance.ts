@@ -5,6 +5,8 @@ import { createPluggyClient } from "../src/lib/open-finance/pluggy";
 import { connectionSchema, mappingSchema, pluggyTransactionSchema, processSchema, reviewEditsSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
 import { NO_CATEGORY, reviewedTransaction } from "../src/lib/open-finance/review";
 import { dateOnlyKey } from "../src/lib/date";
+import { matchesDirection, selectedPreviewTotal } from "../src/app/[locale]/(app)/open-finance/_lib/preview-money";
+import { groupSources } from "../src/app/[locale]/(app)/open-finance/_lib/options";
 import { assertOwnedWidgetItem, pluggyWebhookSecret, publicAppOrigin, validPluggyWebhook, WEBHOOK_HEADER } from "../src/lib/open-finance/widget";
 import { makeErrorMap } from "../src/lib/zod/zod-error-map";
 import { failureFromWidgetEvent, widgetFailure } from "../src/app/[locale]/(app)/open-finance/_lib/widget-errors";
@@ -22,6 +24,18 @@ async function main() {
   const previousVercelEnv = process.env.VERCEL_ENV;
   const previousVercelProduction = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   try {
+    const previewFixture = { id, date: "2026-10-28", description: "fixture", amount: "-19.99", status: "POSTED" as const, payment: false };
+    assert.equal(matchesDirection(previewFixture, "expense"), true);
+    assert.equal(matchesDirection(previewFixture, "income"), false);
+    assert.equal(matchesDirection({ ...previewFixture, amount: null }, "income"), false);
+    assert.equal(selectedPreviewTotal([previewFixture, { ...previewFixture, amount: "0.10" }, { ...previewFixture, amount: "0.20" }]), "-19.69");
+    assert.equal(selectedPreviewTotal([]), "0.00");
+    const grouped = groupSources([
+      { id: "bank", name: "VISA in bank label", type: "BANK", currency: "BRL", accountId: null, cardId: null, fromDate: null, hasImports: false, bankLabel: "fixture", connectionId: "connection" },
+      { id: "card", name: "Account in card label", type: "CREDIT", currency: "BRL", accountId: null, cardId: null, fromDate: null, hasImports: false, bankLabel: "fixture", connectionId: "connection" },
+    ]);
+    assert.deepEqual(grouped[0].sources.map((source) => source.id), ["bank"]);
+    assert.deepEqual(grouped[1].sources.map((source) => source.id), ["card"]);
     const edits = { description: "  Edited locally  ", date: "2026-11-01", amount: "25,10", type: "expense" as const, categoryId: NO_CATEGORY };
     const reviewed = reviewedTransaction(reviewEditsSchema.parse(edits));
     assert.equal(reviewed.amount, "-25.10");

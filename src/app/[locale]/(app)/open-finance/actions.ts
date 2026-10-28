@@ -7,7 +7,7 @@ import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned } f
 import { computeInvoiceCycle } from "@/lib/invoice-resolution";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
-import { openFinanceError } from "@/lib/open-finance/errors";
+import { openFinanceError, mappingConflictInfo } from "@/lib/open-finance/errors";
 import { createPluggyClient } from "@/lib/open-finance/pluggy";
 import { savePluggyConnection } from "@/lib/open-finance/connections";
 import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-item";
@@ -15,7 +15,7 @@ import { processReviewedTransaction } from "@/lib/open-finance/process";
 import { saveSourceMapping, clearSourceMapping } from "@/lib/open-finance/mapping";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
-import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, mappingResolutionSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
 
 export async function createOpenFinanceConnectToken() {
   const userId = await requireOpenFinanceOwner();
@@ -129,15 +129,26 @@ export async function saveOpenFinanceMapping(input: unknown) {
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const value = parsed.data;
     await prisma.$transaction((tx) => saveSourceMapping(tx, userId, value));
-    return { error: null };
-  } catch (error) { return { error: await openFinanceError(error) }; }
+    return { error: null, conflict: null };
+  } catch (error) { return { error: await openFinanceError(error), conflict: mappingConflictInfo(error) }; }
+}
+
+export async function resolveOpenFinanceMapping(input: unknown) {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const parsed = mappingResolutionSchema.safeParse(input);
+    if (!parsed.success) throw new OpenFinanceError("invalid");
+    await prisma.$transaction((tx) => saveSourceMapping(tx, userId, parsed.data, parsed.data.replaceSourceId));
+    return { error: null, conflict: null };
+  } catch (error) { return { error: await openFinanceError(error), conflict: mappingConflictInfo(error) }; }
 }
 
 export async function clearOpenFinanceMapping(input: unknown) {
   const userId = await requireOpenFinanceOwner();
   try {
-    const sourceId = sourceIdSchema.parse(input);
-    await prisma.$transaction((tx) => clearSourceMapping(tx, userId, sourceId));
+    const sourceId = sourceIdSchema.safeParse(input);
+    if (!sourceId.success) throw new OpenFinanceError("invalid");
+    await prisma.$transaction((tx) => clearSourceMapping(tx, userId, sourceId.data));
     return { error: null };
   } catch (error) { return { error: await openFinanceError(error) }; }
 }

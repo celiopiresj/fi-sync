@@ -134,6 +134,8 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   Let the owner edit the description, date, amount, type and category
   before saving; retain the original bank values for freshness checks
   and keep duplicate prevention and import receipts effective after edits.
+  Show bank accounts and credit cards in separate groups based on the
+  provider's `BANK`/`CREDIT` type, never guessed from a bank/card name.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.

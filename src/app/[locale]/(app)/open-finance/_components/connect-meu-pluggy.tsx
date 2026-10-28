@@ -17,11 +17,15 @@ export function ConnectMeuPluggy({ connection }: ConnectControlProps) {
   const locale = useLocale();
   const { resolvedTheme } = useTheme();
   const [manual, setManual] = useState(false);
-  return <div className="flex flex-col gap-4">
+  return <div className="flex w-full min-w-0 flex-col gap-3 xl:w-auto xl:max-w-2xl">
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center xl:justify-end">
+    <Button type="button" variant="ghost" asChild><a href="https://docs.pluggy.ai/pt/docs/guides/meu-pluggy-personal-use" target="_blank" rel="noopener noreferrer">{t("buttons.guide")}</a></Button>
+    <Button type="button" variant="outline" aria-expanded={manual} onClick={() => setManual((value) => !value)}>{t("cards.connect.manual")}</Button>
     <Button type="button" onClick={connection.open} disabled={connection.opening || connection.saving || Boolean(connection.connectToken) || Boolean(connection.pendingItemId)}>
       <BankIcon />
       {connection.opening ? t("cards.connect.opening") : connection.saving ? t("cards.connect.saving") : t("cards.connect.button")}
     </Button>
+    </div>
     {connection.pendingItemId && !connection.saving && <Button type="button" variant="outline" onClick={connection.retry}>{t("cards.connect.retry")}</Button>}
     {connection.syncing && <p role="status" className="text-sm text-muted-foreground">{t("cards.connect.syncing")}</p>}
     {connection.failure && <div role="alert" className="flex flex-col gap-1 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm">
@@ -43,7 +47,6 @@ export function ConnectMeuPluggy({ connection }: ConnectControlProps) {
       onLoadError={connection.onLoadError}
       onEvent={connection.onEvent}
     />}
-    <Button type="button" variant="ghost" aria-expanded={manual} onClick={() => setManual((value) => !value)}>{t("cards.connect.manual")}</Button>
     {manual && <ConnectionForm />}
   </div>;
 }

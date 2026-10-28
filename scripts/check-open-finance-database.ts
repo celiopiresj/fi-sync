@@ -40,10 +40,22 @@ async function main() {
         connectionId: connection.id, externalAccountId: randomUUID(), name: "Conflicting bank", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
       } });
       const mappingInput = { sourceId: source.id, accountId: account.id, cardId: "", fromDate: "2026-10-01" };
+      const previousAccount = await tx.account.create({ data: { userId, name: "Previous wrong destination", type: "CHECKING" } });
+      await tx.openFinanceSource.update({ where: { id: source.id }, data: { accountId: previousAccount.id } });
       await assert.rejects(saveSourceMapping(tx, userId, mappingInput), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.account === account.name && Boolean(error.values?.source.includes("Conflicting bank")));
       await assert.rejects(clearSourceMapping(tx, "not-the-owner", conflictingSource.id));
-      await clearSourceMapping(tx, userId, conflictingSource.id);
+      await assert.rejects(saveSourceMapping(tx, "not-the-owner", mappingInput, conflictingSource.id));
+      const extraConflict = await tx.openFinanceSource.create({ data: { connectionId: connection.id, externalAccountId: randomUUID(), name: "Another legacy mapping", type: "BANK", currency: "BRL", accountId: account.id } });
+      await assert.rejects(saveSourceMapping(tx, userId, mappingInput, conflictingSource.id), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.canReplace === "false");
+      await tx.openFinanceSource.delete({ where: { id: extraConflict.id } });
+      await tx.openFinanceImport.create({ data: { sourceId: conflictingSource.id, externalKey: "bank:locked-conflict" } });
+      await assert.rejects(saveSourceMapping(tx, userId, mappingInput, conflictingSource.id), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.canReplace === "false");
+      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: conflictingSource.id } })).accountId, account.id);
+      await tx.openFinanceImport.deleteMany({ where: { sourceId: conflictingSource.id } });
+      await saveSourceMapping(tx, userId, mappingInput, conflictingSource.id);
       assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: conflictingSource.id } })).accountId, null);
+      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: source.id } })).accountId, account.id);
+      assert.equal(await tx.transaction.count({ where: { userId } }), 0);
       await saveSourceMapping(tx, userId, mappingInput);
       await tx.openFinanceSource.delete({ where: { id: conflictingSource.id } });
       const providerAccount = { id: source.externalAccountId, itemId: connection.itemId, name: "updated fixture", type: "BANK" as const, currencyCode: "BRL" };

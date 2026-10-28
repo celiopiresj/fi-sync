@@ -37,6 +37,7 @@ export const sourceIdSchema = identifier;
 export const mappingSchema = z.object({
   sourceId: identifier, accountId: identifier, cardId: z.string().max(200), fromDate: calendarDateSchema,
 });
+export const mappingResolutionSchema = mappingSchema.extend({ replaceSourceId: identifier });
 export const previewSchema = z.object({ sourceId: identifier, cursor: z.string().max(8000).nullable() });
 export const reviewRequestSchema = z.object({ sourceId: identifier, transactionId: z.uuid() });
 export const reviewEditsSchema = z.object({
@@ -62,11 +63,12 @@ export const processSchema = z.discriminatedUnion("mode", [
 export type PluggyAccount = z.infer<typeof pluggyAccountSchema>;
 export type PluggyTransaction = z.infer<typeof pluggyTransactionSchema>;
 export type MappingValues = z.infer<typeof mappingSchema>;
+export type MappingResolutionValues = z.infer<typeof mappingResolutionSchema>;
 export type ProcessValues = z.infer<typeof processSchema>;
 export type ReviewEdits = z.infer<typeof reviewEditsSchema>;
 
 export class OpenFinanceError extends Error {
-  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "mappingConflict" | "mappingLocked" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget", public readonly values?: Record<string, string>) {
+  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "mappingConflict" | "mappingLocked" | "mappingChanged" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget", public readonly values?: Record<string, string>) {
     super(code);
   }
 }

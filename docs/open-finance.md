@@ -42,8 +42,11 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
    escolha o cartão físico quando aplicável e informe a data inicial
    que deseja importar. Os destinos devem estar cadastrados e ativos.
 
-A tela principal mantém a seleção da origem, o resumo do destino confirmado
-e a prévia dos lançamentos. O resumo mostra a conta do fi-sync e, quando
+A tela segue o modelo com etapas no topo, conexões à esquerda e destino/
+revisão à direita. **Contas bancárias** (`BANK`) e **Cartões de crédito**
+(`CREDIT`) ficam em grupos separados; nomes e rótulos não definem o tipo.
+Em telas menores os painéis se empilham e a tabela vira uma lista.
+O resumo mostra a conta do fi-sync e, quando
 aplicável, o cartão. **Alterar destino ou período** abre a configuração;
 a prévia fica recolhida enquanto o vínculo é editado, inclusive após um
 erro. Só volta ao salvar com sucesso ou manter explicitamente o vínculo
@@ -56,6 +59,19 @@ a conta e a origem em conflito. **Remover vínculo** libera um destino
 escolhido por engano quando ainda não existem lançamentos processados;
 essa ação não remove a conexão com o banco. Vínculos com importações não
 podem ser removidos nem transferidos para outra conta.
+
+Quando houver apenas um vínculo conflitante e as duas origens ainda não
+tiverem registros processados, **Corrigir vínculo e buscar** oferece uma
+confirmação com a conta, a origem atual e a nova origem. Ao confirmar, o
+servidor bloqueia e valida novamente as duas origens, libera o vínculo
+anterior e salva o novo na mesma transação. Nenhum lançamento é criado
+nessa correção. Se já houver importações, outra pessoa for dona da origem
+ou surgirem conflitos adicionais, a troca é bloqueada.
+
+A prévia tem busca por descrição e filtros de entradas/saídas na página
+atual. Alterar um filtro limpa a seleção; somente itens visíveis selecionados
+entram na revisão. O total selecionado usa Dinero.js e os dados do banco
+continuam sendo conferidos novamente antes de salvar cada lançamento.
 
 Sem `OPEN_FINANCE_USER_ID`, ninguém tem acesso. Sem as credenciais da
 Pluggy, somente o dono vê as instruções de configuração.
