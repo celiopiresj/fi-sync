@@ -12,6 +12,7 @@ import { createPluggyClient } from "@/lib/open-finance/pluggy";
 import { savePluggyConnection } from "@/lib/open-finance/connections";
 import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-item";
 import { processReviewedTransaction } from "@/lib/open-finance/process";
+import { saveSourceMapping, clearSourceMapping } from "@/lib/open-finance/mapping";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
 import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
@@ -71,7 +72,7 @@ export async function getOpenFinanceOverview() {
   const userId = await requireOpenFinanceOwner();
   const [connections, accounts] = await Promise.all([
     prisma.openFinanceConnection.findMany({
-      where: { userId }, orderBy: { createdAt: "asc" }, include: { sources: { orderBy: { name: "asc" } } },
+      where: { userId }, orderBy: { createdAt: "asc" }, include: { sources: { orderBy: { name: "asc" }, include: { _count: { select: { imports: true } } } } },
     }),
     prisma.account.findMany({
       where: { userId, status: "ACTIVE", type: { in: ["CHECKING", "SAVINGS", "CREDIT_CARD"] } },
@@ -86,6 +87,7 @@ export async function getOpenFinanceOverview() {
       sources: connection.sources.map((source) => ({
         id: source.id, name: source.name, type: source.type, currency: source.currency,
         accountId: source.accountId, cardId: source.cardId,
+        hasImports: source._count.imports > 0,
         fromDate: source.importFromDate ? dateOnlyKey(source.importFromDate) : null,
       })),
     })),
@@ -126,33 +128,16 @@ export async function saveOpenFinanceMapping(input: unknown) {
     const parsed = mappingSchema.safeParse(input);
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const value = parsed.data;
-    await prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "OpenFinanceSource" WHERE "id" = ${value.sourceId} FOR UPDATE`;
-      const source = await tx.openFinanceSource.findFirst({ where: { id: value.sourceId, connection: { userId, active: true } } });
-      const account = await tx.account.findFirst({
-        where: { id: value.accountId, userId, status: "ACTIVE" }, include: { creditCardDetails: true },
-      });
-      await tx.$queryRaw`SELECT "id" FROM "Account" WHERE "id" = ${value.accountId} FOR UPDATE`;
-      const credit = source?.type === "CREDIT";
-      if (!source || !account || source.currency !== "BRL" || account.currency !== "BRL" ||
-        (credit ? account.type !== "CREDIT_CARD" || !account.creditCardDetails : !["CHECKING", "SAVINGS"].includes(account.type))) {
-        throw new OpenFinanceError("mapping");
-      }
-      if (credit && !await tx.card.findFirst({ where: { id: value.cardId, accountId: account.id, status: "ACTIVE" } })) {
-        throw new OpenFinanceError("mapping");
-      }
-      if (source.accountId !== account.id && await tx.openFinanceImport.count({ where: { sourceId: source.id } })) {
-        throw new OpenFinanceError("mapping");
-      }
-      // One bank account must not be imported twice through two connections.
-      if (await tx.openFinanceSource.findFirst({ where: {
-        id: { not: source.id }, accountId: account.id, connection: { userId, active: true },
-        ...(credit ? { cardId: value.cardId } : {}),
-      } })) throw new OpenFinanceError("mapping");
-      await tx.openFinanceSource.update({ where: { id: source.id }, data: {
-        accountId: account.id, cardId: credit ? value.cardId : null, importFromDate: parseCalendarDate(value.fromDate),
-      } });
-    });
+    await prisma.$transaction((tx) => saveSourceMapping(tx, userId, value));
+    return { error: null };
+  } catch (error) { return { error: await openFinanceError(error) }; }
+}
+
+export async function clearOpenFinanceMapping(input: unknown) {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const sourceId = sourceIdSchema.parse(input);
+    await prisma.$transaction((tx) => clearSourceMapping(tx, userId, sourceId));
     return { error: null };
   } catch (error) { return { error: await openFinanceError(error) }; }
 }

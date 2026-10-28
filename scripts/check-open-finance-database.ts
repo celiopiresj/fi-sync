@@ -8,6 +8,7 @@ import { POST as pluggyWebhook } from "../src/app/api/open-finance/pluggy/route"
 import { pluggyWebhookSecret, WEBHOOK_HEADER } from "../src/lib/open-finance/widget";
 import { processReviewedTransaction } from "../src/lib/open-finance/process";
 import { OpenFinanceError, type PluggyTransaction, type ProcessValues } from "../src/lib/open-finance/schema";
+import { clearSourceMapping, saveSourceMapping } from "../src/lib/open-finance/mapping";
 
 // Every fixture is isolated from real users and the entire transaction
 // is rolled back, including on success. No bank connection is contacted.
@@ -35,6 +36,16 @@ async function main() {
       const source = await tx.openFinanceSource.create({ data: {
         connectionId: connection.id, externalAccountId: randomUUID(), name: "fixture", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
       } });
+      const conflictingSource = await tx.openFinanceSource.create({ data: {
+        connectionId: connection.id, externalAccountId: randomUUID(), name: "Conflicting bank", type: "BANK", currency: "BRL", accountId: account.id, importFromDate: parseCalendarDate("2026-10-01"),
+      } });
+      const mappingInput = { sourceId: source.id, accountId: account.id, cardId: "", fromDate: "2026-10-01" };
+      await assert.rejects(saveSourceMapping(tx, userId, mappingInput), (error) => error instanceof OpenFinanceError && error.code === "mappingConflict" && error.values?.account === account.name && Boolean(error.values?.source.includes("Conflicting bank")));
+      await assert.rejects(clearSourceMapping(tx, "not-the-owner", conflictingSource.id));
+      await clearSourceMapping(tx, userId, conflictingSource.id);
+      assert.equal((await tx.openFinanceSource.findUniqueOrThrow({ where: { id: conflictingSource.id } })).accountId, null);
+      await saveSourceMapping(tx, userId, mappingInput);
+      await tx.openFinanceSource.delete({ where: { id: conflictingSource.id } });
       const providerAccount = { id: source.externalAccountId, itemId: connection.itemId, name: "updated fixture", type: "BANK" as const, currencyCode: "BRL" };
       await savePluggyConnection(userId, connection.itemId, "automatic label", [providerAccount], true, tx);
       await savePluggyConnection(userId, connection.itemId, "automatic label", [providerAccount], true, tx);
@@ -51,6 +62,7 @@ async function main() {
       assert.equal(dateOnlyKey(transaction.date), "2026-10-28");
       assert.equal((await tx.transaction.findFirst({ where: { userId, accountId: account.id, amount: "-19.99", date } }))?.id, transaction.id);
       await tx.openFinanceImport.create({ data: { sourceId: source.id, externalKey: "bank:fixture", transactionId: transaction.id } });
+      await assert.rejects(clearSourceMapping(tx, userId, source.id), (error) => error instanceof OpenFinanceError && error.code === "mappingLocked");
       const duplicate = await tx.openFinanceImport.createMany({ data: [{ sourceId: source.id, externalKey: "bank:fixture" }], skipDuplicates: true });
       assert.equal(duplicate.count, 0);
       assert.equal(await tx.openFinanceSource.findFirst({ where: { id: source.id, connection: { userId: "different-user" } } }), null);

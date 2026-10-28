@@ -32,15 +32,30 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
 5. Reinicie o servidor e abra `/pt-BR/open-finance` ou `/en/open-finance`.
    O acesso também aparece no menu lateral e no final da tela Mais,
    exclusivamente para o usuário configurado.
-6. Clique em **Conectar Meu Pluggy** e entre com a conta em que seus
+6. Abra **Gerenciar bancos**, clique em **Conectar Meu Pluggy** e entre com a conta em que seus
    bancos foram autorizados. A janela usa exclusivamente o conector 200,
    sem Sandbox. O fi-sync recebe e cadastra as conexões automaticamente,
    pelo retorno do widget e pelas notificações da Pluggy. A lista é
    atualizada durante um minuto após o retorno, para incluir conexões
    que terminarem de ser preparadas em segundo plano.
-7. Selecione uma origem, vincule à conta correspondente no fi-sync,
+7. Selecione uma origem em **De onde importar?**, vincule à conta correspondente no fi-sync,
    escolha o cartão físico quando aplicável e informe a data inicial
    que deseja importar. Os destinos devem estar cadastrados e ativos.
+
+A tela principal mantém a seleção da origem, o resumo do destino confirmado
+e a prévia dos lançamentos. O resumo mostra a conta do fi-sync e, quando
+aplicável, o cartão. **Alterar destino ou período** abre a configuração;
+a prévia fica recolhida enquanto o vínculo é editado, inclusive após um
+erro. Só volta ao salvar com sucesso ou manter explicitamente o vínculo
+atual. Alterações ainda não salvas não são usadas para importar.
+
+**Gerenciar bancos** reúne a conexão de novos bancos e os vínculos de cada
+origem. Conexões desativadas ficam recolhidas e não aparecem na seleção.
+Se um destino já estiver ocupado por outra origem, a mensagem identifica
+a conta e a origem em conflito. **Remover vínculo** libera um destino
+escolhido por engano quando ainda não existem lançamentos processados;
+essa ação não remove a conexão com o banco. Vínculos com importações não
+podem ser removidos nem transferidos para outra conta.
 
 Sem `OPEN_FINANCE_USER_ID`, ninguém tem acesso. Sem as credenciais da
 Pluggy, somente o dono vê as instruções de configuração.

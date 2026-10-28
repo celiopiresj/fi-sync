@@ -7,7 +7,10 @@ export type Preview = NonNullable<Awaited<ReturnType<typeof getOpenFinanceTransa
 export type PreviewRow = Preview["rows"][number];
 export type Review = NonNullable<Awaited<ReturnType<typeof getOpenFinanceReview>>["data"]>;
 export type ViewProps = { overview: Overview };
-export type MappingFormProps = { source: Source; accounts: Overview["accounts"] };
+export type MappingFormProps = { source: Source; accounts: Overview["accounts"]; onReady: () => void; onCancel?: () => void };
+export type SourceOption = Source & { bankLabel: string };
+export type BanksManagementProps = ConnectControlProps & { overview: Overview; open: boolean; onSelect: (id: string) => void };
+export type SourceSummaryProps = { source: Source; accounts: Overview["accounts"]; onEdit: () => void };
 export type TransactionTableProps = { source: Source };
 export type ReviewSheetProps = { source: Source; row: PreviewRow | null; remaining: number; onClose: () => void; onProcessed: () => void };
 export type ReviewFormProps = { source: Source; row: PreviewRow; review: Review; remaining: number; onClose: () => void; onProcessed: () => void };
