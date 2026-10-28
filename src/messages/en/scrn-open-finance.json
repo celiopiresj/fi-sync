@@ -1,11 +1,12 @@
 {
   "title": "Open Finance",
   "subtitle": "Your banks and cards, connected through Meu Pluggy.",
-  "description": "Authorize your banks in Meu Pluggy and connect the MeuPluggy connector in the Pluggy Dashboard. Add each bank's itemId here. The service refreshes data every 24 hours; fetching here reads the latest available update.",
+  "description": "Connect your banks in Meu Pluggy and click Connect Meu Pluggy below. After you authorize access, connections are registered automatically. The service refreshes data every 24 hours; fetching here reads the latest available update.",
   "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Fetch transactions", "saveMapping": "Save mapping", "review": "Review", "import": "Import transaction", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close" },
+  "tooltip": { "manual": "Manual registration for existing connections" },
   "cards": {
     "setup": { "title": "Server configuration pending", "description": "Configure PLUGGY_CLIENT_ID and PLUGGY_CLIENT_SECRET on the server. Never paste these credentials into a screen field." },
-    "connect": { "title": "Connect a bank", "description": "Use the itemId created by the MeuPluggy connector, which provides free access to your own data. Up to five personal connections at the provider." },
+    "connect": { "title": "Connect your banks", "description": "Your authorized banks are registered through Meu Pluggy. Up to five personal connections at the provider.", "button": "Connect Meu Pluggy", "opening": "Opening Meu Pluggy…", "saving": "Registering connection…", "syncing": "Waiting for your Meu Pluggy connections. They will appear here automatically.", "retry": "Retry registration", "manual": "I already have an itemId", "automaticLabel": "Meu Pluggy connection {suffix}" },
     "connections": { "title": "Connections", "empty": "No connections added", "description": "Add your authorized banks to list available accounts and cards.", "inactive": "Disabled", "attention": "This connection needs attention in Meu Pluggy." },
     "mapping": { "title": "Map an account or card", "description": "Choose the fi-sync destination and the import start date. Connecting does not change opening balances or generate future installments." },
     "review": { "title": "Transactions to review", "description": "Review before importing. Transfers between your accounts should be linked to existing transfer transactions. Card payments are not imported as refunds; register payments on the invoices screen." }
@@ -31,6 +32,7 @@
   "toast": { "saved": "Change saved.", "imported": "Transaction processed.", "refreshed": "Data updated." },
   "aria": { "close": "Close review", "navigation": "Open Finance connections" },
   "errors": {
+    "widget": { "title": "Could not open the connection", "description": "Try opening Meu Pluggy again. Check that it is enabled in the Pluggy Dashboard." },
     "stale": { "title": "Transaction updated", "description": "The bank changed this transaction. Close the review, fetch the data again and check it before importing." },
     "invalid": { "title": "Invalid input", "description": "Check the supplied fields." },
     "configuration": { "title": "Incomplete configuration", "description": "Configure the Meu Pluggy credentials on the server." },

@@ -116,6 +116,11 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   setup and import behavior are documented in `docs/open-finance.md`.
   Import receipts survive deleting a local transaction, so fetching
   again does not silently recreate a deliberately deleted entry.
+  Connect through the official MeuPluggy widget (connector 200), capturing
+  item ids automatically. Verify `clientUserId` against the owner and
+  connector metadata with the provider before accepting widget/webhook
+  results. Webhooks must authenticate before reading their payload and
+  must never reactivate a connection the user disabled.
 - Everything app-related lives under `src/` (`src/app`, `src/components`,
   `src/lib`, etc.) — that's the Next.js `src` directory convention. Only
   `public/` (static assets) stays at the repo root, per Next.js requirements.

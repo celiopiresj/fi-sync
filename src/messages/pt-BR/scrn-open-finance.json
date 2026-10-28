@@ -1,11 +1,12 @@
 {
   "title": "Open Finance",
   "subtitle": "Seus bancos e cartões, conectados pelo Meu Pluggy.",
-  "description": "Autorize seus bancos no Meu Pluggy e conecte o conector MeuPluggy no Dashboard da Pluggy. Adicione aqui o itemId de cada banco. O serviço atualiza os dados a cada 24 horas; buscar aqui lê a última atualização disponível.",
+  "description": "Conecte os bancos no Meu Pluggy e clique em Conectar Meu Pluggy abaixo. Após sua autorização, as conexões são cadastradas automaticamente. O serviço atualiza os dados a cada 24 horas; buscar aqui lê a última atualização disponível.",
   "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Buscar lançamentos", "saveMapping": "Salvar vínculo", "review": "Revisar", "import": "Importar lançamento", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Fechar" },
+  "tooltip": { "manual": "Cadastro manual para conexões antigas" },
   "cards": {
     "setup": { "title": "Configuração do servidor pendente", "description": "Configure PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET no servidor. Nunca cole essas credenciais em um campo da tela." },
-    "connect": { "title": "Conectar um banco", "description": "Use o itemId criado pelo conector MeuPluggy, que dá acesso gratuito aos seus próprios dados. Até cinco conexões pessoais no provedor." },
+    "connect": { "title": "Conectar seus bancos", "description": "Seus bancos autorizados são cadastrados pelo Meu Pluggy. Até cinco conexões pessoais no provedor.", "button": "Conectar Meu Pluggy", "opening": "Abrindo Meu Pluggy…", "saving": "Cadastrando conexão…", "syncing": "Aguardando as conexões do Meu Pluggy. Elas aparecerão aqui automaticamente.", "retry": "Tentar cadastrar novamente", "manual": "Já tenho um itemId", "automaticLabel": "Conexão Meu Pluggy {suffix}" },
     "connections": { "title": "Conexões", "empty": "Nenhuma conexão adicionada", "description": "Adicione seus bancos autorizados para listar as contas e os cartões disponíveis.", "inactive": "Desativada", "attention": "A conexão precisa de atenção no Meu Pluggy." },
     "mapping": { "title": "Vincular conta ou cartão", "description": "Escolha o destino no fi-sync e a data inicial da importação. A conexão não altera saldos iniciais nem gera parcelas futuras." },
     "review": { "title": "Lançamentos para revisão", "description": "Revise antes de importar. Transferências entre suas contas devem ser vinculadas aos lançamentos de transferência já cadastrados. Pagamentos recebidos no cartão não são importados como estorno; registre o pagamento pela tela de faturas." }
@@ -31,6 +32,7 @@
   "toast": { "saved": "Alteração salva.", "imported": "Lançamento processado.", "refreshed": "Dados atualizados." },
   "aria": { "close": "Fechar revisão", "navigation": "Conexões Open Finance" },
   "errors": {
+    "widget": { "title": "Não foi possível abrir a conexão", "description": "Tente abrir o Meu Pluggy novamente. Confira se ele está habilitado no Dashboard da Pluggy." },
     "stale": { "title": "Lançamento atualizado", "description": "O banco alterou este lançamento. Feche a revisão, busque os dados novamente e confira antes de importar." },
     "invalid": { "title": "Dados inválidos", "description": "Confira os campos informados." },
     "configuration": { "title": "Configuração incompleta", "description": "Configure as credenciais do Meu Pluggy no servidor." },

@@ -33,7 +33,7 @@ export const makeErrorMap =
         if (i.format === "email" || i.validation === "email") {
           return t("email");
         }
-        break;
+        return t("invalid");
       case "invalid_type":
         if (issue.received === "undefined" || issue.received === "null" || i.input === undefined) {
           return t("required");

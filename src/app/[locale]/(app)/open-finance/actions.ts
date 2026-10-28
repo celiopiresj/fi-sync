@@ -10,8 +10,38 @@ import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
 import { openFinanceError } from "@/lib/open-finance/errors";
 import { createPluggyClient } from "@/lib/open-finance/pluggy";
+import { savePluggyConnection } from "@/lib/open-finance/connections";
+import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-item";
+import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
-import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, sourceIdSchema } from "@/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
+
+export async function createOpenFinanceConnectToken() {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const origin = publicAppOrigin();
+    const client = await createPluggyClient();
+    if (origin) {
+      const signature = pluggyWebhookSecret();
+      if (!signature) throw new OpenFinanceError("configuration");
+      await client.ensureWebhooks(`${origin}/api/open-finance/pluggy`, signature);
+    }
+    const token = await client.connectToken({ clientUserId: userId, avoidDuplicates: true,
+      ...(origin ? { oauthRedirectUri: `${origin}/${await getLocale()}/open-finance` } : {}),
+    });
+    return { error: null, accessToken: token.accessToken };
+  } catch (error) { return { error: await openFinanceError(error), accessToken: null }; }
+}
+
+export async function registerOpenFinanceWidgetConnection(input: unknown) {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const value = widgetRegistrationSchema.safeParse(input);
+    if (!value.success) throw new OpenFinanceError("invalid");
+    await registerPluggyWidgetItem(userId, value.data.itemId, true);
+    return { error: null };
+  } catch (error) { return { error: await openFinanceError(error) }; }
+}
 
 async function ownedSource(userId: string, sourceId: string) {
   const source = await prisma.openFinanceSource.findFirst({
@@ -73,27 +103,7 @@ export async function addOpenFinanceConnection(input: unknown) {
       throw new OpenFinanceError("provider");
     }
     const accounts = await client.accounts(item.id);
-    await prisma.$transaction(async (tx) => {
-      // Serialize adding/re-enabling connections, including concurrent tabs.
-      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
-      const existing = await tx.openFinanceConnection.findUnique({ where: { itemId: item.id } });
-      if (existing && existing.userId !== userId) throw new OpenFinanceError("access");
-      if (!existing?.active && await tx.openFinanceConnection.count({ where: { userId, active: true } }) >= 5) {
-        throw new OpenFinanceError("invalid");
-      }
-      const connection = await tx.openFinanceConnection.upsert({
-        where: { itemId: item.id },
-        create: { userId, itemId: item.id, label: parsed.data.label },
-        update: { label: parsed.data.label, active: true },
-      });
-      for (const account of accounts) {
-        await tx.openFinanceSource.upsert({
-          where: { connectionId_externalAccountId: { connectionId: connection.id, externalAccountId: account.id } },
-          create: { connectionId: connection.id, externalAccountId: account.id, name: account.name, type: account.type, currency: account.currencyCode },
-          update: { name: account.name, type: account.type, currency: account.currencyCode },
-        });
-      }
-    });
+    await savePluggyConnection(userId, item.id, parsed.data.label, accounts, true);
     return { error: null };
   } catch (error) { return { error: await openFinanceError(error) }; }
 }

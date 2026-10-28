@@ -10,15 +10,16 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
    banco pelo aplicativo dele. O escopo desejado é conta e cartão Nubank,
    conta e cartão Itaú e cartões C6, next e Bradesco. A disponibilidade
    efetiva dos produtos depende do consentimento e dos dados do banco.
-2. Entre no [Dashboard da Pluggy](https://dashboard.pluggy.ai/) com a mesma
-   conta. Em Aplicações → sua aplicação → Demo → Conectar Conta, escolha
-   **MeuPluggy**, em vez de escolher o banco diretamente ou o Sandbox.
-   Cada banco autorizado se torna um item. Copie o `itemId` de cada um.
+2. No [Dashboard da Pluggy](https://dashboard.pluggy.ai/), habilite o
+   conector **MeuPluggy (200)** em Dados Financeiros → Customização →
+   Conectores → Pessoal → Conectores Diretos. Obtenha as credenciais da
+   aplicação. Não é necessário copiar ids de bancos nem usar a Demo.
 3. Configure no servidor (localmente, em `.env`, que não é versionado):
    - `OPEN_FINANCE_USER_ID`: id exato do seu usuário do Neon Auth.
    - `PLUGGY_CLIENT_ID` e `PLUGGY_CLIENT_SECRET`: credenciais da aplicação
      no Dashboard. Nunca use o prefixo `NEXT_PUBLIC_` nem envie as chaves
-     pelo chat. A tela só recebe os identificadores dos itens.
+     pelo chat. A janela de conexão recebe somente um Connect Token
+     temporário; as credenciais permanecem no servidor.
    Para resolver seu id pelo e-mail cadastrado e configurar o acesso
    exclusivamente no `.env` local, use
    `pnpm exec tsx scripts/configure-open-finance-owner.ts seu-email@example.com`.
@@ -31,13 +32,38 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
 5. Reinicie o servidor e abra `/pt-BR/open-finance` ou `/en/open-finance`.
    O acesso também aparece no menu lateral e no final da tela Mais,
    exclusivamente para o usuário configurado.
-6. Adicione nome e `itemId` de cada conexão. Selecione uma origem, vincule
-   à conta correspondente no fi-sync, escolha o cartão físico quando
-   aplicável e informe a data inicial que deseja importar. As contas e
-   cartões de destino devem estar cadastrados e ativos no fi-sync.
+6. Clique em **Conectar Meu Pluggy** e entre com a conta em que seus
+   bancos foram autorizados. A janela usa exclusivamente o conector 200,
+   sem Sandbox. O fi-sync recebe e cadastra as conexões automaticamente,
+   pelo retorno do widget e pelas notificações da Pluggy. A lista é
+   atualizada durante um minuto após o retorno, para incluir conexões
+   que terminarem de ser preparadas em segundo plano.
+7. Selecione uma origem, vincule à conta correspondente no fi-sync,
+   escolha o cartão físico quando aplicável e informe a data inicial
+   que deseja importar. Os destinos devem estar cadastrados e ativos.
 
 Sem `OPEN_FINANCE_USER_ID`, ninguém tem acesso. Sem as credenciais da
 Pluggy, somente o dono vê as instruções de configuração.
+
+O cadastro por `itemId` continua recolhido em **Já tenho um itemId**, para
+recuperar conexões antigas criadas fora do app. O plano pessoal não
+permite listar itens por `GET /v2/items`; por isso, autorize pelo widget
+do fi-sync para capturar os ids automaticamente.
+
+Na Vercel, o app identifica a URL pública por
+`VERCEL_PROJECT_PRODUCTION_URL`/`VERCEL_URL`, registra os webhooks
+`item/created` e `item/updated` e configura o retorno OAuth. Fora da
+Vercel, defina `OPEN_FINANCE_APP_URL` com uma URL HTTPS pública para
+habilitar esses retornos. Sem URL pública (por exemplo, em localhost),
+o retorno direto do widget funciona, mas os webhooks e o retorno OAuth
+para dispositivos móveis não são configurados.
+
+Os webhooks usam um segredo derivado da chave privada da Pluggy e do id
+do proprietário, enviado em um header, sem uma variável adicional. A
+identidade e o conector de cada item são consultados novamente na API
+antes do cadastro. Notificações repetidas preservam os vínculos locais
+e não reativam conexões desativadas. Rotacionar a chave privada exige
+abrir o widget novamente para atualizar o segredo dos webhooks.
 
 ## Busca e revisão
 
@@ -83,8 +109,9 @@ confirmá-lo.
   processados nem apagam dados locais. Revisões são feitas no fi-sync.
 
 Desativar uma conexão bloqueia buscas e importações, preservando os
-lançamentos e seus comprovantes. Para reativar, adicione novamente o
-mesmo `itemId`; a autorização é validada novamente. Isso não revoga o
+lançamentos e seus comprovantes. Para reativar, conecte explicitamente
+pelo widget ou cadastre novamente o mesmo `itemId` na opção manual;
+a autorização é validada novamente. Isso não revoga o
 consentimento no banco: revogue-o pelo Meu Pluggy ou pelo banco quando
 desejar encerrar o compartilhamento.
 

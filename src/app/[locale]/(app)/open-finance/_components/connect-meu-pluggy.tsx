@@ -1,0 +1,43 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useTheme } from "next-themes";
+import { BankIcon } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
+import { ConnectionForm } from "./connection-form";
+import type { ConnectControlProps } from "../_types/types";
+
+// The SDK initializes browser globals; it must never execute during SSR.
+const PluggyConnect = dynamic(() => import("react-pluggy-connect").then((module) => module.PluggyConnect), { ssr: false });
+
+export function ConnectMeuPluggy({ connection }: ConnectControlProps) {
+  const t = useTranslations("scrn-open-finance");
+  const locale = useLocale();
+  const { resolvedTheme } = useTheme();
+  const [manual, setManual] = useState(false);
+  return <div className="flex flex-col gap-4">
+    <Button type="button" onClick={connection.open} disabled={connection.opening || connection.saving || Boolean(connection.connectToken) || Boolean(connection.pendingItemId)}>
+      <BankIcon />
+      {connection.opening ? t("cards.connect.opening") : connection.saving ? t("cards.connect.saving") : t("cards.connect.button")}
+    </Button>
+    {connection.pendingItemId && !connection.saving && <Button type="button" variant="outline" onClick={connection.retry}>{t("cards.connect.retry")}</Button>}
+    {connection.syncing && <p role="status" className="text-sm text-muted-foreground">{t("cards.connect.syncing")}</p>}
+    {connection.connectToken && <PluggyConnect
+      connectToken={connection.connectToken}
+      connectorIds={[200]}
+      selectedConnectorId={200}
+      includeSandbox={false}
+      allowConnectInBackground={false}
+      language={locale === "pt-BR" ? "pt" : "en"}
+      theme={resolvedTheme === "dark" ? "dark" : "light"}
+      onSuccess={connection.onSuccess}
+      onClose={connection.onClose}
+      onError={connection.onError}
+      onLoadError={connection.onError}
+    />}
+    <Button type="button" variant="ghost" aria-expanded={manual} onClick={() => setManual((value) => !value)}>{t("cards.connect.manual")}</Button>
+    {manual && <ConnectionForm />}
+  </div>;
+}

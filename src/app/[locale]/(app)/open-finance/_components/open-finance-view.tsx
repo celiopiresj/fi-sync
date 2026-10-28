@@ -10,13 +10,15 @@ import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOpenFinanceMutations } from "../_hooks/use-open-finance";
 import { mappedSources } from "../_lib/options";
-import { ConnectionForm } from "./connection-form";
+import { ConnectMeuPluggy } from "./connect-meu-pluggy";
+import { useOpenFinanceScreen } from "../_hooks/use-pluggy-connection";
 import { MappingForm } from "./mapping-form";
 import { TransactionTable } from "./transaction-table";
 import type { ViewProps } from "../_types/types";
 
-export function OpenFinanceView({ overview }: ViewProps) {
+export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
   const t = useTranslations("scrn-open-finance");
+  const { overview, connection } = useOpenFinanceScreen(initialOverview);
   const [sourceId, setSourceId] = useState("");
   const { disable } = useOpenFinanceMutations();
   const sources = mappedSources(overview);
@@ -28,7 +30,7 @@ export function OpenFinanceView({ overview }: ViewProps) {
         <CardHeader><CardTitle>{t("cards.connect.title")}</CardTitle><CardDescription>{t("description")}</CardDescription></CardHeader>
         <CardContent className="flex flex-col gap-4">
           <Button variant="outline" asChild><a href="https://docs.pluggy.ai/pt/docs/guides/meu-pluggy-personal-use" target="_blank" rel="noopener noreferrer">{t("buttons.guide")}</a></Button>
-          {overview.configured ? <ConnectionForm /> : <div className="flex flex-col gap-1 text-warning"><span className="font-medium">{t("cards.setup.title")}</span><p className="text-sm">{t("cards.setup.description")}</p></div>}
+          {overview.configured ? <ConnectMeuPluggy connection={connection} /> : <div className="flex flex-col gap-1 text-warning"><span className="font-medium">{t("cards.setup.title")}</span><p className="text-sm">{t("cards.setup.description")}</p></div>}
         </CardContent>
       </Card>
       <Card>

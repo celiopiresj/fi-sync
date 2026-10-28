@@ -11,7 +11,12 @@ export const pluggyAccountSchema = z.object({
 });
 export const pluggyItemSchema = z.object({
   id: z.uuid(), status: z.string(), consentExpiresAt: z.iso.datetime({ offset: true }).nullish(),
+  clientUserId: z.string().nullish(),
+  connector: z.object({ id: z.number().int(), name: z.string(), isSandbox: z.boolean().optional() }).optional(),
 });
+export const widgetSuccessSchema = z.object({ item: z.object({ id: z.uuid() }) });
+export const widgetRegistrationSchema = z.object({ itemId: z.uuid() });
+export const pluggyWebhookSchema = z.object({ event: z.string().max(100), itemId: z.uuid().optional() });
 export const pluggyTransactionSchema = z.object({
   id: z.uuid(), accountId: z.uuid(), providerId: z.string().max(1000).nullish(),
   description: z.string().max(2000), amount: money,
@@ -27,7 +32,7 @@ export const pluggyTransactionSchema = z.object({
   }).nullish(),
 });
 
-export const connectionSchema = z.object({ label: z.string().trim().min(1).max(80), itemId: z.uuid() });
+export const connectionSchema = z.object({ label: z.string().trim().min(1).max(80), itemId: z.string().min(1).pipe(z.uuid()) });
 export const sourceIdSchema = identifier;
 export const mappingSchema = z.object({
   sourceId: identifier, accountId: identifier, cardId: z.string().max(200), fromDate: calendarDateSchema,
@@ -48,7 +53,7 @@ export type MappingValues = z.infer<typeof mappingSchema>;
 export type ProcessValues = z.infer<typeof processSchema>;
 
 export class OpenFinanceError extends Error {
-  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale") {
+  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget") {
     super(code);
   }
 }

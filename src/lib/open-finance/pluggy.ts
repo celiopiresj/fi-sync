@@ -14,6 +14,7 @@ async function readJson(path: string, init: RequestInit) {
       ...init, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(20000),
     });
     if (!response.ok) throw new OpenFinanceError("provider");
+    if (response.status === 204) return null;
     return await response.json();
   } catch {
     throw new OpenFinanceError("provider");
@@ -33,7 +34,25 @@ export async function createPluggyClient() {
     if (!result.success) throw new OpenFinanceError("provider");
     return result.data;
   }
+  async function post<T>(path: string, body: unknown, schema: z.ZodType<T>, method: "POST" | "PATCH" = "POST"): Promise<T> {
+    const result = schema.safeParse(await readJson(path, {
+      method, headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }));
+    if (!result.success) throw new OpenFinanceError("provider");
+    return result.data;
+  }
   return {
+    connectToken: (options: { clientUserId: string; avoidDuplicates: boolean; oauthRedirectUri?: string }) =>
+      post("/connect_token", { options }, z.object({ accessToken: z.string().min(1).max(16000) })),
+    ensureWebhooks: async (url: string, signature: string) => {
+      const hookSchema = z.object({ id: z.uuid(), event: z.string(), url: z.string(), disabledAt: z.string().nullish(), headers: z.record(z.string(), z.string()).nullish() });
+      const hooks = await get("/webhooks", z.object({ results: z.array(hookSchema) }).nullable().transform((value) => value ?? { results: [] }));
+      for (const event of ["item/created", "item/updated"]) {
+        const existing = hooks.results.find((hook) => hook.event === event && hook.url === url);
+        if (existing && !existing.disabledAt && existing.headers?.["x-fi-sync-pluggy-signature"] === signature) continue;
+        await post(existing ? `/webhooks/${existing.id}` : "/webhooks", { event, url, headers: { "x-fi-sync-pluggy-signature": signature }, ...(existing ? { enabled: true } : {}) }, z.object({ id: z.uuid() }), existing ? "PATCH" : "POST");
+      }
+    },
     item: (id: string) => get(`/items/${encodeURIComponent(id)}`, pluggyItemSchema),
     accounts: async (itemId: string) => {
       const data = await get(`/accounts?${new URLSearchParams({ itemId })}`, z.object({ results: z.array(pluggyAccountSchema) }));
