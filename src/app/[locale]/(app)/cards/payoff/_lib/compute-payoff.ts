@@ -57,17 +57,18 @@ function owedByPerson(
 // A purchase counts toward paying off the card when it's real debt
 // already: every installment (the purchase was made, even if the
 // installment itself lands months from now) and — under "all" — any
-// other row already dated today or earlier. A non-installment row dated
-// in the future is a recurring charge (or a scheduled purchase) that
-// hasn't been billed yet: paying the card off today wouldn't cover it,
-// so it never counts.
+// other row, including one the user entered with a future date. The
+// exception is a recurrence's row dated in the future: that charge
+// hasn't been billed yet, so paying the card off today wouldn't cover
+// it and it never counts.
 function isPayoffDebt(
   transaction: PayoffTransactionInput,
   scope: PayoffScope,
   todayKey: string,
 ): boolean {
   if (transaction.installmentGroupId !== null) return true;
-  return scope === "all" && transaction.dateKey <= todayKey;
+  if (scope !== "all") return false;
+  return transaction.recurrenceId === null || transaction.dateKey <= todayKey;
 }
 
 type ResolvedInvoice = {

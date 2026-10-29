@@ -21,7 +21,7 @@
   },
 
   "hint": {
-    "all": "Soma o que já foi comprado nas faturas em aberto e todas as parcelas que ainda vão vencer, descontando o que já foi pago. Recorrências futuras não entram: ainda não foram cobradas.",
+    "all": "Soma as compras das faturas em aberto, inclusive as lançadas com data futura, e todas as parcelas que ainda vão vencer, descontando o que já foi pago. Recorrências futuras não entram: ainda não foram cobradas.",
     "installments": "Soma só as parcelas que ainda vão vencer, descontando o que já foi pago."
   },
 

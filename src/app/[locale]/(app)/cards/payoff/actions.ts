@@ -82,6 +82,7 @@ export async function getCardPayoff(filters: CardPayoffFilters = {}) {
                 installmentGroupId: true,
                 installmentNumber: true,
                 installmentCount: true,
+                recurrenceId: true,
                 splits: SPLITS_SELECT,
               },
             },
@@ -111,6 +112,7 @@ export async function getCardPayoff(filters: CardPayoffFilters = {}) {
         installmentGroupId: transaction.installmentGroupId,
         installmentNumber: transaction.installmentNumber,
         installmentCount: transaction.installmentCount,
+        recurrenceId: transaction.recurrenceId,
         splits: transaction.splits.map((split) => ({
           personId: split.personId,
           amountCents: toCents(split.amount.toNumber()),

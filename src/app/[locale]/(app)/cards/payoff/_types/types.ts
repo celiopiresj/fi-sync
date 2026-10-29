@@ -20,6 +20,8 @@ export type PayoffTransactionInput = {
   installmentGroupId: string | null;
   installmentNumber: number | null;
   installmentCount: number | null;
+  // Set when a recurrence rule generated this row.
+  recurrenceId: string | null;
   splits: PayoffSplit[];
 };
 

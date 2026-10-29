@@ -21,7 +21,7 @@
   },
 
   "hint": {
-    "all": "Adds up what was already bought on open invoices plus every installment still to come, minus what was already paid. Future recurring charges don't count: they haven't been billed yet.",
+    "all": "Adds up the purchases on open invoices, including ones entered with a future date, plus every installment still to come, minus what was already paid. Future recurring charges don't count: they haven't been billed yet.",
     "installments": "Adds up only the installments still to come, minus what was already paid."
   },
 
