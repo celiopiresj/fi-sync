@@ -85,7 +85,10 @@ async function main() {
       const retained = await tx.transaction.create({ data: { userId, accountId: account.id, description: "retained fixture", amount: "1.01", date } });
       await tx.openFinanceImport.create({ data: { sourceId: source.id, externalKey: "bank:retained", transactionId: retained.id } });
       const category = await tx.category.create({ data: { userId, name: "Review fixture", type: "EXPENSE" } });
+      const selfPerson = await tx.person.create({ data: { userId, name: "Eu", isSelf: true } });
+      const secondPerson = await tx.person.create({ data: { userId, name: "Mãe" } });
       const other = await tx.user.create({ data: { id: `${userId}-other` } });
+      const foreignPerson = await tx.person.create({ data: { userId: other.id, name: "Private person" } });
       const privateCategory = await tx.category.create({ data: { userId: other.id, name: "Private fixture", type: "EXPENSE" } });
       const incomeCategory = await tx.category.create({ data: { userId, name: "Income fixture", type: "INCOME" } });
       const bankRow: PluggyTransaction = { id: randomUUID(), accountId: source.externalAccountId, providerId: "reviewed", description: "Bank original", date: "2026-10-28", amount: -19.99, currencyCode: "BRL", status: "POSTED" };
@@ -94,7 +97,14 @@ async function main() {
         sourceId: source.id, transactionId: bankRow.id, mode: "create", existingTransactionId: "", closingDate: "", dueDate: "",
         expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "Bank original",
         expectedDestination: { accountId: account.id, cardId: "", fromDate: "2026-10-01" },
-        edits: { description: "My edited purchase", date: "2026-10-30", amount: "25,10", type: "expense", categoryId: category.id },
+        edits: {
+          description: "My edited purchase", date: "2026-10-30", amount: "25,10", type: "expense", categoryId: category.id,
+          paymentMethod: "PIX", personId: selfPerson.id,
+          splits: [
+            { personId: selfPerson.id, amount: "15,10" },
+            { personId: secondPerson.id, amount: "10,00" },
+          ],
+        },
       };
       const unchangedCount = await tx.transaction.count({ where: { userId } });
       await assert.rejects(processReviewedTransaction(tx, other.id, bankRow, mapping, value));
@@ -102,14 +112,21 @@ async function main() {
       for (const categoryId of [privateCategory.id, incomeCategory.id]) {
         await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, categoryId } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
       }
+      await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, personId: foreignPerson.id, splits: [] } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
+      await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, splits: [{ personId: selfPerson.id, amount: "10,00" }] } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
+      await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, paymentMethod: "CREDIT_CARD" } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
       await assert.rejects(processReviewedTransaction(tx, userId, { ...bankRow, status: "PENDING" }, mapping, value), (error) => error instanceof OpenFinanceError && error.code === "pending");
       assert.equal(await tx.transaction.count({ where: { userId } }), unchangedCount);
       assert.equal(await tx.openFinanceImport.count({ where: { sourceId: source.id, externalKey: "bank:reviewed" } }), 0);
       await processReviewedTransaction(tx, userId, bankRow, mapping, value);
-      const saved = await tx.transaction.findFirstOrThrow({ where: { userId, description: "My edited purchase" } });
+      const saved = await tx.transaction.findFirstOrThrow({ where: { userId, description: "My edited purchase" }, include: { splits: true } });
       assert.equal(saved.amount.toFixed(2), "-25.10");
       assert.equal(dateOnlyKey(saved.date), "2026-10-30");
       assert.equal(saved.categoryId, category.id);
+      assert.equal(saved.paymentMethod, "PIX");
+      assert.equal(saved.splits.length, 2);
+      assert.equal(saved.splits.find((s) => s.personId === selfPerson.id)?.amount.toFixed(2), "-15.10");
+      assert.equal(saved.splits.find((s) => s.personId === secondPerson.id)?.amount.toFixed(2), "-10.00");
       assert.equal(bankRow.description, "Bank original");
       const editedReceipt = await tx.openFinanceImport.findUniqueOrThrow({ where: { sourceId_externalKey: { sourceId: source.id, externalKey: "bank:reviewed" } } });
       assert.equal(editedReceipt.transactionId, saved.id);
@@ -119,7 +136,7 @@ async function main() {
       await assert.rejects(processReviewedTransaction(tx, userId, anotherRow, mapping, { ...value, transactionId: anotherRow.id }), (error) => error instanceof OpenFinanceError && error.code === "duplicate");
       const originalDuplicate = { ...anotherRow, providerId: "original-duplicate", amount: -25.10, date: "2026-10-30" };
       await assert.rejects(processReviewedTransaction(tx, userId, originalDuplicate, mapping, {
-        ...value, transactionId: originalDuplicate.id, expectedAmount: "-25.10", expectedDate: "2026-10-30", edits: { ...value.edits, amount: "30.00", date: "2026-10-31" },
+        ...value, transactionId: originalDuplicate.id, expectedAmount: "-25.10", expectedDate: "2026-10-30", edits: { ...value.edits, amount: "30.00", date: "2026-10-31", splits: [] },
       }), (error) => error instanceof OpenFinanceError && error.code === "duplicate");
       await processReviewedTransaction(tx, userId, anotherRow, mapping, { ...value, transactionId: anotherRow.id, mode: "ignore" });
       assert.equal(await tx.transaction.count({ where: { userId } }), unchangedCount + 1);
@@ -131,7 +148,7 @@ async function main() {
       } });
       const creditRow = { ...bankRow, id: randomUUID(), accountId: creditSource.externalAccountId, providerId: "reviewed-card", amount: 19.99 };
       const creditMapping = { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" };
-      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, closingDate: "2026-10-30", dueDate: "2026-11-10", edits: { ...value.edits, date: "2026-11-05" }, expectedDestination: { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" } };
+      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, closingDate: "2026-10-30", dueDate: "2026-11-10", edits: { ...value.edits, date: "2026-11-05", paymentMethod: "" as const }, expectedDestination: { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" } };
       await assert.rejects(processReviewedTransaction(tx, userId, creditRow, creditMapping, creditValue), (error) => error instanceof OpenFinanceError && error.code === "invoice");
       assert.equal(await tx.invoice.count({ where: { accountId: creditAccount.id } }), 0);
       await processReviewedTransaction(tx, userId, creditRow, creditMapping, { ...creditValue, closingDate: "2026-11-10", dueDate: "2026-11-20" });
@@ -153,7 +170,7 @@ async function main() {
       assert.equal((await tx.transaction.findUniqueOrThrow({ where: { id: saved.id } })).accountId, account.id);
       const futureRow = { ...bankRow, id: randomUUID(), providerId: "after-destination-change", amount: -7.77 };
       await processReviewedTransaction(tx, userId, futureRow, newDestination, {
-        ...futureValue, transactionId: futureRow.id, expectedAmount: "-7.77", edits: { ...value.edits, amount: "7,77", description: "Imported to new destination" },
+        ...futureValue, transactionId: futureRow.id, expectedAmount: "-7.77", edits: { ...value.edits, amount: "7,77", description: "Imported to new destination", splits: [] },
       });
       assert.equal((await tx.transaction.findFirstOrThrow({ where: { userId, description: "Imported to new destination" } })).accountId, previousAccount.id);
       await tx.openFinanceConnection.delete({ where: { id: connection.id } });

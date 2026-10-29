@@ -39,13 +39,35 @@ export const mappingSchema = z.object({
 });
 export const previewSchema = z.object({ sourceId: identifier, cursor: z.string().max(8000).nullable() });
 export const reviewRequestSchema = z.object({ sourceId: identifier, transactionId: z.uuid() });
+export const reviewPaymentMethodValues = [
+  "CASH",
+  "DEBIT_CARD",
+  "CREDIT_CARD",
+  "BANK_TRANSFER",
+  "PIX",
+  "BOLETO",
+  "OTHER",
+] as const;
+export type ReviewPaymentMethod = (typeof reviewPaymentMethodValues)[number];
+export const reviewDebitPaymentMethodValues = reviewPaymentMethodValues.filter(
+  (method) => method !== "CREDIT_CARD",
+);
+
+const positiveMoneyString = z.string().regex(/^(?=.*[1-9])\d{1,10}(?:[.,]\d{1,2})?$/);
+export const reviewSplitSchema = z.object({
+  personId: identifier,
+  amount: positiveMoneyString,
+});
 export const reviewEditsSchema = z.object({
   description: z.string().trim().min(1).max(2000),
   date: calendarDateSchema,
   // Positive magnitude; the explicit type supplies the sign through Dinero.
-  amount: z.string().regex(/^(?=.*[1-9])\d{1,10}(?:[.,]\d{1,2})?$/),
+  amount: positiveMoneyString,
   type: z.enum(["income", "expense"]),
   categoryId: z.string().max(200),
+  paymentMethod: z.enum(["", ...reviewPaymentMethodValues]).default(""),
+  personId: z.string().max(200).default(""),
+  splits: z.array(reviewSplitSchema).max(50).default([]),
 });
 const processBaseSchema = reviewRequestSchema.extend({
   expectedDestination: mappingSchema.omit({ sourceId: true }),

@@ -1,8 +1,20 @@
 import { BRL, dinero, isNegative, multiply, toDecimal } from "dinero.js";
-import { OpenFinanceError, type PluggyTransaction } from "@/lib/open-finance/schema";
+import { OpenFinanceError, type PluggyTransaction, type ReviewPaymentMethod } from "@/lib/open-finance/schema";
 
 export function transactionKey(row: PluggyTransaction): string {
   return row.providerId ? `bank:${row.providerId}` : `pluggy:${row.id}`;
+}
+
+export function inferPaymentMethod(row: PluggyTransaction, accountType: string): "" | ReviewPaymentMethod {
+  if (accountType === "CREDIT") return "";
+  const op = (row.operationType ?? "").toUpperCase();
+  const desc = row.description.toUpperCase();
+  if (op.includes("PIX") || /\bPIX\b/.test(desc)) return "PIX";
+  if (op.includes("BOLETO") || /\bBOLETO\b/.test(desc)) return "BOLETO";
+  if (op.includes("DEBIT") || op.includes("COMPRA") || /\b(COMPRA|DEBITO|DÉBITO)\b/.test(desc)) return "DEBIT_CARD";
+  if (op.includes("TED") || op.includes("DOC") || op.includes("TRANSFER") || /\b(TED|DOC|TRANSFERENCIA|TRANSFERÊNCIA)\b/.test(desc)) return "BANK_TRANSFER";
+  if (op.includes("SAQUE") || op.includes("CASH") || /\b(SAQUE|DINHEIRO)\b/.test(desc)) return "CASH";
+  return "";
 }
 
 export function isNegativeAmount(amount: string): boolean {

@@ -30,11 +30,38 @@
     "description": { "label": "Descrição" },
     "date": { "label": "Data do lançamento" },
     "amount": { "label": "Valor", "placeholder": "0,00" },
-    "type": { "label": "Tipo", "placeholder": "Selecione o tipo", "income": "Receita", "expense": "Despesa" },
+    "type": { "label": "Tipo", "placeholder": "Selecione o tipo", "income": "Receita", "expense": "Despesa", "creditIncome": "Estorno" },
     "category": { "label": "Categoria", "placeholder": "Selecione uma categoria", "none": "Sem categoria" },
+    "person": { "label": "Pessoa", "placeholder": "Selecione a pessoa" },
+    "paymentMethod": {
+      "label": "Método de pagamento",
+      "placeholder": "Selecione o método",
+      "CASH": "Dinheiro",
+      "DEBIT_CARD": "Cartão de débito",
+      "CREDIT_CARD": "Cartão de crédito",
+      "BANK_TRANSFER": "Transferência",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Outro"
+    },
     "closingDate": { "label": "Fechamento da fatura de destino" },
     "dueDate": { "label": "Vencimento da fatura de destino" },
     "existing": { "label": "Lançamento já cadastrado com mesma data e valor", "placeholder": "Selecione para vincular" }
+  },
+  "splits": {
+    "toggleLabel": "Dividir com outras pessoas",
+    "needsPersonFirst": "Escolha uma pessoa acima para dividir",
+    "payerLabel": "Pagou",
+    "owesLabel": "Deve",
+    "exceeds": "Excede em {value}",
+    "addPerson": "Adicionar pessoa",
+    "newPerson": "Cadastrar nova pessoa",
+    "newPersonPlaceholder": "Nome da pessoa",
+    "remove": "Remover pessoa",
+    "mismatch": "A soma da divisão precisa bater com o valor da transação"
+  },
+  "footer": {
+    "missingField": "Falta preencher: {field}"
   },
   "table": {
     "columns": { "date": "Data", "description": "Descrição", "amount": "Valor", "status": "Situação", "actions": "Ações" },
@@ -42,7 +69,7 @@
     "selection": { "count": "{count, plural, one {# lançamento nesta página} other {# lançamentos nesta página}}", "selected": "{count, plural, =0 {Nenhum selecionado} one {# selecionado} other {# selecionados}}", "all": "Selecionar todos desta página", "row": "Selecionar {description}", "clear": "Limpar seleção", "total": "Total selecionado", "review": "Revisar {count, plural, one {# selecionado} other {# selecionados}}" },
     "menu": { "payment": "Pagamento de fatura", "pending": "Ainda pendente no banco" }
   },
-  "dialog": { "create": { "title": "Editar antes de salvar", "description": "Os dados do banco aparecem abaixo como referência. Edite os campos para o fi-sync; o banco não será alterado. Só este lançamento será salvo ao confirmar.", "original": "Dados recebidos do banco", "destination": "Destino: {account}", "remaining": "{count, plural, one {# lançamento nesta revisão} other {# lançamentos nesta revisão}}", "confirm": "Salvar lançamento", "cancel": "Cancelar" } },
+  "dialog": { "create": { "title": "Editar antes de salvar", "description": "Os dados do banco aparecem abaixo como referência. Edite os campos para o fi-sync; o banco não será alterado. Só este lançamento será salvo ao confirmar.", "original": "Dados recebidos do banco", "destination": "Destino: {account}", "destinationCard": "Destino: {account} · {card}", "installment": "Parcela {number} de {total}", "remaining": "{count, plural, one {# lançamento nesta revisão} other {# lançamentos nesta revisão}}", "confirm": "Salvar lançamento", "cancel": "Cancelar" } },
   "toast": { "saved": "Alteração salva.", "imported": "Lançamento processado.", "refreshed": "Dados atualizados." },
   "aria": { "close": "Fechar revisão", "navigation": "Conexões Open Finance" },
   "errors": {

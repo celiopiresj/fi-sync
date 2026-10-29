@@ -48,6 +48,15 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     if (edited.categoryId && !await tx.category.findFirst({ where: {
       id: edited.categoryId, type: value.edits.type === "expense" ? "EXPENSE" : "INCOME", OR: [{ userId }, { userId: null }],
     } })) throw new OpenFinanceError("invalid");
+    if (edited.splits.length > 0) {
+      const personIds = edited.splits.map((split) => split.personId);
+      if (new Set(personIds).size !== personIds.length) throw new OpenFinanceError("invalid");
+      if (await tx.person.count({ where: { userId, id: { in: personIds } } }) !== personIds.length) {
+        throw new OpenFinanceError("invalid");
+      }
+    }
+    if (source.type === "CREDIT" && edited.paymentMethod) throw new OpenFinanceError("invalid");
+    if (source.type === "BANK" && edited.paymentMethod === "CREDIT_CARD") throw new OpenFinanceError("invalid");
     let invoiceId: string | null = null;
     if (source.type === "CREDIT") {
       if (!source.card || source.card.status !== "ACTIVE" || source.card.accountId !== source.accountId || !value.closingDate || !value.dueDate ||
@@ -60,8 +69,11 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
       invoiceId = invoice.id;
     }
     const metadata = row.creditCardMetadata;
+    const { splits, paymentMethod, ...transactionData } = edited;
     const transaction = await tx.transaction.create({ data: {
-      userId, accountId: source.accountId, ...edited, status: "COMPLETED",
+      userId, accountId: source.accountId, ...transactionData, status: "COMPLETED",
+      ...(source.type === "BANK" && paymentMethod ? { paymentMethod } : {}),
+      ...(splits.length > 0 ? { splits: { create: splits } } : {}),
       ...(metadata?.installmentNumber && metadata.totalInstallments && metadata.installmentNumber <= metadata.totalInstallments ? {
         installmentNumber: metadata.installmentNumber, installmentCount: metadata.totalInstallments,
       } : {}),

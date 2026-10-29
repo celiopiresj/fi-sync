@@ -127,8 +127,10 @@ confirmá-lo.
 - A busca abre uma prévia com caixas de seleção. **Revisar selecionados**
   abre somente os registros escolhidos, um por vez, sem salvá-los em lote.
   Os não selecionados permanecem disponíveis para outra revisão.
-- **Revisar e editar** mostra os dados originais do banco e permite alterar
-  descrição, data, valor, tipo (receita/despesa) e categoria para o fi-sync.
+- **Revisar e editar** mostra os dados originais do banco e permite preencher
+  e alterar descrição, data, valor, tipo (receita/despesa ou estorno),
+  categoria, método de pagamento (para contas bancárias), pessoa responsável
+  (com criação rápida de pessoa) e divisão entre pessoas para o fi-sync.
   O destino é a conta/cartão configurado para a origem. As alterações não são
   enviadas ao banco; só a confirmação salva o lançamento no fi-sync.
 - **Salvar este lançamento** (ou **Salvar e revisar próximo**) cria um

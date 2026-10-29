@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned } from "@/lib/date";
+import { formatPersonName } from "@/lib/format-person-name";
 import { computeInvoiceCycle } from "@/lib/invoice-resolution";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
@@ -14,7 +15,7 @@ import { registerPluggyWidgetItem } from "@/lib/open-finance/register-widget-ite
 import { processReviewedTransaction } from "@/lib/open-finance/process";
 import { saveSourceMapping, clearSourceMapping } from "@/lib/open-finance/mapping";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
-import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
+import { inferPaymentMethod, isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
 import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
 
 export async function createOpenFinanceConnectToken() {
@@ -175,7 +176,7 @@ export async function getOpenFinanceReview(input: unknown) {
     const parsed = reviewRequestSchema.safeParse(input);
     if (!parsed.success) throw new OpenFinanceError("invalid");
     const { source, row, amount, date } = await readTransaction(userId, parsed.data.sourceId, parsed.data.transactionId);
-    const [matches, categories] = await Promise.all([
+    const [matches, categories, people] = await Promise.all([
       prisma.transaction.findMany({
         where: { userId, accountId: source.accountId!, date, amount },
         select: { id: true, description: true }, take: 30,
@@ -184,14 +185,26 @@ export async function getOpenFinanceReview(input: unknown) {
         where: { OR: [{ userId }, { userId: null }], type: { in: ["EXPENSE", "INCOME"] } },
         select: { id: true, name: true, type: true }, orderBy: { name: "asc" },
       }),
+      prisma.person.findMany({
+        where: { userId },
+        select: { id: true, name: true, isSelf: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
+    const defaultPersonId = people.find((person) => person.isSelf)?.id ?? people[0]?.id ?? "";
     const cycle = source.account?.creditCardDetails ? computeInvoiceCycle(date, source.account.creditCardDetails) : null;
     const existingInvoice = cycle ? await prisma.invoice.findUnique({
       where: { accountId_closingDate: { accountId: source.accountId!, closingDate: cycle.closingDate } },
       select: { closingDate: true, dueDate: true },
     }) : null;
+    const metadata = row.creditCardMetadata;
     return { error: null, data: {
-      matches, categories, destination: source.account!.name,
+      matches, categories, people, defaultPersonId,
+      paymentMethod: inferPaymentMethod(row, source.type),
+      destination: source.account!.name,
+      cardName: source.card?.name ?? "",
+      installmentNumber: metadata?.installmentNumber && metadata.totalInstallments && metadata.installmentNumber <= metadata.totalInstallments ? metadata.installmentNumber : null,
+      installmentCount: metadata?.installmentNumber && metadata.totalInstallments && metadata.installmentNumber <= metadata.totalInstallments ? metadata.totalInstallments : null,
       destinationSelection: { accountId: source.accountId!, cardId: source.cardId ?? "", fromDate: dateOnlyKey(source.importFromDate!) },
       credit: source.type === "CREDIT", pending: row.status === "PENDING", payment: isCardPayment(row, source.type),
       description: row.description, amount, date: row.date.slice(0, 10),
@@ -217,4 +230,19 @@ export async function processOpenFinanceTransaction(input: unknown) {
     revalidatePath(`/${locale}`, "layout");
     return { error: null };
   } catch (error) { return { error: await openFinanceError(error) }; }
+}
+
+export async function createOpenFinancePerson(input: unknown) {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const parsed = sourceIdSchema.safeParse(input);
+    if (!parsed.success) throw new OpenFinanceError("invalid");
+    const person = await prisma.person.create({
+      data: { userId, name: formatPersonName(parsed.data) },
+      select: { id: true, name: true },
+    });
+    const locale = await getLocale();
+    revalidatePath(`/${locale}`, "layout");
+    return { error: null, person };
+  } catch (error) { return { error: await openFinanceError(error), person: null }; }
 }

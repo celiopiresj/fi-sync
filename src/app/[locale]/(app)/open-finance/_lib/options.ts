@@ -27,7 +27,8 @@ export function sourceReady(source: Source, accounts: Overview["accounts"]) {
   return Boolean(account && source.fromDate && account.currency === source.currency &&
     (source.type === "CREDIT" ? account.type === "CREDIT_CARD" && card : ["CHECKING", "SAVINGS"].includes(account.type)));
 }
-export function reviewCategoryOptions(categories: Review["categories"], type: string, none: string) {
-  return [{ value: NO_CATEGORY, label: none }, ...categories.filter((category) => category.type === (type === "expense" ? "EXPENSE" : "INCOME"))
-    .map((category) => ({ value: category.id, label: category.name }))];
+export function reviewCategoryOptions(categories: Review["categories"], type: string, none?: string) {
+  const filtered = categories.filter((category) => category.type === (type === "expense" ? "EXPENSE" : "INCOME"))
+    .map((category) => ({ value: category.id, label: category.name }));
+  return none ? [{ value: NO_CATEGORY, label: none }, ...filtered] : filtered;
 }

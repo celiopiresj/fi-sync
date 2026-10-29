@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { isOpenFinanceOwner } from "../src/lib/open-finance/access";
-import { checkedCursor, isCardPayment, isNegativeAmount, normalizedAmount, transactionKey } from "../src/lib/open-finance/normalize";
+import { checkedCursor, inferPaymentMethod, isCardPayment, isNegativeAmount, normalizedAmount, transactionKey } from "../src/lib/open-finance/normalize";
 import { createPluggyClient } from "../src/lib/open-finance/pluggy";
 import { connectionSchema, mappingSchema, pluggyTransactionSchema, processSchema, reviewEditsSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
 import { NO_CATEGORY, reviewedTransaction } from "../src/lib/open-finance/review";
@@ -36,12 +36,34 @@ async function main() {
     ]);
     assert.deepEqual(grouped[0].sources.map((source) => source.id), ["bank"]);
     assert.deepEqual(grouped[1].sources.map((source) => source.id), ["card"]);
-    const edits = { description: "  Edited locally  ", date: "2026-11-01", amount: "25,10", type: "expense" as const, categoryId: NO_CATEGORY };
+    const edits = { description: "  Edited locally  ", date: "2026-11-01", amount: "25,10", type: "expense" as const, categoryId: NO_CATEGORY, paymentMethod: "PIX" as const, personId: "person-self", splits: [] };
     const reviewed = reviewedTransaction(reviewEditsSchema.parse(edits));
     assert.equal(reviewed.amount, "-25.10");
     assert.equal(reviewed.description, "Edited locally");
     assert.equal(dateOnlyKey(reviewed.date), "2026-11-01");
     assert.equal(reviewed.categoryId, null);
+    assert.equal(reviewed.paymentMethod, "PIX");
+    assert.deepEqual(reviewed.splits, [{ personId: "person-self", amount: "-25.10" }]);
+    const splitReviewed = reviewedTransaction(reviewEditsSchema.parse({
+      ...edits,
+      splits: [
+        { personId: "person-self", amount: "15,10" },
+        { personId: "person-other", amount: "10,00" },
+      ],
+    }));
+    assert.deepEqual(splitReviewed.splits, [
+      { personId: "person-self", amount: "-15.10" },
+      { personId: "person-other", amount: "-10.00" },
+    ]);
+    assert.throws(() => reviewedTransaction(reviewEditsSchema.parse({
+      ...edits,
+      splits: [
+        { personId: "person-self", amount: "10,00" },
+        { personId: "person-other", amount: "10,00" },
+      ],
+    })));
+    assert.equal(inferPaymentMethod({ ...row, operationType: "PIX" }, "BANK"), "PIX");
+    assert.equal(inferPaymentMethod({ ...row, operationType: "PIX" }, "CREDIT"), "");
     assert.equal(reviewedTransaction({ ...edits, amount: "0.10", type: "income" }).amount, "0.10");
     assert.equal(reviewedTransaction({ ...edits, amount: "9999999999.99" }).amount, "-9999999999.99");
     assert.equal(reviewedTransaction({ ...edits, amount: "1.1" }).amount, "-1.10");

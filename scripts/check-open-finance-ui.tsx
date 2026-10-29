@@ -20,7 +20,29 @@ const source = { id: "fixture-source", name: "Fixture bank", type: "BANK", curre
 const row = { id: "00000000-0000-4000-8000-000000000002", description: "Bank fixture original", date: "2026-10-28", amount: "-19.99", status: "POSTED" as const, payment: false };
 const props: ReviewFormProps = {
   source, row, remaining: 2, onClose() {}, onProcessed() {},
-  review: { description: row.description, amount: row.amount, date: row.date, matches: [], categories: [], destination: "Fixture destination", destinationSelection: { accountId: "fixture-account", cardId: "", fromDate: "2026-10-01" }, credit: false, pending: false, payment: false, closingDate: "", dueDate: "" },
+  review: {
+    description: row.description,
+    amount: row.amount,
+    date: row.date,
+    matches: [],
+    categories: [{ id: "cat-1", name: "Alimentação", type: "EXPENSE" }],
+    people: [
+      { id: "person-1", name: "Eu", isSelf: true },
+      { id: "person-2", name: "Mãe", isSelf: false },
+    ],
+    defaultPersonId: "person-1",
+    paymentMethod: "PIX",
+    destination: "Fixture destination",
+    cardName: "",
+    installmentNumber: null,
+    installmentCount: null,
+    destinationSelection: { accountId: "fixture-account", cardId: "", fromDate: "2026-10-01" },
+    credit: false,
+    pending: false,
+    payment: false,
+    closingDate: "",
+    dueDate: "",
+  },
 };
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 queryClient.setQueryData(["open-finance-transactions", source.id, null], { error: null, data: { rows: [row], next: null } });
@@ -39,9 +61,11 @@ function render(content: ReactNode) { return renderToString(
   </AppRouterContext.Provider>,
 ); }
 const html = render(<><TransactionTable source={source} /><ReviewForm {...props} /><OpenFinanceView overview={overview} /><MappingForm source={source} accounts={overview.accounts} onReady={() => {}} /></>);
-for (const key of ["description", "date", "type", "amount", "category"] as const) {
+for (const key of ["description", "date", "type", "amount", "category", "paymentMethod", "person"] as const) {
   assert.ok(html.includes(messages.fields[key].label), `Missing translated review control: ${key}`);
 }
+assert.ok(html.includes(messages.splits.toggleLabel));
+assert.ok(html.includes(messages.splits.newPerson));
 assert.ok(html.includes(messages.table.selection.total));
 assert.ok(html.includes(messages.filters.search));
 assert.ok(html.includes(messages.cards.sidebar.accounts));

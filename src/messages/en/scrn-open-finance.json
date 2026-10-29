@@ -30,11 +30,38 @@
     "description": { "label": "Description" },
     "date": { "label": "Transaction date" },
     "amount": { "label": "Amount", "placeholder": "0.00" },
-    "type": { "label": "Type", "placeholder": "Select a type", "income": "Income", "expense": "Expense" },
+    "type": { "label": "Type", "placeholder": "Select a type", "income": "Income", "expense": "Expense", "creditIncome": "Refund" },
     "category": { "label": "Category", "placeholder": "Select a category", "none": "No category" },
+    "person": { "label": "Person", "placeholder": "Select the person" },
+    "paymentMethod": {
+      "label": "Payment method",
+      "placeholder": "Select the method",
+      "CASH": "Cash",
+      "DEBIT_CARD": "Debit card",
+      "CREDIT_CARD": "Credit card",
+      "BANK_TRANSFER": "Bank transfer",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Other"
+    },
     "closingDate": { "label": "Destination invoice closing date" },
     "dueDate": { "label": "Destination invoice due date" },
     "existing": { "label": "Existing transaction with the same date and amount", "placeholder": "Select a transaction to link" }
+  },
+  "splits": {
+    "toggleLabel": "Split with other people",
+    "needsPersonFirst": "Choose a person above to split",
+    "payerLabel": "Paid",
+    "owesLabel": "Owes",
+    "exceeds": "Exceeds by {value}",
+    "addPerson": "Add person",
+    "newPerson": "Register new person",
+    "newPersonPlaceholder": "Person's name",
+    "remove": "Remove person",
+    "mismatch": "The split total must match the transaction amount"
+  },
+  "footer": {
+    "missingField": "Missing: {field}"
   },
   "table": {
     "columns": { "date": "Date", "description": "Description", "amount": "Amount", "status": "Status", "actions": "Actions" },
@@ -42,7 +69,7 @@
     "selection": { "count": "{count, plural, one {# transaction on this page} other {# transactions on this page}}", "selected": "{count, plural, =0 {None selected} one {# selected} other {# selected}}", "all": "Select all on this page", "row": "Select {description}", "clear": "Clear selection", "total": "Selected total", "review": "Review {count, plural, one {# selected} other {# selected}}" },
     "menu": { "payment": "Invoice payment", "pending": "Still pending at the bank" }
   },
-  "dialog": { "create": { "title": "Edit before saving", "description": "The bank data is shown below for reference. Edit the fields for fi-sync; your bank will not be changed. Confirming saves only this transaction.", "original": "Data received from the bank", "destination": "Destination: {account}", "remaining": "{count, plural, one {# transaction in this review} other {# transactions in this review}}", "confirm": "Save transaction", "cancel": "Cancel" } },
+  "dialog": { "create": { "title": "Edit before saving", "description": "The bank data is shown below for reference. Edit the fields for fi-sync; your bank will not be changed. Confirming saves only this transaction.", "original": "Data received from the bank", "destination": "Destination: {account}", "destinationCard": "Destination: {account} · {card}", "installment": "Installment {number} of {total}", "remaining": "{count, plural, one {# transaction in this review} other {# transactions in this review}}", "confirm": "Save transaction", "cancel": "Cancel" } },
   "toast": { "saved": "Change saved.", "imported": "Transaction processed.", "refreshed": "Data updated." },
   "aria": { "close": "Close review", "navigation": "Open Finance connections" },
   "errors": {
