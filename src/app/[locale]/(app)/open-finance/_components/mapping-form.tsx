@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { WarningCircleIcon } from "@phosphor-icons/react";
+import { SpinnerIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ItemGroup } from "@/components/ui/item";
@@ -13,6 +13,7 @@ import type { MappingFormProps } from "../_types/types";
 export function MappingForm(props: MappingFormProps) {
   const { source, accounts, onCancel } = props;
   const t = useTranslations("scrn-open-finance");
+  const tCommon = useTranslations("common");
   const {
     accountId,
     cardId,
@@ -94,29 +95,36 @@ export function MappingForm(props: MappingFormProps) {
           <p className="text-sm text-muted-foreground">
             {t("cards.mapping.editing")}
           </p>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button
-              type="submit"
-              disabled={pending || source.currency !== "BRL"}
-            >
-              {t("buttons.saveMapping")}
-            </Button>
-            {onCancel && (
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2">
               <Button
-                type="button"
-                variant="outline"
-                disabled={pending}
-                onClick={onCancel}
+                type="submit"
+                disabled={pending || source.currency !== "BRL"}
+                className="h-11 flex-1 text-sm font-medium"
               >
-                {t("cards.mapping.cancel")}
+                {pending && <SpinnerIcon className="size-4 animate-spin" />}
+                {t("buttons.saveMapping")}
               </Button>
-            )}
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={onCancel}
+                  className="h-11 flex-1 text-sm font-medium"
+                >
+                  {tCommon("buttons.cancel")}
+                </Button>
+              )}
+            </div>
             {source.accountId && (
               <Button
                 type="button"
                 variant="ghost"
+                size="sm"
                 disabled={pending}
                 onClick={() => void clear()}
+                className="text-xs text-muted-foreground hover:text-foreground"
               >
                 {t("cards.mapping.clear")}
               </Button>

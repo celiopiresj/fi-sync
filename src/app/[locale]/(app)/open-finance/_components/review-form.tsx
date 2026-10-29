@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations, useFormatter } from "next-intl";
-import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { PlusIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import { parseCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import { AmountInput } from "@/components/form/amount-field";
@@ -420,33 +420,42 @@ export function ReviewForm(props: ReviewFormProps) {
               {t("validation.missingField", { field: missingFieldLabel })}
             </p>
           )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button
-              type="submit"
-              disabled={
-                process.isPending ||
-                review.pending ||
-                review.payment ||
-                review.matches.length > 0
-              }
-            >
-              {t(remaining > 1 ? "buttons.saveNext" : "buttons.create")}
-            </Button>
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2">
+              <Button
+                type="submit"
+                disabled={
+                  process.isPending ||
+                  review.pending ||
+                  review.payment ||
+                  review.matches.length > 0
+                }
+                className="h-11 flex-1 text-sm font-medium"
+              >
+                {process.isPending && (
+                  <SpinnerIcon className="size-4 animate-spin" />
+                )}
+                {t(remaining > 1 ? "buttons.saveNext" : "buttons.create")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={process.isPending}
+                onClick={onClose}
+                className="h-11 flex-1 text-sm font-medium"
+              >
+                {t("buttons.close")}
+              </Button>
+            </div>
             <Button
               type="button"
               variant="ghost"
+              size="sm"
               disabled={process.isPending}
               onClick={() => void decide("ignore")}
+              className="text-xs text-muted-foreground hover:text-foreground"
             >
               {t("buttons.ignore")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={process.isPending}
-              onClick={onClose}
-            >
-              {t("buttons.close")}
             </Button>
           </div>
         </fieldset>

@@ -2,7 +2,7 @@
   "title": "Open Finance",
   "subtitle": "Seus bancos e cartões, conectados pelo Meu Pluggy.",
   "description": "Conecte os bancos no Meu Pluggy e clique em Conectar Meu Pluggy abaixo. Após sua autorização, as conexões são cadastradas automaticamente. O serviço atualiza os dados a cada 24 horas; buscar aqui lê a última atualização disponível.",
-  "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Atualizar prévia", "saveMapping": "Buscar lançamentos para revisar", "review": "Revisar e editar", "reviewSelected": "Revisar selecionados", "import": "Salvar este lançamento", "saveNext": "Salvar e revisar próximo", "create": "Salvar lançamento", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Fechar sem salvar" },
+  "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Atualizar prévia", "saveMapping": "Buscar lançamentos para revisar", "review": "Revisar e editar", "reviewSelected": "Revisar selecionados", "import": "Salvar este lançamento", "saveNext": "Salvar e revisar próximo", "create": "Criar", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Cancelar" },
   "tooltip": { "manual": "Cadastro manual para conexões antigas" },
   "tabs": { "manage": "Gerenciar bancos", "back": "Voltar aos lançamentos" },
   "breadcrumb": { "section": "Integrações" },
