@@ -271,7 +271,7 @@ export function PickerRowField({
               onClick={() => choose(option.value)}
             />
           ))}
-          {normalizedQuery && filteredOptions.length === 0 ? (
+          {hasQuery && filteredOptions.length === 0 ? (
             <p className="px-2.5 py-2 text-xs text-muted-foreground">
               {t("picker.noResults")}
             </p>

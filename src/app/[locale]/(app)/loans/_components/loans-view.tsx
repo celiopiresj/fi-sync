@@ -1,5 +1,7 @@
 "use client";
 
+import { matchesSearch } from "@/lib/normalize-search";
+
 import { useMemo, useState } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { toast } from "sonner";
