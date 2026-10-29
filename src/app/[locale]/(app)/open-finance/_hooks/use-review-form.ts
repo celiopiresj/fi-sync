@@ -74,6 +74,17 @@ export function useReviewForm(props: ReviewFormProps) {
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
 
+  const previousTypeRef = useRef(type);
+  useEffect(() => {
+    if (previousTypeRef.current !== type) {
+      previousTypeRef.current = type;
+      if (categoryId) {
+        form.setFieldValue("categoryId", "");
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type]);
+
   useEffect(() => {
     if (isDividing) {
       if (splits.length === 0) {
@@ -173,7 +184,6 @@ export function useReviewForm(props: ReviewFormProps) {
     } catch { /* Handled by mutation */ }
   }
 
-  function resetCategory() { form.setFieldValue("categoryId", ""); }
   async function decide(mode: "match" | "ignore", existingTransactionId = "") {
     try {
       const result = await process.mutateAsync({ ...original, mode, existingTransactionId });
@@ -220,7 +230,6 @@ export function useReviewForm(props: ReviewFormProps) {
     handleAddSecondaryPerson,
     process,
     decide,
-    resetCategory,
     review,
   };
 }

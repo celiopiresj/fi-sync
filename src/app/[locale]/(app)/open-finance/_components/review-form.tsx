@@ -6,6 +6,7 @@ import { parseCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ItemGroup } from "@/components/ui/item";
 import { Switch } from "@/components/ui/switch";
 import { reviewCategoryOptions } from "../_lib/options";
 import { reviewDebitPaymentMethodValues } from "../_schema/schema";
@@ -42,7 +43,6 @@ export function ReviewForm(props: ReviewFormProps) {
     handleAddSecondaryPerson,
     process,
     decide,
-    resetCategory,
     review,
   } = useReviewForm(props);
   return (
@@ -67,72 +67,72 @@ export function ReviewForm(props: ReviewFormProps) {
       {review.payment && <p className="text-sm text-warning">{t("errors.payment.description")}</p>}
       <form className="flex flex-col gap-4" onSubmit={(event) => { event.preventDefault(); void form.handleSubmit(); }}>
         <fieldset disabled={process.isPending} className="flex min-w-0 flex-col gap-4">
-          <form.AppField name="type" listeners={{ onChange: resetCategory }}>{(field) => <field.ToggleGroupField label={t("fields.type.label")} options={[
+          <form.AppField name="type">{(field) => <field.ToggleGroupField label={t("fields.type.label")} options={[
             { value: "expense", label: t("fields.type.expense") },
             { value: "income", label: t(review.credit ? "fields.type.creditIncome" : "fields.type.income") },
           ]} />}</form.AppField>
           <form.AppField name="amount">{(field) => <field.AmountField label={t("fields.amount.label")} placeholder={t("fields.amount.placeholder")} allowExpression size="lg" />}</form.AppField>
           <form.AppField name="description">{(field) => <field.TextField label={t("fields.description.label")} />}</form.AppField>
           <form.AppField name="date">{(field) => <field.DateField label={t("fields.date.label")} />}</form.AppField>
-          <form.AppField name="categoryId">{(field) => <field.SelectField label={t("fields.category.label")} placeholder={t("fields.category.placeholder")} options={reviewCategoryOptions(review.categories, type)} />}</form.AppField>
-          {!review.credit && (
-            <form.AppField name="paymentMethod">{(field) => <field.SelectField label={t("fields.paymentMethod.label")} placeholder={t("fields.paymentMethod.placeholder")} options={reviewDebitPaymentMethodValues.map((method) => ({
-              value: method,
-              label: t(`fields.paymentMethod.${method}`),
-            }))} />}</form.AppField>
-          )}
-          <div className="flex flex-col gap-2">
-            <form.AppField name="personId">{(field) => <field.SelectField label={t("fields.person.label")} placeholder={t("fields.person.placeholder")} options={people.map((person) => ({
-              value: person.id,
-              label: formatPersonName(person.name),
-            }))} />}</form.AppField>
-            {!isAddingPerson ? (
-              <button
-                type="button"
-                onClick={() => setIsAddingPerson(true)}
-                className="flex w-fit items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline"
-              >
-                <PlusIcon className="size-3.5" />
-                {t("splits.newPerson")}
-              </button>
-            ) : (
-              <div className="flex flex-col gap-2 rounded-md border border-border p-2">
-                <Input
-                  value={newPersonName}
-                  onChange={(e) => setNewPersonName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleCreatePerson();
-                    }
-                  }}
-                  placeholder={t("splits.newPersonPlaceholder")}
-                />
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="flex-1"
-                    disabled={isCreatingPerson || !newPersonName.trim()}
-                    onClick={() => void handleCreatePerson()}
-                  >
-                    {tCommon("buttons.save")}
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsAddingPerson(false);
-                      setNewPersonName("");
-                    }}
-                  >
-                    {tCommon("buttons.cancel")}
-                  </Button>
-                </div>
-              </div>
+          <ItemGroup className="gap-0 divide-y rounded-md border border-border">
+            <form.AppField name="categoryId">{(field) => <field.PickerRowField label={t("fields.category.label")} placeholder={t("fields.category.placeholder")} options={reviewCategoryOptions(review.categories, type)} disabled={process.isPending} />}</form.AppField>
+            {!review.credit && (
+              <form.AppField name="paymentMethod">{(field) => <field.PickerRowField label={t("fields.paymentMethod.label")} placeholder={t("fields.paymentMethod.placeholder")} options={reviewDebitPaymentMethodValues.map((method) => ({
+                value: method,
+                label: t(`fields.paymentMethod.${method}`),
+              }))} disabled={process.isPending} />}</form.AppField>
             )}
-          </div>
+            <form.AppField name="personId">{(field) => <field.PickerRowField label={t("fields.person.label")} placeholder={t("fields.person.placeholder")} options={people.map((person) => ({
+              value: person.id,
+              label: person.name,
+            }))} formatDisplay={formatPersonName} disabled={process.isPending} />}</form.AppField>
+          </ItemGroup>
+          {!isAddingPerson ? (
+            <button
+              type="button"
+              onClick={() => setIsAddingPerson(true)}
+              className="flex w-fit items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline"
+            >
+              <PlusIcon className="size-3.5" />
+              {t("splits.newPerson")}
+            </button>
+          ) : (
+            <div className="flex flex-col gap-2 rounded-md border border-border p-2">
+              <Input
+                value={newPersonName}
+                onChange={(e) => setNewPersonName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleCreatePerson();
+                  }
+                }}
+                placeholder={t("splits.newPersonPlaceholder")}
+              />
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  className="flex-1"
+                  disabled={isCreatingPerson || !newPersonName.trim()}
+                  onClick={() => void handleCreatePerson()}
+                >
+                  {tCommon("buttons.save")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsAddingPerson(false);
+                    setNewPersonName("");
+                  }}
+                >
+                  {tCommon("buttons.cancel")}
+                </Button>
+              </div>
+            </div>
+          )}
           {people.length > 1 && (
             <div className="flex flex-col gap-3 rounded-md border border-border p-3">
               <div className="flex items-center justify-between gap-3">
@@ -199,18 +199,22 @@ export function ReviewForm(props: ReviewFormProps) {
                             <span className="sr-only">{t("splits.remove")}</span>
                           </Button>
                         </div>
-                        <form.AppField name={`splits[${index}].personId`}>
-                          {(field) => (
-                            <field.SelectField
-                              label={t("fields.person.label")}
-                              placeholder={t("fields.person.placeholder")}
-                              options={people.map((person) => ({
-                                value: person.id,
-                                label: formatPersonName(person.name),
-                              }))}
-                            />
-                          )}
-                        </form.AppField>
+                        <ItemGroup className="gap-0 divide-y rounded-md border border-border">
+                          <form.AppField name={`splits[${index}].personId`}>
+                            {(field) => (
+                              <field.PickerRowField
+                                label={t("fields.person.label")}
+                                placeholder={t("fields.person.placeholder")}
+                                options={people.map((person) => ({
+                                  value: person.id,
+                                  label: person.name,
+                                }))}
+                                formatDisplay={formatPersonName}
+                                disabled={process.isPending}
+                              />
+                            )}
+                          </form.AppField>
+                        </ItemGroup>
                         <form.AppField name={`splits[${index}].amount`}>
                           {(field) => (
                             <field.AmountField
@@ -236,10 +240,12 @@ export function ReviewForm(props: ReviewFormProps) {
               )}
             </div>
           )}
-          {review.credit && <>
-            <form.AppField name="closingDate">{(field) => <field.DateField label={t("fields.closingDate.label")} />}</form.AppField>
-            <form.AppField name="dueDate">{(field) => <field.DateField label={t("fields.dueDate.label")} />}</form.AppField>
-          </>}
+          {review.credit && (
+            <ItemGroup className="gap-0 divide-y rounded-md border border-border">
+              <form.AppField name="closingDate">{(field) => <field.DatePickerRowField label={t("fields.closingDate.label")} placeholder={t("fields.closingDate.label")} formatDisplay={(value) => formatter.dateTime(value, { dateStyle: "long" })} disabled={process.isPending} />}</form.AppField>
+              <form.AppField name="dueDate">{(field) => <field.DatePickerRowField label={t("fields.dueDate.label")} placeholder={t("fields.dueDate.label")} formatDisplay={(value) => formatter.dateTime(value, { dateStyle: "long" })} disabled={process.isPending} />}</form.AppField>
+            </ItemGroup>
+          )}
           {missingFieldLabel && isTouched ? (
             <p className="text-xs text-muted-foreground">
               {t("footer.missingField", { field: missingFieldLabel })}
@@ -250,7 +256,9 @@ export function ReviewForm(props: ReviewFormProps) {
       </form>
       {review.matches.length > 0 && <div className="flex flex-col gap-3">
         <p className="text-sm text-warning">{t("errors.duplicate.description")}</p>
-        <form.AppField name="existingTransactionId">{(field) => <field.SelectField label={t("fields.existing.label")} placeholder={t("fields.existing.placeholder")} disabled={process.isPending} options={review.matches.map((match) => ({ value: match.id, label: match.description }))} />}</form.AppField>
+        <ItemGroup className="gap-0 divide-y rounded-md border border-border">
+          <form.AppField name="existingTransactionId">{(field) => <field.PickerRowField label={t("fields.existing.label")} placeholder={t("fields.existing.placeholder")} disabled={process.isPending} options={review.matches.map((match) => ({ value: match.id, label: match.description }))} />}</form.AppField>
+        </ItemGroup>
         <Button type="button" variant="outline" disabled={process.isPending || !existingId} onClick={() => void decide("match", existingId)}>{t("buttons.match")}</Button>
       </div>}
       {(process.isError || process.data?.error) && <p role="alert" className="text-sm text-negative">{process.data?.error ?? t("errors.provider.description")}</p>}
