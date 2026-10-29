@@ -42,7 +42,7 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     const destination = await tx.account.findFirst({ where: { id: source.accountId, userId, status: "ACTIVE", currency: "BRL" } });
     if (!destination || source.currency !== "BRL" ||
       (source.type === "CREDIT" ? destination.type !== "CREDIT_CARD" : !["CHECKING", "SAVINGS"].includes(destination.type))) throw new OpenFinanceError("mapping");
-    if (await tx.transaction.findFirst({ where: { userId, accountId: source.accountId, OR: [{ date, amount }, { date: edited.date, amount: edited.amount }] } })) {
+    if (!value.allowDuplicate && await tx.transaction.findFirst({ where: { userId, accountId: source.accountId, OR: [{ date, amount }, { date: edited.date, amount: edited.amount }] } })) {
       throw new OpenFinanceError("duplicate");
     }
     if (edited.categoryId && !await tx.category.findFirst({ where: {

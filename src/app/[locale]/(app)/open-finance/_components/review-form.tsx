@@ -427,8 +427,7 @@ export function ReviewForm(props: ReviewFormProps) {
                 disabled={
                   process.isPending ||
                   review.pending ||
-                  review.payment ||
-                  review.matches.length > 0
+                  review.payment
                 }
                 className="h-11 flex-1 text-sm font-medium"
               >

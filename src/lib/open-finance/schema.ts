@@ -77,6 +77,7 @@ const processBaseSchema = reviewRequestSchema.extend({
   expectedAmount: z.string().regex(/^-?\d{1,10}\.\d{2}$/),
   expectedDate: calendarDateSchema,
   expectedDescription: z.string().max(2000),
+  allowDuplicate: z.boolean().optional(),
 });
 export const processSchema = z.discriminatedUnion("mode", [
   processBaseSchema.extend({ mode: z.literal("create"), edits: reviewEditsSchema }),

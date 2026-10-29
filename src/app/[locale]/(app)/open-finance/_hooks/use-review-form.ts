@@ -263,6 +263,7 @@ export function useReviewForm(props: ReviewFormProps) {
       const result = await process.mutateAsync({
         ...original,
         mode: "create",
+        allowDuplicate: true,
         edits: parsed.data,
         closingDate: parsed.data.closingDate,
         dueDate: parsed.data.dueDate,

@@ -97,7 +97,7 @@
     "access": { "title": "Acesso indisponível", "description": "Esta integração está disponível apenas para o usuário autorizado." },
     "mapping": { "title": "Destino inválido", "description": "Escolha uma conta ativa, da mesma moeda e tipo, e um cartão ativo pertencente a ela." },
     "mappingChanged": { "title": "Destino alterado", "description": "O destino ou período mudou durante a revisão. Feche a revisão e busque a prévia novamente para conferir onde salvar." },
-    "duplicate": { "title": "Possível duplicata", "description": "Há um lançamento com a mesma data e valor. Vincule ao existente ou ignore este registro." },
+    "duplicate": { "title": "Possível duplicata", "description": "Há um lançamento com a mesma data e valor. Vincule ao existente abaixo ou crie como novo lançamento se forem transações diferentes." },
     "pending": { "title": "Lançamento pendente", "description": "Aguarde a confirmação do banco antes de importar." },
     "payment": { "title": "Pagamento de fatura", "description": "Registre o pagamento pela tela de faturas ou vincule ao pagamento já cadastrado." },
     "currency": { "title": "Moeda não suportada", "description": "Esta integração inicial importa somente valores em reais, sem conversão de moeda." },

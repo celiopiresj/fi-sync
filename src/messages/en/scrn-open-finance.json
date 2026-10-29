@@ -97,7 +97,7 @@
     "access": { "title": "Access unavailable", "description": "This integration is only available to the authorized user." },
     "mapping": { "title": "Invalid destination", "description": "Choose an active account with the same currency and type, and an active card belonging to it." },
     "mappingChanged": { "title": "Destination changed", "description": "The destination or period changed during this review. Close the review and fetch the preview again to check where to save." },
-    "duplicate": { "title": "Possible duplicate", "description": "A transaction with the same date and amount exists. Link it or ignore this record." },
+    "duplicate": { "title": "Possible duplicate", "description": "A transaction with the same date and amount exists. Link it below or create it as a new transaction if they are different." },
     "pending": { "title": "Pending transaction", "description": "Wait for confirmation from the bank before importing." },
     "payment": { "title": "Invoice payment", "description": "Register the payment on the invoices screen or link an existing payment." },
     "currency": { "title": "Unsupported currency", "description": "This initial integration only imports amounts in Brazilian reais, without currency conversion." },
