@@ -146,7 +146,11 @@
     },
     "header": {
       "whatsappButton": "Enviar via WhatsApp",
-      "noPhone": "Cadastre um telefone para enviar pelo WhatsApp"
+      "noPhone": "Cadastre um telefone para enviar pelo WhatsApp",
+      "switchPerson": "Trocar pessoa",
+      "peopleList": "Pessoas",
+      "previousPerson": "Pessoa anterior: {name}",
+      "nextPerson": "Próxima pessoa: {name}"
     },
     "buttons": {
       "addTransaction": "Nova transação",

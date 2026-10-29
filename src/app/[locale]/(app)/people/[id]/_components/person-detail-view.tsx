@@ -7,8 +7,11 @@ import { Link } from "@/i18n/navigation";
 import {
   ArrowLeftIcon,
   CaretDownIcon,
+  CaretLeftIcon,
+  CaretRightIcon,
   PlusIcon,
   ReceiptIcon,
+  UsersIcon,
   WhatsappLogoIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
@@ -20,6 +23,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -275,6 +280,16 @@ export function PersonDetailView({
     setPreviewOpen(true);
   }
 
+  const currentIndex = people.findIndex((p) => p.id === statement.person.id);
+  const prevPerson =
+    people.length > 1 && currentIndex !== -1
+      ? people[(currentIndex - 1 + people.length) % people.length]
+      : null;
+  const nextPerson =
+    people.length > 1 && currentIndex !== -1
+      ? people[(currentIndex + 1) % people.length]
+      : null;
+
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
       <Link
@@ -285,7 +300,7 @@ export function PersonDetailView({
         {t("detail.back")}
       </Link>
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Avatar size="lg">
             <AvatarFallback className={color}>
@@ -299,7 +314,87 @@ export function PersonDetailView({
             ) : null}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {people.length > 1 ? (
+            <div className="inline-flex items-center gap-1">
+              {prevPerson ? (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  asChild
+                  title={t("detail.header.previousPerson", { name: prevPerson.name })}
+                >
+                  <Link href={`/people/${prevPerson.id}`}>
+                    <CaretLeftIcon className="size-4" />
+                    <span className="sr-only">
+                      {t("detail.header.previousPerson", { name: prevPerson.name })}
+                    </span>
+                  </Link>
+                </Button>
+              ) : null}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <UsersIcon className="size-4" />
+                    <span className="hidden sm:inline">
+                      {t("detail.header.switchPerson")}
+                    </span>
+                    <CaretDownIcon className="size-3 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="max-h-80 w-56 overflow-y-auto">
+                  <DropdownMenuLabel>{t("detail.header.peopleList")}</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {people.map((p) => {
+                    const isCurrent = p.id === statement.person.id;
+                    const pColor = getPersonColorClasses(p.name, p.colorStyle);
+                    return (
+                      <DropdownMenuItem
+                        key={p.id}
+                        asChild
+                        className={cn(
+                          "flex cursor-pointer items-center gap-2.5",
+                          isCurrent && "bg-muted font-medium",
+                        )}
+                      >
+                        <Link href={`/people/${p.id}`}>
+                          <Avatar size="sm" className="size-5 text-[10px]">
+                            <AvatarFallback className={pColor}>
+                              {getPersonInitial(p.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="truncate">{p.name}</span>
+                          {p.isSelf ? (
+                            <span className="ml-auto text-[10px] text-muted-foreground">
+                              {t("card.selfBadge")}
+                            </span>
+                          ) : null}
+                        </Link>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {nextPerson ? (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  asChild
+                  title={t("detail.header.nextPerson", { name: nextPerson.name })}
+                >
+                  <Link href={`/people/${nextPerson.id}`}>
+                    <CaretRightIcon className="size-4" />
+                    <span className="sr-only">
+                      {t("detail.header.nextPerson", { name: nextPerson.name })}
+                    </span>
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
