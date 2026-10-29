@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useSelector } from "@tanstack/react-form";
-import { useZodForm } from "@/lib/form/use-zod-form";
+import { makeErrorMap } from "@/lib/zod/zod-error-map";
 import { centsToAmountString, parseAmountLoose, toCents } from "../_lib/split-math";
-import { refineReviewForm, reviewDefaults, reviewEditDefaults, reviewFormSchema } from "../_schema/schema";
+import {
+  refineReviewForm,
+  reviewDefaults,
+  reviewEditDefaults,
+  reviewFormSchema,
+  type ReviewFormValues,
+} from "../_schema/schema";
 import { useOpenFinanceMutations } from "./use-open-finance";
 import type { ReviewFormProps } from "../_types/types";
 
@@ -13,55 +18,52 @@ export function useReviewForm(props: ReviewFormProps) {
   const t = useTranslations("scrn-open-finance");
   const tValidation = useTranslations("common.validation");
   const { process, createPerson } = useOpenFinanceMutations();
-  // An in-progress edit keeps the bank snapshot the user actually saw.
-  // Background refetches must not silently replace the expected values
-  // and accept an upstream change without another review.
-  const [review] = useState(props.review);
+
+  // Keep the bank snapshot the user opened the sheet with so background
+  // refetches cannot silently overwrite expected values mid-review.
+  const [review, setReview] = useState(props.review);
   const [people, setPeople] = useState(props.review.people);
+  const [draft, setDraft] = useState<ReviewFormValues>(() =>
+    reviewEditDefaults({ ...props, review }),
+  );
+  const [prevServerMatchesCount, setPrevServerMatchesCount] = useState(
+    props.review.matches.length,
+  );
+  const [prevServerDates, setPrevServerDates] = useState(
+    `${props.review.closingDate}:${props.review.dueDate}`,
+  );
+  const nextServerDates = `${props.review.closingDate}:${props.review.dueDate}`;
+  if (
+    props.review.matches.length !== prevServerMatchesCount ||
+    nextServerDates !== prevServerDates
+  ) {
+    setPrevServerMatchesCount(props.review.matches.length);
+    setPrevServerDates(nextServerDates);
+    setReview((current) => ({
+      ...current,
+      matches: props.review.matches,
+      closingDate: props.review.closingDate || current.closingDate,
+      dueDate: props.review.dueDate || current.dueDate,
+    }));
+    setDraft((current) => ({
+      ...current,
+      closingDate: current.closingDate || props.review.closingDate,
+      dueDate: current.dueDate || props.review.dueDate,
+    }));
+  }
   const [isDividing, setIsDividing] = useState(false);
+  const [secondaries, setSecondaries] = useState<
+    { personId: string; amount: string }[]
+  >([]);
   const [isAddingPerson, setIsAddingPerson] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isTouched, setIsTouched] = useState(false);
+
   const original = reviewDefaults({ ...props, review });
 
-  const schema = useMemo(
-    () =>
-      reviewFormSchema.superRefine((value, ctx) =>
-        refineReviewForm(value, ctx, {
-          credit: review.credit,
-          hasPeople: people.length > 0,
-          messages: {
-            required: tValidation("required"),
-            splitsMismatch: t("splits.mismatch"),
-          },
-        }),
-      ),
-    [review.credit, people.length, t, tValidation],
-  );
-
-  const form = useZodForm(schema, {
-    defaultValues: reviewEditDefaults({ ...props, review }),
-    onSubmit: async ({ value }) => {
-      try {
-        const result = await process.mutateAsync({ ...original, mode: "create", edits: value, closingDate: value.closingDate, dueDate: value.dueDate });
-        if (!result.error) props.onProcessed();
-      } catch { /* The mutation exposes the error; retain the user's draft. */ }
-    },
-  });
-
-  const type = useSelector(form.store, (state) => state.values.type);
-  const existingId = useSelector(form.store, (state) => state.values.existingTransactionId);
-  const personId = useSelector(form.store, (state) => state.values.personId);
-  const splits = useSelector(form.store, (state) => state.values.splits);
-  const amount = useSelector(form.store, (state) => state.values.amount);
-  const description = useSelector(form.store, (state) => state.values.description);
-  const date = useSelector(form.store, (state) => state.values.date);
-  const categoryId = useSelector(form.store, (state) => state.values.categoryId);
-  const paymentMethod = useSelector(form.store, (state) => state.values.paymentMethod);
-  const isTouched = useSelector(form.store, (state) => state.isTouched);
-
-  const parsedAmount = parseAmountLoose(amount);
+  const parsedAmount = parseAmountLoose(draft.amount);
   const totalCents = toCents(parsedAmount);
-  const secondaries = splits.slice(1);
   const secondaryCentsList = secondaries.map((split) =>
     toCents(parseAmountLoose(split.amount)),
   );
@@ -71,80 +73,65 @@ export function useReviewForm(props: ReviewFormProps) {
     Math.max(primaryAmountCents, 0),
   );
   const isOverAllocated = primaryAmountCents < 0;
-  const primaryPerson = people.find((person) => person.id === personId);
-  const sign = type === "expense" ? -1 : 1;
+  const primaryPerson = people.find((person) => person.id === draft.personId);
+  const sign = draft.type === "expense" ? -1 : 1;
 
-  const previousTypeRef = useRef(type);
-  useEffect(() => {
-    if (previousTypeRef.current !== type) {
-      previousTypeRef.current = type;
-      if (categoryId) {
-        form.setFieldValue("categoryId", "");
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type]);
+  function clearError(key: string) {
+    setFieldErrors((prev) => (prev[key] ? { ...prev, [key]: "" } : prev));
+  }
 
-  useEffect(() => {
-    if (isDividing) {
-      if (splits.length === 0) {
-        form.setFieldValue("splits", [
-          { personId, amount: centsToAmountString(totalCents) },
-        ]);
-      }
-    } else if (splits.length > 0) {
-      form.setFieldValue("splits", []);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDividing]);
+  function updateField<K extends keyof ReviewFormValues>(
+    key: K,
+    value: ReviewFormValues[K],
+  ) {
+    setIsTouched(true);
+    clearError(String(key));
+    setDraft((prev) => ({ ...prev, [key]: value }));
+  }
 
-  useEffect(() => {
-    if (!isDividing) return;
-    if (splits[0]?.personId !== personId) {
-      form.setFieldValue("splits[0].personId", personId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [personId, isDividing]);
+  function updateType(nextType: "expense" | "income") {
+    setIsTouched(true);
+    clearError("type");
+    clearError("categoryId");
+    setDraft((prev) => {
+      if (prev.type === nextType) return prev;
+      return {
+        ...prev,
+        type: nextType,
+        categoryId: "",
+      };
+    });
+  }
 
-  useEffect(() => {
-    if (!isDividing) return;
-    const next = centsToAmountString(primaryAmountCents);
-    if (splits[0]?.amount !== next) {
-      form.setFieldValue("splits[0].amount", next);
+  function updateAmount(nextAmount: string) {
+    setIsTouched(true);
+    clearError("amount");
+    clearError("splits");
+    setDraft((prev) => ({ ...prev, amount: nextAmount }));
+    if (isDividing && secondaries.length > 0) {
+      const nextTotalCents = toCents(parseAmountLoose(nextAmount));
+      const peopleCount = secondaries.length + 1;
+      const share = Math.floor(nextTotalCents / peopleCount);
+      const shareStr = centsToAmountString(share);
+      setSecondaries((prev) =>
+        prev.map((split) => ({ ...split, amount: shareStr })),
+      );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [primaryAmountCents, isDividing]);
+  }
 
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+  function toggleDividing(nextDividing: boolean) {
+    setIsTouched(true);
+    clearError("splits");
+    setIsDividing(nextDividing);
+    if (!nextDividing) {
+      setSecondaries([]);
     }
-    if (splits.length <= 1) return;
-    const peopleCount = splits.length;
-    const share = Math.floor(totalCents / peopleCount);
-    const shareStr = centsToAmountString(share);
-    for (let i = 1; i < splits.length; i++) {
-      form.setFieldValue(`splits[${i}].amount`, shareStr);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalCents]);
-
-  useEffect(() => {
-    if (secondaries.length !== 1) return;
-    const maxCents = Math.max(totalCents - 1, 0);
-    if (secondaryCentsList[0] > maxCents) {
-      const clamped = centsToAmountString(maxCents);
-      if (splits[1]?.amount !== clamped) {
-        form.setFieldValue("splits[1].amount", clamped);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalCents, secondaryCentsList[0], secondaries.length]);
+  }
 
   function handleAddSecondaryPerson(newPersonId = "") {
-    const peopleCountBefore = splits.length;
+    setIsTouched(true);
+    clearError("splits");
+    const peopleCountBefore = secondaries.length + 1;
     const shareBefore =
       peopleCountBefore > 0 ? Math.floor(totalCents / peopleCountBefore) : 0;
     const isPristine = secondaryCentsList.every((cents) => cents === shareBefore);
@@ -153,13 +140,50 @@ export function useReviewForm(props: ReviewFormProps) {
       const peopleCountAfter = peopleCountBefore + 1;
       const shareAfter = Math.floor(totalCents / peopleCountAfter);
       const shareAfterStr = centsToAmountString(shareAfter);
-      for (let i = 1; i < splits.length; i++) {
-        form.setFieldValue(`splits[${i}].amount`, shareAfterStr);
-      }
-      form.pushFieldValue("splits", { personId: newPersonId, amount: shareAfterStr });
+      setSecondaries((prev) => [
+        ...prev.map((item) => ({ ...item, amount: shareAfterStr })),
+        { personId: newPersonId, amount: shareAfterStr },
+      ]);
     } else {
-      form.pushFieldValue("splits", { personId: newPersonId, amount: "0,00" });
+      setSecondaries((prev) => [
+        ...prev,
+        { personId: newPersonId, amount: "0,00" },
+      ]);
     }
+  }
+
+  function updateSecondaryPerson(index: number, nextPersonId: string) {
+    setIsTouched(true);
+    clearError("splits");
+    setSecondaries((prev) =>
+      prev.map((item, idx) =>
+        idx === index ? { ...item, personId: nextPersonId } : item,
+      ),
+    );
+  }
+
+  function updateSecondaryAmount(index: number, nextAmount: string) {
+    setIsTouched(true);
+    clearError("splits");
+    setSecondaries((prev) =>
+      prev.map((item, idx) => {
+        if (idx !== index) return item;
+        if (prev.length === 1) {
+          const maxCents = Math.max(totalCents - 1, 0);
+          const candidateCents = toCents(parseAmountLoose(nextAmount));
+          if (candidateCents > maxCents) {
+            return { ...item, amount: centsToAmountString(maxCents) };
+          }
+        }
+        return { ...item, amount: nextAmount };
+      }),
+    );
+  }
+
+  function removeSecondaryPerson(index: number) {
+    setIsTouched(true);
+    clearError("splits");
+    setSecondaries((prev) => prev.filter((_, idx) => idx !== index));
   }
 
   async function handleCreatePerson() {
@@ -172,47 +196,116 @@ export function useReviewForm(props: ReviewFormProps) {
       setPeople((prev) =>
         prev.some((p) => p.id === created.id)
           ? prev
-          : [...prev, { ...created, isSelf: false }].sort((a, b) => a.name.localeCompare(b.name)),
+          : [...prev, { ...created, isSelf: false }].sort((a, b) =>
+              a.name.localeCompare(b.name),
+            ),
       );
       setNewPersonName("");
       setIsAddingPerson(false);
       if (isDividing) {
         handleAddSecondaryPerson(created.id);
       } else {
-        form.setFieldValue("personId", created.id);
+        updateField("personId", created.id);
       }
-    } catch { /* Handled by mutation */ }
+    } catch {
+      /* Handled by mutation */
+    }
+  }
+
+  function buildPayload(): ReviewFormValues {
+    const builtSplits =
+      isDividing && secondaries.length > 0
+        ? [
+            {
+              personId: draft.personId,
+              amount: centsToAmountString(Math.max(primaryAmountCents, 0)),
+            },
+            ...secondaries,
+          ]
+        : [];
+    return {
+      ...draft,
+      splits: builtSplits,
+    };
+  }
+
+  async function submit() {
+    setIsTouched(true);
+    const candidate = buildPayload();
+    const schema = reviewFormSchema.superRefine((value, ctx) =>
+      refineReviewForm(value, ctx, {
+        credit: review.credit,
+        hasPeople: people.length > 0,
+        messages: {
+          required: tValidation("required"),
+          splitsMismatch: t("splits.mismatch"),
+        },
+      }),
+    );
+    const parsed = schema.safeParse(candidate, {
+      error: makeErrorMap(tValidation),
+    });
+    if (!parsed.success) {
+      const nextErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "");
+        if (key && !nextErrors[key]) nextErrors[key] = issue.message;
+      }
+      setFieldErrors(nextErrors);
+      return;
+    }
+    if (isDividing && isOverAllocated) {
+      setFieldErrors({ splits: t("splits.mismatch") });
+      return;
+    }
+    setFieldErrors({});
+    try {
+      const result = await process.mutateAsync({
+        ...original,
+        mode: "create",
+        edits: parsed.data,
+        closingDate: parsed.data.closingDate,
+        dueDate: parsed.data.dueDate,
+      });
+      if (!result.error) props.onProcessed();
+    } catch {
+      /* Mutation exposes error; retain draft */
+    }
   }
 
   async function decide(mode: "match" | "ignore", existingTransactionId = "") {
     try {
-      const result = await process.mutateAsync({ ...original, mode, existingTransactionId });
+      const result = await process.mutateAsync({
+        ...original,
+        mode,
+        existingTransactionId,
+      });
       if (!result.error) props.onProcessed();
-    } catch { /* The mutation exposes the error; retain the review queue. */ }
+    } catch {
+      /* Retain queue on error */
+    }
   }
 
-  const missingFieldLabel = !description.trim()
+  const missingFieldLabel = !draft.description.trim()
     ? t("fields.description.label")
-    : !date
+    : !draft.date
       ? t("fields.date.label")
-      : !amount
+      : !draft.amount
         ? t("fields.amount.label")
-        : !categoryId
+        : !draft.categoryId
           ? t("fields.category.label")
-          : !review.credit && !paymentMethod
+          : !review.credit && !draft.paymentMethod
             ? t("fields.paymentMethod.label")
-            : people.length > 0 && !personId
+            : people.length > 0 && !draft.personId
               ? t("fields.person.label")
               : null;
 
   return {
-    form,
-    type,
-    existingId,
-    personId,
+    draft,
+    fieldErrors,
     people,
     isDividing,
-    setIsDividing,
+    toggleDividing,
     secondaries,
     primaryPerson,
     primaryAmountDisplay,
@@ -228,6 +321,13 @@ export function useReviewForm(props: ReviewFormProps) {
     isCreatingPerson: createPerson.isPending,
     handleCreatePerson,
     handleAddSecondaryPerson,
+    updateField,
+    updateType,
+    updateAmount,
+    updateSecondaryPerson,
+    updateSecondaryAmount,
+    removeSecondaryPerson,
+    submit,
     process,
     decide,
     review,

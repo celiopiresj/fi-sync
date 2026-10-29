@@ -48,7 +48,14 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false 
 queryClient.setQueryData(["open-finance-transactions", source.id, null], { error: null, data: { rows: [row], next: null } });
 const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {}, hmrRefresh() {} };
 const overview: Overview = {
-  configured: true, accounts: [{ id: "fixture-account", name: "Visible fi-sync destination", type: "CHECKING", currency: "BRL", cards: [] }],
+  configured: true,
+  accounts: [{ id: "fixture-account", name: "Visible fi-sync destination", type: "CHECKING", currency: "BRL", cards: [] }],
+  categories: [{ id: "cat-1", name: "Alimentação", type: "EXPENSE" }],
+  people: [
+    { id: "person-1", name: "Eu", isSelf: true },
+    { id: "person-2", name: "Mãe", isSelf: false },
+  ],
+  defaultPersonId: "person-1",
   connections: [{ id: "active", label: "Connected institution", active: true, sources: [source] }, { id: "inactive", label: "Old disabled institution", active: false, sources: [] }],
 };
 function render(content: ReactNode) { return renderToString(

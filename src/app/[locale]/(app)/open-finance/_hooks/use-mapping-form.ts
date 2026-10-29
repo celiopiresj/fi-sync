@@ -1,54 +1,102 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useSelector } from "@tanstack/react-form";
-import { useZodForm } from "@/lib/form/use-zod-form";
+import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { makeErrorMap } from "@/lib/zod/zod-error-map";
 import { useOpenFinanceMutations } from "./use-open-finance";
 import { mappingDefaults, mappingSchema } from "../_schema/schema";
 import type { MappingFormProps } from "../_types/types";
 
 export function useMappingForm(props: MappingFormProps) {
+  const tValidation = useTranslations("common.validation");
   const { mapping, clearMapping } = useOpenFinanceMutations();
-  const form = useZodForm(mappingSchema, {
-    defaultValues: mappingDefaults(props.source),
-    onSubmit: async ({ value }) => {
-      try { const result = await mapping.mutateAsync(value); if (!result.error) props.onReady(); }
-      catch { /* Retain the destination editor on failure. */ }
-    },
-  });
-  const accountId = useSelector(form.store, (state) => state.values.accountId);
-  const cardId = useSelector(form.store, (state) => state.values.cardId);
-  const fromDate = useSelector(form.store, (state) => state.values.fromDate);
-  const previousAccountIdRef = useRef(accountId);
-  useEffect(() => {
-    if (previousAccountIdRef.current !== accountId) {
-      previousAccountIdRef.current = accountId;
-      if (cardId) {
-        form.setFieldValue("cardId", "");
-      }
-      mapping.reset();
-      clearMapping.reset();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountId]);
+  const initial = mappingDefaults(props.source);
+  const [accountId, setAccountId] = useState(initial.accountId);
+  const [cardId, setCardId] = useState(initial.cardId);
+  const [fromDate, setFromDate] = useState(initial.fromDate);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const previousCardAndDateRef = useRef(`${cardId}:${fromDate}`);
-  useEffect(() => {
-    const next = `${cardId}:${fromDate}`;
-    if (previousCardAndDateRef.current !== next) {
-      previousCardAndDateRef.current = next;
-      mapping.reset();
-      clearMapping.reset();
+  function resetMutations() {
+    mapping.reset();
+    clearMapping.reset();
+  }
+
+  function changeAccount(nextAccountId: string) {
+    setAccountId(nextAccountId);
+    const nextAccount = props.accounts.find((account) => account.id === nextAccountId);
+    if (props.source.type === "CREDIT") {
+      setCardId(nextAccount?.cards.length === 1 ? nextAccount.cards[0].id : "");
+    } else {
+      setCardId("");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardId, fromDate]);
+    setFieldErrors((prev) => ({ ...prev, accountId: "", cardId: "" }));
+    resetMutations();
+  }
+
+  function changeCard(nextCardId: string) {
+    setCardId(nextCardId);
+    setFieldErrors((prev) => ({ ...prev, cardId: "" }));
+    resetMutations();
+  }
+
+  function changeFromDate(nextFromDate: string) {
+    setFromDate(nextFromDate);
+    setFieldErrors((prev) => ({ ...prev, fromDate: "" }));
+    resetMutations();
+  }
+
+  async function submit() {
+    const payload = {
+      sourceId: props.source.id,
+      accountId,
+      cardId: props.source.type === "CREDIT" ? cardId : "",
+      fromDate,
+    };
+    const parsed = mappingSchema.safeParse(payload, {
+      error: makeErrorMap(tValidation),
+    });
+    if (!parsed.success) {
+      const nextErrors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0] ?? "");
+        if (key && !nextErrors[key]) nextErrors[key] = issue.message;
+      }
+      setFieldErrors(nextErrors);
+      return;
+    }
+    if (props.source.type === "CREDIT" && !cardId) {
+      setFieldErrors({ cardId: tValidation("required") });
+      return;
+    }
+    setFieldErrors({});
+    try {
+      const result = await mapping.mutateAsync(parsed.data);
+      if (!result.error) props.onReady();
+    } catch {
+      /* Retain the destination editor on failure. */
+    }
+  }
 
   async function clear() {
-    try { const result = await clearMapping.mutateAsync(props.source.id); if (!result.error) props.onReady(); }
-    catch { /* Keep input visible so the owner can retry. */ }
+    try {
+      const result = await clearMapping.mutateAsync(props.source.id);
+      if (!result.error) props.onReady();
+    } catch {
+      /* Keep input visible so the owner can retry. */
+    }
   }
+
   return {
-    form, accountId, clear, pending: mapping.isPending || clearMapping.isPending,
+    accountId,
+    cardId,
+    fromDate,
+    fieldErrors,
+    changeAccount,
+    changeCard,
+    changeFromDate,
+    submit,
+    clear,
+    pending: mapping.isPending || clearMapping.isPending,
     error: mapping.data?.error ?? clearMapping.data?.error,
     failed: mapping.isError || clearMapping.isError,
   };

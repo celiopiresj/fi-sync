@@ -71,7 +71,7 @@ async function readTransaction(userId: string, sourceId: string, transactionId: 
 
 export async function getOpenFinanceOverview() {
   const userId = await requireOpenFinanceOwner();
-  const [connections, accounts] = await Promise.all([
+  const [connections, accounts, categories, people] = await Promise.all([
     prisma.openFinanceConnection.findMany({
       where: { userId }, orderBy: { createdAt: "asc" }, include: { sources: { orderBy: { name: "asc" } } },
     }),
@@ -80,9 +80,19 @@ export async function getOpenFinanceOverview() {
       select: { id: true, name: true, type: true, currency: true, cards: { where: { status: "ACTIVE" }, select: { id: true, name: true } } },
       orderBy: { name: "asc" },
     }),
+    prisma.category.findMany({
+      where: { OR: [{ userId }, { userId: null }], type: { in: ["EXPENSE", "INCOME"] } },
+      select: { id: true, name: true, type: true }, orderBy: { name: "asc" },
+    }),
+    prisma.person.findMany({
+      where: { userId },
+      select: { id: true, name: true, isSelf: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
+  const defaultPersonId = people.find((person) => person.isSelf)?.id ?? people[0]?.id ?? "";
   return {
-    configured: isPluggyConfigured(), accounts,
+    configured: isPluggyConfigured(), accounts, categories, people, defaultPersonId,
     connections: connections.map((connection) => ({
       id: connection.id, label: connection.label, active: connection.active,
       sources: connection.sources.map((source) => ({
@@ -161,11 +171,22 @@ export async function getOpenFinanceTransactions(input: unknown) {
     const processed = new Set(receipts.map((receipt) => receipt.externalKey));
     return { error: null, data: {
       next: page.next,
-      rows: page.results.filter((row) => !processed.has(transactionKey(row))).map((row) => ({
-        id: row.id, date: row.date.slice(0, 10), description: row.description,
-        amount: source.currency === "BRL" && (row.currencyCode === "BRL" || row.amountInAccountCurrency != null) ? normalizedAmount(row, source.type) : null,
-        status: row.status, payment: isCardPayment(row, source.type),
-      })),
+      rows: page.results.filter((row) => !processed.has(transactionKey(row))).map((row) => {
+        const metadata = row.creditCardMetadata;
+        const hasValidInstallment = Boolean(
+          metadata?.installmentNumber &&
+          metadata.totalInstallments &&
+          metadata.installmentNumber <= metadata.totalInstallments,
+        );
+        return {
+          id: row.id, date: row.date.slice(0, 10), description: row.description,
+          amount: source.currency === "BRL" && (row.currencyCode === "BRL" || row.amountInAccountCurrency != null) ? normalizedAmount(row, source.type) : null,
+          status: row.status, payment: isCardPayment(row, source.type),
+          paymentMethod: inferPaymentMethod(row, source.type),
+          installmentNumber: hasValidInstallment ? metadata!.installmentNumber! : null,
+          installmentCount: hasValidInstallment ? metadata!.totalInstallments! : null,
+        };
+      }),
     } };
   } catch (error) { return { error: await openFinanceError(error), data: null }; }
 }

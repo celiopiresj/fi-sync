@@ -41,7 +41,7 @@ export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
         </Card>}
       {!source && <Card><CardContent className="py-10"><Empty><EmptyHeader><EmptyMedia variant="icon"><BankIcon /></EmptyMedia><EmptyTitle>{t("cards.source.empty")}</EmptyTitle><EmptyDescription>{t("cards.source.emptyDescription")}</EmptyDescription></EmptyHeader></Empty></CardContent></Card>}
       {source && workspace.ready && !workspace.editing && overview.configured && <Card>
-        <CardContent className="px-0"><TransactionTable key={`${source.id}:${source.accountId}:${source.cardId}:${source.fromDate}`} source={source} /></CardContent>
+        <CardContent className="px-0"><TransactionTable key={`${source.id}:${source.accountId}:${source.cardId}:${source.fromDate}`} source={source} accounts={overview.accounts} categories={overview.categories} people={overview.people} defaultPersonId={overview.defaultPersonId} /></CardContent>
       </Card>}
         </div>
       </div>
