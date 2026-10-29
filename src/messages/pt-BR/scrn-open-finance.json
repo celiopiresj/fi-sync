@@ -2,7 +2,7 @@
   "title": "Open Finance",
   "subtitle": "Seus bancos e cartões, conectados pelo Meu Pluggy.",
   "description": "Conecte os bancos no Meu Pluggy e clique em Conectar Meu Pluggy abaixo. Após sua autorização, as conexões são cadastradas automaticamente. O serviço atualiza os dados a cada 24 horas; buscar aqui lê a última atualização disponível.",
-  "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Atualizar prévia", "saveMapping": "Buscar lançamentos para revisar", "review": "Revisar e editar", "reviewSelected": "Revisar selecionados", "import": "Salvar este lançamento", "saveNext": "Salvar e revisar próximo", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Fechar sem salvar" },
+  "buttons": { "guide": "Como conectar meus bancos", "add": "Adicionar conexão", "refresh": "Atualizar prévia", "saveMapping": "Buscar lançamentos para revisar", "review": "Revisar e editar", "reviewSelected": "Revisar selecionados", "import": "Salvar este lançamento", "saveNext": "Salvar e revisar próximo", "create": "Salvar lançamento", "match": "Vincular ao existente", "ignore": "Ignorar lançamento", "disable": "Desativar conexão", "enable": "Reativar conexão", "previous": "Anterior", "next": "Próxima", "close": "Fechar sem salvar" },
   "tooltip": { "manual": "Cadastro manual para conexões antigas" },
   "tabs": { "manage": "Gerenciar bancos", "back": "Voltar aos lançamentos" },
   "breadcrumb": { "section": "Integrações" },
@@ -57,8 +57,18 @@
     "addPerson": "Adicionar pessoa",
     "newPerson": "Cadastrar nova pessoa",
     "newPersonPlaceholder": "Nome da pessoa",
+    "newPersonConfirm": "Salvar pessoa",
+    "primaryLabel": "Sua parte",
+    "secondaryLabel": "Outras pessoas",
+    "personLabel": "Pessoa",
+    "personPlaceholder": "Selecione a pessoa",
+    "amountLabel": "Valor",
     "remove": "Remover pessoa",
+    "removePerson": "Remover pessoa",
     "mismatch": "A soma da divisão precisa bater com o valor da transação"
+  },
+  "validation": {
+    "missingField": "Falta preencher: {field}"
   },
   "footer": {
     "missingField": "Falta preencher: {field}"

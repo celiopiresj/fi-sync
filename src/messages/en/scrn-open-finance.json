@@ -2,7 +2,7 @@
   "title": "Open Finance",
   "subtitle": "Your banks and cards, connected through Meu Pluggy.",
   "description": "Connect your banks in Meu Pluggy and click Connect Meu Pluggy below. After you authorize access, connections are registered automatically. The service refreshes data every 24 hours; fetching here reads the latest available update.",
-  "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Refresh preview", "saveMapping": "Fetch transactions to review", "review": "Review and edit", "reviewSelected": "Review selected", "import": "Save this transaction", "saveNext": "Save and review next", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close without saving" },
+  "buttons": { "guide": "How to connect my banks", "add": "Add connection", "refresh": "Refresh preview", "saveMapping": "Fetch transactions to review", "review": "Review and edit", "reviewSelected": "Review selected", "import": "Save this transaction", "saveNext": "Save and review next", "create": "Save transaction", "match": "Link existing transaction", "ignore": "Ignore transaction", "disable": "Disable connection", "enable": "Reactivate connection", "previous": "Previous", "next": "Next", "close": "Close without saving" },
   "tooltip": { "manual": "Manual registration for existing connections" },
   "tabs": { "manage": "Manage banks", "back": "Back to transactions" },
   "breadcrumb": { "section": "Integrations" },
@@ -57,8 +57,18 @@
     "addPerson": "Add person",
     "newPerson": "Register new person",
     "newPersonPlaceholder": "Person's name",
+    "newPersonConfirm": "Save person",
+    "primaryLabel": "Your share",
+    "secondaryLabel": "Other people",
+    "personLabel": "Person",
+    "personPlaceholder": "Select person",
+    "amountLabel": "Amount",
     "remove": "Remove person",
+    "removePerson": "Remove person",
     "mismatch": "The split total must match the transaction amount"
+  },
+  "validation": {
+    "missingField": "Missing: {field}"
   },
   "footer": {
     "missingField": "Missing: {field}"
