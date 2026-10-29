@@ -32,8 +32,6 @@ import {
   shiftStatementPeriod,
 } from "../../_lib/cash-cycle";
 import { usePersonStatement } from "../_hooks/use-person-statement";
-import { buildWhatsAppLink } from "../../_lib/whatsapp-message";
-import { buildPersonStatementMessage } from "../../_lib/statement-message";
 import { WhatsAppPreviewDialog } from "../../_components/whatsapp-preview-dialog";
 import type { PersonStatement, StatementPeriod } from "../_types/types";
 // Deliberate cross-route dependency, not the usual per-route
@@ -164,12 +162,6 @@ export function PersonDetailView({
     ? "detail.summary.totalToPayLegend"
     : "detail.summary.totalToReceiveLegend";
 
-  // Only unpaid invoices count as "pending" — a paid one's items already
-  // rolled into `statement.balance` (see getPersonStatement in
-  // actions.ts), so surfacing them again here would double them up.
-  const pendingCardSections =
-    statement?.cardSections.filter((section) => !section.isPaid) ?? [];
-
   // Shown above the "Movimentações da conta" header — same real signed
   // sum the list below it already displays per-row, just totaled.
   const movementsTotal =
@@ -191,10 +183,6 @@ export function PersonDetailView({
           }),
         },
       )
-    : "";
-
-  const message = statement
-    ? buildPersonStatementMessage(statement, period, t, format)
     : "";
 
   // Loan installments (statement.loanItems) are deliberately NOT
@@ -278,14 +266,9 @@ export function PersonDetailView({
     statement.person.phone,
   );
   const color = getPersonColorClasses(statement.person.name, statement.person.colorStyle);
-  const whatsappLink = buildWhatsAppLink(
-    statement.person.phoneCountryCode,
-    statement.person.phone,
-    message,
-  );
 
   function handleWhatsAppClick() {
-    if (!whatsappLink) {
+    if (!statement?.person.phone) {
       toast.error(t("detail.whatsapp.noPhoneToast"));
       return;
     }
@@ -338,7 +321,7 @@ export function PersonDetailView({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={handleWhatsAppClick} title={whatsappLink ? undefined : t("detail.header.noPhone")}>
+          <Button onClick={handleWhatsAppClick} title={phone ? undefined : t("detail.header.noPhone")}>
             <WhatsappLogoIcon weight="fill" />
             {t("detail.header.whatsappButton")}
           </Button>
@@ -437,7 +420,7 @@ export function PersonDetailView({
         )}
       </div>
 
-      {pendingCardSections.map((section) => (
+      {statement.cardSections.map((section) => (
         <div key={section.accountId} className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
@@ -457,6 +440,14 @@ export function PersonDetailView({
               >
                 {money(section.total)}
               </Badge>
+              {section.isPaid && (
+                <Badge
+                  variant="outline"
+                  className="border-positive/30 bg-positive/10 text-[10px] text-positive"
+                >
+                  {t("detail.invoices.paidBadge")}
+                </Badge>
+              )}
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
               {t("detail.invoices.title", { month: periodLabel })}
@@ -503,7 +494,7 @@ export function PersonDetailView({
           {/* Only when this person already settled part of this invoice
               (see `paid` in getPersonStatement) — otherwise the badge
               above already says everything there is to say. */}
-          {section.paid !== 0 && (
+          {(section.paid !== 0 || section.isPaid) && (
             <div className="flex items-center justify-end gap-3 text-xs text-muted-foreground tabular-nums">
               <span>{t("detail.invoices.paid", { value: money(section.paid) })}</span>
               <span>
@@ -563,12 +554,14 @@ export function PersonDetailView({
         </div>
       )}
 
-      {whatsappLink ? (
+      {statement ? (
         <WhatsAppPreviewDialog
           open={previewOpen}
           onOpenChange={setPreviewOpen}
-          message={message}
-          whatsappLink={whatsappLink}
+          statement={statement}
+          period={period}
+          phoneCountryCode={statement.person.phoneCountryCode}
+          phone={statement.person.phone}
         />
       ) : null}
 

@@ -1,26 +1,31 @@
 "use client";
 
+import { useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   CaretLeftIcon,
   CaretRightIcon,
   CheckCircleIcon,
-  CreditCardIcon,
-  HandCoinsIcon,
+  ListNumbersIcon,
   ReceiptIcon,
-  TrendUpIcon,
+  SquaresFourIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
 import { capitalizeFirst } from "@/lib/capitalize-first";
 import { monthKeyToDate } from "../_lib/projection-month";
-import { RISK_BADGE_CLASS, RISK_TEXT_CLASS } from "../_lib/risk-status-style";
+import { computeCashFlowMilestones } from "../_lib/cash-flow-timeline";
+import { useProjectionSimulation } from "../_hooks/use-projection-simulation";
+import { KpiMathRow } from "./detail/kpi-math-row";
+import { CashFlowTimeline } from "./detail/cash-flow-timeline";
+import { CategoryGridView } from "./detail/category-grid-view";
+import { ChronologicalStatementView } from "./detail/chronological-statement-view";
 import type { ProjectionDetail } from "../_types/types";
 
 type ProjectionDetailViewProps = {
@@ -31,332 +36,329 @@ export function ProjectionDetailView({ detail }: ProjectionDetailViewProps) {
   const t = useTranslations("scrn-projections");
   const format = useFormatter();
 
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
-  // Invoice.dueDate/Transaction.date are @db.Date columns — DATE_ONLY_
-  // FORMAT_OPTIONS (timeZone: "UTC"), never the app's default
-  // APP_TIME_ZONE-based formatting, per src/lib/date.ts's own note on
-  // why those two cases need different handling.
-  function shortDate(date: Date) {
-    return format.dateTime(date, DATE_ONLY_FORMAT_OPTIONS);
-  }
+  const {
+    viewMode,
+    setViewMode,
+    receivables,
+    cards,
+    accounts,
+    loans,
+    totals,
+  } = useProjectionSimulation(detail);
 
-  const monthLabel = capitalizeFirst(
-    format.dateTime(monthKeyToDate(detail.monthKey), {
-      month: "long",
-      year: "numeric",
-    }),
+  const monthDate = useMemo(() => monthKeyToDate(detail.monthKey), [detail.monthKey]);
+
+  const monthLabel = useMemo(
+    () =>
+      capitalizeFirst(
+        format.dateTime(monthDate, {
+          month: "long",
+          year: "numeric",
+        }),
+      ),
+    [format, monthDate],
   );
 
+  const startDateLabel = useMemo(
+    () => format.dateTime(monthDate, DATE_ONLY_FORMAT_OPTIONS),
+    [format, monthDate],
+  );
+
+  const topIncomes = useMemo(() => {
+    if (receivables.length === 0 || totals.totalReceitas <= 0) return [];
+    const sorted = [...receivables].sort((a, b) => b.amount - a.amount);
+    return sorted.slice(0, 2).map((inc) => {
+      // Limpa nomes longos de transferência para caber sem quebrar
+      const cleanName = inc.name
+        .replace(/^transferência\s+de\s+/i, "")
+        .replace(/^transferencia\s+de\s+/i, "")
+        .split("/")[0]
+        ?.trim() ?? inc.name;
+
+      const dateLabel = format.dateTime(inc.date, {
+        day: "2-digit",
+        month: "2-digit",
+      });
+
+      return {
+        name: cleanName.length > 12 ? `${cleanName.slice(0, 10)}…` : cleanName,
+        share: Math.round((inc.amount / totals.totalReceitas) * 100),
+        dateLabel,
+      };
+    });
+  }, [receivables, totals.totalReceitas, format]);
+
+  // Combine items for timeline milestones computation
+  const timelineMilestones = useMemo(() => {
+    const items = [
+      ...receivables.map((r) => ({
+        id: r.id,
+        name: r.name,
+        date: r.date,
+        amount: r.amount,
+        type: "income" as const,
+      })),
+      ...cards.map((c) => ({
+        id: c.id,
+        name: c.name,
+        date: c.dueDate,
+        amount: c.amount,
+        type: "expense" as const,
+        isCard: true,
+      })),
+      ...accounts.map((a) => ({
+        id: a.id,
+        name: a.name,
+        date: a.date,
+        amount: a.amount,
+        type: "expense" as const,
+      })),
+      ...loans.map((l) => ({
+        id: l.id,
+        name: l.name,
+        date: l.date,
+        amount: l.amount,
+        type: "expense" as const,
+      })),
+    ];
+
+    function formatDateLabel(date: Date) {
+      const day = String(date.getUTCDate()).padStart(2, "0");
+      const monthShort = format.dateTime(date, { month: "short" });
+      return `${day} ${capitalizeFirst(monthShort)}`;
+    }
+
+    return computeCashFlowMilestones({
+      initialBalance: detail.initialBalance,
+      firstDayOfMonth: monthDate,
+      items,
+      formatDateLabel,
+      openingTitle: t("detail.timeline.openingTitle"),
+      openingSubtitle: t("detail.timeline.openingSubtitle"),
+    });
+  }, [
+    receivables,
+    cards,
+    accounts,
+    loans,
+    detail.initialBalance,
+    monthDate,
+    format,
+    t,
+  ]);
+
+  const isFinalNegative = totals.saldoFinal < 0;
+
   return (
-    <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="icon-sm">
+    <div className="mx-auto flex w-full max-w-350 min-w-0 flex-col gap-6">
+      {/* Cabeçalho da Página e Controles */}
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div className="flex items-start gap-3.5">
+          <Button asChild variant="ghost" size="icon-sm" className="mt-1">
             <Link href="/projections" aria-label={t("detail.back")}>
               <ArrowLeftIcon />
             </Link>
           </Button>
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-semibold">
+
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
                 {t("detail.title", { month: monthLabel })}
               </h1>
-              <Badge
-                variant="outline"
-                className={cn("w-fit", RISK_BADGE_CLASS[detail.status])}
-              >
-                {detail.status === "ok" ? (
-                  <CheckCircleIcon />
-                ) : (
-                  <WarningCircleIcon />
-                )}
-                {t(`detail.statusBadge.${detail.status}`)}
-              </Badge>
+              {isFinalNegative ? (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-destructive/30 bg-destructive/10 text-xs font-semibold text-destructive"
+                >
+                  <WarningCircleIcon className="size-3.5" />
+                  {t("status.danger")}
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="gap-1.5 border-positive/30 bg-positive/10 text-xs font-semibold text-positive"
+                >
+                  <CheckCircleIcon className="size-3.5" />
+                  {t("status.ok")}
+                </Badge>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {t("detail.subtitle")}
             </p>
           </div>
         </div>
 
-        {(detail.previousMonthId || detail.nextMonthId) && (
-          <div className="flex shrink-0 items-center gap-1">
-            <Button variant="outline" size="icon-sm" asChild disabled={!detail.previousMonthId}>
-              {detail.previousMonthId ? (
-                <Link
-                  href={`/projections/${detail.previousMonthId}`}
-                  aria-label={t("detail.nav.previous")}
-                >
-                  <CaretLeftIcon className="size-4" />
-                </Link>
-              ) : (
-                <span aria-hidden>
-                  <CaretLeftIcon className="size-4" />
-                </span>
-              )}
-            </Button>
-            <Button variant="outline" size="icon-sm" asChild disabled={!detail.nextMonthId}>
-              {detail.nextMonthId ? (
-                <Link
-                  href={`/projections/${detail.nextMonthId}`}
-                  aria-label={t("detail.nav.next")}
-                >
-                  <CaretRightIcon className="size-4" />
-                </Link>
-              ) : (
-                <span aria-hidden>
-                  <CaretRightIcon className="size-4" />
-                </span>
-              )}
-            </Button>
-          </div>
-        )}
-      </div>
+        {/* Controles à Direita: Switcher de Visão + Mês Anterior/Próximo */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+          {/* Botão de Acesso Rápido ao Extrato */}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="hidden sm:inline-flex gap-1.5 rounded-xl text-xs font-semibold shadow-2xs"
+          >
+            <Link
+              href={{
+                pathname: "/transactions",
+                query: {
+                  month: detail.monthKey,
+                  ...(detail.selfPersonId ? { person: detail.selfPersonId } : {}),
+                },
+              }}
+            >
+              <ReceiptIcon className="size-3.5 text-muted-foreground" />
+              <span>{t("detail.viewStatement")}</span>
+            </Link>
+          </Button>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("detail.summary.initialBalance")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums">
-              {money(detail.initialBalance)}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("detail.summary.receivables")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums text-positive">
-              +{money(detail.incomeForecast)}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("detail.summary.totalExpenses")}
-            </span>
-            <span className="text-xl font-semibold tabular-nums text-negative">
-              -{money(detail.totalExpenses)}
-            </span>
-          </CardContent>
-        </Card>
-        <Card
-          className={cn(detail.status !== "ok" && "border-negative/30 bg-negative/5")}
-        >
-          <CardContent className="flex flex-col gap-1">
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("detail.summary.predictedBalance")}
-            </span>
-            <span
+          {/* Switcher de Visualização */}
+          <div className="flex items-center rounded-xl bg-muted p-1 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setViewMode("category")}
               className={cn(
-                "text-xl font-semibold tabular-nums",
-                RISK_TEXT_CLASS[detail.status],
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all",
+                viewMode === "category"
+                  ? "bg-card font-semibold text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {money(detail.projectedBalance)}
-            </span>
-          </CardContent>
-        </Card>
-      </div>
+              <SquaresFourIcon className="size-3.5" />
+              <span>{t("detail.viewMode.category")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("timeline")}
+              className={cn(
+                "flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all",
+                viewMode === "timeline"
+                  ? "bg-card font-semibold text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <ListNumbersIcon className="size-3.5" />
+              <span>{t("detail.viewMode.timeline")}</span>
+            </button>
+          </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                <CreditCardIcon className="size-4 text-muted-foreground" />
-                {t("detail.sections.cards.title")}
-              </span>
-              <span className="text-sm font-semibold tabular-nums">
-                {money(detail.cardExpenses)}
-              </span>
-            </div>
-            {detail.cardsBreakdown.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("detail.sections.cards.empty")}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {detail.cardsBreakdown.map((item) => (
-                  // Each row opens the invoice it belongs to — an open
-                  // invoice, or the one a settlement payment paid off.
+          {/* Navegador de Mês */}
+          {(detail.previousMonthId || detail.nextMonthId) && (
+            <div className="flex items-center rounded-xl border border-border bg-card p-0.5">
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                asChild
+                disabled={!detail.previousMonthId}
+              >
+                {detail.previousMonthId ? (
                   <Link
-                    key={item.id}
-                    href={`/invoices/${item.invoiceId}`}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 transition-colors hover:bg-muted"
+                    href={`/projections/${detail.previousMonthId}`}
+                    aria-label={t("detail.nav.previous")}
                   >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-xs font-semibold">
-                        {item.name}
-                        {item.cardLastFourDigits
-                          ? ` •••• ${item.cardLastFourDigits}`
-                          : ""}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("detail.sections.cards.dueDate", {
-                          date: shortDate(item.dueDate),
-                        })}
-                      </span>
-                    </div>
-                    <span className="flex shrink-0 items-center gap-1 text-xs font-semibold tabular-nums">
-                      {money(item.amount)}
-                      <CaretRightIcon className="size-3.5 text-muted-foreground" />
-                    </span>
+                    <CaretLeftIcon className="size-4" />
                   </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                <ReceiptIcon className="size-4 text-muted-foreground" />
-                {t("detail.sections.accounts.title")}
+                ) : (
+                  <span aria-hidden>
+                    <CaretLeftIcon className="size-4 text-muted-foreground" />
+                  </span>
+                )}
+              </Button>
+              <span className="px-2 text-xs font-semibold text-foreground">
+                {monthLabel}
               </span>
-              <span className="text-sm font-semibold tabular-nums">
-                {money(detail.accountExpenses)}
-              </span>
-            </div>
-            {detail.accountsBreakdown.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("detail.sections.accounts.empty")}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {detail.accountsBreakdown.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3"
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                asChild
+                disabled={!detail.nextMonthId}
+              >
+                {detail.nextMonthId ? (
+                  <Link
+                    href={`/projections/${detail.nextMonthId}`}
+                    aria-label={t("detail.nav.next")}
                   >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-xs font-semibold">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("detail.sections.accounts.dueDate", {
-                          date: shortDate(item.date),
-                        })}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums">
-                      {money(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                <HandCoinsIcon className="size-4 text-muted-foreground" />
-                {t("detail.sections.loans.title")}
-              </span>
-              <span className="text-sm font-semibold tabular-nums">
-                {money(detail.loanExpenses)}
-              </span>
+                    <CaretRightIcon className="size-4" />
+                  </Link>
+                ) : (
+                  <span aria-hidden>
+                    <CaretRightIcon className="size-4 text-muted-foreground" />
+                  </span>
+                )}
+              </Button>
             </div>
-            {detail.loansBreakdown.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("detail.sections.loans.empty")}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {detail.loansBreakdown.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3"
-                  >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-xs font-semibold">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("detail.sections.loans.dueDate", {
-                          date: shortDate(item.date),
-                        })}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums">
-                      {money(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-3">
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
-              <span className="flex items-center gap-2 text-sm font-semibold">
-                <TrendUpIcon className="size-4 text-positive" />
-                {t("detail.sections.receivables.title")}
-              </span>
-              <span className="text-sm font-semibold tabular-nums text-positive">
-                {money(detail.incomeForecast)}
-              </span>
-            </div>
-            {detail.receivablesBreakdown.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                {t("detail.sections.receivables.empty")}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {detail.receivablesBreakdown.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-muted/50 p-3"
-                  >
-                    <div className="flex min-w-0 flex-col">
-                      <span className="truncate text-xs font-semibold">
-                        {item.name}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {t("detail.sections.receivables.dueDate", {
-                          date: shortDate(item.date),
-                        })}
-                      </span>
-                    </div>
-                    <span className="shrink-0 text-xs font-semibold tabular-nums text-positive">
-                      +{money(item.amount)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          )}
+        </div>
       </div>
 
-      <Link
-        href={{
-          pathname: "/transactions",
-          query: {
-            month: detail.monthKey,
-            // Matches this page's own self-share filtering — without it
-            // the linked list would show everyone's transactions for the
-            // month, not just what was actually summed here.
-            ...(detail.selfPersonId ? { person: detail.selfPersonId } : {}),
-          },
-        }}
-        className="self-start text-xs font-medium text-primary hover:underline"
-      >
-        {t("detail.viewStatement")} →
-      </Link>
+      {/* 4 KPI Cards Conectados Matematicamente */}
+      <KpiMathRow
+        initialBalance={detail.initialBalance}
+        totalReceitas={totals.totalReceitas}
+        totalCartoes={totals.totalCartoes}
+        totalContas={totals.totalContas}
+        totalContasFixas={totals.totalContasFixas}
+        totalOutrosGastos={totals.totalOutrosGastos}
+        totalSaidas={totals.totalSaidas}
+        saldoFinal={totals.saldoFinal}
+        deficitMensal={totals.variacaoMensal}
+        startDateLabel={startDateLabel}
+        topIncomes={topIncomes}
+      />
+
+      {/* Trajetória Diária do Saldo */}
+      <CashFlowTimeline
+        milestones={timelineMilestones}
+        monthLabel={monthLabel}
+      />
+
+      {/* Visão Alternável: Por Categoria ou Fluxo Diário */}
+      {viewMode === "category" ? (
+        <CategoryGridView
+          receivables={receivables}
+          cards={cards}
+          accounts={accounts}
+          loans={loans}
+          totals={totals}
+        />
+      ) : (
+        <ChronologicalStatementView
+          milestones={timelineMilestones}
+          monthLabel={monthLabel}
+        />
+      )}
+
+      {/* Botão de Acesso ao Extrato Completo */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/50 text-muted-foreground shadow-2xs">
+            <ReceiptIcon className="size-4.5" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-foreground">
+              Extrato detalhado do mês
+            </h4>
+            <p className="text-[11px] text-muted-foreground">
+              Consulte todos os lançamentos reais e agendados deste período na tela de transações
+            </p>
+          </div>
+        </div>
+
+        <Button asChild variant="outline" size="sm" className="gap-2 rounded-xl text-xs font-semibold shadow-2xs shrink-0">
+          <Link
+            href={{
+              pathname: "/transactions",
+              query: {
+                month: detail.monthKey,
+                ...(detail.selfPersonId ? { person: detail.selfPersonId } : {}),
+              },
+            }}
+          >
+            <span>{t("detail.viewStatement")}</span>
+            <ArrowRightIcon className="size-3.5 text-muted-foreground" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }

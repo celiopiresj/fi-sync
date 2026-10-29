@@ -1,32 +1,27 @@
 {
   "title": "Projeções",
   "subtitle": "Fluxo de caixa e saldo previsto para os próximos {count} meses",
-
   "periodToggle": {
     "3": "3 meses",
     "6": "6 meses",
     "12": "1 ano"
   },
-
   "kpi": {
     "currentBalance": "Saldo Atual",
     "lowestPoint": "Pico Crítico",
     "futureCardCommitment": "Comprometimento em Cartões",
     "expectedIncome": "Receitas Previstas"
   },
-
   "chart": {
     "title": "Curva de Tendência de Saldo (Fluxo de Caixa)",
     "subtitle": "Linha verde indica o saldo previsto. A linha tracejada vermelha mostra o total de saídas — quando ela fica acima do saldo, os compromissos do mês superam o previsto.",
     "balanceLabel": "Saldo",
     "expensesLabel": "Gastos"
   },
-
   "viewMode": {
     "cards": "Modo cards",
     "list": "Modo lista"
   },
-
   "table": {
     "columns": {
       "month": "Mês",
@@ -36,13 +31,11 @@
       "status": "Status"
     }
   },
-
   "status": {
     "ok": "Saudável",
     "warning": "Atenção",
     "danger": "Risco de caixa"
   },
-
   "card": {
     "currentMonthBadge": "Mês atual",
     "projectedBalance": "Saldo Previsto",
@@ -53,7 +46,6 @@
     "incomeForecast": "Previsão a receber",
     "viewDetail": "Ver detalhes"
   },
-
   "detail": {
     "title": "Detalhamento: {month}",
     "subtitle": "Composição completa de receitas e saídas projetadas para este mês",
@@ -101,6 +93,74 @@
         "empty": "Nenhuma receita prevista neste mês.",
         "dueDate": "Previsão: {date}"
       }
+    },
+    "viewMode": {
+      "category": "Por Categoria",
+      "timeline": "Fluxo Diário"
+    },
+    "simulation": {
+      "simulate": "Simular Cenário",
+      "active": "Modo Simulação Ativo",
+      "reset": "Resetar",
+      "restore": "Restaurar Projeção Original",
+      "bannerTitle": "Clique nos itens abaixo para simular adiamentos ou cortes",
+      "impact": "Impacto no saldo final: {amount}",
+      "allActive": "Todos os lançamentos originais estão ativos no momento."
+    },
+    "math": {
+      "step1": "1. Saldo Anterior",
+      "step2": "2. Receitas Previstas",
+      "step3": "3. Total de Saídas",
+      "step4": "4. Saldo Previsto",
+      "fromPrevious": "De {month}",
+      "initialPositive": "Abertura positiva",
+      "initialNegative": "Abertura negativa",
+      "sourcesCount": "{count, plural, one {# fonte} other {# fontes}}",
+      "itemsCount": "{count, plural, one {# lançamento} other {# lançamentos}}",
+      "monthDiff": "Mês: {amount}",
+      "simulateLink": "Simular ajuste",
+      "simulating": "Simulando..."
+    },
+    "timeline": {
+      "title": "Trajetória do Caixa em {month}",
+      "subtitle": "Como o saldo evolui ao longo do mês",
+      "positiveBalance": "Saldo Positivo",
+      "negativeBalance": "Saldo no Vermelho",
+      "openingTitle": "Abertura do Mês",
+      "openingSubtitle": "Saldo inicial herdado",
+      "criticalTurn": "Virada Negativa",
+      "balance": "Saldo:",
+      "accumulatedBalance": "Saldo Acumulado",
+      "movement": "Movimentação",
+      "chronologicalTitle": "Extrato Cronológico Projetado — {month}",
+      "chronologicalSubtitle": "Acompanhe a evolução do saldo acumulado a cada vencimento do mês",
+      "chronologicalOrder": "Ordem Cronológica"
+    },
+    "categoryView": {
+      "incomesTitle": "Receitas Previstas",
+      "incomesSubtitle": "Entradas projetadas no mês",
+      "coverage": "Cobre {percentage}% das saídas",
+      "addIncome": "Adicionar receita extra ou resgate",
+      "loansTitle": "Empréstimos",
+      "loansEmpty": "Nenhuma parcela prevista neste mês.",
+      "upToDate": "Em dia",
+      "cardsTitle": "Faturas de Cartão de Crédito",
+      "cardsShare": "{percentage}% do total de saídas do mês",
+      "activeCards": "{count, plural, one {# cartão ativo} other {# cartões ativos}}",
+      "shareOfCards": "{percentage}% dos cartões",
+      "viewFullInvoice": "Ver fatura completa",
+      "billsTitle": "Contas Fixas / Recorrentes",
+      "billsSummary": "{count, plural, one {# compromisso} other {# compromissos}}",
+      "billsShare": "{percentage}% das saídas",
+      "filterAll": "Todas ({count})",
+      "filterDay": "Dia {day} ({count})",
+      "filterOthers": "Outras Datas ({count})",
+      "dueOn": "Vencimento em {date}",
+      "subtotal": "Subtotal: {amount}",
+      "otherDates": "Demais Vencimentos",
+      "diagnosticTitle": "Diagnóstico de Liquidez",
+      "diagnosticDeficit": "Maior saída concentrada em {date}",
+      "diagnosticAdvice": "A fatura do {card} ({amount}) consome {percentage}% de toda a sua receita mensal prevista."
     }
   }
 }

@@ -182,6 +182,7 @@
       "cash": "One-time",
       "total": "Invoice total",
       "paid": "Paid: {value}",
+      "paidBadge": "Paid",
       "remaining": "Remaining: {value}"
     },
     "loans": {
@@ -192,6 +193,9 @@
     "whatsapp": {
       "messageTitle": "Statement",
       "remainingLabel": "Remaining",
+      "balanceToPayLabel": "Balance to transfer",
+      "balanceInAccountLabel": "Account balance",
+      "settledLabel": "Settled balance",
       "greeting": {
         "morning": "Good morning",
         "afternoon": "Good afternoon",
@@ -199,6 +203,13 @@
       },
       "previewTitle": "Preview message",
       "previewDescription": "Review the text before sending",
+      "tabMessage": "Message",
+      "tabFilter": "Customize entries",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "movementsNote": "Hiding movements does not change the account balance.",
       "send": "Send",
       "cancel": "Cancel",
       "noPhoneToast": "This person has no phone number on file"

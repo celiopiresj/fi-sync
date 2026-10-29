@@ -9,3 +9,19 @@ export type ProjectionDetail = NonNullable<
 export type CardExpenseItem = ProjectionDetail["cardsBreakdown"][number];
 export type AccountExpenseItem = ProjectionDetail["accountsBreakdown"][number];
 export type LoanExpenseItem = ProjectionDetail["loansBreakdown"][number];
+export type ReceivableItem = ProjectionDetail["receivablesBreakdown"][number];
+
+export type CashFlowMilestone = {
+  day: number;
+  date: Date;
+  dateLabel: string;
+  title: string;
+  subtitle?: string;
+  delta: number;
+  balanceAfter: number;
+  type: "start" | "income" | "expense" | "critical" | "mixed";
+  isCritical: boolean;
+  isPositive: boolean;
+};
+
+export type DetailViewMode = "category" | "timeline";

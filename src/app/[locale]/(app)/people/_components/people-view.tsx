@@ -54,13 +54,11 @@ import { createPerson, deletePerson, updatePerson } from "../actions";
 import { joinPersonPhone } from "../_lib/phone";
 import { getPersonColorClasses, getPersonInitial } from "../_lib/person-avatar";
 import { currentStatementPeriod } from "../_lib/cash-cycle";
-import { buildPersonStatementMessage } from "../_lib/statement-message";
-import { buildWhatsAppLink } from "../_lib/whatsapp-message";
 import { usePeopleData } from "../_hooks/use-people-data";
 import { getPersonStatement } from "../actions";
 import { balanceStatusOf, getPeopleColumns } from "./table/columns";
 import { WhatsAppPreviewDialog } from "./whatsapp-preview-dialog";
-import type { PersonRow } from "../_types/types";
+import type { PersonRow, PersonStatement, StatementPeriod } from "../_types/types";
 
 type DialogState =
   | { mode: "create" }
@@ -86,8 +84,8 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [chargingPersonId, setChargingPersonId] = useState<string | null>(null);
   const [chargePreview, setChargePreview] = useState<{
-    message: string;
-    whatsappLink: string;
+    statement: NonNullable<PersonStatement>;
+    period: StatementPeriod;
   } | null>(null);
 
   const { people, invalidatePeople } = usePeopleData(initialPeople);
@@ -177,17 +175,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
       const statement = await getPersonStatement(person.id, period);
       if (!statement) return;
 
-      const message = buildPersonStatementMessage(statement, period, t, format);
-      const whatsappLink = buildWhatsAppLink(
-        statement.person.phoneCountryCode,
-        statement.person.phone,
-        message,
-      );
-      if (!whatsappLink) {
-        toast.error(t("detail.whatsapp.noPhoneToast"));
-        return;
-      }
-      setChargePreview({ message, whatsappLink });
+      setChargePreview({ statement, period });
     } finally {
       setChargingPersonId(null);
     }
@@ -551,8 +539,10 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
           onOpenChange={(open) => {
             if (!open) setChargePreview(null);
           }}
-          message={chargePreview.message}
-          whatsappLink={chargePreview.whatsappLink}
+          statement={chargePreview.statement}
+          period={chargePreview.period}
+          phoneCountryCode={chargePreview.statement.person.phoneCountryCode}
+          phone={chargePreview.statement.person.phone}
         />
       ) : null}
     </div>

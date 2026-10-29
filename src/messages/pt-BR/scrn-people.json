@@ -182,6 +182,7 @@
       "cash": "À vista",
       "total": "Total fatura",
       "paid": "Pago: {value}",
+      "paidBadge": "Pago",
       "remaining": "Restante: {value}"
     },
     "loans": {
@@ -192,6 +193,9 @@
     "whatsapp": {
       "messageTitle": "Extrato",
       "remainingLabel": "Resta",
+      "balanceToPayLabel": "Saldo a transferir",
+      "balanceInAccountLabel": "Saldo na conta",
+      "settledLabel": "Saldo quitado",
       "greeting": {
         "morning": "Bom dia",
         "afternoon": "Boa tarde",
@@ -199,6 +203,13 @@
       },
       "previewTitle": "Pré-visualizar mensagem",
       "previewDescription": "Confira o texto antes de enviar",
+      "tabMessage": "Mensagem",
+      "tabFilter": "Personalizar lançamentos",
+      "selectAll": "Marcar todos",
+      "deselectAll": "Desmarcar todos",
+      "copy": "Copiar",
+      "copied": "Copiado!",
+      "movementsNote": "Ocultar movimentações não altera o saldo da conta.",
       "send": "Enviar",
       "cancel": "Cancelar",
       "noPhoneToast": "Essa pessoa não tem telefone cadastrado"

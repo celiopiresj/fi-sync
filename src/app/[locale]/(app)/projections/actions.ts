@@ -14,6 +14,7 @@ import {
 } from "./_lib/projection-month";
 import { selfShareAmount } from "./_lib/self-share";
 import { neutralTransferGroupIds } from "./_lib/neutral-transfers";
+import { cleanCardName } from "./_lib/card-visuals";
 import { MAX_MONTHS_AHEAD } from "./_constants/constants";
 
 // Shared by every query below that needs to compute a transaction's
@@ -470,7 +471,7 @@ export async function getProjectionDetail(monthId: string) {
   const previousMonthId = series[monthIndex - 1]?.monthKey ?? null;
   const nextMonthId = series[monthIndex + 1]?.monthKey ?? null;
 
-  const [selfPerson, invoices, transactions, loanInstallments] = await Promise.all([
+  const [selfPerson, invoices, transactions, loanInstallments, userCardAccounts] = await Promise.all([
     // Only feeds the detail page's "Ver extrato completo" link — it
     // passes `?person=` too, so what opens on the transactions screen
     // matches exactly the self-share this page already summed, not
@@ -490,7 +491,7 @@ export async function getProjectionDetail(monthId: string) {
           select: {
             name: true,
             cards: {
-              select: { lastFourDigits: true },
+              select: { lastFourDigits: true, colorStyle: true },
               orderBy: { createdAt: "asc" },
               take: 1,
             },
@@ -520,12 +521,32 @@ export async function getProjectionDetail(monthId: string) {
         amount: true,
         splits: SPLITS_SELECT,
         category: { select: { name: true } },
+        recurrenceId: true,
         // Same reasoning as computeMonthSeries' own select above — sorts
         // an invoice-payment settlement into cardsBreakdown below instead
         // of accountsBreakdown, matching how it's already counted in
         // month.cardExpenses/accountExpenses.
         // invoiceId lets that row link straight to the invoice it paid.
-        invoicePayment: { select: { id: true, invoiceId: true } },
+        invoicePayment: {
+          select: {
+            id: true,
+            invoiceId: true,
+            invoice: {
+              select: {
+                account: {
+                  select: {
+                    name: true,
+                    cards: {
+                      select: { colorStyle: true },
+                      orderBy: { createdAt: "asc" },
+                      take: 1,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         // Same idea for a paid loan installment's own settlement — sorts
         // it into loansBreakdown instead of accountsBreakdown, matching
         // month.loanExpenses.
@@ -558,7 +579,37 @@ export async function getProjectionDetail(monthId: string) {
       },
       orderBy: { dueDate: "asc" },
     }),
+    prisma.account.findMany({
+      where: { userId, type: "CREDIT_CARD" },
+      select: {
+        name: true,
+        cards: {
+          select: { colorStyle: true },
+          orderBy: { createdAt: "asc" },
+          take: 1,
+        },
+      },
+    }),
   ]);
+
+  const cardColorByAccountName = new Map<string, string | null>();
+  for (const acc of userCardAccounts) {
+    const color = acc.cards[0]?.colorStyle ?? null;
+    if (color) {
+      cardColorByAccountName.set(acc.name.toLowerCase().trim(), color);
+    }
+  }
+
+  function resolveCardColor(name: string, directColor: string | null | undefined): string | null {
+    if (directColor) return directColor;
+    const clean = cleanCardName(name).toLowerCase().trim();
+    for (const [accName, color] of cardColorByAccountName) {
+      if (color && (clean === accName || clean.includes(accName) || accName.includes(clean))) {
+        return color;
+      }
+    }
+    return null;
+  }
 
   // Same self-share rule as computeMonthSeries above — an invoice with
   // zero self-share (every purchase in it belongs to someone else) is
@@ -597,8 +648,10 @@ export async function getProjectionDetail(monthId: string) {
         invoiceId: invoice.id,
         name: invoice.account.name,
         cardLastFourDigits: invoice.account.cards[0]?.lastFourDigits ?? null,
+        colorStyle: resolveCardColor(invoice.account.name, invoice.account.cards[0]?.colorStyle),
         dueDate: invoice.dueDate,
         amount: selfShareTotal * remainingRatio,
+        invoiceStatus: invoice.status,
       };
     })
     .filter((item) => item.amount > 0);
@@ -610,8 +663,14 @@ export async function getProjectionDetail(monthId: string) {
     date: transaction.date,
     isInvoicePayment: transaction.invoicePayment !== null,
     paidInvoiceId: transaction.invoicePayment?.invoiceId ?? null,
+    cardAccountName:
+      transaction.invoicePayment?.invoice?.account?.name ?? null,
+    cardColorStyle:
+      transaction.invoicePayment?.invoice?.account?.cards[0]?.colorStyle ?? null,
     isLoanInstallment: transaction.loanInstallment !== null,
     transferGroupId: transaction.transferGroupId,
+    recurrenceId: transaction.recurrenceId,
+    isRecurring: transaction.recurrenceId !== null,
     selfShare: selfShareAmount(
       transaction.amount.toNumber(),
       toSplitInputs(transaction.splits),
@@ -642,10 +701,15 @@ export async function getProjectionDetail(monthId: string) {
     .map((transaction) => ({
       id: transaction.id,
       invoiceId: transaction.paidInvoiceId,
-      name: transaction.name,
+      name: transaction.cardAccountName ?? cleanCardName(transaction.name),
       cardLastFourDigits: null,
+      colorStyle: resolveCardColor(
+        transaction.cardAccountName ?? transaction.name,
+        transaction.cardColorStyle,
+      ),
       dueDate: transaction.date,
       amount: Math.abs(transaction.selfShare),
+      invoiceStatus: "PAID" as const,
     }));
 
   const cardsBreakdown = [...stillOwedCardsBreakdown, ...paidCardsBreakdown].sort(
@@ -692,6 +756,8 @@ export async function getProjectionDetail(monthId: string) {
       categoryName: transaction.categoryName,
       date: transaction.date,
       amount: Math.abs(transaction.selfShare),
+      recurrenceId: transaction.recurrenceId,
+      isRecurring: transaction.isRecurring,
     }));
 
   const receivablesBreakdown = transactionsWithSelfShare

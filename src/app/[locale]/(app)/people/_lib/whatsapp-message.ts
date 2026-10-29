@@ -36,9 +36,11 @@ export function getGreetingPeriod(date: Date): GreetingPeriod {
   return "evening";
 }
 
+export const SECTION_DIVIDER = "────────────────";
+
 // WhatsApp's own markdown: *bold* wraps section titles/the final total,
-// not a "----" separator line — breaks less awkwardly on a narrow phone
-// screen. Consolidates every card section's items into this one
+// with a clean divider line separating sections for readability on mobile.
+// Consolidates every card section's items into this one
 // "Fatura" block/total regardless of how many cards contributed (the
 // on-screen view keeps them in separate sections per card — see
 // getPersonStatement in actions.ts — but the message is meant to read as
@@ -51,20 +53,21 @@ export function buildStatementMessage(input: BuildStatementMessageInput): string
   const blocks: string[] = [
     `${input.greeting}!`,
     "",
+    SECTION_DIVIDER,
     `*${input.title}*`,
     "",
     input.balanceLine,
   ];
 
   if (input.movements.length > 0) {
-    blocks.push("", `*${input.movementsSectionTitle}*`);
+    blocks.push("", SECTION_DIVIDER, `*${input.movementsSectionTitle}*`);
     for (const movement of input.movements) {
       blocks.push("", movement.label, movement.valueLine);
     }
   }
 
   if (input.invoiceItems.length > 0) {
-    blocks.push("", `*${input.invoiceSectionTitle}*`);
+    blocks.push("", SECTION_DIVIDER, `*${input.invoiceSectionTitle}*`);
     for (const item of input.invoiceItems) {
       blocks.push("", item.label, item.valueLine);
     }
@@ -74,7 +77,7 @@ export function buildStatementMessage(input: BuildStatementMessageInput): string
   }
 
   if (input.loanItems.length > 0) {
-    blocks.push("", `*${input.loanSectionTitle}*`);
+    blocks.push("", SECTION_DIVIDER, `*${input.loanSectionTitle}*`);
     for (const item of input.loanItems) {
       blocks.push("", item.label, item.valueLine);
     }
@@ -83,7 +86,7 @@ export function buildStatementMessage(input: BuildStatementMessageInput): string
     }
   }
 
-  blocks.push("", `*${input.totalLine}*`);
+  blocks.push("", SECTION_DIVIDER, `*${input.totalLine}*`);
 
   return blocks.join("\n");
 }

@@ -68,7 +68,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <AccountMenu />
           </div>
         </header>
-        <div className="flex-1 p-4 pb-24 md:pb-4">{children}</div>
+        <div className="flex-1 min-w-0 p-4 pb-24 md:pb-4">{children}</div>
       </SidebarInset>
       <MobileNavShell />
     </SidebarProvider>

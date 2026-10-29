@@ -1,32 +1,27 @@
 {
   "title": "Projections",
   "subtitle": "Cash flow and projected balance for the next {count} months",
-
   "periodToggle": {
     "3": "3 months",
     "6": "6 months",
     "12": "1 year"
   },
-
   "kpi": {
     "currentBalance": "Current Balance",
     "lowestPoint": "Critical Low",
     "futureCardCommitment": "Card Commitment",
     "expectedIncome": "Expected Income"
   },
-
   "chart": {
     "title": "Balance Trend Curve (Cash Flow)",
     "subtitle": "The green line shows the projected balance. The dashed red line shows total expenses — when it rides above the balance, that month's commitments outpace what's projected.",
     "balanceLabel": "Balance",
     "expensesLabel": "Expenses"
   },
-
   "viewMode": {
     "cards": "Card view",
     "list": "List view"
   },
-
   "table": {
     "columns": {
       "month": "Month",
@@ -36,13 +31,11 @@
       "status": "Status"
     }
   },
-
   "status": {
     "ok": "Healthy",
     "warning": "Watch",
     "danger": "Cash risk"
   },
-
   "card": {
     "currentMonthBadge": "Current month",
     "projectedBalance": "Projected Balance",
@@ -53,7 +46,6 @@
     "incomeForecast": "Expected income",
     "viewDetail": "View details"
   },
-
   "detail": {
     "title": "Breakdown: {month}",
     "subtitle": "Full breakdown of projected income and expenses for this month",
@@ -101,6 +93,74 @@
         "empty": "No income expected this month.",
         "dueDate": "Expected: {date}"
       }
+    },
+    "viewMode": {
+      "category": "By Category",
+      "timeline": "Daily Cash Flow"
+    },
+    "simulation": {
+      "simulate": "Simulate Scenario",
+      "active": "Simulation Mode Active",
+      "reset": "Reset",
+      "restore": "Restore Original Projection",
+      "bannerTitle": "Click items below to simulate postponements or cuts",
+      "impact": "Final balance impact: {amount}",
+      "allActive": "All original entries are currently active."
+    },
+    "math": {
+      "step1": "1. Previous Balance",
+      "step2": "2. Expected Incomes",
+      "step3": "3. Total Outflows",
+      "step4": "4. Projected Balance",
+      "fromPrevious": "From {month}",
+      "initialPositive": "Positive opening",
+      "initialNegative": "Negative opening",
+      "sourcesCount": "{count, plural, one {# source} other {# sources}}",
+      "itemsCount": "{count, plural, one {# entry} other {# entries}}",
+      "monthDiff": "Month: {amount}",
+      "simulateLink": "Simulate adjustment",
+      "simulating": "Simulating..."
+    },
+    "timeline": {
+      "title": "Cash Flow Trajectory in {month}",
+      "subtitle": "How balance evolves over the month",
+      "positiveBalance": "Positive Balance",
+      "negativeBalance": "Negative Balance",
+      "openingTitle": "Month Opening",
+      "openingSubtitle": "Inherited starting balance",
+      "criticalTurn": "Negative Turn",
+      "balance": "Balance:",
+      "accumulatedBalance": "Accumulated Balance",
+      "movement": "Movement",
+      "chronologicalTitle": "Projected Chronological Statement — {month}",
+      "chronologicalSubtitle": "Track accumulated balance evolution at each due date",
+      "chronologicalOrder": "Chronological Order"
+    },
+    "categoryView": {
+      "incomesTitle": "Expected Income",
+      "incomesSubtitle": "Projected entries for the month",
+      "coverage": "Covers {percentage}% of expenses",
+      "addIncome": "Add extra income or redemption",
+      "loansTitle": "Loans",
+      "loansEmpty": "No loan installments due this month.",
+      "upToDate": "Up to date",
+      "cardsTitle": "Credit Card Invoices",
+      "cardsShare": "{percentage}% of monthly expenses",
+      "activeCards": "{count, plural, one {# active card} other {# active cards}}",
+      "shareOfCards": "{percentage}% of cards",
+      "viewFullInvoice": "View full invoice",
+      "billsTitle": "Fixed / Recurring Bills",
+      "billsSummary": "{count, plural, one {# commitment} other {# commitments}}",
+      "billsShare": "{percentage}% of expenses",
+      "filterAll": "All ({count})",
+      "filterDay": "Day {day} ({count})",
+      "filterOthers": "Other Dates ({count})",
+      "dueOn": "Due on {date}",
+      "subtotal": "Subtotal: {amount}",
+      "otherDates": "Other Due Dates",
+      "diagnosticTitle": "Liquidity Diagnostic",
+      "diagnosticDeficit": "Largest expense concentrated on {date}",
+      "diagnosticAdvice": "The {card} invoice ({amount}) consumes {percentage}% of all your expected monthly income."
     }
   }
 }
