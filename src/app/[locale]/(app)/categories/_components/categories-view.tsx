@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { resolveCategoryIcon } from "@/lib/category-icons";
+import { matchesSearch } from "@/lib/normalize-search";
 import { cn } from "@/lib/utils";
 import {
   CreditCardIcon,
@@ -99,10 +100,8 @@ export function CategoriesView({ data }: CategoriesViewProps) {
     return data.filter((cat) => {
       const catType = cat.type || "EXPENSE";
       const matchesType = filterType === "all" || catType === filterType;
-      const matchesSearch = (cat.name || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
+      const matchesSearchFilter = matchesSearch(cat.name || "", searchQuery);
+      return matchesType && matchesSearchFilter;
     });
   }, [data, filterType, searchQuery]);
 

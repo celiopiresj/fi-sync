@@ -14,6 +14,7 @@ import {
   UsersIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { matchesSearch } from "@/lib/normalize-search";
 import { Link, useRouter } from "@/i18n/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -118,11 +119,11 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
     const query = searchText.trim().toLowerCase();
     const queryDigits = query.replace(/\D/g, "");
     return people.filter((person) => {
-      const matchesName = person.name.toLowerCase().includes(query);
+      const matchesName = matchesSearch(person.name, query);
       const phoneDigits = `${person.phoneCountryCode ?? ""}${person.phone ?? ""}`;
       const matchesPhone = queryDigits.length > 0 && phoneDigits.includes(queryDigits);
-      const matchesSearch = !query || matchesName || matchesPhone;
-      if (!matchesSearch) return false;
+      const matchesFilter = !query || matchesName || matchesPhone;
+      if (!matchesFilter) return false;
 
       if (statusFilter === "toReceive") return person.balance < 0;
       if (statusFilter === "toPay") return person.balance > 0;

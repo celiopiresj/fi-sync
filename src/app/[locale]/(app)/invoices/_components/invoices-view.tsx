@@ -41,6 +41,7 @@ import {
   todayCalendarDate,
 } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { matchesSearch } from "@/lib/normalize-search";
 import {
   CalendarIcon,
   CreditCardIcon,
@@ -162,7 +163,7 @@ export function InvoicesView({
         return false;
       }
       if (!query) return true;
-      const matchesAccount = invoice.account.name.toLowerCase().includes(query);
+      const matchesAccount = matchesSearch(invoice.account.name, query);
       const matchesAmount = money(invoice.total).toLowerCase().includes(query);
       return matchesAccount || matchesAmount;
     });

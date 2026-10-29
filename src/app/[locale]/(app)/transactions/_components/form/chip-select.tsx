@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { parseLocalCalendarDate, formatLocalCalendarDate } from "@/lib/date";
+import { matchesSearch } from "@/lib/normalize-search";
 import {
   Popover,
   PopoverContent,
@@ -110,13 +111,13 @@ export function ChipSelect<T extends string = string>({
     </ChipTrigger>
   );
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredOptions = normalizedQuery
+  const hasQuery = Boolean(query.trim());
+  const filteredOptions = hasQuery
     ? options.filter((option) => {
         const optionLabel = formatDisplay
           ? formatDisplay(option.label)
           : option.label;
-        return optionLabel.toLowerCase().includes(normalizedQuery);
+        return matchesSearch(optionLabel, query);
       })
     : options;
 
@@ -147,7 +148,7 @@ export function ChipSelect<T extends string = string>({
             {formatDisplay ? formatDisplay(option.label) : option.label}
           </button>
         ))}
-        {normalizedQuery && filteredOptions.length === 0 ? (
+        {hasQuery && filteredOptions.length === 0 ? (
           <p className="px-2.5 py-2 text-xs text-muted-foreground">
             {t("picker.noResults")}
           </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { matchesSearch } from "@/lib/normalize-search";
 import type { PreviewDirection, PreviewRow } from "../_types/types";
 import { matchesDirection } from "../_lib/preview-money";
 import { EMPTY_PREVIEW_ROWS } from "../_constants/constants";
@@ -11,10 +12,9 @@ export function usePreviewTable(rows: PreviewRow[] = EMPTY_PREVIEW_ROWS) {
   const [direction, setDirection] = useState<PreviewDirection>("all");
 
   const filteredRows = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return rows.filter((row) => {
       if (!matchesDirection(row, direction)) return false;
-      if (query && !row.description.toLowerCase().includes(query)) return false;
+      if (search.trim() && !matchesSearch(row.description, search)) return false;
       return true;
     });
   }, [rows, search, direction]);

@@ -116,8 +116,7 @@ export function LoansView({ initialLoans, people, accounts }: LoansViewProps) {
     if (!query) return tabLoans;
     return tabLoans.filter(
       (loan) =>
-        loan.description.toLowerCase().includes(query) ||
-        loan.person.name.toLowerCase().includes(query),
+        matchesSearch(loan.description, query) || matchesSearch(loan.person.name, query),
     );
   }, [tabLoans, searchText]);
 

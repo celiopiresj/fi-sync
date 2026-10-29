@@ -178,8 +178,7 @@ export function BudgetsView({
       if (!matchesFilter) return false;
       if (!query) return true;
       return (
-        item.category.name.toLowerCase().includes(query) ||
-        (item.group?.name ?? "").toLowerCase().includes(query)
+        matchesSearch(item.category.name, query) || matchesSearch(item.group?.name ?? "", query)
       );
     });
   }, [budget, searchText, itemsFilter]);

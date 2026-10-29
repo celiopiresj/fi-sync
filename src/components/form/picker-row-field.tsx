@@ -10,6 +10,7 @@ import {
   parseLocalCalendarDate,
   formatLocalCalendarDate,
 } from "@/lib/date";
+import { matchesSearch } from "@/lib/normalize-search";
 import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
 import { Input } from "@/components/ui/input";
 import { PickerSearchInput } from "@/components/form/picker-search-input";
@@ -221,11 +222,11 @@ export function PickerRowField({
     : emptyOption?.label;
   const isFilled = displayLabel !== undefined;
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredOptions = normalizedQuery
+  const hasQuery = Boolean(query.trim());
+  const filteredOptions = hasQuery
     ? options.filter((option) => {
         const label = formatDisplay ? formatDisplay(option.label) : option.label;
-        return label.toLowerCase().includes(normalizedQuery);
+        return matchesSearch(label, query);
       })
     : options;
 

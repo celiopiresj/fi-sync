@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { matchesSearch } from "@/lib/normalize-search";
 import { cn } from "@/lib/utils";
 import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
 import { PickerSearchInput } from "@/components/form/picker-search-input";
@@ -66,13 +67,13 @@ export function PickerRow({
     : undefined;
   const isFilled = displayLabel !== undefined;
 
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredOptions = normalizedQuery
+  const hasQuery = Boolean(query.trim());
+  const filteredOptions = hasQuery
     ? options.filter((option) => {
         const optionLabel = formatDisplay
           ? formatDisplay(option.label)
           : option.label;
-        return optionLabel.toLowerCase().includes(normalizedQuery);
+        return matchesSearch(optionLabel, query);
       })
     : options;
 
@@ -132,7 +133,7 @@ export function PickerRow({
             {formatDisplay ? formatDisplay(option.label) : option.label}
           </button>
         ))}
-        {normalizedQuery && filteredOptions.length === 0 ? (
+        {hasQuery && filteredOptions.length === 0 ? (
           <p className="px-2.5 py-2 text-xs text-muted-foreground">
             {t("picker.noResults")}
           </p>
