@@ -1,5 +1,6 @@
 "use client";
 
+import { useSelector } from "@tanstack/react-form";
 import { useZodForm } from "@/lib/form/use-zod-form";
 import { useOpenFinanceMutations } from "./use-open-finance";
 import { mappingDefaults, mappingSchema } from "../_schema/schema";
@@ -14,13 +15,14 @@ export function useMappingForm(props: MappingFormProps) {
       catch { /* Retain the destination editor on failure. */ }
     },
   });
+  const accountId = useSelector(form.store, (state) => state.values.accountId);
   async function clear() {
     try { const result = await clearMapping.mutateAsync(props.source.id); if (!result.error) props.onReady(); }
     catch { /* Keep input visible so the owner can retry. */ }
   }
   function resetError() { mapping.reset(); clearMapping.reset(); }
   return {
-    form, clear, pending: mapping.isPending || clearMapping.isPending,
+    form, accountId, clear, pending: mapping.isPending || clearMapping.isPending,
     error: mapping.data?.error ?? clearMapping.data?.error,
     failed: mapping.isError || clearMapping.isError,
     resetError, resetCard: () => { form.setFieldValue("cardId", ""); resetError(); },
