@@ -30,7 +30,7 @@ import {
   RECURRENCE_GENERATION_WINDOW_MONTHS,
   stepDate,
 } from "@/lib/recurrence-window";
-import { recomputeInvoiceStatus } from "@/lib/invoice-total";
+import { forwardInvoiceSurplusCredit } from "@/lib/invoice-credit";
 import { TRANSFERABLE_ACCOUNT_TYPES } from "@/lib/transfer-accounts";
 import { getAccountPeopleBalances } from "@/lib/account-balance";
 import { parseStatement } from "@/lib/statement-import/parse";
@@ -860,6 +860,15 @@ async function invoiceIdsAffectedByDeleting(
       affectedInvoiceIds.add(credit.targetInvoiceId);
     }
   }
+
+  const linkedPurchases = await tx.transactionInvoice.findMany({
+    where: { transactionId: { in: transactionIds } },
+    select: { invoiceId: true },
+  });
+  for (const link of linkedPurchases) {
+    affectedInvoiceIds.add(link.invoiceId);
+  }
+
   return [...affectedInvoiceIds];
 }
 
@@ -871,9 +880,8 @@ async function recomputeAffectedInvoices(
   tx: Prisma.TransactionClient,
   invoiceIds: string[],
 ) {
-  const visited = new Set<string>();
   for (const invoiceId of invoiceIds) {
-    await recomputeInvoiceStatus(tx, invoiceId, visited);
+    await forwardInvoiceSurplusCredit(tx, invoiceId);
   }
 }
 
@@ -2198,7 +2206,10 @@ export async function createCreditTransactionsBatch(
 // delete as always.
 export async function deleteTransaction(
   id: string,
-  options?: { installmentScope?: "this" | "all" },
+  options?: {
+    installmentScope?: "this" | "all";
+    confirmPaidInvoice?: boolean;
+  },
 ) {
   const userId = await requireUserId();
 
@@ -2232,18 +2243,19 @@ export async function deleteTransaction(
     const siblings = await prisma.transaction.findMany({
       where: { userId, installmentGroupId: existing.installmentGroupId },
       include: {
-        transactionInvoice: { include: { invoice: { include: { payments: true } } } },
+        transactionInvoice: {
+          include: {
+            invoice: {
+              include: {
+                payments: { select: { id: true } },
+                creditsReceived: { select: { id: true } },
+              },
+            },
+          },
+        },
       },
       orderBy: { installmentNumber: "desc" },
     });
-
-    const paidCount = siblings.filter(
-      (row) => (row.transactionInvoice?.invoice.payments.length ?? 0) > 0,
-    ).length;
-    if (paidCount > 0) {
-      const t = await getTranslations("scrn-transactions");
-      return { error: t("fields.installments.groupHasPaid", { count: paidCount }) };
-    }
 
     if (!options?.installmentScope) {
       const target = siblings.find((row) => row.id === id);
@@ -2258,27 +2270,45 @@ export async function deleteTransaction(
 
     idsToDelete =
       options.installmentScope === "all" ? siblings.map((row) => row.id) : [id];
+
+    const targetSiblings = siblings.filter((row) => idsToDelete.includes(row.id));
+    const paidCount = targetSiblings.filter(
+      (row) =>
+        (row.transactionInvoice?.invoice.payments.length ?? 0) > 0 ||
+        (row.transactionInvoice?.invoice.creditsReceived.length ?? 0) > 0,
+    ).length;
+
+    if (paidCount > 0 && !options?.confirmPaidInvoice) {
+      return {
+        error: null,
+        needsPaidInvoiceConfirmation: true,
+      };
+    }
   } else {
-    // A plain (non-installment) credit-card purchase can be linked to an
-    // Invoice that already has a real payment against it, same as an
-    // installment can (guarded above) — and invoiceIdsAffectedByDeleting
-    // below only ever finds an invoice through InvoicePayment.transactionId,
-    // i.e. only when the transaction BEING DELETED is itself a settlement
-    // row. A plain purchase has no InvoicePayment of its own, so without
-    // this guard it would delete cleanly but silently leave its invoice's
-    // cached status/paidAmount describing a total that no longer includes
-    // it — the same stale-status bug fixed above for editing an amount,
-    // reachable here too since deleting drops the total just as an edit
-    // can raise it. Same policy as the installment-group guard: never let
-    // a delete quietly undo money that already moved — tell the user to
-    // undo the payment first instead.
+    // If the purchase is on an invoice that has payments or credits, confirm
+    // with user before deleting. On delete, any excess payment is forwarded
+    // as credit to the next invoice.
     const linked = await prisma.transactionInvoice.findUnique({
       where: { transactionId: id },
-      include: { invoice: { include: { payments: { select: { id: true } } } } },
+      include: {
+        invoice: {
+          include: {
+            payments: { select: { id: true } },
+            creditsReceived: { select: { id: true } },
+          },
+        },
+      },
     });
-    if (linked && linked.invoice.payments.length > 0) {
-      const t = await getTranslations("scrn-transactions");
-      return { error: t("delete.alreadyPaid") };
+    const hasPaidOrCredit =
+      linked &&
+      (linked.invoice.payments.length > 0 ||
+        linked.invoice.creditsReceived.length > 0);
+
+    if (hasPaidOrCredit && !options?.confirmPaidInvoice) {
+      return {
+        error: null,
+        needsPaidInvoiceConfirmation: true,
+      };
     }
   }
 
@@ -2329,24 +2359,36 @@ export async function updateTransactionsBulk(
   return { error: null, count: result.count };
 }
 
-export async function deleteTransactionsBulk(ids: string[]) {
+export async function deleteTransactionsBulk(
+  ids: string[],
+  options?: { confirmPaidInvoice?: boolean },
+) {
   const userId = await requireUserId();
   if (ids.length === 0) return { error: null, count: 0 };
 
-  // Same policy as deleteTransaction's own guards (installment-group and
-  // plain-purchase, above) — never let a delete quietly undo money that
-  // already moved. A bulk selection can mix rows freely, so unlike those
-  // single-transaction guards this blocks the WHOLE batch the moment ANY
-  // selected transaction is already linked to a paid invoice, rather
-  // than silently deleting the rest around it.
   const links = await prisma.transactionInvoice.findMany({
     where: { transactionId: { in: ids } },
-    include: { invoice: { include: { payments: { select: { id: true } } } } },
+    include: {
+      invoice: {
+        include: {
+          payments: { select: { id: true } },
+          creditsReceived: { select: { id: true } },
+        },
+      },
+    },
   });
-  const paidCount = links.filter((link) => link.invoice.payments.length > 0).length;
-  if (paidCount > 0) {
-    const t = await getTranslations("scrn-transactions");
-    return { error: t("delete.someAlreadyPaid", { count: paidCount }), count: 0 };
+  const paidCount = links.filter(
+    (link) =>
+      link.invoice.payments.length > 0 ||
+      link.invoice.creditsReceived.length > 0,
+  ).length;
+  if (paidCount > 0 && !options?.confirmPaidInvoice) {
+    return {
+      error: null,
+      count: 0,
+      needsPaidInvoiceConfirmation: true,
+      paidCount,
+    };
   }
 
   // Same "both legs of a transfer go together" rule as deleteTransaction:

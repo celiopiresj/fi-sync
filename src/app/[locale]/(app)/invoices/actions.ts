@@ -2,13 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
-import { addDays } from "date-fns";
 import { allocate, BRL, dinero, toDecimal } from "dinero.js";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth/server";
-import { parseCalendarDate, todayCalendarDate, toAppZoned, fromAppZoned } from "@/lib/date";
-import { resolveInvoiceForDate } from "@/lib/invoice-resolution";
+import { parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import { recomputeInvoiceStatus, sumInvoiceTransactionsTotal } from "@/lib/invoice-total";
+import { applyOverflowCredit } from "@/lib/invoice-credit";
 import { formatPersonName } from "@/lib/format-person-name";
 import { invoicePeriodRange } from "./_lib/period";
 import {
@@ -367,70 +366,6 @@ export async function getInvoicePeopleOwed(id: string) {
 // force-created by resolveInvoiceForDate below) has no known total to
 // compare against, so it simply absorbs everything remaining and the
 // loop stops there — same reasoning as projections/actions.ts treating
-// an as-yet-empty month as having nothing to project. An invoice that
-// DOES already carry real purchases only absorbs up to its own
-// remaining due, letting genuine leftover keep rolling to the invoice
-// after it.
-async function applyOverflowCredit(
-  tx: Parameters<typeof recomputeInvoiceStatus>[0],
-  accountId: string,
-  sourcePaymentId: string,
-  fromClosingDate: Date,
-  cardDetails: { closingDay: number; dueDay: number },
-  overflowCents: number,
-) {
-  let remainingCents = overflowCents;
-  let cursorDate = fromClosingDate;
-  // A card cycle is effectively always monthly — this many hops covers
-  // years of rolling overpayment, far past anything a real user would
-  // hit, and exists only as a guard against an unbounded loop.
-  const MAX_HOPS = 24;
-
-  for (let hop = 0; hop < MAX_HOPS && remainingCents > 0; hop++) {
-    cursorDate = fromAppZoned(addDays(toAppZoned(cursorDate), 1));
-    const nextInvoice = await resolveInvoiceForDate(accountId, cursorDate, cardDetails, tx);
-
-    const nextData = await tx.invoice.findUniqueOrThrow({
-      where: { id: nextInvoice.id },
-      include: {
-        transactionInvoices: { include: { transaction: { select: { amount: true } } } },
-        payments: { select: { amount: true } },
-        creditsReceived: { select: { amount: true } },
-      },
-    });
-    const hasKnownTotal = nextData.transactionInvoices.length > 0;
-    const nextTotalCents = Math.round(sumInvoiceTransactionsTotal(nextData.transactionInvoices) * 100);
-    const nextPaidCents = Math.round(
-      nextData.payments.reduce((sum, payment) => sum + payment.amount.toNumber(), 0) * 100,
-    );
-    const nextCreditCents = Math.round(
-      nextData.creditsReceived.reduce((sum, credit) => sum + credit.amount.toNumber(), 0) * 100,
-    );
-    const nextRemainingCents = Math.max(0, nextTotalCents - nextPaidCents - nextCreditCents);
-
-    const creditForThisHop = hasKnownTotal ? Math.min(remainingCents, nextRemainingCents) : remainingCents;
-
-    if (creditForThisHop > 0) {
-      await tx.invoiceCredit.create({
-        data: {
-          sourcePaymentId,
-          targetInvoiceId: nextInvoice.id,
-          amount: creditForThisHop / 100,
-        },
-      });
-      await recomputeInvoiceStatus(tx, nextInvoice.id);
-      remainingCents -= creditForThisHop;
-    }
-
-    cursorDate = nextInvoice.closingDate;
-    // Landed on a cycle with no purchases yet — its eventual total is
-    // unknowable right now, so there's nothing meaningful to compare a
-    // remainder against; park everything here and stop instead of
-    // guessing forward past it.
-    if (!hasKnownTotal) break;
-  }
-}
-
 // Registers a payment against an invoice — may fully or only partially
 // cover what's due (see PARTIALLY_PAID in the InvoiceStatus enum), and
 // may repeat over time until the invoice is fully settled. Renamed from

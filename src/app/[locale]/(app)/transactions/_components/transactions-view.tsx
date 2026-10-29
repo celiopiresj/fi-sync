@@ -82,6 +82,7 @@ import {
   type TransactionFilters,
 } from "../actions";
 import { DeleteDialog } from "./delete-dialog";
+import { ConfirmPaidInvoiceDeleteDialog } from "./confirm-paid-invoice-delete-dialog";
 import { DeleteInstallmentScopeDialog } from "./delete-installment-scope-dialog";
 import { CreditTransactionSheet } from "./form/credit-transaction-sheet";
 import { DebitTransactionSheet } from "./form/debit-transaction-sheet";
@@ -263,6 +264,10 @@ export function TransactionsView({
   // the plain DeleteDialog for DeleteInstallmentScopeDialog's "esta
   // parcela ou todas?" choice instead. Cleared alongside
   // deletingTransaction on cancel/success.
+  const [confirmPaidInvoiceOpen, setConfirmPaidInvoiceOpen] = useState(false);
+  const [pendingPaidInvoiceScope, setPendingPaidInvoiceScope] = useState<"this" | "all" | undefined>(undefined);
+  const [confirmPaidInvoiceBulkOpen, setConfirmPaidInvoiceBulkOpen] = useState(false);
+
   const [deleteInstallmentScope, setDeleteInstallmentScope] = useState<{
     installmentNumber: number;
     installmentCount: number;
@@ -702,12 +707,15 @@ export function TransactionsView({
   // called on an installment-group row without one, which is what
   // swaps DeleteDialog for the scope dialog instead of deleting
   // anything yet.
-  async function performDelete(scope?: "this" | "all") {
+  async function performDelete(scope?: "this" | "all", confirmPaidInvoice?: boolean) {
     if (!deletingTransaction) return;
     setIsDeleting(true);
     const result = await deleteTransaction(
       deletingTransaction.id,
-      scope ? { installmentScope: scope } : undefined,
+      {
+        ...(scope ? { installmentScope: scope } : {}),
+        ...(confirmPaidInvoice ? { confirmPaidInvoice: true } : {}),
+      },
     );
     setIsDeleting(false);
 
@@ -715,14 +723,24 @@ export function TransactionsView({
       setDeleteInstallmentScope(result.needsInstallmentScope);
       return;
     }
+    if (result.needsPaidInvoiceConfirmation) {
+      setPendingPaidInvoiceScope(scope);
+      setDeleteInstallmentScope(null);
+      setConfirmPaidInvoiceOpen(true);
+      return;
+    }
     if (result.error) {
       toast.error(result.error);
       setDeletingTransaction(null);
       setDeleteInstallmentScope(null);
+      setConfirmPaidInvoiceOpen(false);
+      setPendingPaidInvoiceScope(undefined);
       return;
     }
     setDeletingTransaction(null);
     setDeleteInstallmentScope(null);
+    setConfirmPaidInvoiceOpen(false);
+    setPendingPaidInvoiceScope(undefined);
     invalidate();
     toast.success(t("toast.deleted"));
   }
@@ -777,16 +795,24 @@ export function TransactionsView({
     [selectedIds, invalidate, t],
   );
 
-  async function handleBulkDeleteConfirm() {
+  async function handleBulkDeleteConfirm(confirmPaidInvoice?: boolean) {
     setIsBulkActionPending(true);
-    const result = await deleteTransactionsBulk([...selectedIds]);
+    const result = await deleteTransactionsBulk([...selectedIds], { confirmPaidInvoice });
     setIsBulkActionPending(false);
     setIsBulkDeleteOpen(false);
-    if (!result.error) {
-      invalidate();
-      toast.success(t("toast.bulkDeleted", { count: result.count }));
-      setSelectedIds(new Set());
+    if (result.needsPaidInvoiceConfirmation) {
+      setConfirmPaidInvoiceBulkOpen(true);
+      return;
     }
+    if (result.error) {
+      toast.error(result.error);
+      setConfirmPaidInvoiceBulkOpen(false);
+      return;
+    }
+    setConfirmPaidInvoiceBulkOpen(false);
+    invalidate();
+    toast.success(t("toast.bulkDeleted", { count: result.count }));
+    setSelectedIds(new Set());
   }
 
   // SummaryCards' "Saldo mensal" bars pass back the ISO "yyyy-MM" they
@@ -1302,9 +1328,16 @@ export function TransactionsView({
       />
 
       <DeleteDialog
-        open={deletingTransaction !== null && deleteInstallmentScope === null}
+        open={
+          deletingTransaction !== null &&
+          deleteInstallmentScope === null &&
+          !confirmPaidInvoiceOpen
+        }
         onOpenChange={(open) => {
-          if (!open) setDeletingTransaction(null);
+          if (!open) {
+            setDeletingTransaction(null);
+            setPendingPaidInvoiceScope(undefined);
+          }
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
@@ -1317,6 +1350,7 @@ export function TransactionsView({
             if (!open) {
               setDeleteInstallmentScope(null);
               setDeletingTransaction(null);
+              setPendingPaidInvoiceScope(undefined);
             }
           }}
           installmentNumber={deleteInstallmentScope.installmentNumber}
@@ -1326,12 +1360,33 @@ export function TransactionsView({
         />
       )}
 
+      <ConfirmPaidInvoiceDeleteDialog
+        open={confirmPaidInvoiceOpen}
+        onOpenChange={(open) => {
+          setConfirmPaidInvoiceOpen(open);
+          if (!open) {
+            setDeletingTransaction(null);
+            setPendingPaidInvoiceScope(undefined);
+          }
+        }}
+        onConfirm={() => void performDelete(pendingPaidInvoiceScope, true)}
+        isPending={isDeleting}
+      />
+
       <DeleteDialog
         open={isBulkDeleteOpen}
         onOpenChange={setIsBulkDeleteOpen}
-        onConfirm={handleBulkDeleteConfirm}
+        onConfirm={() => handleBulkDeleteConfirm()}
         isPending={isBulkActionPending}
         count={selectedIds.size}
+      />
+
+      <ConfirmPaidInvoiceDeleteDialog
+        open={confirmPaidInvoiceBulkOpen}
+        onOpenChange={setConfirmPaidInvoiceBulkOpen}
+        onConfirm={() => void handleBulkDeleteConfirm(true)}
+        isPending={isBulkActionPending}
+        isBulk
       />
     </div>
   );

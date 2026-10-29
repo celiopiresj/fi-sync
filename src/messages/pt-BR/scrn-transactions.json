@@ -2,25 +2,22 @@
   "title": "Transações",
   "subtitle": "Acompanhe suas movimentações",
   "description": "Veja, filtre e edite os lançamentos da conta selecionada",
-
   "header": {
     "subtitle": "{account} · {count, plural, one {# lançamento} other {# lançamentos}}",
     "previousPeriod": "Mês anterior",
     "nextPeriod": "Próximo mês"
   },
-
   "breadcrumb": {
     "home": "Início",
     "current": "Transações"
   },
-
   "buttons": {
     "add": {
       "title": "Nova transação",
       "description": "Adicionar um lançamento manual",
       "debit": "Transação no débito",
       "credit": "Despesa no cartão",
-    "import": "Importar fatura ou extrato",
+      "import": "Importar fatura ou extrato",
       "transfer": "Transferência"
     },
     "import": {
@@ -32,13 +29,11 @@
       "description": "Exportar transações filtradas"
     }
   },
-
   "messages": {
     "title": "",
     "subtitle": "",
     "description": ""
   },
-
   "cards": {
     "balance": {
       "title": "Saldo do período",
@@ -53,7 +48,6 @@
       "description": "Total gasto no período"
     }
   },
-
   "summary": {
     "balanceLabel": "Saldo do período",
     "totalSpentLabel": "Total gasto",
@@ -64,12 +58,10 @@
     "legendIncome": "Receitas {value}",
     "legendExpenses": "Despesas {value}"
   },
-
   "search": {
     "placeholder": "Buscar por descrição ou valor",
     "clear": "Limpar busca"
   },
-
   "chart": {
     "monthlyBalance": {
       "title": "Saldo mensal",
@@ -87,7 +79,6 @@
       "uncategorized": "Sem categoria"
     }
   },
-
   "fields": {
     "description": {
       "label": "Descrição",
@@ -169,7 +160,6 @@
     },
     "choosePlaceholder": "Escolher"
   },
-
   "splits": {
     "toggleLabel": "Dividir com outras pessoas",
     "needsPersonFirst": "Escolha uma pessoa acima para dividir",
@@ -182,25 +172,20 @@
     "remove": "Remover pessoa",
     "mismatch": "A soma da divisão precisa bater com o valor da transação"
   },
-
   "moreOptions": {
     "title": "Mais opções"
   },
-
   "recurrence": {
     "conflict": "Repetição e parcelamento não podem ser usados juntos"
   },
-
   "footer": {
     "saveAndCreateAnother": "Salvar e criar outro",
     "missingField": "Falta preencher: {field}"
   },
-
   "mode": {
     "single": "Uma de cada vez",
     "batch": "Adicionar em lote"
   },
-
   "quickAdd": {
     "title": "Nova transação",
     "subtitle": "Adicionar um lançamento manual",
@@ -225,7 +210,6 @@
       "subtitle": "Entre suas contas ou com uma pessoa"
     }
   },
-
   "batch": {
     "title": "Lançamento em lote",
     "description": "Adicione várias transações de uma vez",
@@ -268,7 +252,6 @@
       "installments": "Parcelas"
     }
   },
-
   "import": {
     "title": "Importar fatura ou extrato",
     "description": "Leia o arquivo e confira os lançamentos antes de criar",
@@ -317,7 +300,6 @@
       "failed": "Não consegui ler esse arquivo. Tente de novo ou envie outro."
     }
   },
-
   "transfer": {
     "title": "Transferência",
     "description": "Mova dinheiro entre suas contas, ou registre um envio ou recebimento com uma pessoa",
@@ -372,7 +354,6 @@
       "nothingToTransfer": "Não há saldo para transferir"
     }
   },
-
   "table": {
     "columns": {
       "date": "Data",
@@ -407,21 +388,18 @@
       "mixedTypesHint": "Selecione apenas receitas ou apenas despesas para categorizar"
     }
   },
-
   "group": {
     "today": "Hoje, {date}",
     "yesterday": "Ontem, {date}",
     "dateHeader": "{weekday}, {date}",
     "summary": "Dia {dayValue} · Acum. {accValue}"
   },
-
   "menu": {
     "edit": "Editar",
     "duplicate": "Duplicar",
     "archive": "Arquivar",
     "delete": "Excluir"
   },
-
   "filters": {
     "title": "Filtros",
     "description": "Refine a lista de transações",
@@ -471,7 +449,6 @@
       "remove": "Remover filtro {value}"
     }
   },
-
   "dialog": {
     "delete": {
       "title": "Excluir transação?",
@@ -552,9 +529,16 @@
         "description": "Esta transação é uma das duas pontas de uma transferência entre suas contas. Para não deixar uma ponta sem a outra, ela não é editada como um lançamento comum — exclua e registre de novo; as duas pontas saem juntas."
       },
       "close": "Fechar"
+    },
+    "confirmPaidInvoiceDelete": {
+      "title": "Fatura já possui pagamento",
+      "titleBulk": "Faturas com pagamentos registrados",
+      "description": "Esta fatura já possui pagamentos registrados. Ao excluir esta compra, o valor pago a mais será gerado como crédito e lançado na próxima fatura. Deseja continuar?",
+      "descriptionBulk": "Uma ou mais compras selecionadas pertencem a faturas que já possuem pagamentos registrados. Ao excluí-las, o valor pago a mais será gerado como crédito na próxima fatura. Deseja continuar?",
+      "confirm": "Excluir e gerar crédito",
+      "cancel": "Cancelar"
     }
   },
-
   "toast": {
     "created": "Transação criada com sucesso",
     "updated": "Transação atualizada",
@@ -567,7 +551,6 @@
     "markedCompleted": "Transação marcada como concluída",
     "transferCreated": "Transferência registrada"
   },
-
   "tabs": {
     "all": "Todas",
     "income": "Receitas",
@@ -577,18 +560,15 @@
       "credit": "Crédito"
     }
   },
-
   "pagination": {
     "showing": "Mostrando {from}–{to} de {total}",
     "next": "Próxima",
     "previous": "Anterior"
   },
-
   "tooltip": {
     "balance": "Saldo calculado a partir das transações confirmadas",
     "pending": "Transação ainda não confirmada pelo banco"
   },
-
   "aria": {
     "close": "Fechar",
     "menu": "Abrir menu de ações",
@@ -596,12 +576,10 @@
     "delete": "Excluir transação",
     "markCompleted": "Marcar como concluída"
   },
-
   "delete": {
     "alreadyPaid": "Não é possível excluir: essa compra já está paga na fatura. Desfaça o pagamento na fatura antes.",
     "someAlreadyPaid": "{count, plural, one {Não é possível excluir: # das selecionadas já está paga na fatura. Desfaça o pagamento antes.} other {Não é possível excluir: # das selecionadas já estão pagas na fatura. Desfaça os pagamentos antes.}}"
   },
-
   "errors": {
     "load": {
       "title": "Não foi possível carregar as transações",

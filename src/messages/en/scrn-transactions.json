@@ -2,25 +2,22 @@
   "title": "Transactions",
   "subtitle": "Track your activity",
   "description": "View, filter and edit entries for the selected account",
-
   "header": {
     "subtitle": "{account} · {count, plural, one {# entry} other {# entries}}",
     "previousPeriod": "Previous month",
     "nextPeriod": "Next month"
   },
-
   "breadcrumb": {
     "home": "Home",
     "current": "Transactions"
   },
-
   "buttons": {
     "add": {
       "title": "New transaction",
       "description": "Add a manual entry",
       "debit": "Debit transaction",
       "credit": "Card expense",
-    "import": "Import statement or invoice",
+      "import": "Import statement or invoice",
       "transfer": "Transfer"
     },
     "import": {
@@ -32,13 +29,11 @@
       "description": "Export filtered transactions"
     }
   },
-
   "messages": {
     "title": "",
     "subtitle": "",
     "description": ""
   },
-
   "cards": {
     "balance": {
       "title": "Period balance",
@@ -53,7 +48,6 @@
       "description": "Total spent in the period"
     }
   },
-
   "summary": {
     "balanceLabel": "Period balance",
     "totalSpentLabel": "Total spent",
@@ -64,12 +58,10 @@
     "legendIncome": "Income {value}",
     "legendExpenses": "Expenses {value}"
   },
-
   "search": {
     "placeholder": "Search by description or amount",
     "clear": "Clear search"
   },
-
   "chart": {
     "monthlyBalance": {
       "title": "Monthly balance",
@@ -87,7 +79,6 @@
       "uncategorized": "Uncategorized"
     }
   },
-
   "fields": {
     "description": {
       "label": "Description",
@@ -169,7 +160,6 @@
     },
     "choosePlaceholder": "Choose"
   },
-
   "splits": {
     "toggleLabel": "Split with other people",
     "needsPersonFirst": "Choose a person above to split",
@@ -182,25 +172,20 @@
     "remove": "Remove person",
     "mismatch": "The split total must match the transaction amount"
   },
-
   "moreOptions": {
     "title": "More options"
   },
-
   "recurrence": {
     "conflict": "Recurrence and installments can't be used together"
   },
-
   "footer": {
     "saveAndCreateAnother": "Save and create another",
     "missingField": "Missing: {field}"
   },
-
   "mode": {
     "single": "One at a time",
     "batch": "Add in bulk"
   },
-
   "quickAdd": {
     "title": "New transaction",
     "subtitle": "Add a manual entry",
@@ -225,7 +210,6 @@
       "subtitle": "Between your accounts or with a person"
     }
   },
-
   "batch": {
     "title": "Batch entry",
     "description": "Add several transactions at once",
@@ -268,7 +252,6 @@
       "installments": "Installments"
     }
   },
-
   "import": {
     "title": "Import statement or invoice",
     "description": "Read the file and check the entries before creating them",
@@ -317,7 +300,6 @@
       "failed": "Could not read this file. Try again or send another one."
     }
   },
-
   "transfer": {
     "title": "Transfer",
     "description": "Move money between your accounts, or record money sent to or received from a person",
@@ -372,7 +354,6 @@
       "nothingToTransfer": "There is no balance to transfer"
     }
   },
-
   "table": {
     "columns": {
       "date": "Date",
@@ -407,21 +388,18 @@
       "mixedTypesHint": "Select only income or only expenses to categorize"
     }
   },
-
   "group": {
     "today": "Today, {date}",
     "yesterday": "Yesterday, {date}",
     "dateHeader": "{weekday}, {date}",
     "summary": "Day {dayValue} · Accum. {accValue}"
   },
-
   "menu": {
     "edit": "Edit",
     "duplicate": "Duplicate",
     "archive": "Archive",
     "delete": "Delete"
   },
-
   "filters": {
     "title": "Filters",
     "description": "Refine the transactions list",
@@ -471,7 +449,6 @@
       "remove": "Remove filter {value}"
     }
   },
-
   "dialog": {
     "delete": {
       "title": "Delete transaction?",
@@ -552,9 +529,16 @@
         "description": "This transaction is one of the two ends of a transfer between your accounts. So one end is never left without the other, it isn't edited like a regular entry — delete it and record the transfer again; both ends are removed together."
       },
       "close": "Close"
+    },
+    "confirmPaidInvoiceDelete": {
+      "title": "Invoice already paid",
+      "titleBulk": "Invoices with recorded payments",
+      "description": "This invoice already has recorded payments. Deleting this purchase will carry the excess paid amount as a credit to the next invoice. Do you want to continue?",
+      "descriptionBulk": "One or more selected purchases belong to invoices that already have recorded payments. Deleting them will carry the excess paid amount as a credit to the next invoice. Do you want to continue?",
+      "confirm": "Delete and generate credit",
+      "cancel": "Cancel"
     }
   },
-
   "toast": {
     "created": "Transaction created successfully",
     "updated": "Transaction updated",
@@ -567,7 +551,6 @@
     "markedCompleted": "Transaction marked as completed",
     "transferCreated": "Transfer recorded"
   },
-
   "tabs": {
     "all": "All",
     "income": "Income",
@@ -577,18 +560,15 @@
       "credit": "Credit"
     }
   },
-
   "pagination": {
     "showing": "Showing {from}–{to} of {total}",
     "next": "Next",
     "previous": "Previous"
   },
-
   "tooltip": {
     "balance": "Balance calculated from confirmed transactions",
     "pending": "Transaction not yet confirmed by the bank"
   },
-
   "aria": {
     "close": "Close",
     "menu": "Open actions menu",
@@ -596,12 +576,10 @@
     "delete": "Delete transaction",
     "markCompleted": "Mark as completed"
   },
-
   "delete": {
     "alreadyPaid": "Can't delete this: this purchase has already been paid on its invoice. Undo the payment on the invoice first.",
     "someAlreadyPaid": "{count, plural, one {Can't delete: # of the selected transactions has already been paid on its invoice. Undo the payment first.} other {Can't delete: # of the selected transactions have already been paid on their invoices. Undo the payments first.}}"
   },
-
   "errors": {
     "load": {
       "title": "Couldn't load transactions",

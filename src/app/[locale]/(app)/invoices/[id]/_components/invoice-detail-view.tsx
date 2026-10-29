@@ -48,6 +48,7 @@ import type { InvoiceTransactionFilters } from "../_types/types";
 // resolution logic that isn't worth duplicating.
 import { CreditTransactionSheet } from "../../../transactions/_components/form/credit-transaction-sheet";
 import { DeleteDialog } from "../../../transactions/_components/delete-dialog";
+import { ConfirmPaidInvoiceDeleteDialog } from "../../../transactions/_components/confirm-paid-invoice-delete-dialog";
 import { DeleteInstallmentScopeDialog } from "../../../transactions/_components/delete-installment-scope-dialog";
 import { BulkActionsBar } from "../../../transactions/_components/table/bulk-actions-bar";
 import { getTransactionColumns } from "../../../transactions/_components/table/columns";
@@ -132,6 +133,10 @@ export function InvoiceDetailView({
   const [isDeleting, setIsDeleting] = useState(false);
   // Same "needsInstallmentScope" swap as transactions-view.tsx's own —
   // see its comment.
+  const [confirmPaidInvoiceOpen, setConfirmPaidInvoiceOpen] = useState(false);
+  const [pendingPaidInvoiceScope, setPendingPaidInvoiceScope] = useState<"this" | "all" | undefined>(undefined);
+  const [confirmPaidInvoiceBulkOpen, setConfirmPaidInvoiceBulkOpen] = useState(false);
+
   const [deleteInstallmentScope, setDeleteInstallmentScope] = useState<{
     installmentNumber: number;
     installmentCount: number;
@@ -425,12 +430,15 @@ export function InvoiceDetailView({
 
   // Same "needsInstallmentScope" swap as transactions-view.tsx's own
   // performDelete — see its comment.
-  async function performDelete(scope?: "this" | "all") {
+  async function performDelete(scope?: "this" | "all", confirmPaidInvoice?: boolean) {
     if (!deletingTransaction) return;
     setIsDeleting(true);
     const result = await deleteTransaction(
       deletingTransaction.id,
-      scope ? { installmentScope: scope } : undefined,
+      {
+        ...(scope ? { installmentScope: scope } : {}),
+        ...(confirmPaidInvoice ? { confirmPaidInvoice: true } : {}),
+      },
     );
     setIsDeleting(false);
 
@@ -438,14 +446,24 @@ export function InvoiceDetailView({
       setDeleteInstallmentScope(result.needsInstallmentScope);
       return;
     }
+    if (result.needsPaidInvoiceConfirmation) {
+      setPendingPaidInvoiceScope(scope);
+      setDeleteInstallmentScope(null);
+      setConfirmPaidInvoiceOpen(true);
+      return;
+    }
     if (result.error) {
       toast.error(result.error);
       setDeletingTransaction(null);
       setDeleteInstallmentScope(null);
+      setConfirmPaidInvoiceOpen(false);
+      setPendingPaidInvoiceScope(undefined);
       return;
     }
     setDeletingTransaction(null);
     setDeleteInstallmentScope(null);
+    setConfirmPaidInvoiceOpen(false);
+    setPendingPaidInvoiceScope(undefined);
     queryClient.invalidateQueries({ queryKey: ["invoices"] });
     queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
     toast.success(tTransactions("toast.deleted"));
@@ -495,18 +513,26 @@ export function InvoiceDetailView({
     [selectedIds, queryClient, router, tTransactions],
   );
 
-  async function handleBulkDeleteConfirm() {
+  async function handleBulkDeleteConfirm(confirmPaidInvoice?: boolean) {
     setIsBulkActionPending(true);
-    const result = await deleteTransactionsBulk([...selectedIds]);
+    const result = await deleteTransactionsBulk([...selectedIds], { confirmPaidInvoice });
     setIsBulkActionPending(false);
     setIsBulkDeleteOpen(false);
-    if (!result.error) {
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
-      toast.success(tTransactions("toast.bulkDeleted", { count: result.count }));
-      setSelectedIds(new Set());
-      router.refresh();
+    if (result.needsPaidInvoiceConfirmation) {
+      setConfirmPaidInvoiceBulkOpen(true);
+      return;
     }
+    if (result.error) {
+      toast.error(result.error);
+      setConfirmPaidInvoiceBulkOpen(false);
+      return;
+    }
+    setConfirmPaidInvoiceBulkOpen(false);
+    queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+    toast.success(tTransactions("toast.bulkDeleted", { count: result.count }));
+    setSelectedIds(new Set());
+    router.refresh();
   }
 
   function money(value: number) {
@@ -904,9 +930,16 @@ export function InvoiceDetailView({
       />
 
       <DeleteDialog
-        open={deletingTransaction !== null && deleteInstallmentScope === null}
+        open={
+          deletingTransaction !== null &&
+          deleteInstallmentScope === null &&
+          !confirmPaidInvoiceOpen
+        }
         onOpenChange={(open) => {
-          if (!open) setDeletingTransaction(null);
+          if (!open) {
+            setDeletingTransaction(null);
+            setPendingPaidInvoiceScope(undefined);
+          }
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
@@ -919,6 +952,7 @@ export function InvoiceDetailView({
             if (!open) {
               setDeleteInstallmentScope(null);
               setDeletingTransaction(null);
+              setPendingPaidInvoiceScope(undefined);
             }
           }}
           installmentNumber={deleteInstallmentScope.installmentNumber}
@@ -928,12 +962,33 @@ export function InvoiceDetailView({
         />
       )}
 
+      <ConfirmPaidInvoiceDeleteDialog
+        open={confirmPaidInvoiceOpen}
+        onOpenChange={(open) => {
+          setConfirmPaidInvoiceOpen(open);
+          if (!open) {
+            setDeletingTransaction(null);
+            setPendingPaidInvoiceScope(undefined);
+          }
+        }}
+        onConfirm={() => void performDelete(pendingPaidInvoiceScope, true)}
+        isPending={isDeleting}
+      />
+
       <DeleteDialog
         open={isBulkDeleteOpen}
         onOpenChange={setIsBulkDeleteOpen}
-        onConfirm={handleBulkDeleteConfirm}
+        onConfirm={() => handleBulkDeleteConfirm()}
         isPending={isBulkActionPending}
         count={selectedIds.size}
+      />
+
+      <ConfirmPaidInvoiceDeleteDialog
+        open={confirmPaidInvoiceBulkOpen}
+        onOpenChange={setConfirmPaidInvoiceBulkOpen}
+        onConfirm={() => void handleBulkDeleteConfirm(true)}
+        isPending={isBulkActionPending}
+        isBulk
       />
     </div>
   );
