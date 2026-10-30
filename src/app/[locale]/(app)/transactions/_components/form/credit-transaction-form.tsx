@@ -43,6 +43,8 @@ import {
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
 import { DATE_ONLY_FORMAT_OPTIONS, todayCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
+import { formatAmountInput } from "@/lib/format-amount-input";
+import { shouldShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import type {
   AccountOption,
   CategoryOption,
@@ -93,7 +95,7 @@ function toFormValues(
     categoryId: row.categoryId ?? "",
     description: row.description,
     type: row.amount < 0 ? "expense" : "income",
-    amount: Math.abs(row.amount).toString(),
+    amount: formatAmountInput(row.amount),
     date: new Date(row.date).toISOString().slice(0, 10),
     status: row.status,
     // Prefilled from the row's own group, never a flat "1": on edit this
@@ -119,7 +121,7 @@ function toFormValues(
       row.splits.length > 1
         ? row.splits.map((split) => ({
             personId: split.personId,
-            amount: Math.abs(split.amount).toString(),
+            amount: formatAmountInput(split.amount),
           }))
         : [],
   };
@@ -265,6 +267,10 @@ export function CreditTransactionForm({
   });
 
   const accountId = useStore(form.store, (state) => state.values.accountId);
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts,
+  );
   const selectedAccount = accounts.find((account) => account.id === accountId);
   const personId = useStore(form.store, (state) => state.values.personId);
   const splits = useStore(form.store, (state) => state.values.splits);
@@ -281,7 +287,12 @@ export function CreditTransactionForm({
     (state) => state.values.installmentAmountMode,
   );
   const isSubmitting = useStore(form.store, (state) => state.isSubmitting);
-  const isTouched = useStore(form.store, (state) => state.isTouched);
+  // Gates the "Falta preencher" hint above the submit buttons. Not the
+  // form's `isTouched`: that flips on a bare blur, so tapping "Criar"
+  // straight from the auto-focused amount inserted the hint mid-tap,
+  // pushed the button down, and swallowed the tap. A real edit (or a
+  // submit attempt) is what should bring it up.
+  const isDirty = useStore(form.store, (state) => state.isDirty);
 
   const evaluatedAmount = isCompoundExpression(amount)
     ? evaluateExpression(amount)
@@ -569,7 +580,7 @@ export function CreditTransactionForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholderCredit")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+            {shouldShowFieldErrors(field.state.meta, submissionAttempts) ? (
               <p className="text-xs text-red-600 dark:text-red-400">
                 {field.state.meta.errors.join(", ")}
               </p>
@@ -905,7 +916,7 @@ export function CreditTransactionForm({
       <FormError title={t("toast.error")} description={serverError} />
 
       <div className="flex flex-col gap-2">
-        {missingFieldLabel && isTouched ? (
+        {missingFieldLabel && (isDirty || submissionAttempts > 0) ? (
           <p className="text-xs text-muted-foreground">
             {t("footer.missingField", { field: missingFieldLabel })}
           </p>

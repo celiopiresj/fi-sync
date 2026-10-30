@@ -391,6 +391,17 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   at/above it, it's the fixed desktop sidebar. New screens should reuse
   `sm`/`md`/`lg`/`xl` consistently (e.g. a table that becomes cards below
   `md`) instead of introducing their own breakpoints.
+- **Field errors appear only after an edit or a submit attempt, never on
+  a bare blur.** Registered field components use `useShowFieldErrors()`
+  and inline `form.AppField` render props use `shouldShowFieldErrors(meta,
+  submissionAttempts)` (`src/lib/form/use-show-field-errors.ts`) — not
+  `isTouched` alone. Any text that appears on blur (an error line, a
+  "Falta preencher" hint) shifts the layout between a phone's touchstart
+  and touchend, and the browser then drops the click: this was a real,
+  verified bug where the first tap after leaving the auto-focused amount
+  (opening a picker, or "Criar" itself) silently did nothing on mobile.
+  For the same reason, a field's blur handler must not call `onChange`
+  unless the value actually changed (that marks it dirty).
 - **Form fields always stack, never side by side** — every field in a form
   (create/edit sheets, dialogs, etc.) is full-width, one per row, at every
   breakpoint — no `sm:grid-cols-2`/`lg:grid-cols-2` pairing of fields into

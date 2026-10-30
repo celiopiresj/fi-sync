@@ -3,6 +3,7 @@
 import { type ComponentProps, type ReactNode } from "react";
 import { dinero, toDecimal, BRL } from "dinero.js";
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import {
   InputGroup,
   InputGroupAddon,
@@ -111,7 +112,12 @@ export function AmountInput({
         aria-invalid={isInvalid || undefined}
         onChange={(e) => onChange(applyCurrencyMask(e.target.value, allowExpression))}
         onBlur={() => {
-          onChange(normalizeAmountDisplay(value, allowExpression));
+          // Only write back a real change: an unconditional onChange
+          // marked the field dirty on a bare blur (e.g. leaving the empty,
+          // auto-focused amount), which let its "required" error show
+          // before the user had typed anything — see useShowFieldErrors.
+          const normalized = normalizeAmountDisplay(value, allowExpression);
+          if (normalized !== value) onChange(normalized);
           onBlur?.();
         }}
         placeholder={placeholder}
@@ -156,8 +162,7 @@ export function AmountField({
   className,
 }: AmountFieldProps) {
   const field = useFieldContext<string>();
-  const hasError =
-    field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const hasError = useShowFieldErrors();
 
   if (size === "lg") {
     return (

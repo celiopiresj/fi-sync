@@ -7,6 +7,7 @@ import {
   type CountryCode,
 } from "libphonenumber-js";
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import { Input } from "@/components/ui/input";
 
 // This component is only ever rendered on the client ("use client"), but
@@ -169,6 +170,7 @@ export function PhoneField({
   defaultCountry,
 }: PhoneFieldProps) {
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -184,7 +186,7 @@ export function PhoneField({
         placeholder={placeholder}
         defaultCountry={defaultCountry}
       />
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+      {showErrors ? (
         <p className="text-xs text-red-600 dark:text-red-400">
           {field.state.meta.errors.join(", ")}
         </p>

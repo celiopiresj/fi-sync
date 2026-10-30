@@ -28,6 +28,8 @@ import {
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
 import { todayCalendarDate, dateOnlyKey } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
+import { formatAmountInput } from "@/lib/format-amount-input";
+import { shouldShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import type {
   AccountOption,
   CategoryOption,
@@ -128,6 +130,10 @@ export function CreditRecurrenceCreateForm({
   });
 
   const accountId = useStore(form.store, (state) => state.values.accountId);
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts,
+  );
   const selectedAccount = accounts.find((account) => account.id === accountId);
   const personId = useStore(form.store, (state) => state.values.personId);
   const splits = useStore(form.store, (state) => state.values.splits);
@@ -314,7 +320,7 @@ export function CreditRecurrenceCreateForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholderCredit")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+            {shouldShowFieldErrors(field.state.meta, submissionAttempts) ? (
               <p className="text-xs text-red-600 dark:text-red-400">
                 {field.state.meta.errors.join(", ")}
               </p>
@@ -585,7 +591,7 @@ export function CreditRecurrenceCreateForm({
 function toEditFormValues(row: RecurrenceRow): CreditRecurrenceContentFormValues {
   return {
     type: row.amount < 0 ? "expense" : "income",
-    amount: Math.abs(row.amount).toString(),
+    amount: formatAmountInput(row.amount),
     description: row.description,
     accountId: row.accountId,
     categoryId: row.categoryId ?? "",
@@ -595,7 +601,7 @@ function toEditFormValues(row: RecurrenceRow): CreditRecurrenceContentFormValues
       row.splits.length > 1
         ? row.splits.map((split) => ({
             personId: split.personId,
-            amount: Math.abs(split.amount).toString(),
+            amount: formatAmountInput(split.amount),
           }))
         : [],
     endDate: row.endDate ? dateOnlyKey(row.endDate) : "",
@@ -661,6 +667,10 @@ export function CreditRecurrenceEditForm({
   });
 
   const accountId = useStore(form.store, (state) => state.values.accountId);
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts,
+  );
   const selectedAccount = accounts.find((account) => account.id === accountId);
   const personId = useStore(form.store, (state) => state.values.personId);
   const splits = useStore(form.store, (state) => state.values.splits);
@@ -847,7 +857,7 @@ export function CreditRecurrenceEditForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholderCredit")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+            {shouldShowFieldErrors(field.state.meta, submissionAttempts) ? (
               <p className="text-xs text-red-600 dark:text-red-400">
                 {field.state.meta.errors.join(", ")}
               </p>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // Registered as `ToggleGroupField` on `useAppForm` — single-select
@@ -14,6 +15,7 @@ type ToggleGroupFieldProps = {
 
 export function ToggleGroupField({ label, options }: ToggleGroupFieldProps) {
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -37,7 +39,7 @@ export function ToggleGroupField({ label, options }: ToggleGroupFieldProps) {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+      {showErrors ? (
         <p className="text-xs text-red-600 dark:text-red-400">
           {field.state.meta.errors.join(", ")}
         </p>

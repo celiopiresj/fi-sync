@@ -177,8 +177,26 @@ export function TransactionMobileList({
                     : subtitleParts.join(" · ");
 
                 return (
-                  <div key={row.id} className="flex items-center gap-3 px-3 py-2.5">
-                    <div className="relative shrink-0">
+                  <div
+                    key={row.id}
+                    className="relative flex items-center gap-3 py-2.5 pr-1 pl-3 active:bg-muted/50"
+                  >
+                    {/* Whole-row tap target that opens the edit form —
+                        on a phone the "..." menu alone was the only way
+                        in, and at icon size it's easy to miss. Sits
+                        behind the row's content (an overlay button
+                        rather than wrapping the row, since the row
+                        already holds its own buttons and buttons can't
+                        nest); the controls that need their own taps
+                        are lifted above it with `relative z-10`. */}
+                    <button
+                      type="button"
+                      onClick={() => actions.onEdit(row)}
+                      className="absolute inset-0"
+                    >
+                      <span className="sr-only">{messages.menuEdit}</span>
+                    </button>
+                    <div className="pointer-events-none relative shrink-0">
                       <CategoryIcon
                         className={cn("size-5", row.category?.colorStyle || "text-muted-foreground")}
                       />
@@ -195,7 +213,7 @@ export function TransactionMobileList({
                         />
                       )}
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="pointer-events-none flex min-w-0 flex-1 flex-col">
                       <div className="flex items-center justify-between gap-2">
                         <span className="min-w-0 truncate text-sm font-medium">
                           {row.description}
@@ -228,10 +246,10 @@ export function TransactionMobileList({
                             type="button"
                             variant="ghost"
                             size="icon-sm"
-                            className="size-5 shrink-0"
+                            className="pointer-events-auto relative z-10 -my-1 size-7 shrink-0"
                             onClick={() => actions.onMarkCompleted(row)}
                           >
-                            <CheckCircleIcon className="size-3.5" />
+                            <CheckCircleIcon className="size-4.5" />
                             <span className="sr-only">{messages.markCompletedAria}</span>
                           </Button>
                         )}
@@ -261,8 +279,8 @@ export function TransactionMobileList({
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
-                          <DotsThreeIcon />
+                        <Button variant="ghost" size="icon" className="relative z-10 shrink-0">
+                          <DotsThreeIcon className="size-5" />
                           <span className="sr-only">{messages.menuAria}</span>
                         </Button>
                       </DropdownMenuTrigger>

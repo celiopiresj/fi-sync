@@ -29,6 +29,8 @@ import {
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
 import { todayCalendarDate, dateOnlyKey } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
+import { formatAmountInput } from "@/lib/format-amount-input";
+import { shouldShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import type {
   AccountOption,
   CategoryOption,
@@ -152,6 +154,10 @@ export function DebitRecurrenceCreateForm({
   });
 
   const accountId = useStore(form.store, (state) => state.values.accountId);
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts,
+  );
   const personId = useStore(form.store, (state) => state.values.personId);
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
@@ -325,7 +331,7 @@ export function DebitRecurrenceCreateForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholder")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+            {shouldShowFieldErrors(field.state.meta, submissionAttempts) ? (
               <p className="text-xs text-red-600 dark:text-red-400">
                 {field.state.meta.errors.join(", ")}
               </p>
@@ -591,7 +597,7 @@ export function DebitRecurrenceCreateForm({
 function toEditFormValues(row: RecurrenceRow): DebitRecurrenceContentFormValues {
   return {
     type: row.amount < 0 ? "expense" : "income",
-    amount: Math.abs(row.amount).toString(),
+    amount: formatAmountInput(row.amount),
     description: row.description,
     accountId: row.accountId,
     categoryId: row.categoryId ?? "",
@@ -603,7 +609,7 @@ function toEditFormValues(row: RecurrenceRow): DebitRecurrenceContentFormValues 
       row.splits.length > 1
         ? row.splits.map((split) => ({
             personId: split.personId,
-            amount: Math.abs(split.amount).toString(),
+            amount: formatAmountInput(split.amount),
           }))
         : [],
     // `row.endDate` is a value read back from a `@db.Date` column (UTC
@@ -679,6 +685,10 @@ export function DebitRecurrenceEditForm({
   });
 
   const accountId = useStore(form.store, (state) => state.values.accountId);
+  const submissionAttempts = useStore(
+    form.store,
+    (state) => state.submissionAttempts,
+  );
   const personId = useStore(form.store, (state) => state.values.personId);
   const splits = useStore(form.store, (state) => state.values.splits);
   const amount = useStore(form.store, (state) => state.values.amount);
@@ -853,7 +863,7 @@ export function DebitRecurrenceEditForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholder")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+            {shouldShowFieldErrors(field.state.meta, submissionAttempts) ? (
               <p className="text-xs text-red-600 dark:text-red-400">
                 {field.state.meta.errors.join(", ")}
               </p>

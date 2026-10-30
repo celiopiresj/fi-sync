@@ -108,7 +108,7 @@ export function MoreView({ overview }: MoreViewProps) {
     .join(" · ");
 
   return (
-    <div className="mx-auto flex max-w-350 flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-350 flex-col gap-5">
       <PageHeader title={t("title")} />
 
       <div className="flex flex-col gap-2">

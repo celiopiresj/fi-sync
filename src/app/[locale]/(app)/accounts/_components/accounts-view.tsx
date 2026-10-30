@@ -186,7 +186,7 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
                           // whole card, so clicking anywhere on it opens
                           // the detail screen) — the actions menu opts
                           // back out with its own `relative z-10`.
-                          "relative max-w-85",
+                          "relative sm:max-w-85",
                           account.status === "INACTIVE" && "opacity-60",
                         )}
                       >

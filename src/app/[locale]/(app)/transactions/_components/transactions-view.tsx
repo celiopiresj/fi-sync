@@ -39,6 +39,7 @@ import { toast } from "sonner";
 import { useTransactionFormOptions } from "../_hooks/use-transaction-form-options";
 import { useTransactionsData } from "../_hooks/use-transactions-data";
 import { scopeRowsToPerson } from "../_lib/scope-to-person";
+import { filterSelectableAccounts } from "../_lib/selectable-accounts";
 import { formatGroupDateHeader } from "../_lib/format-group-date";
 import { formatSignedAmount } from "../_lib/format-signed-amount";
 import { accountIdForKind, resolveAccountKind } from "../_lib/account-kind";
@@ -445,27 +446,25 @@ export function TransactionsView({
   // them only ever goes through the dedicated Investments screen now
   // (investments/actions.ts's own createInvestmentMovement posts both
   // transfer legs), never this general debit form.
-  const selectableDebitAccounts = useMemo(() => {
-    const editingAccountId =
-      dialogState?.mode === "edit" ? dialogState.row.accountId : undefined;
-    return accounts.filter(
-      (account) =>
-        (account.type === "CHECKING" ||
-          account.type === "SAVINGS" ||
-          account.type === "CASH") &&
-        (account.status === "ACTIVE" || account.id === editingAccountId),
-    );
-  }, [accounts, dialogState]);
+  const selectableDebitAccounts = useMemo(
+    () =>
+      filterSelectableAccounts(
+        accounts,
+        "debit",
+        dialogState?.mode === "edit" ? dialogState.row.accountId : undefined,
+      ),
+    [accounts, dialogState],
+  );
 
-  const selectableCreditAccounts = useMemo(() => {
-    const editingAccountId =
-      dialogState?.mode === "edit" ? dialogState.row.accountId : undefined;
-    return accounts.filter(
-      (account) =>
-        account.type === "CREDIT_CARD" &&
-        (account.status === "ACTIVE" || account.id === editingAccountId),
-    );
-  }, [accounts, dialogState]);
+  const selectableCreditAccounts = useMemo(
+    () =>
+      filterSelectableAccounts(
+        accounts,
+        "credit",
+        dialogState?.mode === "edit" ? dialogState.row.accountId : undefined,
+      ),
+    [accounts, dialogState],
+  );
 
   // Shared with the mobile list (transaction-mobile-list.tsx) via the
   // `formatGroupHeader` prop so the BUG-fix wording can't drift between
@@ -1073,17 +1072,20 @@ export function TransactionsView({
       />
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
+        {/* Below `sm` the action button gets its own full-width row on
+            top and the search box its own line — side by side they left
+            the search a sliver ("Buscar por desc…"). */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-start">
           {/* Search + filters + the Débito/Crédito tab stay grouped
-              together and size to their own content/cap — the flex-1
-              spacer below is what pushes "Nova transação" to the right,
+              together and size to their own content/cap — this group's
+              own flex-1 is what pushes "Nova transação" to the right,
               so the empty space on wide screens lands between the groups
               (list controls vs. primary action) instead of inside the
               search box. `flex-wrap` (only on this inner group, not the
               outer row) is what added the tab without eating into the
               "Nova transação" button's own spot on a narrow screen —
               it drops to a second line here first instead. */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             <SearchInput
               value={searchText}
               onChange={setSearchText}
@@ -1115,10 +1117,13 @@ export function TransactionsView({
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          <div className="flex-1" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button>
+              {/* Phone-sized screens add through the bottom bar's FAB
+                  (same debit/credit/transfer/import choices — see
+                  MobileFab/AddTransactionDrawer), so this duplicate
+                  only shows where the FAB doesn't (`md` and up). */}
+              <Button className="hidden md:inline-flex">
                 {t("buttons.add.title")}
                 <CaretDownIcon />
               </Button>

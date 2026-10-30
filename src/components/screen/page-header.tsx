@@ -27,9 +27,18 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between gap-3", className)}>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
+    // Stacks below `sm`: on a phone, title + subtitle next to a stepper or
+    // action button left each of them a fraction of the width — wrapped
+    // subtitles, and wider right slots (the invoices stepper) pushed
+    // off-screen. From `sm` up it's the original single row.
+    <div
+      className={cn(
+        "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-semibold">{title}</h1>
           {badge}
         </div>

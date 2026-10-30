@@ -15,6 +15,9 @@ import { mobileTabItems } from "@/components/nav/mobile-tab-items";
 // (rendered as a sibling by MobileNavShell, absolutely positioned — a
 // 4-column grid's midpoint naturally falls between columns 2 and 3, so
 // no extra spacing/margin bookkeeping is needed here).
+// Height is 4rem *plus* the bottom safe-area inset: the inset is applied
+// as padding, so a flat `h-16` (border-box) would eat it out of the
+// icon/label area on devices that report one.
 export function MobileTabBar() {
   const t = useTranslations("common");
   const pathname = usePathname();
@@ -26,7 +29,7 @@ export function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-4 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
       aria-label={t("aria.primaryNavigation")}
     >
       {mobileTabItems.map(({ href, labelKey, icon: Icon }) => {

@@ -30,6 +30,7 @@ import { CreditTransactionForm } from "./credit-transaction-form";
 import { BatchTransactionMobile } from "./batch-transaction-mobile";
 import { ImportStatementScreen } from "../import/import-statement-screen";
 import { TransferForm } from "./transfer-form";
+import { filterSelectableAccounts } from "../../_lib/selectable-accounts";
 
 type Step = "choose" | "debit" | "credit" | "transfer" | "batch" | "import";
 
@@ -289,7 +290,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                 <DebitTransactionForm
                   isEditing={false}
                   initialValues={null}
-                  accounts={options.accounts}
+                  accounts={filterSelectableAccounts(options.accounts, "debit")}
                   categories={options.categories}
                   people={options.people}
                   defaultPersonId={options.defaultPersonId}
@@ -301,7 +302,7 @@ export function AddTransactionDrawer({ open, onOpenChange }: AddTransactionDrawe
                 <CreditTransactionForm
                   isEditing={false}
                   initialValues={null}
-                  accounts={options.accounts}
+                  accounts={filterSelectableAccounts(options.accounts, "credit")}
                   categories={options.categories}
                   people={options.people}
                   defaultPersonId={options.defaultPersonId}

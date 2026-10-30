@@ -102,10 +102,20 @@ export function RecurrenceMobileList({
           return (
             <div
               key={recurrence.id}
-              className="flex flex-col gap-1.5 px-3 py-2.5"
+              className="relative flex flex-col gap-1.5 py-2.5 pr-1 pl-3 active:bg-muted/50"
             >
+              {/* Whole-row tap opens the edit form, same overlay-button
+                  arrangement as transactions' transaction-mobile-list.tsx
+                  (the row's own buttons sit above it with `relative z-10`). */}
+              <button
+                type="button"
+                onClick={() => actions.onEdit(recurrence)}
+                className="absolute inset-0"
+              >
+                <span className="sr-only">{messages.menuEdit}</span>
+              </button>
               <div className="flex items-center gap-3">
-                <div className="relative shrink-0">
+                <div className="pointer-events-none relative shrink-0">
                   <CategoryIcon
                     className={cn("size-5", recurrence.category?.colorStyle || "text-muted-foreground")}
                   />
@@ -122,7 +132,7 @@ export function RecurrenceMobileList({
                     />
                   )}
                 </div>
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div className="pointer-events-none flex min-w-0 flex-1 flex-col">
                   <div className="flex items-center justify-between gap-2">
                     <span className="min-w-0 truncate text-sm font-medium">
                       {recurrence.description}
@@ -171,8 +181,8 @@ export function RecurrenceMobileList({
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <DotsThreeIcon />
+                    <Button variant="ghost" size="icon" className="relative z-10 shrink-0">
+                      <DotsThreeIcon className="size-5" />
                       <span className="sr-only">{messages.menuAria}</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -194,7 +204,7 @@ export function RecurrenceMobileList({
                   type="button"
                   onClick={() => actions.onExtend(recurrence)}
                   disabled={pending}
-                  className="flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+                  className="relative z-10 flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
                 >
                   <ArrowsClockwiseIcon className="size-3" />
                   {pending ? messages.extendingLabel : messages.extendLabel}
@@ -205,7 +215,7 @@ export function RecurrenceMobileList({
                   type="button"
                   onClick={() => actions.onAdvance(recurrence)}
                   disabled={advancing}
-                  className="flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+                  className="relative z-10 flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
                 >
                   <CalendarCheckIcon className="size-3" />
                   {advancing ? messages.advancingLabel : messages.advanceLabel}

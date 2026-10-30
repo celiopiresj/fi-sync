@@ -1,6 +1,7 @@
 "use client";
 
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ export function SelectField({
   disabled,
 }: SelectFieldProps) {
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -57,7 +59,7 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+      {showErrors ? (
         <p className="text-xs text-red-600 dark:text-red-400">
           {field.state.meta.errors.join(", ")}
         </p>

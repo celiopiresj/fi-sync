@@ -297,7 +297,7 @@ export function InvoicesView({
           clearLabel={t("search.clear")}
         />
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex max-w-full min-w-0 flex-wrap items-center gap-3">
           <Select
             value={accountId ?? ALL_VALUE}
             onValueChange={(value) =>

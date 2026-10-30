@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import {
@@ -203,6 +204,7 @@ export function PickerRowField({
 }: PickerRowFieldProps) {
   const t = useTranslations("common");
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
   const [openState, setOpenState] = useState(false);
   const [query, setQuery] = useState("");
   const open = openProp ?? openState;
@@ -279,7 +281,7 @@ export function PickerRowField({
         </div>
         {footer}
       </PickerRow>
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+      {showErrors ? (
         <p className="mt-1 px-3 text-xs text-red-600 dark:text-red-400">
           {field.state.meta.errors.join(", ")}
         </p>
@@ -322,6 +324,7 @@ export function DatePickerRowField({
   sheetTitle,
 }: DatePickerRowFieldProps) {
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
   const [open, setOpen] = useState(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -376,7 +379,7 @@ export function DatePickerRowField({
           />
         </div>
       </PickerRow>
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
+      {showErrors ? (
         <p className="mt-1 px-3 text-xs text-red-600 dark:text-red-400">
           {field.state.meta.errors.join(", ")}
         </p>

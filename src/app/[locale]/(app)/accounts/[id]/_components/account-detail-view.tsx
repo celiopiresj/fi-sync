@@ -65,8 +65,11 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
         {t("detail.back")}
       </Link>
 
-      <div className="flex items-start justify-between gap-3 rounded-lg bg-surface-1 p-4">
-        <div className="flex items-center gap-3">
+      {/* Wraps the status/transfer controls onto their own line on a
+          phone instead of squeezing the account name into a narrow
+          column beside them. */}
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg bg-surface-1 p-4">
+        <div className="flex min-w-0 items-center gap-3">
           <span
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-lg",
@@ -75,7 +78,7 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
           >
             <BankIcon weight="fill" className={cn("size-5", color.icon)} />
           </span>
-          <div className="flex flex-col gap-0.5">
+          <div className="flex min-w-0 flex-col gap-0.5">
             <h1 className="text-xl font-semibold">{account.name}</h1>
             <span className="text-sm text-muted-foreground">
               {t(`fields.type.${account.type.toLowerCase()}`)}

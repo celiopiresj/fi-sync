@@ -20,7 +20,7 @@ export function MobileFab({ onClick }: MobileFabProps) {
       onClick={onClick}
       aria-label={t("aria.addTransaction")}
       className={cn(
-        "fixed bottom-9 left-1/2 z-40 flex size-14 -translate-x-1/2 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/40 md:hidden",
+        "fixed bottom-[calc(2.25rem+env(safe-area-inset-bottom))] left-1/2 z-40 flex size-14 -translate-x-1/2 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/40 md:hidden",
       )}
     >
       <PlusIcon weight="bold" className="size-6" />

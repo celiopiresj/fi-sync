@@ -522,11 +522,14 @@ export function RecurrencesView({
       <SummaryCards recurrences={recurrences} />
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
+        {/* Below `sm` the action button gets its own full-width row on
+            top and the search box its own line — side by side they left
+            the search a sliver ("Buscar por desc…"). */}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-start">
           {/* Same grouping as transactions-view.tsx: search + filters +
               Débito/Crédito tab wrap together before pushing the
               "Nova recorrência" button off its spot on narrow screens. */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             <SearchInput
               value={searchText}
               onChange={setSearchText}
@@ -557,7 +560,6 @@ export function RecurrencesView({
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          <div className="flex-1" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>

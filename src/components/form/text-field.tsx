@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useFieldContext } from "@/lib/form/form-context";
+import { useShowFieldErrors } from "@/lib/form/use-show-field-errors";
 import { Input } from "@/components/ui/input";
 import { EyeIcon, EyeSlashIcon } from "@phosphor-icons/react";
 import { FieldErrors } from "./field-errors";
@@ -40,6 +41,7 @@ export function TextField({
   autoComplete,
 }: TextFieldProps) {
   const field = useFieldContext<string>();
+  const showErrors = useShowFieldErrors();
   const tCommon = useTranslations("common");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -86,7 +88,7 @@ export function TextField({
           </button>
         )}
       </div>
-      {field.state.meta.isTouched ? (
+      {showErrors ? (
         <FieldErrors errors={field.state.meta.errors} />
       ) : null}
     </div>

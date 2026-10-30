@@ -42,7 +42,11 @@ function ToggleGroup({
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
         "group/toggle-group flex w-fit flex-row items-center gap-[--spacing(var(--gap))] rounded-md data-[size=sm]:rounded-[min(var(--radius-md),8px)] data-vertical:flex-col data-vertical:items-stretch",
-        variant === "tabs" && "rounded-lg bg-muted p-0.75",
+        // A long tab set (invoice statuses, category types) is wider than
+        // a phone: scroll it sideways inside its own pill instead of
+        // pushing the whole toolbar past the viewport edge.
+        variant === "tabs" &&
+          "max-w-full overflow-x-auto rounded-lg bg-muted p-0.75 [scrollbar-width:none] *:shrink-0",
         className
       )}
       {...props}

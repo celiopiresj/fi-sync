@@ -10,8 +10,12 @@ import { MagnifyingGlassIcon, SpinnerIcon, XIcon } from "@phosphor-icons/react";
 // to its own content, not a block parent that would actually give
 // `w-full` something to fill, so that resolved to the box's own tiny
 // intrinsic width instead of growing it. Stays `w-full` below `sm` so a
-// fixed 400px doesn't overflow a phone viewport. A caller passing
-// `className` can still override this.
+// fixed 400px doesn't overflow a phone viewport — and `basis-full`
+// there too, because inside those same content-sized flex rows `w-full`
+// alone still collapsed to a sliver next to the row's other controls
+// ("Buscar por desc…" cut off on a phone); a full basis makes it take its
+// own line in a wrapping row instead. A caller passing `className` can
+// still override this.
 type SearchInputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -35,7 +39,7 @@ export function SearchInput({
   isLoading,
 }: SearchInputProps) {
   return (
-    <div className={cn("relative w-full sm:w-100", className)}>
+    <div className={cn("relative w-full basis-full sm:w-100 sm:basis-auto", className)}>
       {isLoading ? (
         <SpinnerIcon className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-muted-foreground" />
       ) : (
