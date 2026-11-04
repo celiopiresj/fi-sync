@@ -38,16 +38,19 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
    pelo retorno do widget e pelas notificações da Pluggy. A lista é
    atualizada durante um minuto após o retorno, para incluir conexões
    que terminarem de ser preparadas em segundo plano.
-7. Selecione uma origem na faixa de contas e cartões no topo, escolha a conta de destino no fi-sync,
+7. Selecione uma origem em **Importar de**, escolha a conta de destino no fi-sync,
    escolha o cartão físico quando aplicável e informe a data inicial
    que deseja importar. Os destinos devem estar cadastrados e ativos.
 
 A tela tem uma coluna só. As etapas de configuração aparecem apenas até a
-primeira origem ficar pronta para revisão. As origens ficam numa faixa
-horizontal, com **Contas bancárias** (`BANK`) e **Cartões de crédito**
-(`CREDIT`) em grupos separados; nomes e rótulos não definem o tipo. Abaixo
-dela, uma linha mostra a origem, a conta do fi-sync e, quando aplicável, o
-cartão e a data inicial.
+primeira origem ficar pronta para revisão. A origem é escolhida no seletor
+**Importar de**: a lista abre abaixo dele, com a busca fixa no topo e só a
+lista rolando, e separa **Contas bancárias** (`BANK`) e **Cartões de
+crédito** (`CREDIT`); nomes e rótulos não definem o tipo. Cada item mostra a
+conta do fi-sync de destino. A tela abre na última origem usada (guardada
+apenas no navegador) ou, na falta dela, na primeira pronta para revisão. Ao
+lado do seletor ficam a conta do fi-sync e, quando aplicável, o cartão e a
+data inicial.
 
 Os lançamentos são separados por mês. As abas vão do mês da data inicial até
 o mês atual; cartões incluem também o mês seguinte, onde ficam as parcelas

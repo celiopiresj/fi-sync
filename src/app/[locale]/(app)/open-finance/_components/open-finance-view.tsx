@@ -12,7 +12,6 @@ import { MappingForm } from "./mapping-form";
 import { TransactionTable } from "./transaction-table";
 import { BanksManagement } from "./banks-management";
 import { SourceSummary } from "./source-summary";
-import { SourceStrip } from "./source-strip";
 import { ImportSteps } from "./import-steps";
 import { ConnectMeuPluggy } from "./connect-meu-pluggy";
 import type { ViewProps } from "../_types/types";
@@ -34,19 +33,19 @@ export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
       </div>
       {!workspace.setupComplete && <ImportSteps connected={workspace.sources.length > 0} selected={Boolean(source)} ready={workspace.setupComplete} />}
       <BanksManagement overview={overview} open={workspace.manageOpen} onOpenChange={workspace.setManageOpen} onSelect={workspace.configure} onConnect={() => { workspace.setManageOpen(false); connection.open(); }} />
-      {workspace.sources.length > 0 && <SourceStrip sources={workspace.sources} source={source} onSelect={workspace.select} />}
 
-      {!source && <Card><CardContent className="py-10"><Empty><EmptyHeader><EmptyMedia variant="icon"><BankIcon /></EmptyMedia><EmptyTitle>{workspace.sources.length > 0 ? t("cards.source.empty") : t("cards.connections.empty")}</EmptyTitle><EmptyDescription>{workspace.sources.length > 0 ? t("cards.source.emptyDescription") : t("cards.connections.description")}</EmptyDescription></EmptyHeader>
-        {workspace.sources.length === 0 && <EmptyContent><Button type="button" variant="outline" onClick={() => workspace.setManageOpen(true)}><GearSixIcon />{t("tabs.manage")}</Button></EmptyContent>}
+      {!source && <Card><CardContent className="py-10"><Empty><EmptyHeader><EmptyMedia variant="icon"><BankIcon /></EmptyMedia><EmptyTitle>{t("cards.connections.empty")}</EmptyTitle><EmptyDescription>{t("cards.connections.description")}</EmptyDescription></EmptyHeader>
+        <EmptyContent><Button type="button" variant="outline" onClick={() => workspace.setManageOpen(true)}><GearSixIcon />{t("tabs.manage")}</Button></EmptyContent>
       </Empty></CardContent></Card>}
 
-      {source && workspace.editing && <Card>
+      {source && workspace.editing && <Card className="pt-0">
+        <SourceSummary source={source} sources={workspace.sources} accounts={overview.accounts} onSelect={workspace.select} />
         <CardHeader><CardTitle>{t("cards.import.title", { source: source.name })}</CardTitle><CardDescription>{t("cards.import.description")}</CardDescription></CardHeader>
         <CardContent><MappingForm key={sourceKey} source={source} accounts={overview.accounts} onReady={workspace.complete} onCancel={workspace.ready ? workspace.complete : undefined} /></CardContent>
       </Card>}
 
-      {source && workspace.setupComplete && overview.configured && <TransactionTable key={sourceKey} source={source} header={<SourceSummary source={source} accounts={overview.accounts} onEdit={workspace.edit} />} accounts={overview.accounts} categories={overview.categories} people={overview.people} defaultPersonId={overview.defaultPersonId} />}
-      {source && workspace.setupComplete && !overview.configured && <Card><SourceSummary source={source} accounts={overview.accounts} onEdit={workspace.edit} /></Card>}
+      {source && workspace.setupComplete && overview.configured && <TransactionTable key={sourceKey} source={source} header={<SourceSummary source={source} sources={workspace.sources} accounts={overview.accounts} onSelect={workspace.select} onEdit={workspace.edit} />} accounts={overview.accounts} categories={overview.categories} people={overview.people} defaultPersonId={overview.defaultPersonId} />}
+      {source && workspace.setupComplete && !overview.configured && <Card className="py-0"><SourceSummary source={source} sources={workspace.sources} accounts={overview.accounts} onSelect={workspace.select} onEdit={workspace.edit} /></Card>}
     </div>
   );
 }

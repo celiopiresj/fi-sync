@@ -86,9 +86,11 @@ assert.ok(!html.includes("Marcar Bank fixture original como já lançado"));
 // The floating selection bar only appears once something is selected.
 assert.ok(!html.includes(messages.table.selection.total));
 assert.ok(html.includes(messages.filters.search));
-assert.ok(html.includes(messages.cards.sidebar.accounts));
-// The source strip hides empty groups: the fixture has no credit card.
-assert.ok(!html.includes(messages.cards.sidebar.cards));
+// The source picker opens on the only ready source; its grouped list stays closed.
+assert.ok(html.includes(messages.cards.source.picker));
+assert.ok(html.includes("Fixture bank"));
+assert.ok(html.includes("Salvando em Visible fi-sync destination"));
+assert.ok(!html.includes(messages.cards.source.search));
 assert.ok(html.includes(messages.buttons.saveNext));
 assert.ok(html.includes(messages.buttons.close));
 assert.ok(html.includes(messages.dialog.create.original));

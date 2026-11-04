@@ -1,4 +1,5 @@
-import type { MappingFormProps, Overview, Review, Source } from "../_types/types";
+import { matchesSearch } from "@/lib/normalize-search";
+import type { MappingFormProps, Overview, Review, Source, SourceOption } from "../_types/types";
 import { NO_CATEGORY } from "@/lib/open-finance/review";
 
 export function mappingAccountOptions(source: Source, accounts: MappingFormProps["accounts"]) {
@@ -31,4 +32,14 @@ export function reviewCategoryOptions(categories: Review["categories"], type: st
   const filtered = categories.filter((category) => category.type === (type === "expense" ? "EXPENSE" : "INCOME"))
     .map((category) => ({ value: category.id, label: category.name }));
   return none ? [{ value: NO_CATEGORY, label: none }, ...filtered] : filtered;
+}
+// Opens on the last source the owner used when it still exists, otherwise
+// on the first one ready to review, so the screen rarely starts empty.
+export function defaultSourceId(sources: SourceOption[], accounts: Overview["accounts"], storedId: string | null) {
+  if (storedId && sources.some((source) => source.id === storedId)) return storedId;
+  return (sources.find((source) => sourceReady(source, accounts)) ?? sources[0])?.id ?? "";
+}
+export function filterSources(sources: SourceOption[], accounts: Overview["accounts"], query: string) {
+  if (!query.trim()) return sources;
+  return sources.filter((source) => matchesSearch(`${source.name} ${source.bankLabel} ${sourceDestination(source, accounts).account?.name ?? ""}`, query));
 }

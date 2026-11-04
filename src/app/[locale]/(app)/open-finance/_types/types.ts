@@ -20,9 +20,9 @@ export type ViewProps = { overview: Overview };
 export type MappingFormProps = { source: Source; accounts: Overview["accounts"]; onReady: () => void; onCancel?: () => void };
 export type SourceOption = Source & { bankLabel: string; connectionId: string };
 export type BanksManagementProps = { overview: Overview; open: boolean; onOpenChange: (open: boolean) => void; onSelect: (id: string) => void; onConnect: () => void };
-export type SourceStripProps = { sources: SourceOption[]; source?: SourceOption; onSelect: (id: string) => void };
+export type SourcePickerProps = { sources: SourceOption[]; source: SourceOption; accounts: Overview["accounts"]; onSelect: (id: string) => void };
 export type ImportStepsProps = { connected: boolean; selected: boolean; ready: boolean };
-export type SourceSummaryProps = { source: Source; accounts: Overview["accounts"]; onEdit: () => void };
+export type SourceSummaryProps = SourcePickerProps & { onEdit?: () => void };
 export type TransactionTableProps = {
   source: Source;
   header?: ReactNode;
