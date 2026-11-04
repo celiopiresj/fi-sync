@@ -3,7 +3,9 @@
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned } from "@/lib/date";
+import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned, todayCalendarDate } from "@/lib/date";
+import { importMonths, monthRange } from "@/lib/open-finance/months";
+import { findExistingMatches } from "@/lib/open-finance/existing";
 import { formatPersonName } from "@/lib/format-person-name";
 import { computeInvoiceCycle } from "@/lib/invoice-resolution";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
@@ -164,29 +166,36 @@ export async function getOpenFinanceTransactions(input: unknown) {
     const item = await client.item(source.connection.itemId);
     if (item.id !== source.connection.itemId || item.status === "LOGIN_ERROR" ||
       (item.consentExpiresAt && new Date(item.consentExpiresAt) <= new Date())) throw new OpenFinanceError("provider");
-    const page = await client.page(source.externalAccountId, dateOnlyKey(source.importFromDate), parsed.data.cursor);
+    const fromDate = dateOnlyKey(source.importFromDate);
+    // Only months between the import start and today (next month for
+    // cards) are browsable; anything else is a tampered request.
+    if (!importMonths(fromDate, todayCalendarDate(), source.type).includes(parsed.data.month)) throw new OpenFinanceError("invalid");
+    const range = monthRange(parsed.data.month, fromDate);
+    const page = await client.page(source.externalAccountId, range.dateFrom, range.dateTo, parsed.data.cursor);
     const receipts = await prisma.openFinanceImport.findMany({
       where: { sourceId: source.id, externalKey: { in: page.results.map(transactionKey) } }, select: { externalKey: true },
     });
     const processed = new Set(receipts.map((receipt) => receipt.externalKey));
+    const rows = page.results.filter((row) => !processed.has(transactionKey(row))).map((row) => {
+      const metadata = row.creditCardMetadata;
+      const hasValidInstallment = Boolean(
+        metadata?.installmentNumber &&
+        metadata.totalInstallments &&
+        metadata.installmentNumber <= metadata.totalInstallments,
+      );
+      return {
+        id: row.id, date: row.date.slice(0, 10), description: row.description,
+        amount: source.currency === "BRL" && (row.currencyCode === "BRL" || row.amountInAccountCurrency != null) ? normalizedAmount(row, source.type) : null,
+        status: row.status, payment: isCardPayment(row, source.type),
+        paymentMethod: inferPaymentMethod(row, source.type),
+        installmentNumber: hasValidInstallment ? metadata!.installmentNumber! : null,
+        installmentCount: hasValidInstallment ? metadata!.totalInstallments! : null,
+      };
+    });
+    const existing = await findExistingMatches(userId, source.accountId, rows);
     return { error: null, data: {
       next: page.next,
-      rows: page.results.filter((row) => !processed.has(transactionKey(row))).map((row) => {
-        const metadata = row.creditCardMetadata;
-        const hasValidInstallment = Boolean(
-          metadata?.installmentNumber &&
-          metadata.totalInstallments &&
-          metadata.installmentNumber <= metadata.totalInstallments,
-        );
-        return {
-          id: row.id, date: row.date.slice(0, 10), description: row.description,
-          amount: source.currency === "BRL" && (row.currencyCode === "BRL" || row.amountInAccountCurrency != null) ? normalizedAmount(row, source.type) : null,
-          status: row.status, payment: isCardPayment(row, source.type),
-          paymentMethod: inferPaymentMethod(row, source.type),
-          installmentNumber: hasValidInstallment ? metadata!.installmentNumber! : null,
-          installmentCount: hasValidInstallment ? metadata!.totalInstallments! : null,
-        };
-      }),
+      rows: rows.map((row) => ({ ...row, existing: existing.get(row.id) ?? null })),
     } };
   } catch (error) { return { error: await openFinanceError(error), data: null }; }
 }

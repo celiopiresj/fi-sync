@@ -8,7 +8,7 @@ export function useOpenFinanceWorkspace(overview: Overview) {
   const sources = mappedSources(overview);
   const [sourceId, setSourceId] = useState("");
   const [settingsId, setSettingsId] = useState<string | null>(null);
-  const [manageOpen, setManageOpen] = useState(sources.length === 0);
+  const [manageOpen, setManageOpen] = useState(false);
   const source = sources.find((source) => source.id === sourceId) ?? (sources.length === 1 ? sources[0] : undefined);
   const ready = Boolean(source && sourceReady(source, overview.accounts));
   const editing = Boolean(source && (!ready || settingsId === source.id));
@@ -16,7 +16,10 @@ export function useOpenFinanceWorkspace(overview: Overview) {
   function configure(id: string) { setSourceId(id); setSettingsId(id); setManageOpen(false); }
   return {
     sources, source, ready, editing, manageOpen, select, configure,
+    // Setup steps only guide the first configuration; once a source is
+    // ready to review they would just push the list down.
+    setupComplete: ready && !editing,
     edit: () => { if (source) setSettingsId(source.id); },
-    complete: () => setSettingsId(null), toggleManage: () => setManageOpen((open) => !open),
+    complete: () => setSettingsId(null), setManageOpen,
   };
 }

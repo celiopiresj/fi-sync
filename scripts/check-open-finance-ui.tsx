@@ -11,6 +11,8 @@ import { ReviewForm } from "../src/app/[locale]/(app)/open-finance/_components/r
 import { TransactionTable } from "../src/app/[locale]/(app)/open-finance/_components/transaction-table";
 import { OpenFinanceView } from "../src/app/[locale]/(app)/open-finance/_components/open-finance-view";
 import { MappingForm } from "../src/app/[locale]/(app)/open-finance/_components/mapping-form";
+import { todayCalendarDate } from "../src/lib/date";
+import { importMonths } from "../src/lib/open-finance/months";
 import type { Overview, ReviewFormProps } from "../src/app/[locale]/(app)/open-finance/_types/types";
 
 // Render the actual controls with synthetic cached data, without a browser
@@ -45,7 +47,9 @@ const props: ReviewFormProps = {
   },
 };
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-queryClient.setQueryData(["open-finance-transactions", source.id, null], { error: null, data: { rows: [row], next: null } });
+const month = importMonths(source.fromDate, todayCalendarDate(), source.type)[0];
+const existingRow = { ...row, id: "00000000-0000-4000-8000-000000000003", description: "Bank fixture already entered", existing: { id: "manual-1", description: "Manual fixture entry" } };
+queryClient.setQueryData(["open-finance-transactions", source.id, month, null], { error: null, data: { rows: [row, existingRow], next: null } });
 const router = { back() {}, forward() {}, refresh() {}, push() {}, replace() {}, prefetch: async () => {}, hmrRefresh() {} };
 const overview: Overview = {
   configured: true,
@@ -73,10 +77,18 @@ for (const key of ["description", "date", "type", "amount", "category", "payment
 }
 assert.ok(html.includes(messages.splits.toggleLabel));
 assert.ok(html.includes(messages.splits.newPerson));
-assert.ok(html.includes(messages.table.selection.total));
+assert.ok(html.includes(messages.tabs.months.label));
+assert.ok(html.includes(messages.cards.summary.income));
+assert.ok(html.includes("2 a importar"));
+assert.ok(html.includes("Já lançado: Manual fixture entry"));
+assert.ok(html.includes(messages.table.menu.markExisting));
+assert.ok(!html.includes("Marcar Bank fixture original como já lançado"));
+// The floating selection bar only appears once something is selected.
+assert.ok(!html.includes(messages.table.selection.total));
 assert.ok(html.includes(messages.filters.search));
 assert.ok(html.includes(messages.cards.sidebar.accounts));
-assert.ok(html.includes(messages.cards.sidebar.cards));
+// The source strip hides empty groups: the fixture has no credit card.
+assert.ok(!html.includes(messages.cards.sidebar.cards));
 assert.ok(html.includes(messages.buttons.saveNext));
 assert.ok(html.includes(messages.buttons.close));
 assert.ok(html.includes(messages.dialog.create.original));
@@ -86,22 +98,26 @@ assert.ok(html.includes('value="2026-10-28"'));
 assert.ok(html.includes('role="checkbox"'));
 assert.ok(!html.includes("MISSING_MESSAGE"));
 assert.ok(html.includes(messages.tabs.manage));
-assert.ok(html.includes(messages.cards.sidebar.title));
 assert.ok(html.includes(messages.cards.mapping.edit));
 assert.ok(html.includes("Visible fi-sync destination"));
-assert.ok(!html.includes("Old disabled institution"));
 assert.ok(html.includes(messages.cards.mapping.clear));
+assert.ok(!html.includes("Old disabled institution"));
 const mappedPage = render(<OpenFinanceView overview={overview} />);
 assert.ok(mappedPage.includes("Visible fi-sync destination"));
 assert.ok(mappedPage.includes("Bank fixture original"));
+// Only the row with a matching manual entry offers the quick action (table + mobile list).
+assert.equal(mappedPage.split("Marcar Bank fixture already entered como já lançado").length - 1, 2);
 assert.ok(!mappedPage.includes(messages.buttons.saveMapping));
-assert.match(mappedPage, /<section[^>]*id="open-finance-banks"[^>]*hidden=""/);
+// Bank management lives in a closed sheet: nothing of it renders up front.
+assert.ok(!mappedPage.includes(messages.cards.management.title));
+assert.ok(!mappedPage.includes(messages.steps.connect));
 const unmappedOverview = { ...overview, connections: [{ ...overview.connections[0], sources: [{ ...source, accountId: null, fromDate: null }] }] };
 queryClient.setQueryData(["open-finance-overview"], unmappedOverview);
 const unmappedPage = render(<OpenFinanceView overview={unmappedOverview} />);
 assert.ok(unmappedPage.includes(messages.buttons.saveMapping));
 assert.ok(!unmappedPage.includes("Bank fixture original"));
-assert.ok(!unmappedPage.includes(messages.table.selection.total));
+assert.ok(!unmappedPage.includes(messages.cards.summary.income));
+assert.ok(unmappedPage.includes(messages.steps.connect));
 assert.equal(queryClient.isMutating(), 0);
 queryClient.clear();
 console.log("UI render checks passed: selection, editable translated fields, bank reference, exact amount/date defaults and no writes while previewing.");

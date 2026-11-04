@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MONTH_PATTERN } from "@/lib/open-finance/months";
 
 export const calendarDateSchema = z.iso.date();
 const identifier = z.string().trim().min(1).max(200);
@@ -37,7 +38,7 @@ export const sourceIdSchema = identifier;
 export const mappingSchema = z.object({
   sourceId: identifier, accountId: identifier, cardId: z.string().max(200), fromDate: calendarDateSchema,
 });
-export const previewSchema = z.object({ sourceId: identifier, cursor: z.string().max(8000).nullable() });
+export const previewSchema = z.object({ sourceId: identifier, month: z.string().regex(MONTH_PATTERN), cursor: z.string().max(8000).nullable() });
 export const reviewRequestSchema = z.object({ sourceId: identifier, transactionId: z.uuid() });
 export const reviewPaymentMethodValues = [
   "CASH",

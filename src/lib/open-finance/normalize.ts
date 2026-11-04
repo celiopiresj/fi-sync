@@ -38,12 +38,13 @@ export function isCardPayment(row: PluggyTransaction, accountType: string): bool
   return accountType === "CREDIT" && ["PAGAMENTO", "PAGAMENTO_FATURA"].includes(row.operationType ?? "");
 }
 
-export function checkedCursor(cursor: string, accountId: string, fromDate: string): string {
+export function checkedCursor(cursor: string, accountId: string, fromDate: string, toDate: string): string {
   if (!cursor.startsWith("?") || cursor.includes("#")) throw new OpenFinanceError("invalid");
   const query = new URLSearchParams(cursor);
-  const allowed = ["accountId", "dateFrom", "after"];
+  const allowed = ["accountId", "dateFrom", "dateTo", "after"];
   if ([...query.keys()].some((key) => !allowed.includes(key) || query.getAll(key).length !== 1) ||
-    query.get("accountId") !== accountId || query.get("dateFrom") !== fromDate || !query.get("after")) {
+    query.get("accountId") !== accountId || query.get("dateFrom") !== fromDate ||
+    query.get("dateTo") !== toDate || !query.get("after")) {
     throw new OpenFinanceError("invalid");
   }
   return cursor;

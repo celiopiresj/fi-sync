@@ -38,22 +38,33 @@ o acesso no menu e recebem 404 ao tentar abrir a rota ou chamar as ações.
    pelo retorno do widget e pelas notificações da Pluggy. A lista é
    atualizada durante um minuto após o retorno, para incluir conexões
    que terminarem de ser preparadas em segundo plano.
-7. Selecione uma origem em **De onde importar?**, escolha a conta de destino no fi-sync,
+7. Selecione uma origem na faixa de contas e cartões no topo, escolha a conta de destino no fi-sync,
    escolha o cartão físico quando aplicável e informe a data inicial
    que deseja importar. Os destinos devem estar cadastrados e ativos.
 
-A tela segue o modelo com etapas no topo, conexões à esquerda e destino/
-revisão à direita. **Contas bancárias** (`BANK`) e **Cartões de crédito**
-(`CREDIT`) ficam em grupos separados; nomes e rótulos não definem o tipo.
-Em telas menores os painéis se empilham e a tabela vira uma lista.
-O resumo mostra a conta do fi-sync e, quando
-aplicável, o cartão. **Alterar destino ou período** abre a configuração;
+A tela tem uma coluna só. As etapas de configuração aparecem apenas até a
+primeira origem ficar pronta para revisão. As origens ficam numa faixa
+horizontal, com **Contas bancárias** (`BANK`) e **Cartões de crédito**
+(`CREDIT`) em grupos separados; nomes e rótulos não definem o tipo. Abaixo
+dela, uma linha mostra a origem, a conta do fi-sync e, quando aplicável, o
+cartão e a data inicial.
+
+Os lançamentos são separados por mês. As abas vão do mês da data inicial até
+o mês atual; cartões incluem também o mês seguinte, onde ficam as parcelas
+futuras. O mês atual abre por padrão. Cada mês consulta a Pluggy apenas
+naquele intervalo (`dateFrom`/`dateTo`, nunca antes da data inicial), e o
+servidor recusa meses fora desse intervalo. A contagem "a importar" de cada
+aba vem do cache dos meses já abertos, sem consultas extras ao provedor.
+Cada mês mostra entradas, saídas e quantidade a importar, e a lista é
+agrupada por dia com o total do dia. Em telas menores a tabela vira uma
+lista. A barra de seleção só aparece quando há itens marcados. **Alterar destino ou período** abre a configuração;
 a prévia fica recolhida enquanto o destino é editado, inclusive após um
 erro. Só volta ao salvar com sucesso ou cancelar a alteração.
 Alterações ainda não salvas não são usadas para importar.
 
-**Gerenciar bancos** reúne a conexão de novos bancos e o destino de cada
-origem. Conexões desativadas ficam recolhidas e não aparecem na seleção.
+**Gerenciar bancos** abre um painel lateral que reúne a conexão de novos
+bancos, o destino de cada origem, a desativação de conexões, o cadastro por
+`itemId` e o guia do Meu Pluggy. Conexões desativadas ficam recolhidas e não aparecem na seleção.
 Destinos de importação são preferências editáveis, não vínculos bancários
 exclusivos: uma mesma conta do fi-sync pode receber lançamentos de múltiplos
 bancos ou cartões, e o usuário pode alterar o destino a qualquer momento,
@@ -62,13 +73,24 @@ futuras: transações já salvas nunca são movidas e os comprovantes de
 importação são preservados para prevenir duplicatas. **Limpar destino**
 desassocia o destino da origem sem remover a conexão bancária.
 
+Lançamentos cadastrados antes, sem o Open Finance, são reconhecidos na lista:
+quando o destino já tem um lançamento com a mesma data e valor que ainda não
+está vinculado a nenhuma importação, a linha mostra **Já lançado** com a
+descrição dele. Cada lançamento existente é sugerido para uma linha do banco
+só. O botão **Já lançado** da linha vincula o recibo de importação a esse
+lançamento, sem criar nada. Na seleção, **Marcar como já lançados** faz o
+mesmo em lote, após confirmação: as linhas com lançamento igual ficam
+vinculadas e as demais recebem só o recibo, como lançadas por outros meios.
+Nos dois casos a linha deixa de aparecer, e os dados do banco são conferidos
+de novo antes de gravar.
+
 Durante a revisão de lançamentos, o fi-sync valida se o destino conferido no
 início da revisão continua o mesmo ao salvar. Caso o destino ou o período
 tenham sido alterados enquanto a revisão estava aberta, o salvamento é
 bloqueado para evitar redirecionamento silencioso de lançamentos.
 
-A prévia tem busca por descrição e filtros de entradas/saídas na página
-atual. Alterar um filtro limpa a seleção; somente itens visíveis selecionados
+A prévia tem busca por descrição e filtros de entradas/saídas no mês (ou na
+página, se o mês tiver mais de uma). Alterar um filtro ou o mês limpa a seleção; somente itens visíveis selecionados
 entram na revisão. O total selecionado usa Dinero.js e os dados do banco
 continuam sendo conferidos novamente antes de salvar cada lançamento.
 

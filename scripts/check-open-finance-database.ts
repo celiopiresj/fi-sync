@@ -7,6 +7,7 @@ import { savePluggyConnection } from "../src/lib/open-finance/connections";
 import { POST as pluggyWebhook } from "../src/app/api/open-finance/pluggy/route";
 import { pluggyWebhookSecret, WEBHOOK_HEADER } from "../src/lib/open-finance/widget";
 import { processReviewedTransaction } from "../src/lib/open-finance/process";
+import { findExistingMatches } from "../src/lib/open-finance/existing";
 import { OpenFinanceError, type PluggyTransaction, type ProcessValues } from "../src/lib/open-finance/schema";
 import { clearSourceMapping, saveSourceMapping } from "../src/lib/open-finance/mapping";
 
@@ -83,7 +84,18 @@ async function main() {
       assert.ok(receipt);
       assert.equal(receipt.transactionId, null);
       const retained = await tx.transaction.create({ data: { userId, accountId: account.id, description: "retained fixture", amount: "1.01", date } });
+      // A manual entry with the same date and amount is offered once; one
+      // already linked to a receipt is never offered again.
+      const manual = await tx.transaction.create({ data: { userId, accountId: account.id, description: "manual fixture", amount: "-7.50", date } });
+      const offered = await findExistingMatches(userId, account.id, [
+        { id: "row-a", date: "2026-10-28", amount: "-7.50" }, { id: "row-b", date: "2026-10-28", amount: "-7.50" },
+        { id: "row-c", date: "2026-10-29", amount: "-7.50" }, { id: "row-d", date: "2026-10-28", amount: "1.01" }, { id: "row-e", date: "2026-10-28", amount: null },
+      ], tx);
+      assert.deepEqual([...offered.entries()], [["row-a", { id: manual.id, description: "manual fixture" }], ["row-d", { id: retained.id, description: "retained fixture" }]]);
       await tx.openFinanceImport.create({ data: { sourceId: source.id, externalKey: "bank:retained", transactionId: retained.id } });
+      assert.equal((await findExistingMatches(userId, account.id, [{ id: "row-d", date: "2026-10-28", amount: "1.01" }], tx)).size, 0);
+      assert.equal((await findExistingMatches("different-user", account.id, [{ id: "row-a", date: "2026-10-28", amount: "-7.50" }], tx)).size, 0);
+      await tx.transaction.delete({ where: { id: manual.id } });
       const category = await tx.category.create({ data: { userId, name: "Review fixture", type: "EXPENSE" } });
       const selfPerson = await tx.person.create({ data: { userId, name: "Eu", isSelf: true } });
       const secondPerson = await tx.person.create({ data: { userId, name: "Mãe" } });

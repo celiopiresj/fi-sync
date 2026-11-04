@@ -63,11 +63,11 @@ export async function createPluggyClient() {
       if (data.results.some((account) => account.itemId !== itemId)) throw new OpenFinanceError("provider");
       return data.results;
     },
-    page: async (accountId: string, fromDate: string, cursor: string | null) => {
-      const query = cursor ? checkedCursor(cursor, accountId, fromDate) : `?${new URLSearchParams({ accountId, dateFrom: fromDate })}`;
+    page: async (accountId: string, fromDate: string, toDate: string, cursor: string | null) => {
+      const query = cursor ? checkedCursor(cursor, accountId, fromDate, toDate) : `?${new URLSearchParams({ accountId, dateFrom: fromDate, dateTo: toDate })}`;
       const page = await get(`/v2/transactions${query}`, z.object({ results: z.array(pluggyTransactionSchema), next: z.string().nullable() }));
       if (page.results.some((row) => row.accountId !== accountId)) throw new OpenFinanceError("provider");
-      if (page.next) checkedCursor(page.next, accountId, fromDate);
+      if (page.next) checkedCursor(page.next, accountId, fromDate, toDate);
       return page;
     },
     transaction: async (accountId: string, id: string) => {

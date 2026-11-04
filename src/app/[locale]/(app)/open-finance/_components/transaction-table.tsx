@@ -1,415 +1,69 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
-import {
-  ArrowRightIcon,
-  BankIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  ArrowsClockwiseIcon,
-} from "@phosphor-icons/react";
-import { parseCalendarDate } from "@/lib/date";
-import { isNegativeAmount } from "@/lib/open-finance/normalize";
+import { useTranslations } from "next-intl";
+import { BankIcon, CaretLeftIcon, CaretRightIcon, ArrowsClockwiseIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SearchInput } from "@/components/screen/search-input";
-import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-  EmptyDescription,
-} from "@/components/ui/empty";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { usePreviewReview } from "../_hooks/use-preview-review";
 import { PREVIEW_DIRECTIONS } from "../_constants/constants";
+import { MonthTabs } from "./month-tabs";
+import { MonthSummary } from "./month-summary";
+import { PreviewRows } from "./preview-rows";
+import { SelectionBar } from "./selection-bar";
+import { ExistingDialog } from "./existing-dialog";
 import { ReviewSheet } from "./review-sheet";
 import type { TransactionTableProps } from "../_types/types";
 
-export function TransactionTable({
-  source,
-  accounts,
-  categories,
-  people,
-  defaultPersonId,
-}: TransactionTableProps) {
+export function TransactionTable({ source, header, accounts, categories, people, defaultPersonId }: TransactionTableProps) {
   const t = useTranslations("scrn-open-finance");
   const common = useTranslations("common");
-  const formatter = useFormatter();
   const preview = usePreviewReview(source);
-  const { query, filteredRows, selectableRows, selectedIds } = preview;
+  const { query, filteredRows } = preview;
+  const filtered = Boolean(preview.search) || preview.direction !== "all";
 
   return (
-    <div className="flex min-w-0 flex-col">
-      <div className="flex flex-col gap-4 px-5 pb-4">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-base font-semibold">{t("cards.review.title")}</h2>
-          <span className="text-xs text-muted-foreground">
-            {t("table.selection.count", { count: preview.totalRowsCount })}
-          </span>
-        </div>
-        <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
-          <ToggleGroup
-            type="single"
-            variant="tabs"
-            size="sm"
-            value={preview.direction}
-            onValueChange={preview.changeDirection}
-            aria-label={t("filters.label")}
-          >
-            {PREVIEW_DIRECTIONS.map((direction) => (
-              <ToggleGroupItem key={direction} value={direction}>
-                {t(`filters.${direction}`)}
-              </ToggleGroupItem>
-            ))}
+    <div className="flex min-w-0 flex-col gap-4">
+      <Card className="gap-0 py-0">
+        {header}
+        <MonthTabs months={preview.months} value={preview.month} onChange={preview.changeMonth} />
+      </Card>
+
+      {query.data?.data && <MonthSummary summary={preview.summary} />}
+
+      <Card className="gap-0 py-0">
+        <div className="flex flex-col gap-3 p-5 lg:flex-row lg:flex-wrap lg:items-center">
+          <ToggleGroup type="single" variant="tabs" size="sm" value={preview.direction} onValueChange={preview.changeDirection} aria-label={t("filters.label")}>
+            {PREVIEW_DIRECTIONS.map((direction) => <ToggleGroupItem key={direction} value={direction}>{t(`filters.${direction}`)}</ToggleGroupItem>)}
           </ToggleGroup>
-          <SearchInput
-            value={preview.search}
-            onChange={preview.changeSearch}
-            placeholder={t("filters.search")}
-            clearLabel={t("filters.clear")}
-            className="min-w-0 sm:w-auto lg:flex-1"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={query.isFetching}
-            onClick={() => void query.refetch()}
-          >
-            <ArrowsClockwiseIcon />
-            {t("buttons.refresh")}
-          </Button>
+          <SearchInput value={preview.search} onChange={preview.changeSearch} placeholder={t("filters.search")} clearLabel={t("filters.clear")} className="min-w-0 sm:w-auto lg:flex-1" />
+          <Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}><ArrowsClockwiseIcon />{t("buttons.refresh")}</Button>
         </div>
-      </div>
 
-      {query.isPending && (
-        <p role="status" className="px-5 pb-4">
-          {common("status.loading")}
-        </p>
-      )}
-      {(query.isError || query.data?.error) && (
-        <p role="alert" className="px-5 pb-4 text-sm text-negative">
-          {query.data?.error ?? t("errors.provider.description")}
-        </p>
-      )}
-      {query.data?.data && filteredRows.length === 0 && (
-        <Empty>
+        {query.isPending && <p role="status" className="px-5 pb-5">{common("status.loading")}</p>}
+        {(query.isError || query.data?.error) && <p role="alert" className="px-5 pb-5 text-sm text-negative">{query.data?.error ?? t("errors.provider.description")}</p>}
+        {query.data?.data && filteredRows.length === 0 && <Empty className="pb-10">
           <EmptyHeader>
-            <EmptyMedia variant="icon">
-              <BankIcon />
-            </EmptyMedia>
-            <EmptyTitle>
-              {preview.search || preview.direction !== "all"
-                ? t("filters.empty")
-                : t("table.empty.title")}
-            </EmptyTitle>
-            {!preview.search && preview.direction === "all" && (
-              <EmptyDescription>{t("table.empty.description")}</EmptyDescription>
-            )}
+            <EmptyMedia variant="icon"><BankIcon /></EmptyMedia>
+            <EmptyTitle>{filtered ? t("filters.empty") : t("table.empty.title")}</EmptyTitle>
+            {!filtered && <EmptyDescription>{t("table.empty.description")}</EmptyDescription>}
           </EmptyHeader>
-        </Empty>
-      )}
+        </Empty>}
+        {filteredRows.length > 0 && <PreviewRows preview={preview} />}
 
-      {filteredRows.length > 0 && (
-        <>
-          <div className="hidden md:block">
-            <Table className="min-w-160 text-sm">
-              <TableHeader>
-                <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead className="w-10 pl-5">
-                    <Checkbox
-                      aria-label={t("table.selection.all")}
-                      checked={
-                        preview.isAllSelected ||
-                        (preview.isSomeSelected ? "indeterminate" : false)
-                      }
-                      disabled={selectableRows.length === 0}
-                      onCheckedChange={(checked) =>
-                        preview.toggleAll(checked === true)
-                      }
-                    />
-                  </TableHead>
-                  <TableHead className="text-xs">
-                    {t("table.columns.date")}
-                  </TableHead>
-                  <TableHead className="text-xs">
-                    {t("table.columns.description")}
-                  </TableHead>
-                  <TableHead className="text-xs">
-                    {t("fields.type.label")}
-                  </TableHead>
-                  <TableHead className="text-right text-xs">
-                    {t("table.columns.amount")}
-                  </TableHead>
-                  <TableHead className="pr-5 text-right text-xs">
-                    {t("table.columns.actions")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredRows.map((item) => {
-                  const isSelected = Boolean(selectedIds[item.id]);
-                  const canSelect = item.amount !== null;
-                  return (
-                    <TableRow
-                      key={item.id}
-                      data-state={isSelected ? "selected" : undefined}
-                      className="data-[state=selected]:bg-primary/5"
-                    >
-                      <TableCell className="pl-5">
-                        <Checkbox
-                          aria-label={t("table.selection.row", {
-                            description: item.description,
-                          })}
-                          checked={isSelected}
-                          disabled={!canSelect}
-                          onCheckedChange={(checked) =>
-                            preview.toggleRow(item.id, checked === true)
-                          }
-                        />
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground tabular-nums">
-                        {formatter.dateTime(parseCalendarDate(item.date), {
-                          dateStyle: "short",
-                        })}
-                      </TableCell>
-                      <TableCell className="max-w-80 py-3">
-                        <span
-                          className="block truncate font-medium"
-                          title={item.description}
-                        >
-                          {item.description}
-                        </span>
-                        {item.status === "PENDING" && (
-                          <span className="block text-xs text-warning">
-                            {t("table.menu.pending")}
-                          </span>
-                        )}
-                        {item.payment && (
-                          <span className="block text-xs text-warning">
-                            {t("table.menu.payment")}
-                          </span>
-                        )}
-                        {item.amount === null && (
-                          <span className="block text-xs text-warning">
-                            {t("errors.currency.description")}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs whitespace-nowrap">
-                          {item.amount === null
-                            ? t("errors.currency.title")
-                            : t(
-                                isNegativeAmount(item.amount)
-                                  ? "filters.expense"
-                                  : "filters.income",
-                              )}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right font-semibold whitespace-nowrap tabular-nums">
-                        {item.amount !== null && (
-                          <span
-                            className={
-                              isNegativeAmount(item.amount)
-                                ? "text-negative"
-                                : "text-positive"
-                            }
-                          >
-                            {formatter.number(Number(item.amount), {
-                              style: "currency",
-                              currency: "BRL",
-                            })}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="pr-5 text-right">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={item.amount === null}
-                          onClick={() => preview.reviewRow(item)}
-                        >
-                          {t("buttons.review")}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+        {(preview.hasPrevious || preview.hasNext) && <div className="flex items-center justify-end gap-3 border-t px-5 py-3">
+          <span className="text-xs text-muted-foreground">{t("pagination.page", { page: preview.page })}</span>
+          <Button type="button" variant="outline" size="icon-sm" aria-label={t("buttons.previous")} disabled={query.isFetching || !preview.hasPrevious} onClick={preview.previousPage}><CaretLeftIcon /></Button>
+          <Button type="button" variant="outline" size="icon-sm" aria-label={t("buttons.next")} disabled={query.isFetching || !preview.hasNext} onClick={preview.nextPage}><CaretRightIcon /></Button>
+        </div>}
+      </Card>
 
-          <div className="flex flex-col divide-y border-t md:hidden">
-            <label className="flex items-center gap-3 px-5 py-3 text-sm">
-              <Checkbox
-                checked={
-                  preview.isAllSelected ||
-                  (preview.isSomeSelected ? "indeterminate" : false)
-                }
-                disabled={selectableRows.length === 0}
-                onCheckedChange={(checked) =>
-                  preview.toggleAll(checked === true)
-                }
-              />
-              {t("table.selection.all")}
-            </label>
-            {filteredRows.map((item) => {
-              const isSelected = Boolean(selectedIds[item.id]);
-              const canSelect = item.amount !== null;
-              return (
-                <div key={item.id} className="flex items-start gap-3 px-5 py-4">
-                  <Checkbox
-                    className="mt-1"
-                    aria-label={t("table.selection.row", {
-                      description: item.description,
-                    })}
-                    checked={isSelected}
-                    disabled={!canSelect}
-                    onCheckedChange={(checked) =>
-                      preview.toggleRow(item.id, checked === true)
-                    }
-                  />
-                  <div className="flex min-w-0 flex-1 flex-col gap-2">
-                    <span className="text-sm font-medium wrap-break-word">
-                      {item.description}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatter.dateTime(parseCalendarDate(item.date), {
-                        dateStyle: "short",
-                      })}
-                    </span>
-                    {item.status === "PENDING" && (
-                      <span className="text-xs text-warning">
-                        {t("table.menu.pending")}
-                      </span>
-                    )}
-                    {item.payment && (
-                      <span className="text-xs text-warning">
-                        {t("table.menu.payment")}
-                      </span>
-                    )}
-                    {item.amount === null && (
-                      <span className="text-xs text-warning">
-                        {t("errors.currency.description")}
-                      </span>
-                    )}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      {item.amount !== null && (
-                        <span
-                          className={
-                            isNegativeAmount(item.amount)
-                              ? "text-sm font-semibold text-negative"
-                              : "text-sm font-semibold text-positive"
-                          }
-                        >
-                          {formatter.number(Number(item.amount), {
-                            style: "currency",
-                            currency: "BRL",
-                          })}
-                        </span>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={item.amount === null}
-                        onClick={() => preview.reviewRow(item)}
-                      >
-                        {t("buttons.review")}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+      <SelectionBar preview={preview} />
+      <ExistingDialog preview={preview} />
 
-      <div className="mt-4 flex flex-col gap-4 border-t bg-muted/30 px-5 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground">
-              {t("pagination.page", { page: preview.page })}
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label={t("buttons.previous")}
-              disabled={query.isFetching || !preview.hasPrevious}
-              onClick={preview.previousPage}
-            >
-              <CaretLeftIcon />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-sm"
-              aria-label={t("buttons.next")}
-              disabled={query.isFetching || !query.data?.data?.next}
-              onClick={preview.nextPage}
-            >
-              <CaretRightIcon />
-            </Button>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {t("table.selection.selected", { count: preview.selectedCount })}
-          </span>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-          <span className="mr-auto flex flex-wrap gap-2 text-sm">
-            <span className="text-muted-foreground">
-              {t("table.selection.total")}
-            </span>
-            <span className="font-semibold tabular-nums">
-              {formatter.number(Number(preview.selectedTotal), {
-                style: "currency",
-                currency: "BRL",
-              })}
-            </span>
-          </span>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={preview.selectedCount === 0}
-            onClick={preview.clearSelection}
-          >
-            {t("table.selection.clear")}
-          </Button>
-          <Button
-            type="button"
-            disabled={preview.selectedCount === 0}
-            onClick={preview.reviewSelected}
-          >
-            {t("table.selection.review", { count: preview.selectedCount })}
-            <ArrowRightIcon />
-          </Button>
-        </div>
-      </div>
-
-      <ReviewSheet
-        source={source}
-        row={preview.row}
-        remaining={preview.remaining}
-        accounts={accounts}
-        categories={categories}
-        people={people}
-        defaultPersonId={defaultPersonId}
-        onClose={preview.close}
-        onProcessed={preview.processed}
-      />
+      <ReviewSheet source={source} row={preview.row} remaining={preview.remaining} accounts={accounts} categories={categories} people={people} defaultPersonId={defaultPersonId} onClose={preview.close} onProcessed={preview.processed} />
     </div>
   );
 }

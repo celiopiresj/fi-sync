@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { isOpenFinanceOwner } from "../src/lib/open-finance/access";
+import { importMonths, monthRange, shiftMonth } from "../src/lib/open-finance/months";
+import { existingProcessValues } from "../src/app/[locale]/(app)/open-finance/_lib/existing";
 import { checkedCursor, inferPaymentMethod, isCardPayment, isNegativeAmount, normalizedAmount, transactionKey } from "../src/lib/open-finance/normalize";
 import { createPluggyClient } from "../src/lib/open-finance/pluggy";
 import { connectionSchema, mappingSchema, pluggyTransactionSchema, processSchema, reviewEditsSchema, type PluggyTransaction } from "../src/lib/open-finance/schema";
@@ -75,6 +77,16 @@ async function main() {
     const original = { sourceId: "source", transactionId: id, existingTransactionId: "", closingDate: "", dueDate: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original", expectedDestination: { accountId: "account", cardId: "", fromDate: "2026-10-01" } };
     assert.equal(processSchema.safeParse({ ...original, mode: "create" }).success, false);
     const request = processSchema.parse({ ...original, mode: "create", edits });
+    // "Already recorded" links a matching manual entry, otherwise only records a receipt.
+    const existingSource = { id: "source-1", name: "Fixture", type: "BANK", currency: "BRL", accountId: "account-1", cardId: null, fromDate: "2026-10-01", hasImports: false };
+    const existingRow = { id: "00000000-0000-4000-8000-000000000009", description: "Bank row", date: "2026-10-28", amount: "-7.50", status: "POSTED" as const, payment: false };
+    const linked = processSchema.parse(existingProcessValues(existingSource, { ...existingRow, existing: { id: "manual-1", description: "Manual" } }));
+    assert.equal(linked.mode, "match");
+    assert.equal(linked.existingTransactionId, "manual-1");
+    assert.deepEqual(linked.expectedDestination, { accountId: "account-1", cardId: "", fromDate: "2026-10-01" });
+    const unlinked = processSchema.parse(existingProcessValues(existingSource, existingRow));
+    assert.equal(unlinked.mode, "ignore");
+    assert.equal(unlinked.existingTransactionId, "");
     assert.equal(processSchema.safeParse({ ...original, expectedDestination: undefined, mode: "create", edits }).success, false);
     assert.equal(request.expectedAmount, "-19.99");
     assert.equal(request.expectedDescription, "bank original");
@@ -118,10 +130,19 @@ async function main() {
     assert.equal(pluggyTransactionSchema.safeParse({ ...row, amount: 1.005 }).success, false);
     assert.equal(connectionSchema.safeParse({ label: "bank", itemId: "../auth" }).success, false);
     assert.equal(mappingSchema.safeParse({ sourceId: "a", accountId: "b", cardId: "", fromDate: "2026-02-30" }).success, false);
-    const cursor = `?accountId=${accountId}&dateFrom=2026-10-01&after=opaque%2Bvalue%3D`;
-    assert.equal(checkedCursor(cursor, accountId, "2026-10-01"), cursor);
+    const cursor = `?accountId=${accountId}&dateFrom=2026-10-01&dateTo=2026-10-31&after=opaque%2Bvalue%3D`;
+    assert.equal(checkedCursor(cursor, accountId, "2026-10-01", "2026-10-31"), cursor);
+    assert.throws(() => checkedCursor(cursor.replace("&dateTo=2026-10-31", ""), accountId, "2026-10-01", "2026-10-31"));
+    assert.throws(() => checkedCursor(cursor, accountId, "2026-10-01", "2026-11-30"));
+    assert.equal(shiftMonth("2026-01", -1), "2025-12");
+    assert.equal(shiftMonth("2026-12", 1), "2027-01");
+    assert.deepEqual(importMonths("2026-08-20", "2026-11-04", "BANK"), ["2026-11", "2026-10", "2026-09", "2026-08"]);
+    assert.deepEqual(importMonths("2026-11-02", "2026-11-04", "CREDIT"), ["2026-12", "2026-11"]);
+    assert.deepEqual(monthRange("2026-08", "2026-08-20"), { dateFrom: "2026-08-20", dateTo: "2026-08-31" });
+    assert.deepEqual(monthRange("2028-02", "2026-08-20"), { dateFrom: "2028-02-01", dateTo: "2028-02-29" });
+    assert.deepEqual(monthRange("2026-02", "2026-01-01"), { dateFrom: "2026-02-01", dateTo: "2026-02-28" });
     for (const invalid of ["https://evil.example/", "//evil.example/", `${cursor}&ids=${id}`, `${cursor}&accountId=${id}`, cursor.replace(accountId, id), cursor.replace("2026-10-01", "2020-01-01")]) {
-      assert.throws(() => checkedCursor(invalid, accountId, "2026-10-01"));
+      assert.throws(() => checkedCursor(invalid, accountId, "2026-10-01", "2026-10-31"));
     }
     process.env.PLUGGY_CLIENT_ID = "fixture-client";
     process.env.PLUGGY_CLIENT_SECRET = "fixture-secret";
@@ -193,10 +214,10 @@ async function main() {
     await client.ensureWebhooks("https://app.example.com/api/open-finance/pluggy", "rotated-fixture-signature");
     assert.equal(webhooks.length, 2);
     assert.equal(webhooks.every((hook) => hook.headers[WEBHOOK_HEADER] === "rotated-fixture-signature"), true);
-    assert.equal((await client.page(accountId, "2026-10-01", null)).results[0].id, id);
+    assert.equal((await client.page(accountId, "2026-10-01", "2026-10-31", null)).results[0].id, id);
     assert.equal((await client.transaction(accountId, id)).id, id);
     wrongAccount = true;
-    await assert.rejects(client.page(accountId, "2026-10-01", null));
+    await assert.rejects(client.page(accountId, "2026-10-01", "2026-10-31", null));
     await assert.rejects(client.transaction(accountId, id));
     assert.equal(requests.every((path) => ["/auth", "/v2/transactions", "/connect_token", "/webhooks"].includes(path) || path.startsWith("/webhooks/")), true);
     console.log("Open Finance checks passed: editable review, exact money/dates, required confirmation, original snapshots, widget lifecycle, owner isolation, callbacks, webhooks and pagination.");
