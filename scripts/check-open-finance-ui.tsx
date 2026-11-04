@@ -89,7 +89,7 @@ assert.ok(html.includes(messages.filters.search));
 // The source picker opens on the only ready source; its grouped list stays closed.
 assert.ok(html.includes(messages.cards.source.picker));
 assert.ok(html.includes("Fixture bank"));
-assert.ok(html.includes("Salvando em Visible fi-sync destination"));
+assert.match(html, /Salvando em <b[^>]*>Visible fi-sync destination<\/b>/);
 assert.ok(!html.includes(messages.cards.source.search));
 assert.ok(html.includes(messages.buttons.saveNext));
 assert.ok(html.includes(messages.buttons.close));

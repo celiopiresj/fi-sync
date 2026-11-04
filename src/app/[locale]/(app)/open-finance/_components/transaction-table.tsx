@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { BankIcon, CaretLeftIcon, CaretRightIcon, ArrowsClockwiseIcon } from "@phosphor-icons/react";
+import { CheckIcon, MagnifyingGlassIcon, CaretLeftIcon, CaretRightIcon, ArrowsClockwiseIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -29,24 +29,20 @@ export function TransactionTable({ source, header, accounts, categories, people,
       <Card className="gap-0 py-0">
         {header}
         <MonthTabs months={preview.months} value={preview.month} onChange={preview.changeMonth} />
-      </Card>
-
-      {query.data?.data && <MonthSummary summary={preview.summary} />}
-
-      <Card className="gap-0 py-0">
-        <div className="flex flex-col gap-3 p-5 lg:flex-row lg:flex-wrap lg:items-center">
+        {query.data?.data && <MonthSummary summary={preview.summary} />}
+        <div className="flex flex-wrap items-center gap-2.5 px-5 py-3.5">
           <ToggleGroup type="single" variant="tabs" size="sm" value={preview.direction} onValueChange={preview.changeDirection} aria-label={t("filters.label")}>
             {PREVIEW_DIRECTIONS.map((direction) => <ToggleGroupItem key={direction} value={direction}>{t(`filters.${direction}`)}</ToggleGroupItem>)}
           </ToggleGroup>
-          <SearchInput value={preview.search} onChange={preview.changeSearch} placeholder={t("filters.search")} clearLabel={t("filters.clear")} className="min-w-0 sm:w-auto lg:flex-1" />
+          <SearchInput value={preview.search} onChange={preview.changeSearch} placeholder={t("filters.search")} clearLabel={t("filters.clear")} className="min-w-45 flex-1" />
           <Button type="button" variant="outline" size="sm" disabled={query.isFetching} onClick={() => void query.refetch()}><ArrowsClockwiseIcon />{t("buttons.refresh")}</Button>
         </div>
 
-        {query.isPending && <p role="status" className="px-5 pb-5">{common("status.loading")}</p>}
+        {query.isPending && <p role="status" className="px-5 pb-5 text-sm text-muted-foreground">{common("status.loading")}</p>}
         {(query.isError || query.data?.error) && <p role="alert" className="px-5 pb-5 text-sm text-negative">{query.data?.error ?? t("errors.provider.description")}</p>}
         {query.data?.data && filteredRows.length === 0 && <Empty className="pb-10">
           <EmptyHeader>
-            <EmptyMedia variant="icon"><BankIcon /></EmptyMedia>
+            <EmptyMedia variant="icon">{filtered ? <MagnifyingGlassIcon /> : <CheckIcon />}</EmptyMedia>
             <EmptyTitle>{filtered ? t("filters.empty") : t("table.empty.title")}</EmptyTitle>
             {!filtered && <EmptyDescription>{t("table.empty.description")}</EmptyDescription>}
           </EmptyHeader>

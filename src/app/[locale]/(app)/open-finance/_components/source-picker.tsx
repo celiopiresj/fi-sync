@@ -18,8 +18,8 @@ export function SourcePicker({ sources, source, accounts, onSelect }: SourcePick
   const picker = useSourcePicker({ sources, accounts, onSelect });
   return <Popover open={picker.open} onOpenChange={picker.changeOpen}>
     <PopoverTrigger asChild>
-      <Button type="button" variant="outline" aria-label={t("fields.source.label")} className="h-auto w-full min-w-0 justify-start gap-2.5 rounded-lg bg-background py-1.5 pr-2.5 pl-1.5 text-left sm:w-auto sm:max-w-sm data-[state=open]:border-primary data-[state=open]:ring-2 data-[state=open]:ring-primary/15">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">{source.type === "CREDIT" ? <CreditCardIcon className="size-4.5" /> : <BankIcon className="size-4.5" />}</span>
+      <Button type="button" variant="outline" aria-label={t("fields.source.label")} className="h-auto w-full min-w-0 justify-start gap-2.5 rounded-lg bg-background py-1.5 pr-2.5 pl-1.5 text-left sm:w-85 data-[state=open]:border-primary data-[state=open]:ring-2 data-[state=open]:ring-primary/15">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">{source.type === "CREDIT" ? <CreditCardIcon className="size-4.5" /> : <BankIcon className="size-4.5" />}</span>
         <span className="flex min-w-0 flex-1 flex-col"><span className="text-xs font-normal text-muted-foreground">{t("cards.source.picker")}</span><span className="truncate text-sm font-semibold">{source.name}</span></span>
         <CaretDownIcon className="shrink-0 text-muted-foreground" />
       </Button>
