@@ -3,12 +3,35 @@
   "breadcrumb": "General Overview • {month}",
   "greeting": "Hi, {name}! 👋",
 
+  "accountsCarousel": {
+    "title": "My Accounts & Cards",
+    "viewAll": "View all",
+    "creditCard": "Card",
+    "currentAccount": "Checking Account",
+    "currentInvoice": "Current invoice",
+    "empty": "No accounts registered"
+  },
+
   "buttons": {
     "newTransaction": "New Transaction"
   },
 
+  "quickActions": {
+    "title": "Quick Actions",
+    "newTransaction": "New Transaction",
+    "transfer": "Transfer",
+    "split": "Split Bill",
+    "sync": "Sync"
+  },
+
   "kpis": {
     "totalBalance": "Total balance",
+    "available": "Available",
+    "invoicesShort": "Invoices",
+    "balanceShort": "Balance",
+    "inflowShort": "Income",
+    "outflowShort": "Expenses",
+    "monthlyBalance": "Month balance",
     "totalBalanceSubtitle": "{value} this month",
     "monthIncome": "Income this month",
     "incomeChange": "{value} vs. last month",

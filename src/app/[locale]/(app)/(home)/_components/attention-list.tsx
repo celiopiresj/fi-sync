@@ -114,9 +114,9 @@ export function AttentionList({ attention }: AttentionListProps) {
   ).filter((row): row is NonNullable<typeof row> => row !== null);
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+    <div className="flex flex-col gap-3 rounded-2xl bg-card border border-border/80 p-5 shadow-xs">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">{t("attention.title")}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{t("attention.title")}</h2>
         {rows.length > 0 && (
           <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
             {t("attention.count", { count: rows.length })}
@@ -130,11 +130,11 @@ export function AttentionList({ attention }: AttentionListProps) {
           {t("attention.empty")}
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {rows.map((row) => (
             <div
               key={row.key}
-              className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2.5"
+              className="flex items-center justify-between gap-3 rounded-xl bg-muted/30 border border-border/40 p-3"
             >
               <div className="flex min-w-0 items-center gap-2.5">
                 <span

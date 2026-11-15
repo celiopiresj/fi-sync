@@ -3,12 +3,35 @@
   "breadcrumb": "Resumo Geral • {month}",
   "greeting": "Olá, {name}! 👋",
 
+  "accountsCarousel": {
+    "title": "Minhas Contas & Cartões",
+    "viewAll": "Ver todas",
+    "creditCard": "Cartão",
+    "currentAccount": "Conta Corrente",
+    "currentInvoice": "Fatura atual",
+    "empty": "Nenhuma conta cadastrada"
+  },
+
   "buttons": {
     "newTransaction": "Nova Transação"
   },
 
+  "quickActions": {
+    "title": "Ações Rápidas",
+    "newTransaction": "Nova Transação",
+    "transfer": "Transferir",
+    "split": "Dividir",
+    "sync": "Sincronizar"
+  },
+
   "kpis": {
     "totalBalance": "Saldo total",
+    "available": "Disponível",
+    "invoicesShort": "Faturas",
+    "balanceShort": "Balanço",
+    "inflowShort": "Entradas",
+    "outflowShort": "Saídas",
+    "monthlyBalance": "Balanço do mês",
     "totalBalanceSubtitle": "{value} este mês",
     "monthIncome": "Receitas do mês",
     "incomeChange": "{value} vs. mês anterior",

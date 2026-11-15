@@ -11,10 +11,8 @@ import { mobileTabItems } from "@/components/nav/mobile-tab-items";
 // transaction-mobile-list.tsx). Replaces the sidebar's off-canvas Sheet
 // as the real mobile navigation surface — see (app)/layout.tsx, which
 // hides SidebarTrigger below `md` so that Sheet never opens on a phone.
-// The center gap between the 2nd and 3rd tab is where MobileFab docks
-// (rendered as a sibling by MobileNavShell, absolutely positioned — a
-// 4-column grid's midpoint naturally falls between columns 2 and 3, so
-// no extra spacing/margin bookkeeping is needed here).
+// Grid has 5 columns: 2 tabs on the left, an empty spacer in column 3
+// where MobileFab docks, and 2 tabs on the right.
 export function MobileTabBar() {
   const t = useTranslations("common");
   const pathname = usePathname();
@@ -24,12 +22,15 @@ export function MobileTabBar() {
     mobileTabItems.map((item) => item.href),
   );
 
+  const leftItems = mobileTabItems.slice(0, 2);
+  const rightItems = mobileTabItems.slice(2);
+
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-4 border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 grid h-16 grid-cols-5 border-t border-border/80 bg-background/85 backdrop-blur-md pb-[env(safe-area-inset-bottom)] shadow-xs md:hidden"
       aria-label={t("aria.primaryNavigation")}
     >
-      {mobileTabItems.map(({ href, labelKey, icon: Icon }) => {
+      {leftItems.map(({ href, labelKey, icon: Icon }) => {
         const isActive = href === activeHref;
 
         return (
@@ -37,12 +38,33 @@ export function MobileTabBar() {
             key={href}
             href={href}
             className={cn(
-              "flex flex-col items-center justify-center gap-1 text-muted-foreground",
-              isActive && "text-primary",
+              "flex flex-col items-center justify-center gap-1 text-muted-foreground transition-transform duration-150 active:scale-95",
+              isActive && "text-primary font-semibold",
             )}
           >
             <Icon weight={isActive ? "fill" : "regular"} className="size-5.5" />
-            <span className="text-[10px] font-medium">{t(`nav.${labelKey}`)}</span>
+            <span className="text-[10px] tracking-tight">{t(`nav.${labelKey}`)}</span>
+          </Link>
+        );
+      })}
+
+      {/* Spacer column for center-docked MobileFab */}
+      <div className="pointer-events-none" aria-hidden="true" />
+
+      {rightItems.map(({ href, labelKey, icon: Icon }) => {
+        const isActive = href === activeHref;
+
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex flex-col items-center justify-center gap-1 text-muted-foreground transition-transform duration-150 active:scale-95",
+              isActive && "text-primary font-semibold",
+            )}
+          >
+            <Icon weight={isActive ? "fill" : "regular"} className="size-5.5" />
+            <span className="text-[10px] tracking-tight">{t(`nav.${labelKey}`)}</span>
           </Link>
         );
       })}

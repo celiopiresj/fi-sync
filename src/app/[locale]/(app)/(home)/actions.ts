@@ -273,6 +273,22 @@ export async function getHomeOverview() {
     expensesVsBudgetPercent,
     monthlyTrend,
     categoryBreakdown: { items: categoryBreakdownItems, totalExpenses: categoryBreakdownTotal },
+    accounts: accounts
+      .filter((a) => a.status === "ACTIVE")
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        type: a.type,
+        balance: a.balance,
+      })),
+    cardAccounts: cardAccounts
+      .filter((c) => c.status === "ACTIVE")
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        limit: typeof c.limit === "number" && !Number.isNaN(c.limit) ? c.limit : 0,
+        currentInvoiceBalance: typeof c.spent === "number" && !Number.isNaN(c.spent) ? c.spent : 0,
+      })),
     recentTransactions: recentTransactions.map((transaction) => ({
       id: transaction.id,
       description: transaction.description,

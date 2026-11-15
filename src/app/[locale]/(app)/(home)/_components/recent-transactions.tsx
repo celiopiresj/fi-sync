@@ -18,12 +18,12 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const format = useFormatter();
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+    <div className="flex flex-col gap-3 rounded-2xl bg-card border border-border/80 p-5 shadow-xs">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-medium">{t("recentTransactions.title")}</h2>
+        <h2 className="text-sm font-semibold text-foreground">{t("recentTransactions.title")}</h2>
         <Link
           href="/transactions"
-          className="shrink-0 text-xs text-primary transition-colors hover:underline"
+          className="shrink-0 text-xs font-medium text-primary transition-colors hover:underline"
         >
           {t("recentTransactions.viewAll")}
         </Link>
@@ -32,7 +32,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       {transactions.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("recentTransactions.empty")}</p>
       ) : (
-        <div className="flex flex-col divide-y divide-border">
+        <div className="flex flex-col divide-y divide-border/60">
           {transactions.map((transaction) => {
             const color = resolveCategoryColorClasses(transaction.categoryColorStyle);
             const Icon = resolveCategoryIcon(transaction.categoryIcon);
@@ -47,17 +47,17 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
             ].filter((part): part is string => Boolean(part));
 
             return (
-              <div key={transaction.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+              <div key={transaction.id} className="flex items-center gap-3 py-3 first:pt-1 last:pb-1">
                 <span
                   className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                    "flex size-9 shrink-0 items-center justify-center rounded-xl",
                     color.badge,
                   )}
                 >
-                  {createElement(Icon, { className: "size-4" })}
+                  {createElement(Icon, { className: "size-4.5" })}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="min-w-0 truncate text-sm font-medium">
+                  <span className="min-w-0 truncate text-sm font-medium text-foreground">
                     {transaction.description}
                   </span>
                   <span className="min-w-0 truncate text-xs text-muted-foreground">
@@ -66,7 +66,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                 </div>
                 <span
                   className={cn(
-                    "shrink-0 text-sm font-medium tabular-nums",
+                    "shrink-0 font-heading text-sm font-semibold tabular-nums",
                     transaction.amount < 0 ? "text-negative" : "text-positive",
                   )}
                 >
