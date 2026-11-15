@@ -75,6 +75,8 @@ type DataTableProps<TData> = {
   renderGroupHeader?: (row: Row<TData>) => ReactNode;
   getRowId?: (row: TData) => string;
   selection?: SelectionConfig;
+  sorting?: SortingState;
+  onSortingChange?: OnChangeFn<SortingState>;
   // Opt-in per-row expandable detail rendered as extra row(s) directly
   // below a given row (e.g. "this transaction splits across N people,
   // show each one indented below it") — orthogonal to `groupBy` (which
@@ -101,9 +103,14 @@ export function DataTable<TData>({
   renderGroupHeader,
   getRowId,
   selection,
+  sorting,
+  onSortingChange,
   renderSubRows,
 }: DataTableProps<TData>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [internalSorting, setInternalSorting] = useState<SortingState>([]);
+  const resolvedSorting = sorting ?? internalSorting;
+  const handleSortingChange: OnChangeFn<SortingState> =
+    onSortingChange ?? setInternalSorting;
   // Groups start fully expanded (`true` is TanStack's shorthand for "all
   // expanded") — matches a plain, ungrouped table's look until the user
   // actually collapses something.
@@ -168,7 +175,7 @@ export function DataTable<TData>({
     columns: tableColumns,
     getRowId,
     state: {
-      sorting,
+      sorting: resolvedSorting,
       expanded,
       grouping: groupBy ? [groupBy] : [],
       // The grouped column's value is already shown in the group header
@@ -181,7 +188,7 @@ export function DataTable<TData>({
       columnVisibility: groupBy ? { [groupBy]: false } : {},
       rowSelection,
     },
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange,
     onExpandedChange: setExpanded,
     onRowSelectionChange: handleRowSelectionChange,
     // Grouped "rows" are synthetic header rows, not real data — never

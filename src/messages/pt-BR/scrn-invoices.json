@@ -89,6 +89,11 @@
       "empty": "Nenhuma transação nesta fatura ainda",
       "searchPlaceholder": "Buscar por descrição…",
       "searchClear": "Limpar busca",
+      "sortGrouping": {
+        "label": "Ao ordenar",
+        "grouped": "Por pessoa",
+        "flat": "Sem pessoa"
+      },
       "filters": {
         "title": "Filtros",
         "description": "Refine as transações desta fatura",

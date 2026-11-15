@@ -28,10 +28,11 @@ import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
 import { formatPersonName } from "@/lib/format-person-name";
 import { DATE_ONLY_FORMAT_OPTIONS, dateOnlyKey } from "@/lib/date";
 import { cn } from "@/lib/utils";
-import type { Column, Row } from "@tanstack/react-table";
+import type { Column, Row, SortingState } from "@tanstack/react-table";
 import { EditPaymentDateDialog } from "./edit-payment-date-dialog";
 import { PayInvoiceDialog } from "./pay-invoice-dialog";
 import { InvoiceTransactionFiltersSheet } from "./invoice-transaction-filters-sheet";
+import { useSortGroupingMode } from "../_hooks/use-sort-grouping-mode";
 import {
   InvoiceStatusBadge,
   invoiceStatusMessageKey,
@@ -144,6 +145,22 @@ export function InvoiceDetailView({
   const [searchText, setSearchText] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [filters, setFilters] = useState<InvoiceTransactionFilters>({});
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sortGroupingMode, setSortGroupingMode] = useSortGroupingMode();
+
+  const isSorting = sorting.length > 0;
+  const shouldGroupByPerson = !isSorting || sortGroupingMode === "grouped";
+
+  function handleSortGroupingModeChange(value: string) {
+    if (value !== "grouped" && value !== "flat") return;
+    setSortGroupingMode(value);
+    if (value === "grouped") {
+      // The `person` column is hidden while grouped — drop any active sort
+      // on `person` so the user isn't left with an active sort column they
+      // can no longer see or click to clear.
+      setSorting((prev) => prev.filter((item) => item.id !== "person"));
+    }
+  }
 
   // Same bulk-selection shape as transactions-view.tsx's own (see its
   // comment) — real Transaction ids, not row indexes, plus its own
@@ -826,6 +843,25 @@ export function InvoiceDetailView({
               ))}
             </ToggleGroup>
           )}
+          <div className="hidden items-center gap-2 min-[700px]:ml-auto min-[700px]:flex">
+            <span className="text-xs text-muted-foreground">
+              {t("detail.transactions.sortGrouping.label")}
+            </span>
+            <ToggleGroup
+              type="single"
+              variant="tabs"
+              size="sm"
+              value={sortGroupingMode}
+              onValueChange={handleSortGroupingModeChange}
+            >
+              <ToggleGroupItem value="grouped">
+                {t("detail.transactions.sortGrouping.grouped")}
+              </ToggleGroupItem>
+              <ToggleGroupItem value="flat">
+                {t("detail.transactions.sortGrouping.flat")}
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
         </div>
 
         {/* Same 700px cutoff as transactions-view.tsx's own DataTable/
@@ -835,8 +871,10 @@ export function InvoiceDetailView({
           <DataTable
             columns={columns}
             data={filteredTransactions}
-            groupBy="person"
-            renderGroupHeader={renderPersonGroupHeader}
+            sorting={sorting}
+            onSortingChange={setSorting}
+            groupBy={shouldGroupByPerson ? "person" : undefined}
+            renderGroupHeader={shouldGroupByPerson ? renderPersonGroupHeader : undefined}
             renderSubRows={renderSubRows}
             emptyState={emptyStateNode}
             getRowId={(row) => row.id}

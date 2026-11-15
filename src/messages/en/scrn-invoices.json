@@ -89,6 +89,11 @@
       "empty": "No transactions on this invoice yet",
       "searchPlaceholder": "Search by description…",
       "searchClear": "Clear search",
+      "sortGrouping": {
+        "label": "When sorting",
+        "grouped": "By person",
+        "flat": "Ungrouped"
+      },
       "filters": {
         "title": "Filters",
         "description": "Refine this invoice's transactions",
