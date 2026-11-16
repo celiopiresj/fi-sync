@@ -208,6 +208,8 @@ export function computeCardPayoff(input: ComputeCardPayoffInput): CardPayoff {
   const groups = new Map<string, ItemAccumulator>();
   const paidItems: PayoffItem[] = [];
   const monthCents = new Map<string, number>();
+  const monthPaidCents = new Map<string, number>();
+  const activeMonths = new Set<string>();
   const personCents = new Map<string, number>();
   const cardCents = new Map<string, number>();
   const cardNames = new Map<string, string>();
@@ -275,7 +277,12 @@ export function computeCardPayoff(input: ComputeCardPayoffInput): CardPayoff {
     }
 
     const remainingCents = forFilter(invoice.remaining);
+    const paidCents = -adjustmentCents;
+    if (remainingCents !== 0 || paidCents !== 0) {
+      activeMonths.add(invoice.monthKey);
+    }
     addCents(monthCents, invoice.monthKey, remainingCents);
+    addCents(monthPaidCents, invoice.monthKey, paidCents);
     addCents(cardCents, card.id, remainingCents);
     cardNames.set(card.id, card.name);
     for (const [personId, cents] of invoice.remaining) {
@@ -288,6 +295,7 @@ export function computeCardPayoff(input: ComputeCardPayoffInput): CardPayoff {
   }
 
   const totalCents = sumCents(monthCents);
+  const paidTotalCents = sumCents(monthPaidCents);
   const items = [...groups.values()];
   const installmentGroups = items.filter((group) => group.isInstallment);
   const maxMonthCents = Math.max(0, ...monthCents.values());
@@ -305,6 +313,7 @@ export function computeCardPayoff(input: ComputeCardPayoffInput): CardPayoff {
     firstMonth,
     lastMonth,
     total: fromCents(totalCents),
+    paidTotal: fromCents(paidTotalCents),
     selfTotal: fromCents(selfCents),
     othersTotal: fromCents(totalCents - selfCents),
     othersCount: people.filter((entry) => !entry.person.isSelf && entry.cents > 0).length,
@@ -315,13 +324,18 @@ export function computeCardPayoff(input: ComputeCardPayoffInput): CardPayoff {
         (latest, group) => (latest === null || group.lastMonth > latest ? group.lastMonth : latest),
         null,
       ),
-    months: [...monthCents]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([monthKey, cents]) => ({
-        monthKey,
-        total: fromCents(cents),
-        barPercent: maxMonthCents > 0 ? Math.max(0, Math.round((cents / maxMonthCents) * 100)) : 0,
-      })),
+    months: [...activeMonths]
+      .sort((a, b) => a.localeCompare(b))
+      .map((monthKey) => {
+        const cents = monthCents.get(monthKey) ?? 0;
+        const paid = monthPaidCents.get(monthKey) ?? 0;
+        return {
+          monthKey,
+          total: fromCents(cents),
+          paid: fromCents(paid),
+          barPercent: maxMonthCents > 0 ? Math.max(0, Math.round((cents / maxMonthCents) * 100)) : 0,
+        };
+      }),
     people: people.map(({ person, cents }) => ({
       personId: person.id,
       name: person.name,

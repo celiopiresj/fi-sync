@@ -30,6 +30,7 @@
     "totalPerson": "Total de {name}",
     "totalSelected": "{count, plural, one {Total de # pessoa} other {Total de # pessoas}}",
     "totalLegend": "{count, plural, =0 {Nenhuma compra} one {# compra} other {# compras}}",
+    "totalLegendWithPaid": "{count, plural, =0 {Nenhuma compra} one {# compra} other {# compras}} · {paid} já pago",
     "self": "Sua parte",
     "selfLegend": "O que é seu nesse total",
     "others": "De outras pessoas",
@@ -41,7 +42,8 @@
 
   "months": {
     "title": "Por fatura",
-    "description": "Quanto cai em cada mês se você não quitar antes"
+    "description": "Quanto cai em cada mês se você não quitar antes",
+    "paid": "Já pago {amount}"
   },
 
   "breakdown": {

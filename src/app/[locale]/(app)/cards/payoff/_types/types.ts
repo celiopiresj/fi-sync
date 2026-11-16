@@ -66,6 +66,8 @@ export type PayoffItem = {
 export type PayoffMonth = {
   monthKey: string;
   total: number;
+  // What was already paid against this month's in-scope rows (positive).
+  paid: number;
   // Width of this month's bar relative to the biggest month (0–100).
   barPercent: number;
 };
@@ -96,6 +98,7 @@ export type CardPayoff = {
   firstMonth: string | null;
   lastMonth: string | null;
   total: number;
+  paidTotal: number;
   selfTotal: number;
   othersTotal: number;
   othersCount: number;

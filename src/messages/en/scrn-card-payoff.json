@@ -30,6 +30,7 @@
     "totalPerson": "{name}'s total",
     "totalSelected": "{count, plural, one {Total for # person} other {Total for # people}}",
     "totalLegend": "{count, plural, =0 {No purchases} one {# purchase} other {# purchases}}",
+    "totalLegendWithPaid": "{count, plural, =0 {No purchases} one {# purchase} other {# purchases}} · {paid} paid",
     "self": "Your share",
     "selfLegend": "What's yours in this total",
     "others": "Other people's",
@@ -41,7 +42,8 @@
 
   "months": {
     "title": "By invoice",
-    "description": "What lands each month if you don't pay off earlier"
+    "description": "What lands each month if you don't pay off earlier",
+    "paid": "Paid {amount}"
   },
 
   "breakdown": {

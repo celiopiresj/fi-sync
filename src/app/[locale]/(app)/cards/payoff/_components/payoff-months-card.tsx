@@ -35,14 +35,25 @@ export function PayoffMonthsCard({ months, className }: PayoffMonthsCardProps) {
               {formatMonthShort(format, month.monthKey)}
             </span>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-negative/70"
-                style={{ width: `${month.barPercent}%` }}
-              />
+              {month.total > 0 ? (
+                <div
+                  className="h-full rounded-full bg-negative/70"
+                  style={{ width: `${month.barPercent}%` }}
+                />
+              ) : month.paid > 0 ? (
+                <div className="h-full w-full rounded-full bg-positive/40" />
+              ) : null}
             </div>
-            <span className="w-24 shrink-0 text-right text-xs font-semibold tabular-nums">
-              {formatMoney(format, month.total)}
-            </span>
+            <div className="flex shrink-0 items-center justify-end gap-2 text-right">
+              {month.paid > 0 && (
+                <span className="text-xs font-medium text-positive tabular-nums">
+                  {t("months.paid", { amount: formatMoney(format, month.paid) })}
+                </span>
+              )}
+              <span className="w-24 text-xs font-semibold tabular-nums">
+                {formatMoney(format, month.total)}
+              </span>
+            </div>
           </div>
         ))}
       </CardContent>

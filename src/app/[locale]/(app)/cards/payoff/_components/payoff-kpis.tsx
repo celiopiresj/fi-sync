@@ -31,7 +31,14 @@ export function PayoffKpis({ payoff, singlePersonName, selectedCount }: PayoffKp
         }
         value={formatMoney(format, payoff.total)}
         tone="negative"
-        subtitle={t("kpis.totalLegend", { count: payoff.purchasesCount })}
+        subtitle={
+          payoff.paidTotal > 0
+            ? t("kpis.totalLegendWithPaid", {
+                count: payoff.purchasesCount,
+                paid: formatMoney(format, payoff.paidTotal),
+              })
+            : t("kpis.totalLegend", { count: payoff.purchasesCount })
+        }
       />
       {singlePersonName === null && (
         <>
