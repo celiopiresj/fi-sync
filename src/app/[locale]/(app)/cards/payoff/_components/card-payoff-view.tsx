@@ -108,7 +108,6 @@ export function CardPayoffView({ options, initialPayoff }: CardPayoffViewProps) 
         // — stepping twice before the first refetch lands must still
         // move two months, not recompute from the stale result twice.
         fromMonth={fromMonth ?? payoff.fromMonth}
-        firstMonth={payoff.firstMonth}
         lastMonth={payoff.lastMonth}
         onFromMonthChange={setFromMonth}
       />

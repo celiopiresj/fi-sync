@@ -25,11 +25,10 @@ type PayoffFiltersProps = {
   onPeopleChange: (personIds: string[]) => void;
   scope: PayoffScope;
   onScopeChange: (scope: PayoffScope) => void;
-  // The window in use and how far it can move (CardPayoff's own
-  // fromMonth/firstMonth/lastMonth) — null when nothing is owed at all,
+  // The window in use and its upper bound (CardPayoff's own
+  // fromMonth/lastMonth) — null when nothing is owed at all,
   // which hides the stepper.
   fromMonth: string | null;
-  firstMonth: string | null;
   lastMonth: string | null;
   onFromMonthChange: (monthKey: string) => void;
 };
@@ -43,7 +42,6 @@ export function PayoffFilters({
   scope,
   onScopeChange,
   fromMonth,
-  firstMonth,
   lastMonth,
   onFromMonthChange,
 }: PayoffFiltersProps) {
@@ -98,7 +96,6 @@ export function PayoffFilters({
             onNext={() => onFromMonthChange(shiftMonthKey(fromMonth, 1))}
             previousLabel={t("filters.from.previous")}
             nextLabel={t("filters.from.next")}
-            previousDisabled={firstMonth === null || fromMonth <= firstMonth}
             nextDisabled={lastMonth === null || fromMonth >= lastMonth}
           />
         </div>

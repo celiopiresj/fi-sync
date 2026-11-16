@@ -48,8 +48,8 @@ export async function getCardPayoffOptions() {
 }
 
 // How much it takes to pay the cards off — see computeCardPayoff for the
-// rules. Reads every unpaid invoice (any due month, so the screen also
-// knows the range its "a partir de" stepper can move over) and hands the
+// rules. Reads every invoice (including already-paid ones so stepping back
+// to previous months shows their purchases and payments) and hands the
 // calculation plain integer cents.
 export async function getCardPayoff(filters: CardPayoffFilters = {}) {
   const userId = await requireUserId();
@@ -59,7 +59,6 @@ export async function getCardPayoff(filters: CardPayoffFilters = {}) {
   const [invoices, people] = await Promise.all([
     prisma.invoice.findMany({
       where: {
-        status: { not: "PAID" },
         account: {
           userId,
           type: "CREDIT_CARD",
