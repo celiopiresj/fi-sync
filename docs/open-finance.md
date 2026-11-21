@@ -175,10 +175,11 @@ confirmá-lo.
   não é criada automaticamente uma segunda transação.
   Essa verificação considera os dados originais e os editados. O comprovante
   usa a identidade do banco, mesmo quando o valor ou a data foram alterados.
-- Para cartão, confira o fechamento e vencimento da fatura de destino.
-  As datas sugeridas usam as configurações do cartão; a fatura real do
-  banco pode ter datas diferentes. A importação não altera as datas de
-  uma fatura já existente.
+- Para cartão, a fatura de destino é definida automaticamente pela data
+  do lançamento (editada, se for o caso) e pelo ciclo do cartão, como na
+  tela de transações. A revisão apenas informa o fechamento e o
+  vencimento; não é possível editá-los. Uma fatura já existente é reusada
+  sem ter as datas alteradas.
 - Um pagamento recebido no cartão é bloqueado para criação como estorno.
   Registre o pagamento na tela de faturas e vincule-o se houver um
   lançamento equivalente, ou ignore a informação do cartão. A saída na

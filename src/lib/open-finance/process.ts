@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { dateOnlyKey, parseCalendarDate } from "@/lib/date";
 import { recomputeInvoiceStatus } from "@/lib/invoice-total";
+import { resolveInvoiceForDate } from "@/lib/invoice-resolution";
 import { isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
 import { OpenFinanceError, type PluggyTransaction, type ProcessValues } from "@/lib/open-finance/schema";
 import { reviewedTransaction } from "@/lib/open-finance/review";
@@ -38,7 +39,7 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     // Check both the original bank record and the edited values. Editing
     // a date or amount must not bypass an existing transaction's warning.
     await tx.$queryRaw`SELECT "id" FROM "Account" WHERE "id" = ${source.accountId} FOR UPDATE`;
-    const destination = await tx.account.findFirst({ where: { id: source.accountId, userId, status: "ACTIVE", currency: "BRL" } });
+    const destination = await tx.account.findFirst({ where: { id: source.accountId, userId, status: "ACTIVE", currency: "BRL" }, include: { creditCardDetails: true } });
     if (!destination || source.currency !== "BRL" ||
       (source.type === "CREDIT" ? destination.type !== "CREDIT_CARD" : !["CHECKING", "SAVINGS"].includes(destination.type))) throw new OpenFinanceError("mapping");
     if (!value.allowDuplicate && await tx.transaction.findFirst({ where: { userId, accountId: source.accountId, OR: [{ date, amount }, { date: edited.date, amount: edited.amount }] } })) {
@@ -58,14 +59,11 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     if (source.type === "BANK" && edited.paymentMethod === "CREDIT_CARD") throw new OpenFinanceError("invalid");
     let invoiceId: string | null = null;
     if (source.type === "CREDIT") {
-      if (!source.card || source.card.status !== "ACTIVE" || source.card.accountId !== source.accountId || !value.closingDate || !value.dueDate ||
-        value.dueDate < value.closingDate || value.closingDate < value.edits.date) throw new OpenFinanceError("invoice");
-      const invoice = await tx.invoice.upsert({
-        where: { accountId_closingDate: { accountId: source.accountId, closingDate: parseCalendarDate(value.closingDate) } },
-        create: { accountId: source.accountId, closingDate: parseCalendarDate(value.closingDate), dueDate: parseCalendarDate(value.dueDate) }, update: {},
-      });
-      if (dateOnlyKey(invoice.dueDate) !== value.dueDate) throw new OpenFinanceError("invoice");
-      invoiceId = invoice.id;
+      if (!source.card || source.card.status !== "ACTIVE" || source.card.accountId !== source.accountId ||
+        !destination.creditCardDetails) throw new OpenFinanceError("invoice");
+      // The invoice follows the (edited) purchase date and the card's
+      // cycle, exactly like a purchase created on the transactions screen.
+      invoiceId = (await resolveInvoiceForDate(source.accountId, edited.date, destination.creditCardDetails, tx)).id;
     }
     const metadata = row.creditCardMetadata;
     const { splits, paymentMethod, ...transactionData } = edited;

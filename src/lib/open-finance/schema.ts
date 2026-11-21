@@ -40,6 +40,7 @@ export const mappingSchema = z.object({
 });
 export const previewSchema = z.object({ sourceId: identifier, month: z.string().regex(MONTH_PATTERN), cursor: z.string().max(8000).nullable() });
 export const reviewRequestSchema = z.object({ sourceId: identifier, transactionId: z.uuid() });
+export const invoicePreviewSchema = z.object({ sourceId: identifier, date: calendarDateSchema });
 export const reviewPaymentMethodValues = [
   "CASH",
   "DEBIT_CARD",
@@ -73,8 +74,6 @@ export const reviewEditsSchema = z.object({
 const processBaseSchema = reviewRequestSchema.extend({
   expectedDestination: mappingSchema.omit({ sourceId: true }),
   existingTransactionId: z.string().max(200),
-  closingDate: z.union([calendarDateSchema, z.literal("")]),
-  dueDate: z.union([calendarDateSchema, z.literal("")]),
   expectedAmount: z.string().regex(/^-?\d{1,10}\.\d{2}$/),
   expectedDate: calendarDateSchema,
   expectedDescription: z.string().max(2000),

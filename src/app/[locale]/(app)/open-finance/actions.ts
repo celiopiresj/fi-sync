@@ -3,11 +3,11 @@
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { dateOnlyKey, formatLocalCalendarDate, parseCalendarDate, toAppZoned, todayCalendarDate } from "@/lib/date";
+import { dateOnlyKey, parseCalendarDate, todayCalendarDate } from "@/lib/date";
 import { importMonths, monthRange } from "@/lib/open-finance/months";
 import { findExistingMatches } from "@/lib/open-finance/existing";
 import { formatPersonName } from "@/lib/format-person-name";
-import { computeInvoiceCycle } from "@/lib/invoice-resolution";
+import { invoiceDatesFor } from "@/lib/open-finance/invoice";
 import { requireOpenFinanceOwner } from "@/lib/open-finance/auth";
 import { isPluggyConfigured } from "@/lib/open-finance/access";
 import { openFinanceError } from "@/lib/open-finance/errors";
@@ -18,7 +18,7 @@ import { processReviewedTransaction } from "@/lib/open-finance/process";
 import { saveSourceMapping, clearSourceMapping } from "@/lib/open-finance/mapping";
 import { pluggyWebhookSecret, publicAppOrigin } from "@/lib/open-finance/widget";
 import { inferPaymentMethod, isCardPayment, normalizedAmount, transactionKey } from "@/lib/open-finance/normalize";
-import { connectionSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
+import { connectionSchema, invoicePreviewSchema, mappingSchema, OpenFinanceError, previewSchema, processSchema, reviewRequestSchema, sourceIdSchema, widgetRegistrationSchema } from "@/lib/open-finance/schema";
 
 export async function createOpenFinanceConnectToken() {
   const userId = await requireOpenFinanceOwner();
@@ -222,11 +222,9 @@ export async function getOpenFinanceReview(input: unknown) {
       }),
     ]);
     const defaultPersonId = people.find((person) => person.isSelf)?.id ?? people[0]?.id ?? "";
-    const cycle = source.account?.creditCardDetails ? computeInvoiceCycle(date, source.account.creditCardDetails) : null;
-    const existingInvoice = cycle ? await prisma.invoice.findUnique({
-      where: { accountId_closingDate: { accountId: source.accountId!, closingDate: cycle.closingDate } },
-      select: { closingDate: true, dueDate: true },
-    }) : null;
+    const invoice = source.account?.creditCardDetails
+      ? await invoiceDatesFor(source.accountId!, source.account.creditCardDetails, date)
+      : null;
     const metadata = row.creditCardMetadata;
     return { error: null, data: {
       matches, categories, people, defaultPersonId,
@@ -238,11 +236,23 @@ export async function getOpenFinanceReview(input: unknown) {
       destinationSelection: { accountId: source.accountId!, cardId: source.cardId ?? "", fromDate: dateOnlyKey(source.importFromDate!) },
       credit: source.type === "CREDIT", pending: row.status === "PENDING", payment: isCardPayment(row, source.type),
       description: row.description, amount, date: row.date.slice(0, 10),
-      // Computed dates are instants in APP_TIME_ZONE, unlike dates read
-      // back from Postgres. This representation keeps their calendar day.
-      closingDate: existingInvoice ? dateOnlyKey(existingInvoice.closingDate) : cycle ? formatLocalCalendarDate(toAppZoned(cycle.closingDate)) : "",
-      dueDate: existingInvoice ? dateOnlyKey(existingInvoice.dueDate) : cycle ? formatLocalCalendarDate(toAppZoned(cycle.dueDate)) : "",
+      closingDate: invoice?.closingDate ?? "",
+      dueDate: invoice?.dueDate ?? "",
     } };
+  } catch (error) { return { error: await openFinanceError(error), data: null }; }
+}
+
+// Invoice the edited purchase date lands in. Read-only: it never creates
+// an invoice, and saving resolves the invoice again on the server.
+export async function previewOpenFinanceInvoice(input: unknown) {
+  const userId = await requireOpenFinanceOwner();
+  try {
+    const parsed = invoicePreviewSchema.safeParse(input);
+    if (!parsed.success) throw new OpenFinanceError("invalid");
+    const source = await ownedSource(userId, parsed.data.sourceId);
+    const details = source.account?.userId === userId ? source.account.creditCardDetails : null;
+    if (!details || !source.accountId) return { error: null, data: null };
+    return { error: null, data: await invoiceDatesFor(source.accountId, details, parseCalendarDate(parsed.data.date)) };
   } catch (error) { return { error: await openFinanceError(error), data: null }; }
 }
 

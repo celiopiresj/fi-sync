@@ -1,6 +1,6 @@
 import { add, BRL, dinero, equal } from "dinero.js";
 import { todayCalendarDate } from "@/lib/date";
-import { connectionSchema, mappingSchema, processSchema, reviewEditsSchema, calendarDateSchema, reviewDebitPaymentMethodValues } from "@/lib/open-finance/schema";
+import { connectionSchema, mappingSchema, processSchema, reviewEditsSchema, reviewDebitPaymentMethodValues } from "@/lib/open-finance/schema";
 import { NO_CATEGORY } from "@/lib/open-finance/review";
 import { isNegativeAmount } from "@/lib/open-finance/normalize";
 import { z } from "zod";
@@ -10,8 +10,6 @@ export { connectionSchema, mappingSchema, processSchema, reviewDebitPaymentMetho
 export const connectionDefaults = { label: "", itemId: "" };
 export const reviewFormSchema = reviewEditsSchema.extend({
   existingTransactionId: z.string().max(200),
-  closingDate: z.union([calendarDateSchema, z.literal("")]),
-  dueDate: z.union([calendarDateSchema, z.literal("")]),
 });
 export type ReviewFormValues = z.infer<typeof reviewFormSchema>;
 
@@ -78,7 +76,7 @@ export function mappingDefaults(source: MappingFormProps["source"]) {
   return { sourceId: source.id, accountId: source.accountId ?? "", cardId: source.cardId ?? "", fromDate: source.fromDate ?? `${todayCalendarDate().slice(0, 7)}-01` };
 }
 export function reviewDefaults({ source, row, review }: ReviewFormProps) {
-  return { sourceId: source.id, transactionId: row.id, mode: "create" as "create" | "match" | "ignore", existingTransactionId: "", closingDate: review.closingDate, dueDate: review.dueDate, expectedAmount: review.amount, expectedDate: review.date, expectedDescription: review.description, expectedDestination: review.destinationSelection };
+  return { sourceId: source.id, transactionId: row.id, mode: "create" as "create" | "match" | "ignore", existingTransactionId: "", expectedAmount: review.amount, expectedDate: review.date, expectedDescription: review.description, expectedDestination: review.destinationSelection };
 }
 export function reviewEditDefaults({ review }: ReviewFormProps): ReviewFormValues {
   return {
@@ -89,6 +87,6 @@ export function reviewEditDefaults({ review }: ReviewFormProps): ReviewFormValue
     paymentMethod: review.credit ? "" : review.paymentMethod,
     personId: review.defaultPersonId,
     splits: [],
-    closingDate: review.closingDate, dueDate: review.dueDate, existingTransactionId: "",
+    existingTransactionId: "",
   };
 }

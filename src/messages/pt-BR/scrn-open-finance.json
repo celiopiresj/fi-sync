@@ -45,8 +45,7 @@
       "BOLETO": "Boleto",
       "OTHER": "Outro"
     },
-    "closingDate": { "label": "Fechamento da fatura de destino" },
-    "dueDate": { "label": "Vencimento da fatura de destino" },
+    "invoice": { "label": "Cai na fatura que fecha em {closingDate} e vence em {dueDate}" },
     "existing": { "label": "Lançamento já cadastrado com mesma data e valor", "placeholder": "Selecione para vincular" }
   },
   "splits": {

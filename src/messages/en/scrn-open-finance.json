@@ -45,8 +45,7 @@
       "BOLETO": "Boleto",
       "OTHER": "Other"
     },
-    "closingDate": { "label": "Destination invoice closing date" },
-    "dueDate": { "label": "Destination invoice due date" },
+    "invoice": { "label": "Lands on the invoice closing {closingDate} and due {dueDate}" },
     "existing": { "label": "Existing transaction with the same date and amount", "placeholder": "Select a transaction to link" }
   },
   "splits": {

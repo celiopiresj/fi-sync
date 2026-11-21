@@ -2,7 +2,7 @@
 
 import { useTranslations, useFormatter } from "next-intl";
 import { PlusIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
-import { parseCalendarDate } from "@/lib/date";
+import { DATE_ONLY_FORMAT_OPTIONS, parseCalendarDate } from "@/lib/date";
 import { formatPersonName } from "@/lib/format-person-name";
 import { AmountInput } from "@/components/form/amount-field";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ export function ReviewForm(props: ReviewFormProps) {
     process,
     decide,
     review,
+    invoice,
   } = useReviewForm(props);
 
   return (
@@ -383,36 +384,19 @@ export function ReviewForm(props: ReviewFormProps) {
             )}
           </div>
 
-          {review.credit && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="review-closing-date"
-                  className="text-sm font-medium"
-                >
-                  {t("fields.closingDate.label")}
-                </label>
-                <Input
-                  id="review-closing-date"
-                  name="closingDate"
-                  type="date"
-                  value={draft.closingDate}
-                  onChange={(e) => updateField("closingDate", e.target.value)}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="review-due-date" className="text-sm font-medium">
-                  {t("fields.dueDate.label")}
-                </label>
-                <Input
-                  id="review-due-date"
-                  name="dueDate"
-                  type="date"
-                  value={draft.dueDate}
-                  onChange={(e) => updateField("dueDate", e.target.value)}
-                />
-              </div>
-            </div>
+          {invoice && (
+            <p className="text-xs text-muted-foreground">
+              {t("fields.invoice.label", {
+                closingDate: formatter.dateTime(
+                  parseCalendarDate(invoice.closingDate),
+                  DATE_ONLY_FORMAT_OPTIONS,
+                ),
+                dueDate: formatter.dateTime(
+                  parseCalendarDate(invoice.dueDate),
+                  DATE_ONLY_FORMAT_OPTIONS,
+                ),
+              })}
+            </p>
           )}
 
           {missingFieldLabel && isTouched && (

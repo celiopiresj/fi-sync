@@ -4,8 +4,8 @@ import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/rea
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
-import { addOpenFinanceConnection, clearOpenFinanceMapping, createOpenFinancePerson, getOpenFinanceTransactions, getOpenFinanceReview, processOpenFinanceTransaction, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
-import type { MappingValues, ProcessValues } from "@/lib/open-finance/schema";
+import { addOpenFinanceConnection, clearOpenFinanceMapping, createOpenFinancePerson, getOpenFinanceTransactions, getOpenFinanceReview, previewOpenFinanceInvoice, processOpenFinanceTransaction, saveOpenFinanceMapping, setOpenFinanceConnectionActive } from "../actions";
+import { calendarDateSchema, type MappingValues, type ProcessValues } from "@/lib/open-finance/schema";
 import { existingProcessValues } from "../_lib/existing";
 import type { PreviewRow, Source } from "../_types/types";
 
@@ -91,4 +91,16 @@ export function useOpenFinanceReview(source: Source, transactionId: string | nul
     queryKey: ["open-finance-review", source.id, source.accountId, source.cardId, source.fromDate, transactionId],
     queryFn: () => getOpenFinanceReview({ sourceId: source.id, transactionId }), enabled: Boolean(transactionId), staleTime: 0,
   });
+}
+
+// Invoice the reviewed purchase lands in, following the edited date.
+// Display only: saving resolves the same invoice on the server.
+export function useOpenFinanceInvoicePreview(sourceId: string, date: string, enabled: boolean) {
+  const query = useQuery({
+    queryKey: ["open-finance-invoice-preview", sourceId, date],
+    queryFn: () => previewOpenFinanceInvoice({ sourceId, date }),
+    enabled: enabled && calendarDateSchema.safeParse(date).success,
+    placeholderData: (previous) => previous,
+  });
+  return query.data?.data ?? null;
 }

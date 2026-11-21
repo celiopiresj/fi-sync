@@ -106,7 +106,7 @@ async function main() {
       const bankRow: PluggyTransaction = { id: randomUUID(), accountId: source.externalAccountId, providerId: "reviewed", description: "Bank original", date: "2026-10-28", amount: -19.99, currencyCode: "BRL", status: "POSTED" };
       const mapping = { accountId: account.id, cardId: null, fromDate: "2026-10-01" };
       const value: Extract<ProcessValues, { mode: "create" }> = {
-        sourceId: source.id, transactionId: bankRow.id, mode: "create", existingTransactionId: "", closingDate: "", dueDate: "",
+        sourceId: source.id, transactionId: bankRow.id, mode: "create", existingTransactionId: "",
         expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "Bank original",
         expectedDestination: { accountId: account.id, cardId: "", fromDate: "2026-10-01" },
         edits: {
@@ -165,10 +165,8 @@ async function main() {
       } });
       const creditRow = { ...bankRow, id: randomUUID(), accountId: creditSource.externalAccountId, providerId: "reviewed-card", amount: 19.99 };
       const creditMapping = { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" };
-      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, closingDate: "2026-10-30", dueDate: "2026-11-10", edits: { ...value.edits, date: "2026-11-05", paymentMethod: "" as const }, expectedDestination: { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" } };
-      await assert.rejects(processReviewedTransaction(tx, userId, creditRow, creditMapping, creditValue), (error) => error instanceof OpenFinanceError && error.code === "invoice");
-      assert.equal(await tx.invoice.count({ where: { accountId: creditAccount.id } }), 0);
-      await processReviewedTransaction(tx, userId, creditRow, creditMapping, { ...creditValue, closingDate: "2026-11-10", dueDate: "2026-11-20" });
+      const creditValue = { ...value, sourceId: creditSource.id, transactionId: creditRow.id, edits: { ...value.edits, date: "2026-11-05", paymentMethod: "" as const }, expectedDestination: { accountId: creditAccount.id, cardId: card.id, fromDate: "2026-10-01" } };
+      await processReviewedTransaction(tx, userId, creditRow, creditMapping, creditValue);
       const cardTransaction = await tx.transaction.findFirstOrThrow({ where: { userId, accountId: creditAccount.id }, include: { transactionInvoice: { include: { invoice: true } }, transactionCard: true } });
       assert.equal(dateOnlyKey(cardTransaction.date), "2026-11-05");
       assert.equal(dateOnlyKey(cardTransaction.transactionInvoice!.invoice.closingDate), "2026-11-10");

@@ -11,7 +11,10 @@ import {
   reviewFormSchema,
   type ReviewFormValues,
 } from "../_schema/schema";
-import { useOpenFinanceMutations } from "./use-open-finance";
+import {
+  useOpenFinanceInvoicePreview,
+  useOpenFinanceMutations,
+} from "./use-open-finance";
 import type { ReviewFormProps } from "../_types/types";
 
 export function useReviewForm(props: ReviewFormProps) {
@@ -29,28 +32,22 @@ export function useReviewForm(props: ReviewFormProps) {
   const [prevServerMatchesCount, setPrevServerMatchesCount] = useState(
     props.review.matches.length,
   );
-  const [prevServerDates, setPrevServerDates] = useState(
-    `${props.review.closingDate}:${props.review.dueDate}`,
-  );
-  const nextServerDates = `${props.review.closingDate}:${props.review.dueDate}`;
-  if (
-    props.review.matches.length !== prevServerMatchesCount ||
-    nextServerDates !== prevServerDates
-  ) {
+  if (props.review.matches.length !== prevServerMatchesCount) {
     setPrevServerMatchesCount(props.review.matches.length);
-    setPrevServerDates(nextServerDates);
-    setReview((current) => ({
-      ...current,
-      matches: props.review.matches,
-      closingDate: props.review.closingDate || current.closingDate,
-      dueDate: props.review.dueDate || current.dueDate,
-    }));
-    setDraft((current) => ({
-      ...current,
-      closingDate: current.closingDate || props.review.closingDate,
-      dueDate: current.dueDate || props.review.dueDate,
-    }));
+    setReview((current) => ({ ...current, matches: props.review.matches }));
   }
+  const invoicePreview = useOpenFinanceInvoicePreview(
+    props.source.id,
+    draft.date,
+    review.credit,
+  );
+  // Until the preview for the edited date arrives, the invoice of the
+  // bank date (already loaded with the review) is the right one to show.
+  const invoice =
+    invoicePreview ??
+    (review.credit && draft.date === review.date && review.closingDate
+      ? { closingDate: review.closingDate, dueDate: review.dueDate }
+      : null);
   const [isDividing, setIsDividing] = useState(false);
   const [secondaries, setSecondaries] = useState<
     { personId: string; amount: string }[]
@@ -265,8 +262,6 @@ export function useReviewForm(props: ReviewFormProps) {
         mode: "create",
         allowDuplicate: true,
         edits: parsed.data,
-        closingDate: parsed.data.closingDate,
-        dueDate: parsed.data.dueDate,
       });
       if (!result.error) props.onProcessed();
     } catch {
@@ -332,5 +327,6 @@ export function useReviewForm(props: ReviewFormProps) {
     process,
     decide,
     review,
+    invoice,
   };
 }

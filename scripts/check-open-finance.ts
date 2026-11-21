@@ -74,7 +74,7 @@ async function main() {
     }
     assert.equal(reviewEditsSchema.safeParse({ ...edits, description: "  " }).success, false);
     assert.equal(reviewEditsSchema.safeParse({ ...edits, date: "2026-02-30" }).success, false);
-    const original = { sourceId: "source", transactionId: id, existingTransactionId: "", closingDate: "", dueDate: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original", expectedDestination: { accountId: "account", cardId: "", fromDate: "2026-10-01" } };
+    const original = { sourceId: "source", transactionId: id, existingTransactionId: "", expectedAmount: "-19.99", expectedDate: "2026-10-28", expectedDescription: "bank original", expectedDestination: { accountId: "account", cardId: "", fromDate: "2026-10-01" } };
     assert.equal(processSchema.safeParse({ ...original, mode: "create" }).success, false);
     const request = processSchema.parse({ ...original, mode: "create", edits });
     // "Already recorded" links a matching manual entry, otherwise only records a receipt.
