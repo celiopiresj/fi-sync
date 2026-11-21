@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   ChatCircleIcon,
@@ -14,7 +14,6 @@ import {
   UsersIcon,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { matchesSearch } from "@/lib/normalize-search";
 import { Link, useRouter } from "@/i18n/navigation";
 import { DataTable } from "@/components/data-table/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +41,13 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { PageHeader } from "@/components/screen/page-header";
 import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
@@ -56,16 +62,29 @@ import { getPersonColorClasses, getPersonInitial } from "../_lib/person-avatar";
 import { currentStatementPeriod } from "../_lib/cash-cycle";
 import { usePeopleData } from "../_hooks/use-people-data";
 import { getPersonStatement } from "../actions";
-import { balanceStatusOf, getPeopleColumns } from "./table/columns";
+import { getPeopleColumns } from "./table/columns";
+import { usePersonMoney } from "../_hooks/use-person-money";
+import {
+  balanceStatusOf,
+  filterPeople,
+  summarizePeople,
+} from "../_lib/people-list";
+import {
+  BALANCE_STATUS_BADGE,
+  BALANCE_STATUS_TEXT,
+} from "../_constants/constants";
 import { WhatsAppPreviewDialog } from "./whatsapp-preview-dialog";
-import type { PersonRow, PersonStatement, StatementPeriod } from "../_types/types";
+import type {
+  BalanceStatusFilter,
+  PersonRow,
+  PersonStatement,
+  StatementPeriod,
+} from "../_types/types";
 
 type DialogState =
   | { mode: "create" }
   | { mode: "edit"; row: PersonRow }
   | null;
-
-type BalanceStatusFilter = "all" | "toReceive" | "toPay" | "settled";
 
 type PeopleViewProps = {
   initialPeople: PersonRow[];
@@ -73,8 +92,8 @@ type PeopleViewProps = {
 
 export function PeopleView({ initialPeople }: PeopleViewProps) {
   const t = useTranslations("scrn-people");
-  const format = useFormatter();
   const router = useRouter();
+  const money = usePersonMoney();
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const [deletingPerson, setDeletingPerson] = useState<PersonRow | null>(null);
@@ -90,45 +109,15 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
 
   const { people, invalidatePeople } = usePeopleData(initialPeople);
 
-  const money = (value: number) =>
-    format.number(value, { style: "currency", currency: "BRL" });
+  const { totalToReceive, totalToPay, pendingCount } = useMemo(
+    () => summarizePeople(people),
+    [people],
+  );
 
-  // Sign convention matches the person detail page's "Saldo na conta"/
-  // "Total a pagar": positive balance = the user owes this person,
-  // negative = this person owes the user (see listPeople in actions.ts).
-  // Excludes the self ("Eu") person — a balance against yourself isn't a
-  // real debt either direction, so it shouldn't inflate what's actually
-  // owed across everyone else (see the card rendering below, which hides
-  // the balance/"Cobrar" UI for the same person for the same reason).
-  const { totalToReceive, totalToPay, pendingCount } = useMemo(() => {
-    return people.reduce(
-      (acc, person) => {
-        if (person.isSelf) return acc;
-        if (person.balance < 0) acc.totalToReceive += Math.abs(person.balance);
-        if (person.balance > 0) acc.totalToPay += person.balance;
-        if (person.balance !== 0) acc.pendingCount += 1;
-        return acc;
-      },
-      { totalToReceive: 0, totalToPay: 0, pendingCount: 0 },
-    );
-  }, [people]);
-
-  const filteredPeople = useMemo(() => {
-    const query = searchText.trim().toLowerCase();
-    const queryDigits = query.replace(/\D/g, "");
-    return people.filter((person) => {
-      const matchesName = matchesSearch(person.name, query);
-      const phoneDigits = `${person.phoneCountryCode ?? ""}${person.phone ?? ""}`;
-      const matchesPhone = queryDigits.length > 0 && phoneDigits.includes(queryDigits);
-      const matchesFilter = !query || matchesName || matchesPhone;
-      if (!matchesFilter) return false;
-
-      if (statusFilter === "toReceive") return person.balance < 0;
-      if (statusFilter === "toPay") return person.balance > 0;
-      if (statusFilter === "settled") return person.balance === 0;
-      return true;
-    });
-  }, [people, searchText, statusFilter]);
+  const filteredPeople = useMemo(
+    () => filterPeople(people, searchText, statusFilter),
+    [people, searchText, statusFilter],
+  );
 
   async function handleSubmit(values: PersonFormValues) {
     const isEditing = dialogState?.mode === "edit";
@@ -173,9 +162,14 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
     try {
       const period = currentStatementPeriod();
       const statement = await getPersonStatement(person.id, period);
-      if (!statement) return;
+      if (!statement) {
+        toast.error(t("toast.error"));
+        return;
+      }
 
       setChargePreview({ statement, period });
+    } catch {
+      toast.error(t("toast.error"));
     } finally {
       setChargingPersonId(null);
     }
@@ -208,8 +202,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
           onDelete: (row) => setDeletingPerson(row),
         },
       ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, format, router],
+    [t, money, router],
   );
 
   const hasPeople = people.length > 0;
@@ -229,18 +222,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
         );
         const color = getPersonColorClasses(person.name, person.colorStyle);
         const balanceStatus = balanceStatusOf(person.balance);
-        const balanceBadgeVariant =
-          balanceStatus === "toReceive"
-            ? "default"
-            : balanceStatus === "toPay"
-              ? "destructive"
-              : "secondary";
-        const balanceTextClass =
-          balanceStatus === "toReceive"
-            ? "text-positive"
-            : balanceStatus === "toPay"
-              ? "text-negative"
-              : "text-foreground";
+        const balanceTextClass = BALANCE_STATUS_TEXT[balanceStatus];
         const balanceSign =
           balanceStatus === "toReceive"
             ? "+ "
@@ -250,7 +232,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
         const isCharging = chargingPersonId === person.id;
 
         return (
-          <Card key={person.id} radius="lg">
+          <Card key={person.id} className="@container">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-base">
                 <Avatar>
@@ -258,8 +240,8 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                     {getPersonInitial(person.name)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex flex-col gap-0.5">
-                  <span className="flex items-center gap-1.5">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex flex-wrap items-center gap-1.5 break-words">
                     {person.name}
                     {person.isSelf && (
                       <Badge variant="secondary">{t("card.selfBadge")}</Badge>
@@ -267,7 +249,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                   </span>
                   {phone ? (
                     <span className="flex items-center gap-1 text-xs font-normal text-muted-foreground">
-                      <PhoneIcon className="size-3" />
+                      <PhoneIcon aria-hidden="true" className="size-3 shrink-0" />
                       {phone}
                     </span>
                   ) : null}
@@ -276,8 +258,8 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
               <CardAction>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <DotsThreeIcon />
+                    <Button variant="ghost" size="icon-sm" className="size-11 md:size-8">
+                      <DotsThreeIcon aria-hidden="true" />
                       <span className="sr-only">{t("aria.menu")}</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -328,7 +310,10 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                       {balanceSign}
                       {money(Math.abs(person.balance))}
                     </span>
-                    <Badge variant={balanceBadgeVariant} className="uppercase">
+                    <Badge
+                      variant="outline"
+                      className={cn("uppercase", BALANCE_STATUS_BADGE[balanceStatus])}
+                    >
                       {t(`card.balanceStatus.${balanceStatus}`)}
                     </Badge>
                   </div>
@@ -336,7 +321,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
               )}
 
               <p className="flex items-center gap-1 px-0.5 text-xs text-muted-foreground">
-                <ReceiptIcon className="size-3.5" />
+                <ReceiptIcon aria-hidden="true" className="size-3.5" />
                 {t("card.splitsCount", { count: person.splitsCount })}
               </p>
             </CardContent>
@@ -346,7 +331,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 person.isSelf ? "grid-cols-1" : "grid-cols-2",
               )}
             >
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="h-11 sm:h-8">
                 <Link href={`/people/${person.id}`}>
                   {t("buttons.viewStatement")}
                 </Link>
@@ -357,14 +342,15 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="h-11 sm:h-8"
                   onClick={() => handleCharge(person)}
                   disabled={!phone || isCharging}
                   title={phone ? undefined : t("detail.header.noPhone")}
                 >
                   {isCharging ? (
-                    <SpinnerIcon className="size-4 animate-spin" />
+                    <SpinnerIcon aria-hidden="true" className="size-4 animate-spin" />
                   ) : (
-                    <ChatCircleIcon className="size-4" />
+                    <ChatCircleIcon aria-hidden="true" className="size-4" />
                   )}
                   {t("buttons.charge")}
                 </Button>
@@ -440,7 +426,35 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
               clearLabel={t("search.clear")}
             />
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as BalanceStatusFilter)
+                }
+              >
+                <SelectTrigger
+                  aria-label={t("filters.status.all")}
+                  className="h-11 w-full sm:hidden"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("filters.status.all")} ({people.length})
+                  </SelectItem>
+                  <SelectItem value="toReceive">
+                    {t("filters.status.toReceive")}
+                  </SelectItem>
+                  <SelectItem value="toPay">
+                    {t("filters.status.toPay")}
+                  </SelectItem>
+                  <SelectItem value="settled">
+                    {t("filters.status.settled")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
               <ToggleGroup
                 type="single"
                 variant="tabs"
@@ -449,17 +463,18 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 onValueChange={(value) => {
                   if (value) setStatusFilter(value as BalanceStatusFilter);
                 }}
+                className="hidden sm:flex"
               >
-                <ToggleGroupItem value="all">
+                <ToggleGroupItem value="all" className="h-7">
                   {t("filters.status.all")} ({people.length})
                 </ToggleGroupItem>
-                <ToggleGroupItem value="toReceive">
+                <ToggleGroupItem value="toReceive" className="h-7">
                   {t("filters.status.toReceive")}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="toPay">
+                <ToggleGroupItem value="toPay" className="h-7">
                   {t("filters.status.toPay")}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="settled">
+                <ToggleGroupItem value="settled" className="h-7">
                   {t("filters.status.settled")}
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -485,7 +500,15 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button size="sm" variant="outline" onClick={() => setSearchText("")}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-11 sm:h-8"
+                  onClick={() => {
+                    setSearchText("");
+                    setStatusFilter("all");
+                  }}
+                >
                   {t("empty.noResults.button")}
                 </Button>
               </EmptyContent>
@@ -530,6 +553,7 @@ export function PeopleView({ initialPeople }: PeopleViewProps) {
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
+        personName={deletingPerson?.name ?? ""}
         linkedSplitsCount={deletingPerson?.splitsCount ?? 0}
       />
 

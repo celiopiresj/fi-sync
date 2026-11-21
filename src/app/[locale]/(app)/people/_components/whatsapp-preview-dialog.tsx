@@ -147,7 +147,10 @@ function WhatsAppPreviewContent({
   }
 
   return (
-    <DialogContent closeLabel={t("aria.close")} className="sm:max-w-xl">
+    <DialogContent
+      closeLabel={t("aria.close")}
+      className="max-h-[90dvh] overflow-y-auto sm:max-w-xl"
+    >
       <DialogHeader>
         <DialogTitle>{t("detail.whatsapp.previewTitle")}</DialogTitle>
         <DialogDescription>
@@ -156,13 +159,18 @@ function WhatsAppPreviewContent({
       </DialogHeader>
 
       {totalItemCount > 0 ? (
-        <div className="flex items-center justify-between gap-2 border-b border-border pb-3">
-          <div className="inline-flex rounded-lg border border-border bg-surface-1 p-0.5">
+        <div className="flex flex-col gap-2.5 border-b border-border pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            role="tablist"
+            className="flex w-full rounded-xl bg-muted p-0.75 sm:w-auto"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "preview"}
               onClick={() => setActiveTab("preview")}
               className={cn(
-                "cursor-pointer rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "flex h-9 grow cursor-pointer items-center justify-center whitespace-nowrap rounded-lg px-2.5 text-xs font-medium transition-colors sm:h-7 sm:grow-0 sm:px-3",
                 activeTab === "preview"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground",
@@ -172,35 +180,39 @@ function WhatsAppPreviewContent({
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "filter"}
               onClick={() => setActiveTab("filter")}
               className={cn(
-                "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "flex h-9 grow cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-xs font-medium transition-colors sm:h-7 sm:grow-0 sm:px-3",
                 activeTab === "filter"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
               <span>{t("detail.whatsapp.tabFilter")}</span>
-              <span className="rounded-full bg-surface-2 px-1.5 py-0.2 text-[10px] text-muted-foreground">
+              <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">
                 {selectedCount}/{totalItemCount}
               </span>
             </button>
           </div>
 
           {activeTab === "filter" ? (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center justify-center gap-3 text-xs sm:justify-end">
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="cursor-pointer text-primary hover:underline"
+                className="min-h-8 cursor-pointer font-medium text-primary hover:underline sm:min-h-0"
               >
                 {t("detail.whatsapp.selectAll")}
               </button>
-              <span className="text-muted-foreground">·</span>
+              <span aria-hidden="true" className="text-muted-foreground">
+                ·
+              </span>
               <button
                 type="button"
                 onClick={handleDeselectAll}
-                className="cursor-pointer text-muted-foreground hover:text-foreground hover:underline"
+                className="min-h-8 cursor-pointer text-muted-foreground hover:text-foreground hover:underline sm:min-h-0"
               >
                 {t("detail.whatsapp.deselectAll")}
               </button>
@@ -379,38 +391,44 @@ function WhatsAppPreviewContent({
         </div>
       )}
 
-      <DialogFooter className="flex-row items-center justify-between gap-2 sm:justify-between">
+      <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleCopy}
-          className="flex items-center gap-1.5"
+          className="flex h-11 items-center justify-center gap-1.5 sm:h-8"
         >
           {copied ? (
             <>
-              <CheckIcon className="size-3.5 text-positive" />
+              <CheckIcon aria-hidden="true" className="size-3.5 text-positive" />
               <span>{t("detail.whatsapp.copied")}</span>
             </>
           ) : (
             <>
-              <CopyIcon className="size-3.5" />
+              <CopyIcon aria-hidden="true" className="size-3.5" />
               <span>{t("detail.whatsapp.copy")}</span>
             </>
           )}
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center">
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="h-11 sm:h-8"
             onClick={() => onOpenChange(false)}
           >
             {t("detail.whatsapp.cancel")}
           </Button>
           {whatsappLink ? (
-            <Button asChild size="sm" onClick={() => onOpenChange(false)}>
+            <Button
+              asChild
+              size="sm"
+              className="h-11 sm:h-8"
+              onClick={() => onOpenChange(false)}
+            >
               <a
                 href={whatsappLink}
                 target="_blank"
@@ -420,7 +438,7 @@ function WhatsAppPreviewContent({
               </a>
             </Button>
           ) : (
-            <Button size="sm" disabled>
+            <Button size="sm" className="h-11 sm:h-8" disabled>
               {t("detail.whatsapp.send")}
             </Button>
           )}

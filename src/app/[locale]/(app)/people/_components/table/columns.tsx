@@ -1,7 +1,5 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
-import { DotsThreeIcon } from "@phosphor-icons/react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,29 +9,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getPersonColorClasses, getPersonInitial } from "../../_lib/person-avatar";
+import { cn } from "@/lib/utils";
+import { DotsThreeIcon } from "@phosphor-icons/react";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+  BALANCE_STATUS_BADGE,
+  BALANCE_STATUS_TEXT,
+} from "../../_constants/constants";
+import { balanceStatusOf, displayBalanceOf } from "../../_lib/people-list";
+import {
+  getPersonColorClasses,
+  getPersonInitial,
+} from "../../_lib/person-avatar";
 import { joinPersonPhone } from "../../_lib/phone";
-import type { PersonRow } from "../../_types/types";
+import type { BalanceStatus, PersonRow } from "../../_types/types";
 
-export type BalanceStatus = "toReceive" | "toPay" | "settled";
-
-// Same sign convention as the grid cards and the person detail page's
-// "Saldo na conta": positive = the user owes this person, negative = this
-// person owes the user (see listPeople in actions.ts).
-export function balanceStatusOf(balance: number): BalanceStatus {
-  if (balance > 0) return "toPay";
-  if (balance < 0) return "toReceive";
-  return "settled";
-}
-
-const balanceBadgeVariant: Record<
-  BalanceStatus,
-  "default" | "destructive" | "secondary"
-> = {
-  toReceive: "default",
-  toPay: "destructive",
-  settled: "secondary",
-};
+export { balanceStatusOf };
+export type { BalanceStatus };
 
 export type PeopleColumnMessages = {
   columns: {
@@ -89,7 +81,8 @@ export function getPeopleColumns(
     },
     {
       id: "phone",
-      accessorFn: (row) => joinPersonPhone(row.phoneCountryCode, row.phone) ?? "",
+      accessorFn: (row) =>
+        joinPersonPhone(row.phoneCountryCode, row.phone) ?? "",
       header: messages.columns.phone,
       cell: ({ getValue }) => (
         <span className="text-sm text-muted-foreground">
@@ -108,21 +101,32 @@ export function getPeopleColumns(
     },
     {
       accessorKey: "balance",
-      header: () => <div className="text-right">{messages.columns.balance}</div>,
+      header: () => (
+        <div className="text-right">{messages.columns.balance}</div>
+      ),
       cell: ({ row }) => {
         // A balance against yourself isn't a real debt either direction
         // — same reasoning people-view.tsx's own card rendering hides
         // this for (see its comment).
         if (row.original.isSelf) {
-          return <div className="text-right text-sm text-muted-foreground">—</div>;
+          return (
+            <div className="text-right text-sm text-muted-foreground">—</div>
+          );
         }
         const status = balanceStatusOf(row.original.balance);
+        const displayBalance = displayBalanceOf(row.original.balance);
+        const sign = displayBalance > 0 ? "+ " : displayBalance < 0 ? "- " : "";
         return (
           <div className="flex items-center justify-end gap-2">
-            <span className="text-sm font-medium tabular-nums">
-              {formatAmount(Math.abs(row.original.balance))}
+            <span
+              className={cn(
+                "text-sm font-semibold tabular-nums",
+                BALANCE_STATUS_TEXT[status],
+              )}>
+              {sign}
+              {formatAmount(Math.abs(displayBalance))}
             </span>
-            <Badge variant={balanceBadgeVariant[status]}>
+            <Badge variant="outline" className={BALANCE_STATUS_BADGE[status]}>
               {messages.balanceStatus(status)}
             </Badge>
           </div>
@@ -138,8 +142,7 @@ export function getPeopleColumns(
           <Button
             variant="outline"
             size="sm"
-            onClick={() => actions.onViewStatement(row.original)}
-          >
+            onClick={() => actions.onViewStatement(row.original)}>
             {messages.viewStatement}
           </Button>
           <DropdownMenu>
@@ -156,8 +159,7 @@ export function getPeopleColumns(
               {!row.original.isSelf && (
                 <DropdownMenuItem
                   variant="destructive"
-                  onSelect={() => actions.onDelete(row.original)}
-                >
+                  onSelect={() => actions.onDelete(row.original)}>
                   {messages.menu.delete}
                 </DropdownMenuItem>
               )}

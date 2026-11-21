@@ -1,80 +1,90 @@
 "use client";
 
-import { useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
-import { toast } from "sonner";
-import { Link } from "@/i18n/navigation";
-import {
-  ArrowLeftIcon,
-  CaretDownIcon,
-  CaretLeftIcon,
-  CaretRightIcon,
-  PlusIcon,
-  ReceiptIcon,
-  UsersIcon,
-  WhatsappLogoIcon,
-} from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
-import { DATE_ONLY_FORMAT_OPTIONS, parseCalendarDate } from "@/lib/date";
+import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
+import { PeriodStepper } from "@/components/screen/page-header";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { PeriodStepper } from "@/components/screen/page-header";
-import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
-import { getPersonColorClasses, getPersonInitial } from "../../_lib/person-avatar";
-import { joinPersonPhone } from "../../_lib/phone";
 import {
-  currentStatementPeriod,
-  shiftStatementPeriod,
-} from "../../_lib/cash-cycle";
-import { usePersonStatement } from "../_hooks/use-person-statement";
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+} from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "@/i18n/navigation";
+import { DATE_ONLY_FORMAT_OPTIONS, parseCalendarDate } from "@/lib/date";
+import { cn } from "@/lib/utils";
+import {
+    ArrowLeftIcon,
+    CaretDownIcon,
+    CaretLeftIcon,
+    CaretRightIcon,
+    PlusIcon,
+    ReceiptIcon,
+    UsersIcon,
+    WhatsappLogoIcon,
+} from "@phosphor-icons/react";
+import { useFormatter, useTranslations } from "next-intl";
+import { useState } from "react";
+import { toast } from "sonner";
 import { WhatsAppPreviewDialog } from "../../_components/whatsapp-preview-dialog";
+import { usePersonMoney } from "../../_hooks/use-person-money";
+import {
+    currentStatementPeriod,
+    shiftStatementPeriod,
+} from "../../_lib/cash-cycle";
+import {
+    getPersonColorClasses,
+    getPersonInitial,
+} from "../../_lib/person-avatar";
+import { joinPersonPhone } from "../../_lib/phone";
+import { usePersonStatement } from "../_hooks/use-person-statement";
 import type { PersonStatement, StatementPeriod } from "../_types/types";
-// Deliberate cross-route dependency, not the usual per-route
-// self-containment duplication (see AGENTS.md) — same reasoning
-// invoice-detail-view.tsx's own identical import already documents:
 // this reuses the exact same forms/sheets and their installment/
 // invoice-resolution/recurrence-conversion logic rather than
 // re-implementing any of it here for a screen that just needs to
 // create/edit the same kind of rows filtered to one person.
-import { DebitTransactionSheet } from "../../../transactions/_components/form/debit-transaction-sheet";
 import { CreditTransactionSheet } from "../../../transactions/_components/form/credit-transaction-sheet";
+import { DebitTransactionSheet } from "../../../transactions/_components/form/debit-transaction-sheet";
 import { SpecialTransactionDialog } from "../../../transactions/_components/special-transaction-dialog";
-import {
-  resolveSpecialTransactionKind,
-  type SpecialTransactionKind,
-} from "../../../transactions/_lib/special-transaction";
 import { useTransactionFormOptions } from "../../../transactions/_hooks/use-transaction-form-options";
 import {
-  createDebitTransaction,
-  updateDebitTransaction,
-  createTransactionsBatch,
-  createCreditTransaction,
-  updateCreditTransaction,
-  createCreditTransactionsBatch,
-  getTransactionById,
-} from "../../../transactions/actions";
+    resolveSpecialTransactionKind,
+    type SpecialTransactionKind,
+} from "../../../transactions/_lib/special-transaction";
 import type {
-  AccountOption,
-  CategoryOption,
-  PersonOption,
-  TransactionRow,
-} from "../../../transactions/_types/types";
-import type {
-  BatchRowFormValues,
-  CreditBatchRowFormValues,
-  CreditTransactionFormValues,
-  DebitTransactionFormValues,
+    BatchRowFormValues,
+    CreditBatchRowFormValues,
+    CreditTransactionFormValues,
+    DebitTransactionFormValues,
 } from "../../../transactions/_schema/schema";
+import type {
+    AccountOption,
+    CategoryOption,
+    PersonOption,
+    TransactionRow,
+} from "../../../transactions/_types/types";
+import {
+    createCreditTransaction,
+    createCreditTransactionsBatch,
+    createDebitTransaction,
+    createTransactionsBatch,
+    getTransactionById,
+    updateCreditTransaction,
+    updateDebitTransaction,
+} from "../../../transactions/actions";
 
 type PersonDetailViewProps = {
   personId: string;
@@ -136,7 +146,13 @@ export function PersonDetailView({
   const isDefaultPeriod =
     period.year === initialPeriod.year && period.month === initialPeriod.month;
 
-  const { data: statement, invalidate } = usePersonStatement(
+  const {
+    data: statement,
+    isFetching,
+    isError,
+    refetch,
+    invalidate,
+  } = usePersonStatement(
     personId,
     period,
     initialStatement,
@@ -148,8 +164,7 @@ export function PersonDetailView({
     initialDefaultPersonId,
   );
 
-  const money = (value: number) =>
-    format.number(value, { style: "currency", currency: "BRL" });
+  const money = usePersonMoney();
 
   const periodLabelDate = parseCalendarDate(
     `${period.year}-${String(period.month + 1).padStart(2, "0")}-01`,
@@ -264,7 +279,53 @@ export function PersonDetailView({
     toast.success(t("detail.toast.transactionsCreated", { count }));
   }
 
-  if (!statement) return null;
+  if (!statement) {
+    if (isError) {
+      return (
+        <div className="mx-auto flex max-w-350 flex-col gap-6 py-12">
+          <Empty className="border-none">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <UsersIcon aria-hidden="true" />
+              </EmptyMedia>
+              <EmptyTitle>{t("detail.errors.load.title")}</EmptyTitle>
+              <EmptyDescription>
+                {t("detail.errors.load.description")}
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button className="h-11 sm:h-9" onClick={() => refetch()}>
+                {t("buttons.retry")}
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        aria-busy="true"
+        className="mx-auto flex max-w-350 flex-col gap-6"
+      >
+        <Skeleton className="h-5 w-24" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-12 rounded-full" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+        </div>
+        <Skeleton className="h-48 rounded-2xl" />
+      </div>
+    );
+  }
 
   const phone = joinPersonPhone(
     statement.person.phoneCountryCode,
@@ -291,41 +352,50 @@ export function PersonDetailView({
       : null;
 
   return (
-    <div className="mx-auto flex max-w-350 flex-col gap-6">
+    <div
+      aria-busy={isFetching}
+      className={cn(
+        "mx-auto flex max-w-350 flex-col gap-6 transition-opacity",
+        isFetching && "opacity-70",
+      )}
+    >
       <Link
         href="/people"
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:min-h-0"
       >
-        <ArrowLeftIcon className="size-4" />
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
         {t("detail.back")}
       </Link>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <Avatar size="lg">
             <AvatarFallback className={color}>
               {getPersonInitial(statement.person.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="text-lg font-semibold">{statement.person.name}</span>
+          <div className="flex min-w-0 flex-col">
+            <h1 className="font-heading text-2xl font-bold tracking-tight break-words text-foreground">
+              {statement.person.name}
+            </h1>
             {phone ? (
               <span className="text-sm text-muted-foreground">{phone}</span>
             ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
           {people.length > 1 ? (
-            <div className="inline-flex items-center gap-1">
+            <div className="flex w-full items-center justify-between gap-1 rounded-2xl border border-border/80 bg-card p-1 shadow-xs sm:inline-flex sm:w-auto sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none">
               {prevPerson ? (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   asChild
+                  className="size-10 rounded-xl sm:size-9 sm:rounded-md sm:border sm:border-input sm:bg-background sm:shadow-xs"
                   title={t("detail.header.previousPerson", { name: prevPerson.name })}
                 >
                   <Link href={`/people/${prevPerson.id}`}>
-                    <CaretLeftIcon className="size-4" />
+                    <CaretLeftIcon aria-hidden="true" className="size-4" />
                     <span className="sr-only">
                       {t("detail.header.previousPerson", { name: prevPerson.name })}
                     </span>
@@ -335,12 +405,16 @@ export function PersonDetailView({
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-2">
-                    <UsersIcon className="size-4" />
-                    <span className="hidden sm:inline">
-                      {t("detail.header.switchPerson")}
-                    </span>
-                    <CaretDownIcon className="size-3 text-muted-foreground" />
+                  <Button
+                    variant="ghost"
+                    className="h-10 flex-1 gap-2 rounded-xl sm:h-9 sm:flex-none sm:rounded-md sm:border sm:border-input sm:bg-background sm:shadow-xs"
+                  >
+                    <UsersIcon aria-hidden="true" className="size-4" />
+                    <span>{t("detail.header.switchPerson")}</span>
+                    <CaretDownIcon
+                      aria-hidden="true"
+                      className="size-3 text-muted-foreground"
+                    />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="max-h-80 w-56 overflow-y-auto">
@@ -379,13 +453,14 @@ export function PersonDetailView({
 
               {nextPerson ? (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   asChild
+                  className="size-10 rounded-xl sm:size-9 sm:rounded-md sm:border sm:border-input sm:bg-background sm:shadow-xs"
                   title={t("detail.header.nextPerson", { name: nextPerson.name })}
                 >
                   <Link href={`/people/${nextPerson.id}`}>
-                    <CaretRightIcon className="size-4" />
+                    <CaretRightIcon aria-hidden="true" className="size-4" />
                     <span className="sr-only">
                       {t("detail.header.nextPerson", { name: nextPerson.name })}
                     </span>
@@ -397,10 +472,10 @@ export function PersonDetailView({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <PlusIcon />
+              <Button variant="outline" className="hidden md:inline-flex">
+                <PlusIcon aria-hidden="true" />
                 {t("detail.buttons.addTransaction")}
-                <CaretDownIcon />
+                <CaretDownIcon aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -416,15 +491,19 @@ export function PersonDetailView({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={handleWhatsAppClick} title={phone ? undefined : t("detail.header.noPhone")}>
-            <WhatsappLogoIcon weight="fill" />
+          <Button
+            className="h-11 w-full sm:h-9 sm:w-auto"
+            onClick={handleWhatsAppClick}
+            title={phone ? undefined : t("detail.header.noPhone")}
+          >
+            <WhatsappLogoIcon aria-hidden="true" weight="fill" />
             {t("detail.header.whatsappButton")}
           </Button>
         </div>
       </div>
 
       <PeriodStepper
-        className="justify-center"
+        className="sm:justify-center"
         label={periodLabel}
         onPrevious={() => setPeriod((current) => shiftStatementPeriod(current, -1))}
         onNext={() => setPeriod((current) => shiftStatementPeriod(current, 1))}
@@ -482,18 +561,18 @@ export function PersonDetailView({
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="rounded-md border border-border">
-            <div className="divide-y divide-border">
+          <Card className="gap-0 py-0">
+            <div className="divide-y divide-border/60">
               {statement.movements.map((movement) => (
                 <button
                   key={movement.id}
                   type="button"
                   onClick={() => handleRowClick(movement.id)}
                   disabled={isLoadingRow === movement.id}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
+                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="min-w-0 truncate text-sm font-medium">
+                    <span className="min-w-0 break-words text-sm font-medium">
                       {movement.description}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -511,7 +590,7 @@ export function PersonDetailView({
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
         )}
       </div>
 
@@ -549,18 +628,18 @@ export function PersonDetailView({
             </span>
           </div>
 
-          <div className="rounded-md border border-border">
-            <div className="divide-y divide-border">
+          <Card className="gap-0 py-0">
+            <div className="divide-y divide-border/60">
               {section.items.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => handleRowClick(item.id)}
                   disabled={isLoadingRow === item.id}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
+                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-60"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="min-w-0 truncate text-sm font-medium">
+                    <span className="min-w-0 break-words text-sm font-medium">
                       {item.description}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -584,7 +663,7 @@ export function PersonDetailView({
                 </button>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Only when this person already settled part of this invoice
               (see `paid` in getPersonStatement) — otherwise the badge
@@ -618,15 +697,15 @@ export function PersonDetailView({
             </div>
           </div>
 
-          <div className="rounded-md border border-border">
-            <div className="divide-y divide-border">
+          <Card className="gap-0 py-0">
+            <div className="divide-y divide-border/60">
               {statement.loanItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between gap-3 px-3 py-2.5"
+                  className="flex items-center justify-between gap-3 px-4 py-3"
                 >
                   <div className="flex min-w-0 flex-col">
-                    <span className="min-w-0 truncate text-sm font-medium">
+                    <span className="min-w-0 break-words text-sm font-medium">
                       {item.description}
                     </span>
                     <span className="text-xs text-muted-foreground">
@@ -645,7 +724,7 @@ export function PersonDetailView({
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       )}
 

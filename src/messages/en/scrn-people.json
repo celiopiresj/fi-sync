@@ -6,7 +6,8 @@
     "add": "New person",
     "viewStatement": "View statement",
     "charge": "Charge",
-    "newExpense": "New expense"
+    "newExpense": "New expense",
+    "retry": "Try again"
   },
 
   "search": {
@@ -18,13 +19,16 @@
     "toReceive": "To receive",
     "toPay": "To pay",
     "registered": "People registered",
-    "pending": "{count, plural, =0 {none pending} one {# pending} other {# pending}}"
+    "pending": "{count, plural, =0 {none pending} one {# pending} other {# pending}}",
+    "title": "Balance with people",
+    "peopleCount": "{count, plural, one {# person} other {# people}}"
   },
 
   "filters": {
     "status": {
       "label": "Status",
       "all": "All",
+      "allWithCount": "All ({count})",
       "toReceive": "To receive",
       "toPay": "To pay",
       "settled": "Settled"
@@ -83,14 +87,15 @@
     "button": "New person",
     "noResults": {
       "title": "No matching people",
-      "description": "Try searching a different name",
-      "button": "Clear search"
+      "description": "Try a different name, phone or balance filter",
+      "button": "Clear filters"
     }
   },
 
   "menu": {
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "charge": "Charge via WhatsApp"
   },
 
   "dialog": {
@@ -98,22 +103,25 @@
       "title": "New person",
       "description": "Fill in the person's details",
       "confirm": "Create",
+      "submitting": "Creating…",
       "cancel": "Cancel"
     },
     "edit": {
       "title": "Edit person",
       "description": "Update the person's details",
       "confirm": "Save",
+      "submitting": "Saving…",
       "cancel": "Cancel"
     },
     "delete": {
-      "title": "Delete person?",
-      "description": "This action cannot be undone.",
+      "title": "Delete {name}?",
+      "description": "This person leaves your list and can no longer be used to split expenses. This action cannot be undone.",
+      "pending": "Deleting…",
       "confirm": "Delete",
       "cancel": "Cancel"
     },
     "deleteBlocked": {
-      "title": "Can't delete this person",
+      "title": "Can't delete {name}",
       "close": "Close"
     }
   },
@@ -134,7 +142,9 @@
 
   "aria": {
     "close": "Close",
-    "menu": "Open actions menu"
+    "menu": "Open actions menu",
+    "statusFilter": "Filter people by balance",
+    "loading": "Loading"
   },
 
   "detail": {
@@ -144,10 +154,17 @@
       "description": "This person doesn't exist or was deleted.",
       "button": "Back to People"
     },
+    "errors": {
+      "load": {
+        "title": "Couldn't load the statement",
+        "description": "Check your connection and try again."
+      }
+    },
     "header": {
       "whatsappButton": "Send via WhatsApp",
       "noPhone": "Add a phone number to send via WhatsApp",
       "switchPerson": "Switch person",
+      "personNavigation": "Browse people",
       "peopleList": "People",
       "previousPerson": "Previous person: {name}",
       "nextPerson": "Next person: {name}"
@@ -208,7 +225,9 @@
       "previewTitle": "Preview message",
       "previewDescription": "Review the text before sending",
       "tabMessage": "Message",
-      "tabFilter": "Customize entries",
+      "tabFilter": "Entries",
+      "tabsLabel": "Message content",
+      "selectedCount": "{selected} of {total}",
       "selectAll": "Select all",
       "deselectAll": "Deselect all",
       "copy": "Copy",

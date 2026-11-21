@@ -1,21 +1,25 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { SpinnerIcon, TrashIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type DeleteDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isPending: boolean;
+  personName: string;
   // How many TransactionSplit rows point at the person being considered
   // for deletion — deleting would cascade-remove those (see
   // prisma/schema.prisma, TransactionSplit.person onDelete: Cascade), so
@@ -30,45 +34,68 @@ export function DeleteDialog({
   onOpenChange,
   onConfirm,
   isPending,
+  personName,
   linkedSplitsCount,
 }: DeleteDialogProps) {
   const t = useTranslations("scrn-people");
   const canDelete = linkedSplitsCount === 0;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent closeLabel={t("aria.close")}>
-        <DialogHeader>
-          <DialogTitle>
-            {t(canDelete ? "dialog.delete.title" : "dialog.deleteBlocked.title")}
-          </DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia
+            className={
+              canDelete
+                ? "bg-destructive/10 text-destructive"
+                : "bg-warning/10 text-warning"
+            }
+          >
+            {canDelete ? (
+              <TrashIcon aria-hidden="true" />
+            ) : (
+              <WarningCircleIcon aria-hidden="true" />
+            )}
+          </AlertDialogMedia>
+          <AlertDialogTitle className="break-words">
+            {t(canDelete ? "dialog.delete.title" : "dialog.deleteBlocked.title", {
+              name: personName,
+            })}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
             {canDelete
               ? t("dialog.delete.description")
               : t("errors.hasSplits", { count: linkedSplitsCount })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
           {canDelete ? (
             <>
-              <Button variant="outline" onClick={() => onOpenChange(false)}>
+              <AlertDialogCancel disabled={isPending} className="h-11 sm:h-9">
                 {t("dialog.delete.cancel")}
-              </Button>
-              <Button
+              </AlertDialogCancel>
+              <AlertDialogAction
                 variant="destructive"
                 disabled={isPending}
-                onClick={onConfirm}
+                className="h-11 sm:h-9"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onConfirm();
+                }}
               >
-                {t("dialog.delete.confirm")}
-              </Button>
+                {isPending && (
+                  <SpinnerIcon aria-hidden="true" className="animate-spin" />
+                )}
+                {t(isPending ? "dialog.delete.pending" : "dialog.delete.confirm")}
+              </AlertDialogAction>
             </>
           ) : (
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
+            <AlertDialogCancel className="h-11 sm:h-9">
               {t("dialog.deleteBlocked.close")}
-            </Button>
+            </AlertDialogCancel>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

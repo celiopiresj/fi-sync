@@ -6,7 +6,8 @@
     "add": "Nova pessoa",
     "viewStatement": "Ver extrato",
     "charge": "Cobrar",
-    "newExpense": "Nova despesa"
+    "newExpense": "Nova despesa",
+    "retry": "Tentar novamente"
   },
 
   "search": {
@@ -18,13 +19,16 @@
     "toReceive": "A receber",
     "toPay": "A pagar",
     "registered": "Pessoas cadastradas",
-    "pending": "{count, plural, =0 {nenhuma pendente} one {# pendente} other {# pendentes}}"
+    "pending": "{count, plural, =0 {nenhuma pendente} one {# pendente} other {# pendentes}}",
+    "title": "Saldo com pessoas",
+    "peopleCount": "{count, plural, one {# pessoa} other {# pessoas}}"
   },
 
   "filters": {
     "status": {
       "label": "Status",
       "all": "Todos",
+      "allWithCount": "Todos ({count})",
       "toReceive": "A receber",
       "toPay": "A pagar",
       "settled": "Quitados"
@@ -83,14 +87,15 @@
     "button": "Nova pessoa",
     "noResults": {
       "title": "Nenhuma pessoa encontrada",
-      "description": "Tente buscar por outro nome",
-      "button": "Limpar busca"
+      "description": "Tente outro nome, telefone ou filtro de saldo",
+      "button": "Limpar filtros"
     }
   },
 
   "menu": {
     "edit": "Editar",
-    "delete": "Excluir"
+    "delete": "Excluir",
+    "charge": "Cobrar via WhatsApp"
   },
 
   "dialog": {
@@ -98,22 +103,25 @@
       "title": "Nova pessoa",
       "description": "Preencha os dados da pessoa",
       "confirm": "Criar",
+      "submitting": "Criando…",
       "cancel": "Cancelar"
     },
     "edit": {
       "title": "Editar pessoa",
       "description": "Atualize os dados da pessoa",
       "confirm": "Salvar",
+      "submitting": "Salvando…",
       "cancel": "Cancelar"
     },
     "delete": {
-      "title": "Excluir pessoa?",
-      "description": "Essa ação não pode ser desfeita.",
+      "title": "Excluir {name}?",
+      "description": "Esta pessoa sai da sua lista e deixa de aparecer na divisão de despesas. Essa ação não pode ser desfeita.",
+      "pending": "Excluindo…",
       "confirm": "Excluir",
       "cancel": "Cancelar"
     },
     "deleteBlocked": {
-      "title": "Não é possível excluir",
+      "title": "Não é possível excluir {name}",
       "close": "Fechar"
     }
   },
@@ -134,7 +142,9 @@
 
   "aria": {
     "close": "Fechar",
-    "menu": "Abrir menu de ações"
+    "menu": "Abrir menu de ações",
+    "statusFilter": "Filtrar pessoas por saldo",
+    "loading": "Carregando"
   },
 
   "detail": {
@@ -144,10 +154,17 @@
       "description": "Essa pessoa não existe ou foi excluída.",
       "button": "Voltar para Pessoas"
     },
+    "errors": {
+      "load": {
+        "title": "Não foi possível carregar o extrato",
+        "description": "Verifique sua conexão e tente novamente."
+      }
+    },
     "header": {
       "whatsappButton": "Enviar via WhatsApp",
       "noPhone": "Cadastre um telefone para enviar pelo WhatsApp",
       "switchPerson": "Trocar pessoa",
+      "personNavigation": "Navegar entre pessoas",
       "peopleList": "Pessoas",
       "previousPerson": "Pessoa anterior: {name}",
       "nextPerson": "Próxima pessoa: {name}"
@@ -208,7 +225,9 @@
       "previewTitle": "Pré-visualizar mensagem",
       "previewDescription": "Confira o texto antes de enviar",
       "tabMessage": "Mensagem",
-      "tabFilter": "Personalizar lançamentos",
+      "tabFilter": "Lançamentos",
+      "tabsLabel": "Conteúdo da mensagem",
+      "selectedCount": "{selected} de {total}",
       "selectAll": "Marcar todos",
       "deselectAll": "Desmarcar todos",
       "copy": "Copiar",
