@@ -38,3 +38,23 @@ export const emptyAccountFormValues: AccountFormValues = {
   type: "CHECKING",
   initialBalance: "",
 };
+
+export function accountToFormValues(
+  row: { name: string; type: string; initialBalance: number | null } | null,
+  defaultType: AccountTypeOption | undefined,
+): AccountFormValues {
+  if (!row) {
+    return defaultType
+      ? { ...emptyAccountFormValues, type: defaultType }
+      : emptyAccountFormValues;
+  }
+
+  return {
+    name: row.name,
+    type: row.type as AccountFormValues["type"],
+    initialBalance:
+      row.initialBalance == null
+        ? ""
+        : row.initialBalance.toFixed(2).replace(".", ","),
+  };
+}

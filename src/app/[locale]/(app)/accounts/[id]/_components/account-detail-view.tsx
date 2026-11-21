@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   ArrowLeftIcon,
@@ -11,9 +11,11 @@ import {
   UsersIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { KpiCard, KpiGrid } from "@/components/screen/kpi-card";
+import { SectionCard } from "@/components/screen/section-card";
 import {
   Empty,
   EmptyDescription,
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 import { getAccountColorClasses } from "../../_lib/account-color";
+import { useAccountMoney } from "../../_hooks/use-account-money";
 import {
   getPersonColorClasses,
   getPersonInitial,
@@ -39,7 +42,7 @@ type AccountDetailViewProps = {
 export function AccountDetailView({ account }: AccountDetailViewProps) {
   const t = useTranslations("scrn-accounts");
   const tCommon = useTranslations("common");
-  const format = useFormatter();
+  const money = useAccountMoney();
 
   const [transferOpen, setTransferOpen] = useState(false);
   // Fetched as soon as the screen loads, not on click: this is the screen
@@ -49,83 +52,85 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
   const { data: transferOptions } = useQuickAddTransactionOptions(true);
   const { submitTransfer } = useQuickAddTransactionMutations();
 
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
-
   const color = getAccountColorClasses(account.id);
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
       <Link
         href="/accounts"
-        className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:min-h-0"
       >
-        <ArrowLeftIcon className="size-4" />
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
         {t("detail.back")}
       </Link>
 
-      <div className="flex items-start justify-between gap-3 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
-        <div className="flex items-center gap-3">
-          <span
-            className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-xl",
-              color.bg,
-            )}
-          >
-            <BankIcon weight="fill" className={cn("size-5", color.icon)} />
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">{account.name}</h1>
-            <span className="text-sm text-muted-foreground">
-              {t(`fields.type.${account.type.toLowerCase()}`)}
-            </span>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Badge variant={account.status === "ACTIVE" ? "default" : "secondary"}>
-            {tCommon(`status.${account.status.toLowerCase()}`)}
-          </Badge>
-          {/* Nothing in the account means nothing to move. */}
-          {account.balance !== 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTransferOpen(true)}
+      <Card>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "flex size-10 shrink-0 items-center justify-center rounded-xl",
+                color.bg,
+              )}
             >
-              <SwapIcon />
-              {t("detail.transferBalance")}
-            </Button>
-          )}
-        </div>
-      </div>
+              <BankIcon weight="fill" className={cn("size-5", color.icon)} />
+            </span>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <h1 className="font-heading text-2xl font-bold tracking-tight break-words text-foreground">
+                {account.name}
+              </h1>
+              <span className="text-sm text-muted-foreground">
+                {t(`fields.type.${account.type.toLowerCase()}`)}
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:shrink-0">
+            <Badge variant={account.status === "ACTIVE" ? "default" : "secondary"}>
+              {tCommon(`status.${account.status.toLowerCase()}`)}
+            </Badge>
+            {/* Nothing in the account means nothing to move. */}
+            {account.balance !== 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-11 sm:h-8"
+                onClick={() => setTransferOpen(true)}
+              >
+                <SwapIcon aria-hidden="true" />
+                {t("detail.transferBalance")}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <KpiGrid columns={2}>
         <KpiCard
           label={t("detail.kpis.balance")}
           value={money(account.balance)}
           tone={account.balance < 0 ? "negative" : "positive"}
+          subtitle={t("detail.kpis.peopleCount", {
+            count: account.people.length,
+          })}
         />
         <KpiCard
-          label={t("detail.kpis.people")}
+          label={t("detail.people.title")}
           value={account.people.length}
           icon={<UsersIcon className="size-5" />}
         />
       </KpiGrid>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.people.title")}</h2>
-          <p className="text-xs text-muted-foreground">
-            {t("detail.people.description")}
-          </p>
-        </div>
-
+      <SectionCard
+        title={t("detail.people.title")}
+        description={t("detail.people.description")}
+        contentClassName="gap-0"
+      >
         {account.people.length === 0 ? (
-          <Empty className="rounded-md border border-dashed border-border py-12">
+          <Empty className="border-none py-8">
             <EmptyHeader>
               <EmptyMedia variant="icon">
-                <UsersIcon />
+                <UsersIcon aria-hidden="true" />
               </EmptyMedia>
               <EmptyTitle>{t("detail.people.empty.title")}</EmptyTitle>
               <EmptyDescription>
@@ -134,20 +139,18 @@ export function AccountDetailView({ account }: AccountDetailViewProps) {
             </EmptyHeader>
           </Empty>
         ) : (
-          <div className="rounded-md border border-border">
-            <div className="divide-y divide-border">
-              {account.people.map((row) => (
-                <PersonBalanceRow
-                  key={row.personId ?? "unattributed"}
-                  accountId={account.id}
-                  row={row}
-                  money={money}
-                />
-              ))}
-            </div>
+          <div className="-mx-5 divide-y divide-border/60">
+            {account.people.map((row) => (
+              <PersonBalanceRow
+                key={row.personId ?? "unattributed"}
+                accountId={account.id}
+                row={row}
+                money={money}
+              />
+            ))}
           </div>
         )}
-      </div>
+      </SectionCard>
       {transferOptions && (
         // Opens straight on "saldo da conta" with this account as the
         // source — the two typed shapes are still one toggle away.
@@ -187,8 +190,8 @@ function PersonBalanceRow({
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="flex items-center gap-1.5">
-          <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+        <span className="flex flex-wrap items-center gap-1.5">
+          <span className="min-w-0 break-words text-sm font-medium">{name}</span>
           {row.isSelf && (
             <Badge variant="secondary">{t("detail.people.selfBadge")}</Badge>
           )}

@@ -1,26 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Link } from "@/i18n/navigation";
-import { BankIcon, DotsThreeIcon, PlusIcon } from "@phosphor-icons/react";
+import { BankIcon, PlusIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Empty,
   EmptyContent,
@@ -30,13 +14,11 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { PageHeader } from "@/components/screen/page-header";
+import { AccountsSummary } from "./accounts-summary";
+import { AccountGroupSection } from "./account-group-section";
 import { AccountSheet } from "./form/account-sheet";
 import { DeleteDialog } from "./delete-dialog";
-import {
-  accountTypeValues,
-  type AccountFormValues,
-  type AccountTypeOption,
-} from "../_schema/schema";
+import type { AccountFormValues, AccountTypeOption } from "../_schema/schema";
 import {
   createAccount,
   deleteAccount,
@@ -45,7 +27,7 @@ import {
   updateAccount,
 } from "../actions";
 import { useAccountsData } from "../_hooks/use-accounts-data";
-import { getAccountColorClasses } from "../_lib/account-color";
+import { groupAccountsByType, summarizeAccounts } from "../_lib/account-groups";
 import type { AccountRow } from "../_types/types";
 
 type DialogState =
@@ -59,8 +41,6 @@ type AccountsViewProps = {
 
 export function AccountsView({ initialAccounts }: AccountsViewProps) {
   const t = useTranslations("scrn-accounts");
-  const tCommon = useTranslations("common");
-  const format = useFormatter();
 
   const [dialogState, setDialogState] = useState<DialogState>(null);
   const [deletingAccount, setDeletingAccount] = useState<AccountRow | null>(
@@ -70,24 +50,8 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
 
   const { accounts, invalidateAccounts } = useAccountsData(initialAccounts);
 
-  // Fixed CHECKING -> SAVINGS -> CASH section order regardless of data;
-  // within a section, active accounts first, then inactive (archived
-  // ones sink to the bottom instead of interleaving).
-  const groups = useMemo(
-    () =>
-      accountTypeValues.map((type) => ({
-        type,
-        accounts: accounts
-          .filter((account) => account.type === type)
-          .sort((a, b) => {
-            if (a.status !== b.status) {
-              return a.status === "INACTIVE" ? 1 : -1;
-            }
-            return a.name.localeCompare(b.name);
-          }),
-      })),
-    [accounts],
-  );
+  const groups = useMemo(() => groupAccountsByType(accounts), [accounts]);
+  const summary = useMemo(() => summarizeAccounts(accounts), [accounts]);
 
   async function handleSubmit(values: AccountFormValues) {
     const isEditing = dialogState?.mode === "edit";
@@ -106,29 +70,42 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
   async function handleToggleStatus(account: AccountRow) {
     const wasActive = account.status === "ACTIVE";
     const result = await toggleAccountStatus(account.id);
-    if (!result.error) {
-      invalidateAccounts();
-      toast.success(t(wasActive ? "toast.archived" : "toast.reactivated"));
+    if (result.error) {
+      toast.error(t("toast.error"));
+      return;
     }
+    invalidateAccounts();
+    toast.success(t(wasActive ? "toast.archived" : "toast.reactivated"));
   }
 
   async function handleToggleDefault(account: AccountRow) {
     const wasDefault = account.isDefault;
     const result = await toggleDefaultAccount(account.id);
-    if (!result.error) {
-      invalidateAccounts();
-      toast.success(t(wasDefault ? "toast.defaultUnset" : "toast.defaultSet"));
+    if (result.error) {
+      toast.error(t("toast.error"));
+      return;
     }
+    invalidateAccounts();
+    toast.success(t(wasDefault ? "toast.defaultUnset" : "toast.defaultSet"));
   }
 
   async function handleDeleteConfirm() {
     if (!deletingAccount) return;
     setIsDeleting(true);
-    await deleteAccount(deletingAccount.id);
-    setIsDeleting(false);
-    setDeletingAccount(null);
-    invalidateAccounts();
-    toast.success(t("toast.deleted"));
+    try {
+      const result = await deleteAccount(deletingAccount.id);
+      if (result?.error) {
+        toast.error(t("toast.error"));
+        return;
+      }
+      setDeletingAccount(null);
+      invalidateAccounts();
+      toast.success(t("toast.deleted"));
+    } catch {
+      toast.error(t("toast.error"));
+    } finally {
+      setIsDeleting(false);
+    }
   }
 
   const hasAccounts = accounts.length > 0;
@@ -139,7 +116,11 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
         title={t("title")}
         subtitle={t("description")}
         right={
-          <Button onClick={() => setDialogState({ mode: "create" })}>
+          <Button
+            className="h-11 sm:h-9"
+            onClick={() => setDialogState({ mode: "create" })}
+          >
+            <PlusIcon aria-hidden="true" />
             {t("buttons.add")}
           </Button>
         }
@@ -149,169 +130,39 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
         <Empty className="border-none py-12">
           <EmptyHeader>
             <EmptyMedia variant="icon">
-              <BankIcon />
+              <BankIcon aria-hidden="true" />
             </EmptyMedia>
             <EmptyTitle>{t("empty.title")}</EmptyTitle>
             <EmptyDescription>{t("empty.description")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
-            <Button size="sm" onClick={() => setDialogState({ mode: "create" })}>
+            <Button
+              className="h-11 sm:h-9"
+              onClick={() => setDialogState({ mode: "create" })}
+            >
+              <PlusIcon aria-hidden="true" />
               {t("empty.button")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="flex flex-col gap-6">
-          {groups.map((group) => (
-            <div key={group.type} className="flex flex-col gap-3">
-              <h2 className="text-sm font-medium text-muted-foreground">
-                {t(`fields.type.${group.type.toLowerCase()}`)}
-              </h2>
-              {group.accounts.length > 0 ? (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {group.accounts.map((account) => {
-                    const color = getAccountColorClasses(account.id);
-                    const balance = format.number(account.balance, {
-                      style: "currency",
-                      currency: "BRL",
-                    });
+        <>
+          <AccountsSummary summary={summary} groups={groups} />
 
-                    return (
-                      <Card
-                        key={account.id}
-                        className={cn(
-                          // `relative` is what anchors the stretched
-                          // link on the account name below (its
-                          // `after:absolute after:inset-0` covers the
-                          // whole card, so clicking anywhere on it opens
-                          // the detail screen) — the actions menu opts
-                          // back out with its own `relative z-10`.
-                          "relative max-w-85",
-                          account.status === "INACTIVE" && "opacity-60",
-                        )}
-                      >
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-3 text-base">
-                            <span
-                              className={cn(
-                                "flex size-9 shrink-0 items-center justify-center rounded-xl",
-                                color.bg,
-                              )}
-                            >
-                              <BankIcon
-                                weight="fill"
-                                className={cn("size-5", color.icon)}
-                              />
-                            </span>
-                            <Link
-                              href={`/accounts/${account.id}`}
-                              className="after:absolute after:inset-0 hover:underline"
-                            >
-                              {account.name}
-                            </Link>
-                          </CardTitle>
-                          <CardAction className="relative z-10">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon-sm">
-                                  <DotsThreeIcon />
-                                  <span className="sr-only">
-                                    {t("aria.menu")}
-                                  </span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onSelect={() =>
-                                    setDialogState({
-                                      mode: "edit",
-                                      row: account,
-                                    })
-                                  }
-                                >
-                                  {t("menu.edit")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onSelect={() => handleToggleDefault(account)}
-                                >
-                                  {t(
-                                    account.isDefault
-                                      ? "menu.unsetDefault"
-                                      : "menu.setDefault",
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onSelect={() => handleToggleStatus(account)}
-                                >
-                                  {t(
-                                    account.status === "ACTIVE"
-                                      ? "menu.archive"
-                                      : "menu.reactivate",
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  variant="destructive"
-                                  onSelect={() => setDeletingAccount(account)}
-                                >
-                                  {t("menu.delete")}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </CardAction>
-                        </CardHeader>
-                        <CardContent className="flex flex-col gap-2">
-                          <span
-                            className="text-2xl font-semibold tabular-nums"
-                            aria-label={`${t("fields.balance.label")}: ${balance}`}
-                          >
-                            {balance}
-                          </span>
-                          {account.initialBalance !== null && (
-                            <span className="text-xs text-muted-foreground">
-                              {t("fields.initialBalance.cardLabel")}:{" "}
-                              {format.number(account.initialBalance, {
-                                style: "currency",
-                                currency: "BRL",
-                              })}
-                            </span>
-                          )}
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <Badge
-                              variant={
-                                account.status === "ACTIVE"
-                                  ? "default"
-                                  : "secondary"
-                              }
-                            >
-                              {tCommon(`status.${account.status.toLowerCase()}`)}
-                            </Badge>
-                            {account.isDefault && (
-                              <Badge variant="outline">{t("card.defaultBadge")}</Badge>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setDialogState({ mode: "create", type: group.type })
-                    }
-                    className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-8 text-muted-foreground transition-colors hover:bg-accent/50"
-                  >
-                    <PlusIcon className="size-5" />
-                    <span className="text-sm">{t("buttons.addTile")}</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-                  {t(`empty.perType.${group.type.toLowerCase()}`)}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+          <div className="flex flex-col gap-6">
+            {groups.map((group) => (
+              <AccountGroupSection
+                key={group.type}
+                group={group}
+                onAdd={(type) => setDialogState({ mode: "create", type })}
+                onEdit={(row) => setDialogState({ mode: "edit", row })}
+                onToggleDefault={handleToggleDefault}
+                onToggleStatus={handleToggleStatus}
+                onDelete={setDeletingAccount}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <AccountSheet
@@ -334,6 +185,7 @@ export function AccountsView({ initialAccounts }: AccountsViewProps) {
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
+        accountName={deletingAccount?.name ?? ""}
       />
     </div>
   );

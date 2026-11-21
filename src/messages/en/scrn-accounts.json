@@ -1,12 +1,11 @@
 {
   "title": "Accounts",
   "description": "Manage your checking, savings and cash accounts",
-
   "buttons": {
     "add": "New account",
-    "addTile": "Add account"
+    "addTile": "Add account",
+    "addShort": "Add"
   },
-
   "fields": {
     "name": {
       "label": "Name",
@@ -30,7 +29,6 @@
       "cardLabel": "Initial balance"
     }
   },
-
   "empty": {
     "title": "No accounts yet",
     "description": "Create your first checking, savings or cash account",
@@ -41,7 +39,6 @@
       "cash": "No cash account yet."
     }
   },
-
   "menu": {
     "edit": "Edit",
     "setDefault": "Set as default",
@@ -50,11 +47,9 @@
     "reactivate": "Reactivate",
     "delete": "Delete"
   },
-
   "card": {
     "defaultBadge": "Default"
   },
-
   "detail": {
     "transferBalance": "Transfer balance",
     "back": "Back to accounts",
@@ -65,7 +60,7 @@
     },
     "kpis": {
       "balance": "Current balance",
-      "people": "People with activity"
+      "peopleCount": "{count, plural, =0 {No people with activity} one {# person with activity} other {# people with activity}}"
     },
     "people": {
       "title": "Balance per person",
@@ -80,28 +75,30 @@
       }
     }
   },
-
   "dialog": {
     "create": {
       "title": "New account",
       "description": "Fill in the account details",
       "confirm": "Create",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "submitting": "Creating…"
     },
     "edit": {
       "title": "Edit account",
       "description": "Update the account details",
       "confirm": "Save",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "submitting": "Saving…"
     },
     "delete": {
-      "title": "Delete account?",
-      "description": "This action cannot be undone. Transactions linked to this account will also be deleted.",
-      "confirm": "Delete",
+      "title": "Delete “{name}”?",
+      "description": "Every transaction in this account will be deleted along with it. This action cannot be undone.",
+      "hint": "If you just want to stop using it, archive the account instead: its history stays saved.",
+      "confirm": "Delete account",
+      "confirming": "Deleting…",
       "cancel": "Cancel"
     }
   },
-
   "toast": {
     "created": "Account created successfully",
     "updated": "Account updated",
@@ -112,9 +109,17 @@
     "defaultUnset": "Account unset as default",
     "error": "Couldn't complete the action"
   },
-
   "aria": {
     "close": "Close",
-    "menu": "Open actions menu"
+    "menu": "Open actions menu",
+    "addToType": "Add a {type} account",
+    "menuFor": "Actions for {name}"
+  },
+  "cards": {
+    "totalBalance": "Total balance",
+    "totalBalanceCount": "{count, plural, =0 {No accounts} one {Across # account} other {Across # accounts}}",
+    "byType": "Balance by account type",
+    "groupCount": "{count, plural, =0 {No accounts} one {# account} other {# accounts}}",
+    "initialBalance": "Initial balance: <amount>{value}</amount>"
   }
 }
