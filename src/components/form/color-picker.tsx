@@ -186,30 +186,44 @@ export const AVAILABLE_COLORS: ColorOption[] = [
 export function ColorPicker({
   value,
   onChange,
+  ariaLabelledBy,
 }: {
   value?: string | null;
   onChange: (val: string) => void;
+  ariaLabelledBy?: string;
 }) {
   return (
-    <div className="flex items-center gap-2.5 flex-wrap">
-      {AVAILABLE_COLORS.map((col) => (
-        <button
-          key={col.name}
-          type="button"
-          onClick={() => onChange(col.class)}
-          className={cn(
-            // A plain `border` (not another `ring-*`) around every swatch,
-            // not just white — several colors (white, yellow, lime, the
-            // lightest tints) otherwise blend into the picker's own
-            // background with nothing to define their edge.
-            "w-7 h-7 rounded-full border border-black/10 dark:border-white/10 ring-2 ring-offset-2 transition-all active:scale-95",
-            col.badgeClass,
-            value === col.class
-              ? "ring-slate-900 dark:ring-slate-100"
-              : "ring-transparent hover:scale-110",
-          )}
-        />
-      ))}
+    <div
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+      className="flex flex-wrap items-center gap-1 sm:gap-2"
+    >
+      {AVAILABLE_COLORS.map((col) => {
+        const isSelected = value === col.class;
+        return (
+          <button
+            key={col.name}
+            type="button"
+            onClick={() => onChange(col.class)}
+            aria-label={col.name}
+            aria-pressed={isSelected}
+            className="flex size-11 items-center justify-center rounded-full sm:size-8"
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                // A plain `border` (not another `ring-*`) around every swatch,
+                // not just white — several colors (white, yellow, lime, the
+                // lightest tints) otherwise blend into the picker's own
+                // background with nothing to define their edge.
+                "size-7 rounded-full border border-black/10 ring-2 ring-offset-2 transition-transform active:scale-95 dark:border-white/10",
+                col.badgeClass,
+                isSelected ? "ring-foreground" : "ring-transparent hover:scale-110",
+              )}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 }

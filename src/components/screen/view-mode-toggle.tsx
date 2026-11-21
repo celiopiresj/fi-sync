@@ -1,4 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 import { ListIcon, SquaresFourIcon } from "@phosphor-icons/react";
 
 // The cards/list segmented control repeated in invoices/people/budgets —
@@ -26,16 +27,16 @@ export function ViewModeToggle({
       variant="tabs"
       size="sm"
       value={value}
-      className={className}
+      className={cn("hidden min-[700px]:flex", className)}
       onValueChange={(next) => {
         if (next) onValueChange(next as ViewMode);
       }}
     >
-      <ToggleGroupItem value="cards" aria-label={cardsLabel}>
-        <SquaresFourIcon />
+      <ToggleGroupItem value="cards" aria-label={cardsLabel} className="h-7 min-w-7">
+        <SquaresFourIcon aria-hidden="true" />
       </ToggleGroupItem>
-      <ToggleGroupItem value="list" aria-label={listLabel}>
-        <ListIcon />
+      <ToggleGroupItem value="list" aria-label={listLabel} className="h-7 min-w-7">
+        <ListIcon aria-hidden="true" />
       </ToggleGroupItem>
     </ToggleGroup>
   );

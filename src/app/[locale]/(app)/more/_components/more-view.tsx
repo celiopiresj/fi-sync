@@ -52,7 +52,7 @@ function RowIcon({ icon: Icon }: { icon: ComponentType<IconProps> }) {
 
 function RowContent({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col">
+    <div className="flex min-w-0 flex-1 flex-col text-left">
       <span className="text-sm font-medium">{title}</span>
       {subtitle && <span className="truncate text-xs text-muted-foreground">{subtitle}</span>}
     </div>
@@ -163,7 +163,10 @@ export function MoreView({ overview }: MoreViewProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild disabled={!mounted}>
-              <button type="button" className="flex w-full items-center gap-3 px-4 py-3">
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 active:bg-muted/60"
+              >
                 <RowIcon icon={activeTheme === "dark" ? MoonIcon : SunIcon} />
                 <RowContent title={t("rows.theme.title")} />
                 <span className="shrink-0 text-xs text-muted-foreground">
@@ -184,7 +187,10 @@ export function MoreView({ overview }: MoreViewProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type="button" className="flex w-full items-center gap-3 px-4 py-3">
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 active:bg-muted/60"
+              >
                 <RowIcon icon={GlobeIcon} />
                 <RowContent title={t("rows.language.title")} />
                 <span className="shrink-0 text-xs text-muted-foreground">

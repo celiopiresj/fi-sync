@@ -8,6 +8,7 @@ import {
 } from "libphonenumber-js";
 import { useFieldContext } from "@/lib/form/form-context";
 import { Input } from "@/components/ui/input";
+import { FieldErrors } from "./field-errors";
 
 // This component is only ever rendered on the client ("use client"), but
 // Next.js still renders it once on the server to produce the initial HTML.
@@ -169,6 +170,9 @@ export function PhoneField({
   defaultCountry,
 }: PhoneFieldProps) {
   const field = useFieldContext<string>();
+  const hasError =
+    field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const errorId = `${field.name}-error`;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -183,11 +187,11 @@ export function PhoneField({
         onChange={field.handleChange}
         placeholder={placeholder}
         defaultCountry={defaultCountry}
+        aria-invalid={hasError || undefined}
+        aria-describedby={hasError ? errorId : undefined}
       />
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-        <p className="text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+      {hasError ? (
+        <FieldErrors id={errorId} errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

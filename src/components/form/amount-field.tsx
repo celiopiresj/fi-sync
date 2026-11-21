@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
 import { evaluateExpression } from "@/lib/math/safe-expression";
+import { FieldErrors } from "./field-errors";
 
 // Snaps a raw typed value (comma-or-period decimal, or — when
 // `allowExpression` — a "+ - * /" expression, same grammar the matching
@@ -158,6 +159,7 @@ export function AmountField({
   const field = useFieldContext<string>();
   const hasError =
     field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const errorId = `${field.name}-error`;
 
   if (size === "lg") {
     return (
@@ -177,14 +179,13 @@ export function AmountField({
           onChange={field.handleChange}
           placeholder={placeholder}
           isInvalid={hasError}
+          aria-describedby={hasError ? errorId : undefined}
           allowExpression={allowExpression}
           size="lg"
         />
         {footer}
         {hasError ? (
-          <p className="text-xs text-red-600 dark:text-red-400">
-            {field.state.meta.errors.join(", ")}
-          </p>
+          <FieldErrors id={errorId} errors={field.state.meta.errors} />
         ) : null}
       </div>
     );
@@ -204,13 +205,12 @@ export function AmountField({
         onChange={field.handleChange}
         placeholder={placeholder}
         isInvalid={hasError}
+        aria-describedby={hasError ? errorId : undefined}
         allowExpression={allowExpression}
       />
       {footer}
       {hasError ? (
-        <p className="text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+        <FieldErrors id={errorId} errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

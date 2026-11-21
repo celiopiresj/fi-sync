@@ -1,7 +1,8 @@
 "use client";
 
-import { useFieldContext } from "@/lib/form/form-context";
 import { Input } from "@/components/ui/input";
+import { useFieldContext } from "@/lib/form/form-context";
+import { FieldErrors } from "./field-errors";
 
 type DateFieldProps = {
   label: string;
@@ -9,6 +10,9 @@ type DateFieldProps = {
 
 export function DateField({ label }: DateFieldProps) {
   const field = useFieldContext<string>();
+  const hasError =
+    field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const errorId = `${field.name}-error`;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -22,11 +26,11 @@ export function DateField({ label }: DateFieldProps) {
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
+        aria-invalid={hasError || undefined}
+        aria-describedby={hasError ? errorId : undefined}
       />
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-        <p className="text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+      {hasError ? (
+        <FieldErrors id={errorId} errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

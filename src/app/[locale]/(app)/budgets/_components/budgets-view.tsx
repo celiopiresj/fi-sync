@@ -378,7 +378,7 @@ export function BudgetsView({
               clearLabel={t("search.clear")}
             />
 
-            <div className="flex items-center gap-2">
+            <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center sm:gap-2">
               <ToggleGroup
                 type="single"
                 variant="tabs"
@@ -386,14 +386,16 @@ export function BudgetsView({
                 value={itemsFilter}
                 onValueChange={(value) => {
                   if (value) setItemsFilter(value as ItemsFilter);
-                }}>
-                <ToggleGroupItem value="all">
+                }}
+                className="w-full sm:w-auto"
+              >
+                <ToggleGroupItem value="all" className="h-9 grow sm:h-7 sm:grow-0">
                   {t("filters.tabs.all")}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="exceeded">
+                <ToggleGroupItem value="exceeded" className="h-9 grow sm:h-7 sm:grow-0">
                   {t("filters.tabs.exceeded")}
                 </ToggleGroupItem>
-                <ToggleGroupItem value="within">
+                <ToggleGroupItem value="within" className="h-9 grow sm:h-7 sm:grow-0">
                   {t("filters.tabs.within")}
                 </ToggleGroupItem>
               </ToggleGroup>
@@ -406,9 +408,9 @@ export function BudgetsView({
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="h-11 w-full sm:h-9 sm:w-auto">
                     {t("buttons.edit")}
-                    <CaretDownIcon />
+                    <CaretDownIcon aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

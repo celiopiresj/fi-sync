@@ -6,6 +6,7 @@ import { CaretRightIcon } from "@phosphor-icons/react";
 import { useFieldContext } from "@/lib/form/form-context";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { FieldErrors } from "./field-errors";
 import {
   parseLocalCalendarDate,
   formatLocalCalendarDate,
@@ -81,7 +82,7 @@ function PickerRow({
     <Item
       asChild
       size="sm"
-      className="h-9.5 min-h-9.5 w-full cursor-pointer justify-between rounded-none border-0 px-3 py-0 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50"
+      className="min-h-11 w-full cursor-pointer justify-between rounded-none border-0 px-3 py-0 hover:bg-muted/50 disabled:pointer-events-none disabled:opacity-50 sm:h-9.5 sm:min-h-9.5"
     >
       <button type="button" disabled={disabled}>
         <ItemContent className="flex-none">
@@ -96,7 +97,10 @@ function PickerRow({
           )}
         >
           <span className="truncate">{isFilled ? displayValue : placeholder}</span>
-          <CaretRightIcon className="size-3.5 shrink-0 text-muted-foreground" />
+          <CaretRightIcon
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-muted-foreground"
+          />
         </span>
       </button>
     </Item>
@@ -109,12 +113,14 @@ function PickerRow({
         <SheetContent
           side="bottom"
           closeLabel={sheetTitle}
-          className="max-h-[85vh] gap-0"
+          className="max-h-[85dvh] gap-0"
         >
           <SheetHeader>
             <SheetTitle>{sheetTitle}</SheetTitle>
           </SheetHeader>
-          <div className="overflow-y-auto px-6 pb-6">{children}</div>
+          <div className="overflow-y-auto px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     );
@@ -280,9 +286,7 @@ export function PickerRowField({
         {footer}
       </PickerRow>
       {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-        <p className="mt-1 px-3 text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+        <FieldErrors className="mt-1 px-3" errors={field.state.meta.errors} />
       ) : null}
     </div>
   );
@@ -377,9 +381,7 @@ export function DatePickerRowField({
         </div>
       </PickerRow>
       {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-        <p className="mt-1 px-3 text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+        <FieldErrors className="mt-1 px-3" errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

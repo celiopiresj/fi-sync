@@ -45,6 +45,9 @@ export function TextField({
 
   const isPassword = type === "password";
   const resolvedType = isPassword && showPassword ? "text" : type;
+  const hasError =
+    field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const errorId = `${field.name}-error`;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -65,13 +68,15 @@ export function TextField({
           placeholder={placeholder}
           disabled={disabled}
           autoComplete={autoComplete}
-          className={isPassword ? "pr-9" : undefined}
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? errorId : undefined}
+          className={isPassword ? "pr-11 sm:pr-9" : undefined}
         />
         {isPassword && (
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute inset-y-0 right-0 flex items-center px-2.5 text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex min-w-11 items-center justify-center px-2.5 text-muted-foreground hover:text-foreground sm:min-w-9"
             aria-label={
               showPassword
                 ? tCommon("form.hidePassword")
@@ -79,15 +84,15 @@ export function TextField({
             }
           >
             {showPassword ? (
-              <EyeSlashIcon className="size-4" />
+              <EyeSlashIcon aria-hidden="true" className="size-4" />
             ) : (
-              <EyeIcon className="size-4" />
+              <EyeIcon aria-hidden="true" className="size-4" />
             )}
           </button>
         )}
       </div>
-      {field.state.meta.isTouched ? (
-        <FieldErrors errors={field.state.meta.errors} />
+      {hasError ? (
+        <FieldErrors id={errorId} errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

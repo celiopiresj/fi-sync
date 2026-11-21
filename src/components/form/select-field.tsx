@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FieldErrors } from "./field-errors";
 
 // Registered as `SelectField` on `useAppForm`. `options[].label` is
 // usually user/data-owned text (an account or category name) rather than
@@ -28,6 +29,9 @@ export function SelectField({
   disabled,
 }: SelectFieldProps) {
   const field = useFieldContext<string>();
+  const hasError =
+    field.state.meta.isTouched && field.state.meta.errors.length > 0;
+  const errorId = `${field.name}-error`;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -46,7 +50,12 @@ export function SelectField({
         onValueChange={(value) => field.handleChange(value)}
         disabled={disabled || options.length === 0}
       >
-        <SelectTrigger id={field.name} className="w-full">
+        <SelectTrigger
+          id={field.name}
+          className="w-full"
+          aria-invalid={hasError || undefined}
+          aria-describedby={hasError ? errorId : undefined}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
@@ -57,10 +66,8 @@ export function SelectField({
           ))}
         </SelectContent>
       </Select>
-      {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-        <p className="text-xs text-red-600 dark:text-red-400">
-          {field.state.meta.errors.join(", ")}
-        </p>
+      {hasError ? (
+        <FieldErrors id={errorId} errors={field.state.meta.errors} />
       ) : null}
     </div>
   );

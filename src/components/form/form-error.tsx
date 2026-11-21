@@ -12,7 +12,10 @@ export function FormError({ title, description }: FormErrorProps) {
   if (!description) return null;
 
   return (
-    <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+    <div
+      role="alert"
+      className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+    >
       <p className="font-medium">{title}</p>
       <p>{description}</p>
     </div>

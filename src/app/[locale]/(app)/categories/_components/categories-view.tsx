@@ -25,6 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { matchesSearch } from "@/lib/normalize-search";
@@ -170,7 +177,27 @@ export function CategoriesView({ data }: CategoriesViewProps) {
           placeholder={t("filters.searchPlaceholder")}
           clearLabel={t("filters.clearSearch")}
         />
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <Select
+            value={filterType}
+            onValueChange={(value) => setFilterType(value as FilterType)}
+          >
+            <SelectTrigger
+              aria-label={t("filters.all")}
+              className="h-11 w-full sm:hidden"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("filters.all")}</SelectItem>
+              <SelectItem value="EXPENSE">{t("filters.expense")}</SelectItem>
+              <SelectItem value="INCOME">{t("filters.income")}</SelectItem>
+              <SelectItem value="INVESTMENT">{t("filters.investment")}</SelectItem>
+              <SelectItem value="LOAN">{t("filters.loan")}</SelectItem>
+              <SelectItem value="CARD_PAYMENT">{t("filters.cardPayment")}</SelectItem>
+            </SelectContent>
+          </Select>
+
           <ToggleGroup
             type="single"
             variant="tabs"
@@ -178,7 +205,9 @@ export function CategoriesView({ data }: CategoriesViewProps) {
             value={filterType}
             onValueChange={(value) => {
               if (value) setFilterType(value as FilterType);
-            }}>
+            }}
+            className="hidden sm:flex"
+          >
             <ToggleGroupItem value="all">{t("filters.all")}</ToggleGroupItem>
             <ToggleGroupItem value="EXPENSE">
               {t("filters.expense")}

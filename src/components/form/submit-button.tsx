@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { SpinnerIcon } from "@phosphor-icons/react";
+import { Button } from "@/components/ui/button";
 import { useFormContext } from "@/lib/form/form-context";
 import { cn } from "@/lib/utils";
 
@@ -34,13 +35,10 @@ export function SubmitButton({
       selector={(state) => [state.canSubmit, state.isSubmitting] as const}
     >
       {([canSubmit, isSubmitting]) => (
-        <button
+        <Button
           type="submit"
           disabled={!canSubmit || isSubmitting}
-          className={cn(
-            "inline-flex h-11 items-center justify-center gap-2 rounded-md bg-foreground text-sm font-medium text-background disabled:opacity-60",
-            className,
-          )}
+          className={cn("h-11 sm:h-9", className)}
         >
           {/* Same spinner glyph as the toast loading state
               (components/ui/sonner.tsx) — the established "something is
@@ -49,10 +47,12 @@ export function SubmitButton({
               or the label swap alone (invisible when submittingLabel
               isn't passed — see AGENTS.md: no default/fallback UI text,
               so a caller that skips it should still get a clear signal). */}
-          {isSubmitting && <SpinnerIcon className="size-4 animate-spin" />}
+          {isSubmitting && (
+            <SpinnerIcon aria-hidden="true" className="size-4 animate-spin" />
+          )}
           {isSubmitting ? (submittingLabel ?? label) : label}
           {!isSubmitting && icon}
-        </button>
+        </Button>
       )}
     </form.Subscribe>
   );

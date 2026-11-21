@@ -17,6 +17,10 @@ type PageHeaderProps = {
   title: string;
   subtitle?: ReactNode;
   badge?: ReactNode;
+  // Compact action aligned to the right of the title row (e.g. a mobile
+  // icon-only filter trigger) so it stays pinned beside the title even
+  // when `right` (like `PeriodStepper`) wraps below on narrow screens.
+  titleAction?: ReactNode;
   right?: ReactNode;
   className?: string;
 };
@@ -26,6 +30,7 @@ export function PageHeader({
   title,
   subtitle,
   badge,
+  titleAction,
   right,
   className,
 }: PageHeaderProps) {
@@ -36,19 +41,27 @@ export function PageHeader({
         className,
       )}
     >
-      <div className="flex min-w-0 flex-col gap-1">
-        {eyebrow ? (
-          <p className="text-xs text-muted-foreground">{eyebrow}</p>
-        ) : null}
-        <div className="flex flex-wrap items-baseline gap-2">
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
-            {title}
-          </h1>
-          {badge}
+      <div
+        className={cn(
+          "flex min-w-0 items-start justify-between gap-3",
+          titleAction && "w-full sm:w-auto",
+        )}
+      >
+        <div className="flex min-w-0 flex-col gap-1">
+          {eyebrow ? (
+            <p className="text-xs text-muted-foreground">{eyebrow}</p>
+          ) : null}
+          <div className="flex flex-wrap items-baseline gap-2">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+              {title}
+            </h1>
+            {badge}
+          </div>
+          {subtitle ? (
+            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          ) : null}
         </div>
-        {subtitle ? (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
-        ) : null}
+        {titleAction ? <div className="shrink-0">{titleAction}</div> : null}
       </div>
       {right}
     </div>
@@ -85,15 +98,21 @@ export function PeriodStepper({
   className,
 }: PeriodStepperProps) {
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div
+      className={cn(
+        "flex w-full items-center justify-between gap-1 rounded-2xl border border-border/80 bg-card p-1 shadow-xs sm:w-auto sm:justify-start sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none",
+        className,
+      )}
+    >
       <Button
         variant="ghost"
         size="icon-sm"
         onClick={onPrevious}
         disabled={previousDisabled}
         aria-label={previousLabel}
+        className="size-10 rounded-xl sm:size-8 sm:rounded-md"
       >
-        <CaretLeftIcon />
+        <CaretLeftIcon aria-hidden="true" />
       </Button>
       {/* capitalizeFirst, not Tailwind's `capitalize` class — that's a
           per-WORD text-transform, which would also capitalize "de" in a
@@ -107,8 +126,9 @@ export function PeriodStepper({
         onClick={onNext}
         disabled={nextDisabled}
         aria-label={nextLabel}
+        className="size-10 rounded-xl sm:size-8 sm:rounded-md"
       >
-        <CaretRightIcon />
+        <CaretRightIcon aria-hidden="true" />
       </Button>
     </div>
   );

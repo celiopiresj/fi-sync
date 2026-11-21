@@ -1,24 +1,27 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { cn } from "@/lib/utils";
 
 type FieldErrorsProps = {
+  id?: string;
+  className?: string;
   errors: Array<string | undefined | null>;
 };
 
-export function FieldErrors({ errors }: FieldErrorsProps) {
+export function FieldErrors({ id, className, errors }: FieldErrorsProps) {
   const tCommon = useTranslations("common");
 
-  if (!errors || errors.length === 0) return null;
+  const visible = errors?.filter(Boolean) ?? [];
+  if (visible.length === 0) return null;
 
   return (
-    <p className="text-xs text-destructive">
-      {errors
-        .filter(Boolean)
+    <p id={id} role="alert" className={cn("text-xs text-destructive", className)}>
+      {visible
         .map((err) =>
           typeof err === "string" && err.startsWith("validation.")
             ? tCommon(err as Parameters<typeof tCommon>[0])
-            : err
+            : err,
         )
         .join(", ")}
     </p>

@@ -62,10 +62,11 @@ export function KpiCard({
 }: KpiCardProps) {
   if (icon && iconPlacement === "inline") {
     return (
-      <Card className={className}>
+      <Card className={cn("@container", className)}>
         <CardContent className="flex flex-col gap-1">
           <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
             <span
+              aria-hidden="true"
               className={cn(
                 "flex size-7 shrink-0 items-center justify-center rounded-lg",
                 TONE_TINT[tone],
@@ -83,7 +84,9 @@ export function KpiCard({
           >
             {value}
           </span>
-          {subtitle ? <span className="text-xs">{subtitle}</span> : null}
+          {subtitle ? (
+            <span className="text-xs text-muted-foreground">{subtitle}</span>
+          ) : null}
         </CardContent>
       </Card>
     );
@@ -91,9 +94,10 @@ export function KpiCard({
 
   if (icon) {
     return (
-      <Card className={className}>
+      <Card className={cn("@container", className)}>
         <CardContent className="flex items-center gap-3">
           <span
+            aria-hidden="true"
             className={cn(
               "flex size-10 shrink-0 items-center justify-center rounded-xl",
               TONE_TINT[tone],
@@ -125,7 +129,7 @@ export function KpiCard({
   }
 
   return (
-    <Card className={className}>
+    <Card className={cn("@container", className)}>
       <CardContent className="flex flex-col gap-1">
         <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {label}
