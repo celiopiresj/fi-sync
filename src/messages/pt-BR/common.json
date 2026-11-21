@@ -47,6 +47,10 @@
     "system": "Sistema"
   },
   "errorGeneric": "Algo deu errado. Tente novamente.",
+  "creditCard": {
+    "closesOn": "Fecha dia {day}",
+    "dueOn": "Vence dia {day}"
+  },
   "status": {
     "active": "Ativa",
     "inactive": "Inativa",

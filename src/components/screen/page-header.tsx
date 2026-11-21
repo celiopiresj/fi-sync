@@ -12,6 +12,8 @@ import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 // component each screen hand-rolled its own copy with small drifts
 // (different heading sizes, different subtitle colors).
 type PageHeaderProps = {
+  // Small context line above the title (home: "Resumo Geral • novembro").
+  eyebrow?: ReactNode;
   title: string;
   subtitle?: ReactNode;
   badge?: ReactNode;
@@ -20,6 +22,7 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({
+  eyebrow,
   title,
   subtitle,
   badge,
@@ -27,10 +30,20 @@ export function PageHeader({
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex items-center justify-between gap-3", className)}>
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold">{title}</h1>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3",
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-1">
+        {eyebrow ? (
+          <p className="text-xs text-muted-foreground">{eyebrow}</p>
+        ) : null}
+        <div className="flex flex-wrap items-baseline gap-2">
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+            {title}
+          </h1>
           {badge}
         </div>
         {subtitle ? (

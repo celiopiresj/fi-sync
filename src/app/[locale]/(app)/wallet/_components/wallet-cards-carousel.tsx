@@ -4,7 +4,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { CreditCardIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
-import { resolveTileHeaderClass } from "../../cards/_lib/card-tile-color";
+import { resolveTileHeaderClass } from "@/lib/card-color";
 import type { WalletOverview } from "../_types/types";
 
 type WalletCardsCarouselProps = {

@@ -32,7 +32,7 @@ export function MappingForm(props: MappingFormProps) {
   return (
     <div className="flex flex-col gap-4 border-t pt-4">
       <div className="flex flex-col gap-1">
-        <h2 className="text-sm font-medium">{t("cards.mapping.title")}</h2>
+        <h2 className="font-heading text-sm font-semibold text-foreground">{t("cards.mapping.title")}</h2>
         <p className="text-sm text-muted-foreground">
           {t("cards.mapping.description")}
         </p>

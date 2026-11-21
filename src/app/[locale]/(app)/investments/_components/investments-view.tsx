@@ -250,7 +250,7 @@ export function InvestmentsView({
                             <CardTitle className="flex items-center gap-3 text-base">
                               <span
                                 className={cn(
-                                  "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                                  "flex size-9 shrink-0 items-center justify-center rounded-xl",
                                   color.bg,
                                 )}
                               >

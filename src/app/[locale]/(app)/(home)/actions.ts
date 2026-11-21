@@ -141,8 +141,10 @@ export async function getHomeOverview() {
         description: true,
         amount: true,
         date: true,
+        paymentMethod: true,
         category: { select: { name: true, icon: true, colorStyle: true } },
-        account: { select: { name: true } },
+        account: { select: { type: true, name: true } },
+        transactionCard: { select: { card: { select: { account: { select: { name: true } } } } } },
       },
     }),
   ]);
@@ -287,7 +289,11 @@ export async function getHomeOverview() {
         id: c.id,
         name: c.name,
         limit: typeof c.limit === "number" && !Number.isNaN(c.limit) ? c.limit : 0,
-        currentInvoiceBalance: typeof c.spent === "number" && !Number.isNaN(c.spent) ? c.spent : 0,
+        used: typeof c.spent === "number" && !Number.isNaN(c.spent) ? c.spent : 0,
+        // The card face shows the first physical card on the account.
+        colorStyle: c.cards[0]?.colorStyle ?? null,
+        closingDay: c.closingDay,
+        dueDay: c.dueDay,
       })),
     recentTransactions: recentTransactions.map((transaction) => ({
       id: transaction.id,
@@ -297,7 +303,17 @@ export async function getHomeOverview() {
       categoryName: transaction.category?.name ?? null,
       categoryIcon: transaction.category?.icon ?? null,
       categoryColorStyle: transaction.category?.colorStyle ?? null,
-      accountName: transaction.account.name,
+      // A card purchase often has no method recorded (the card account
+      // already says how it was paid), so it falls back to "credit card".
+      paymentMethod:
+        transaction.paymentMethod ??
+        (transaction.account.type === "CREDIT_CARD" ? ("CREDIT_CARD" as const) : null),
+      // Which card a credit-card purchase went on: the card account it
+      // lives in, or the card linked to it.
+      cardName:
+        transaction.account.type === "CREDIT_CARD"
+          ? transaction.account.name
+          : (transaction.transactionCard?.card.account.name ?? null),
     })),
     attention: {
       closedInvoicesCount: closedInvoices.length,

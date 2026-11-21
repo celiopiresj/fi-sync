@@ -24,13 +24,12 @@ export function OpenFinanceView({ overview: initialOverview }: ViewProps) {
   const sourceKey = source ? `${source.id}:${source.accountId}:${source.cardId}:${source.fromDate}` : "";
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <div className="flex flex-col gap-1"><span className="text-xs text-muted-foreground">{t("breadcrumb.section")}</span><PageHeader title={t("title")} subtitle={t("subtitle")} className="flex-col items-start gap-4 xl:flex-row xl:items-end [&_h1]:text-[28px] [&_h1]:font-bold [&_h1]:tracking-tight" right={
+      <PageHeader eyebrow={t("breadcrumb.section")} title={t("title")} subtitle={t("subtitle")} className="flex-col items-start gap-4 xl:flex-row xl:items-end" right={
         <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-start xl:w-auto xl:justify-end">
           <Button type="button" variant="outline" onClick={() => workspace.setManageOpen(true)}><GearSixIcon />{t("tabs.manage")}</Button>
           {overview.configured ? <ConnectMeuPluggy connection={connection} /> : <p className="text-sm text-warning">{t("cards.setup.description")}</p>}
         </div>
       } />
-      </div>
       {!workspace.setupComplete && <ImportSteps connected={workspace.sources.length > 0} selected={Boolean(source)} ready={workspace.setupComplete} />}
       <BanksManagement overview={overview} open={workspace.manageOpen} onOpenChange={workspace.setManageOpen} onSelect={workspace.configure} onConnect={() => { workspace.setManageOpen(false); connection.open(); }} />
 

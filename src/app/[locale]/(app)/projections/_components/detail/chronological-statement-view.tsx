@@ -29,7 +29,7 @@ export function ChronologicalStatementView({
   }
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-border">
+    <Card className="overflow-hidden">
       <CardContent className="p-0">
         <div className="flex flex-col justify-between gap-2 border-b border-border p-5 sm:flex-row sm:items-center">
           <div>

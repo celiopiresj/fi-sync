@@ -206,7 +206,7 @@ export function CategoryGridView({
       {/* ================= COLUNA 1: RECEITAS + EMPRÉSTIMOS + DIAGNÓSTICO ================= */}
       <div className="space-y-6 xl:col-span-6 2xl:col-span-4">
         {/* Receitas Previstas */}
-        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-xs">
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center justify-between border-b border-border p-5">
               <div className="flex items-center gap-2.5">
@@ -287,7 +287,7 @@ export function CategoryGridView({
         </Card>
 
         {/* Card de Empréstimos */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
+        <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -349,7 +349,7 @@ export function CategoryGridView({
 
       {/* ================= COLUNA 2: FATURAS DE CARTÃO DE CRÉDITO ================= */}
       <div className="xl:col-span-6 2xl:col-span-4">
-        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-xs">
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center justify-between border-b border-border p-5">
               <div className="flex items-center gap-2.5">
@@ -500,7 +500,7 @@ export function CategoryGridView({
       {/* ================= COLUNA 3: CONTAS FIXAS & RECORRENTES + OUTROS GASTOS ================= */}
       <div className="space-y-6 xl:col-span-12 2xl:col-span-4">
         {/* Card 1: Contas Fixas & Recorrentes (Apenas o total dos Fixos) */}
-        <Card className="overflow-hidden rounded-2xl border-border bg-card shadow-xs">
+        <Card className="overflow-hidden">
           <CardContent className="p-0">
             <div className="flex items-center justify-between border-b border-border p-5">
               <div className="flex items-center gap-2.5">
@@ -639,7 +639,7 @@ export function CategoryGridView({
         </Card>
 
         {/* Card 2: Outros Gastos (Variáveis / Pontuais) - Apenas o total consolidado */}
-        <Card className="rounded-2xl border-border bg-card shadow-xs">
+        <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">

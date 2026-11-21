@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { getUsageTier } from "../_lib/card-usage";
-import { resolveTileHeaderClass } from "../_lib/card-tile-color";
+import { resolveTileHeaderClass } from "@/lib/card-color";
 import type { CreditCardAccountRow } from "../_types/types";
 import { CardUsageBar } from "./card-usage-bar";
 

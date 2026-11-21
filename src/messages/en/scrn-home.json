@@ -3,17 +3,27 @@
   "breadcrumb": "General Overview • {month}",
   "greeting": "Hi, {name}! 👋",
 
-  "accountsCarousel": {
-    "title": "My Accounts & Cards",
+  "accounts": {
+    "title": "My accounts",
+    "subtitle": "{count, plural, one {# account} other {# accounts}}",
     "viewAll": "View all",
-    "creditCard": "Card",
-    "currentAccount": "Checking Account",
-    "currentInvoice": "Current invoice",
-    "empty": "No accounts registered"
+    "type": {
+      "checking": "Checking account",
+      "savings": "Savings",
+      "cash": "Cash"
+    }
   },
 
-  "buttons": {
-    "newTransaction": "New Transaction"
+  "cards": {
+    "title": "My cards",
+    "subtitle": "{count, plural, one {# card} other {# cards}}",
+    "viewAll": "View all",
+    "spendingLimit": "Spending limit",
+    "usedOf": "used of {limit}",
+    "noLimit": "No limit set",
+    "previous": "Previous card",
+    "next": "Next card",
+    "show": "Show {name}"
   },
 
   "quickActions": {
@@ -25,23 +35,22 @@
   },
 
   "kpis": {
+    "availableAfterInvoices": "Free after invoices",
+    "availableAfterInvoicesHint": "Balance minus invoices due",
     "totalBalance": "Total balance",
-    "available": "Available",
-    "invoicesShort": "Invoices",
-    "balanceShort": "Balance",
-    "inflowShort": "Income",
-    "outflowShort": "Expenses",
-    "monthlyBalance": "Month balance",
     "totalBalanceSubtitle": "{value} this month",
-    "monthIncome": "Income this month",
-    "incomeChange": "{value} vs. last month",
-    "monthExpenses": "Expenses this month",
-    "underBudget": "{value} under budget",
-    "overBudget": "{value} over budget",
     "invoicesDue": "Due on invoices",
-    "invoicesDueSubtitle": "{count, plural, =0 {No invoice awaiting settlement} one {# invoice awaiting settlement} other {# invoices awaiting settlement}}",
     "invoicesDueCount": "{count, plural, =0 {No invoices} one {# invoice} other {# invoices}}",
     "totalBalanceAccounts": "{count, plural, one {# account} other {# accounts}}"
+  },
+
+  "monthSummary": {
+    "income": "Money in",
+    "expenses": "Money out",
+    "title": "Month balance",
+    "net": "Net {value}",
+    "spentShare": "You spent {percent} of what came in",
+    "noIncome": "No income recorded this month"
   },
 
   "aria": {
@@ -69,7 +78,6 @@
   "attention": {
     "title": "Needs Attention",
     "empty": "All caught up",
-    "and": "and",
     "count": "{count, plural, one {# alert} other {# alerts}}",
     "closedInvoices": "{count, plural, one {# invoice awaiting payment} other {# invoices awaiting payment}}",
     "closedInvoicesDetail": "Total due: {value}",
@@ -83,6 +91,16 @@
   },
 
   "recentTransactions": {
+    "creditCardNamed": "{name} card",
+    "paymentMethod": {
+      "CASH": "Cash",
+      "DEBIT_CARD": "Debit card",
+      "CREDIT_CARD": "Credit card",
+      "BANK_TRANSFER": "Bank transfer",
+      "PIX": "Pix",
+      "BOLETO": "Boleto",
+      "OTHER": "Other"
+    },
     "title": "Recent Transactions",
     "viewAll": "View statement",
     "empty": "No transaction recorded yet",

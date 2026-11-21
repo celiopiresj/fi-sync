@@ -47,6 +47,10 @@
     "system": "System"
   },
   "errorGeneric": "Something went wrong. Please try again.",
+  "creditCard": {
+    "closesOn": "Closes on day {day}",
+    "dueOn": "Due on day {day}"
+  },
   "status": {
     "active": "Active",
     "inactive": "Inactive",

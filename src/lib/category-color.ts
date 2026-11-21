@@ -5,7 +5,7 @@ import { AVAILABLE_COLORS } from "@/components/form/color-picker";
 // for a progress-bar fill. Resolves the same user-chosen color back to
 // its bold `badgeClass` (bg-orange-500) for the bar, reusing the one
 // color already picked rather than inventing a second palette — same
-// technique cards/_lib/card-tile-color.ts already uses for its own tile
+// technique src/lib/card-color.ts already uses for its own tile
 // header. No match (color never set, or a category without one) falls
 // back to a neutral gray for both. Shared (not route-local) because both
 // the home dashboard's category breakdown and the spending-by-category

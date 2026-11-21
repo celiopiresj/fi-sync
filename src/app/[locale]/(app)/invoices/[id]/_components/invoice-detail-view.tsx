@@ -691,10 +691,10 @@ export function InvoiceDetailView({
         )}
       </div>
 
-      <div className="flex flex-col gap-4 rounded-lg bg-surface-1 p-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-semibold">{invoice.account.name}</h1>
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">{invoice.account.name}</h1>
             <p className="text-sm text-muted-foreground">
               {t("detail.summary.period", {
                 closing: format.dateTime(invoice.closingDate, DATE_ONLY_FORMAT_OPTIONS),
@@ -709,10 +709,10 @@ export function InvoiceDetailView({
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
             {t("detail.summary.total")}
           </span>
-          <span className="text-[28px] font-medium tabular-nums text-negative">
+          <span className="font-heading text-3xl font-bold tracking-tight tabular-nums text-negative">
             {money(invoice.total)}
           </span>
         </div>
@@ -754,7 +754,7 @@ export function InvoiceDetailView({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium">{t("detail.payments.title")}</h2>
+        <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.payments.title")}</h2>
 
         {invoice.payments.length === 0 ? (
           <p className="rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
@@ -803,7 +803,7 @@ export function InvoiceDetailView({
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-medium">{t("detail.transactions.title")}</h2>
+          <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.transactions.title")}</h2>
           <Button
             size="sm"
             variant="outline"

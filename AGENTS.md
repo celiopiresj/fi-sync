@@ -359,9 +359,11 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
 - **Reuse the shared screen components instead of re-implementing them
   per route.** `src/components/screen/` holds the app-wide building
   blocks every list screen needs: `PageHeader`/`PeriodStepper` (title +
-  subtitle + optional period stepper), `KpiCard`/`KpiGrid` (the stat-card
-  row at the top of a screen), `SearchInput` (search box with icon +
-  clear button), `ViewModeToggle` (the cards/list segmented control).
+  subtitle + optional `eyebrow` context line + optional period stepper),
+  `KpiCard`/`KpiGrid` (the stat-card row at the top of a screen),
+  `SectionCard`/`SectionLink` (a titled content block with an optional
+  description and a "Ver tudo" action), `SearchInput` (search box with
+  icon + clear button), `ViewModeToggle` (the cards/list segmented control).
   These exist because every route used to hand-roll a slightly different
   version of the same thing (different card radius, different search box
   height, different empty-state markup) — before adding a new one-off
@@ -369,10 +371,24 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   covers it. Similarly, always use the shared `Empty`/`EmptyHeader`/
   `EmptyMedia`/`EmptyTitle`/`EmptyDescription`/`EmptyContent` family
   (`src/components/ui/empty.tsx`) for empty states rather than a hand-rolled
-  `border-dashed` div, and `Card`'s own `radius="lg"` prop
-  (`src/components/ui/card.tsx`) for the bigger-radius item-grid tiles
-  (invoice cards, people cards, budget item cards, category cards)
-  instead of overriding with `className="rounded-2xl"`.
+  `border-dashed` div, and a plain `Card` (`src/components/ui/card.tsx`)
+  for any card surface instead of a hand-rolled bordered div or a
+  `className="rounded-2xl ..."` override.
+- **The home screen is the visual reference for every screen.** Its
+  design language lives in the shared components above, so a screen
+  matches it by using them, not by copying classes: `Card` is the home's
+  surface (`rounded-2xl`, `border-border/80`, `shadow-xs`, 20px padding);
+  page titles are `font-heading text-2xl font-bold tracking-tight`
+  (`PageHeader`); section titles are `font-heading text-sm font-semibold`
+  (`SectionCard`/`CardTitle`); a headline figure's label is the small
+  uppercase eyebrow (`text-[11px] font-semibold tracking-wider uppercase
+  text-muted-foreground`) and the figure itself is `font-heading` bold
+  `tracking-tight tabular-nums` (`KpiCard`); icon tiles are `rounded-xl`
+  with a `bg-*/10` tint; buttons and form controls are `rounded-xl`. Don't
+  reintroduce the old grey `rounded-lg bg-surface-1` summary panel. When
+  a screen needs something the shared components don't cover yet, extend
+  them (or add one under `src/components/screen/`) in the home's style
+  rather than styling one route by hand.
 - **Responsive by default** — every screen must work on desktop, laptop,
   tablet, and phone, not just desktop. Design/test against Tailwind's
   standard breakpoints, not arbitrary widths:
@@ -391,6 +407,25 @@ pnpm dlx shadcn@latest add <component>   # e.g. button, dialog, input, table
   at/above it, it's the fixed desktop sidebar. New screens should reuse
   `sm`/`md`/`lg`/`xl` consistently (e.g. a table that becomes cards below
   `md`) instead of introducing their own breakpoints.
+- **On a phone, at most two items per line.** Below `sm` (unprefixed
+  classes), a horizontal row holds no more than two items. A small icon
+  attached to its own label (or an avatar next to a name) counts as part
+  of that label; a button, an amount, a percentage, a badge or a separate
+  text column each count as an item. When a row would hold more, move the
+  extra items to a second line (stack the action button under the text,
+  put a secondary figure under the main one, group two related values in
+  one stacked column), and then go back to a single row from `sm` up if
+  it fits. Never let a button or a figure squeeze text into a narrow
+  column that wraps word by word. This is about rows of content; a grid
+  or carousel of equal tiles (quick-action tiles, the tab bar) is not a
+  row of content.
+- **Never cut text off with an ellipsis.** No `truncate`/`line-clamp`/
+  `text-ellipsis` on anything the user needs to read (names,
+  descriptions, labels, details): let it wrap (`break-words`) or
+  restructure the layout so it fits. A long joined list ("A, B e C…")
+  becomes one item per line instead of a sentence that runs out of room.
+  Amounts don't wrap either (`whitespace-nowrap`); give them their own
+  line or a smaller size instead.
 - **Form fields always stack, never side by side** — every field in a form
   (create/edit sheets, dialogs, etc.) is full-width, one per row, at every
   breakpoint — no `sm:grid-cols-2`/`lg:grid-cols-2` pairing of fields into

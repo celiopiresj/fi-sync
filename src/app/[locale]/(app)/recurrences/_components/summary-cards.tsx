@@ -65,13 +65,13 @@ export function SummaryCards({ recurrences }: SummaryCardsProps) {
   const expensesShare = 100 - incomeShare;
 
   return (
-    <div className="flex flex-col divide-y-[0.5px] divide-border rounded-lg bg-surface-1 lg:flex-row lg:divide-x-[0.5px] lg:divide-y-0">
-      <div className="flex w-full min-w-0 flex-col gap-4 p-4 lg:flex-1">
+    <div className="flex flex-col divide-y-[0.5px] divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs lg:flex-row lg:divide-x-[0.5px] lg:divide-y-0">
+      <div className="flex w-full min-w-0 flex-col gap-4 p-5 lg:flex-1">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">{t("summary.title")}</span>
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">{t("summary.title")}</span>
           <span
             className={cn(
-              "text-[26px] font-medium tabular-nums",
+              "font-heading text-3xl font-bold tracking-tight tabular-nums",
               balance >= 0 ? "text-positive" : "text-negative",
             )}
           >

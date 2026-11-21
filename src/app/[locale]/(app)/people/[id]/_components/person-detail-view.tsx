@@ -456,7 +456,7 @@ export function PersonDetailView({
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between gap-3">
           <div className="flex min-w-0 items-center gap-2">
-            <h2 className="text-sm font-medium">{t("detail.movements.title")}</h2>
+            <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.movements.title")}</h2>
             <Badge
               variant="secondary"
               className={cn(
@@ -519,7 +519,7 @@ export function PersonDetailView({
         <div key={section.accountId} className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <h2 className="text-sm font-medium">{section.accountName}</h2>
+              <h2 className="font-heading text-sm font-semibold text-foreground">{section.accountName}</h2>
               {/* The sum of the rows listed right below, nothing else.
                   It used to show `remaining` (this person's share minus
                   whatever they'd already paid toward the invoice), which
@@ -606,7 +606,7 @@ export function PersonDetailView({
         <div className="flex flex-col gap-3">
           <div className="flex items-baseline justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
-              <h2 className="text-sm font-medium">{t("detail.loans.title")}</h2>
+              <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.loans.title")}</h2>
               {/* Always text-negative, unlike movements/card sections
                   above — a loan installment has no sign ambiguity to
                   reflect (always a real expense, see getPersonStatement's

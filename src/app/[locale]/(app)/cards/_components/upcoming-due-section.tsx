@@ -32,7 +32,7 @@ export function UpcomingDueSection({ groups }: UpcomingDueSectionProps) {
           {t("sections.upcoming.sortedHint")}
         </span>
       </div>
-      <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-lg bg-surface-1 p-4">
+      <div className="flex flex-wrap gap-x-8 gap-y-4 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
         {groups.map((group) => (
           <div key={group.dueDay} className="flex w-full max-w-64 min-w-48 flex-col gap-2">
             <div className="flex items-center justify-between gap-3">

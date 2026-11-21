@@ -3,31 +3,35 @@
 import { createElement } from "react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { SectionCard, SectionLink } from "@/components/screen/section-card";
 import { cn } from "@/lib/utils";
 import { DATE_ONLY_FORMAT_OPTIONS } from "@/lib/date";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { resolveCategoryColorClasses } from "@/lib/category-color";
+import { useHomeMoney } from "../_hooks/use-home-money";
 import type { HomeOverview } from "../_types/types";
 
 type RecentTransactionsProps = {
   transactions: HomeOverview["recentTransactions"];
+  balancesVisible?: boolean;
+  className?: string;
 };
 
-export function RecentTransactions({ transactions }: RecentTransactionsProps) {
+export function RecentTransactions({
+  transactions,
+  balancesVisible = true,
+  className,
+}: RecentTransactionsProps) {
   const t = useTranslations("scrn-home");
   const format = useFormatter();
+  const money = useHomeMoney(balancesVisible);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-card border border-border/80 p-5 shadow-xs">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground">{t("recentTransactions.title")}</h2>
-        <Link
-          href="/transactions"
-          className="shrink-0 text-xs font-medium text-primary transition-colors hover:underline"
-        >
-          {t("recentTransactions.viewAll")}
-        </Link>
-      </div>
+    <SectionCard
+      title={t("recentTransactions.title")}
+      action={<SectionLink href="/transactions">{t("recentTransactions.viewAll")}</SectionLink>}
+      className={className}
+    >
 
       {transactions.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("recentTransactions.empty")}</p>
@@ -36,13 +40,16 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
           {transactions.map((transaction) => {
             const color = resolveCategoryColorClasses(transaction.categoryColorStyle);
             const Icon = resolveCategoryIcon(transaction.categoryIcon);
-            // The date rides in this context line rather than under the
-            // amount: the row's right edge stays a single value, which is
-            // what keeps the list scannable at phone width, and nothing
-            // is dropped to get there.
-            const subtitleParts = [
+            // Category, how it was paid (naming the card for a credit-card
+            // purchase) and the date. Each is rendered once: stacked one per
+            // line on phones, joined on one line with "•" from `sm` up.
+            const details = [
               transaction.categoryName,
-              transaction.accountName,
+              transaction.paymentMethod === "CREDIT_CARD" && transaction.cardName
+                ? t("recentTransactions.creditCardNamed", { name: transaction.cardName })
+                : transaction.paymentMethod
+                  ? t(`recentTransactions.paymentMethod.${transaction.paymentMethod}`)
+                  : null,
               format.dateTime(transaction.date, DATE_ONLY_FORMAT_OPTIONS),
             ].filter((part): part is string => Boolean(part));
 
@@ -57,11 +64,20 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                   {createElement(Icon, { className: "size-4.5" })}
                 </span>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                  <span className="min-w-0 break-words text-sm font-medium text-foreground">
                     {transaction.description}
                   </span>
-                  <span className="min-w-0 truncate text-xs text-muted-foreground">
-                    {subtitleParts.join(" • ")}
+                  <span className="flex min-w-0 flex-col text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-1.5">
+                    {details.map((detail, index) => (
+                      <span key={index} className="flex min-w-0 items-center gap-x-1.5">
+                        {index > 0 && (
+                          <span aria-hidden className="hidden sm:inline">
+                            •
+                          </span>
+                        )}
+                        <span className="break-words">{detail}</span>
+                      </span>
+                    ))}
                   </span>
                 </div>
                 <span
@@ -70,7 +86,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     transaction.amount < 0 ? "text-negative" : "text-positive",
                   )}
                 >
-                  {format.number(transaction.amount, { style: "currency", currency: "BRL" })}
+                  {money(transaction.amount)}
                 </span>
               </div>
             );
@@ -80,10 +96,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
 
       <Link
         href="/transactions"
-        className="flex w-full items-center justify-center gap-1.5 rounded-md border border-dashed border-border py-2 text-xs text-muted-foreground transition-colors hover:bg-accent/50"
+        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-border py-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent/50"
       >
         {t("recentTransactions.addNew")}
       </Link>
-    </div>
+    </SectionCard>
   );
 }

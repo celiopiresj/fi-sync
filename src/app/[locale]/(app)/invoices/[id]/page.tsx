@@ -24,7 +24,7 @@ export default async function InvoiceDetailPage({ params }: InvoiceDetailPagePro
     const t = await getTranslations("scrn-invoices");
     return (
       <div className="mx-auto flex max-w-350 flex-col items-center gap-3 py-16 text-center">
-        <h1 className="text-lg font-semibold">{t("detail.notFound.title")}</h1>
+        <h1 className="font-heading text-lg font-bold tracking-tight text-foreground">{t("detail.notFound.title")}</h1>
         <p className="text-sm text-muted-foreground">
           {t("detail.notFound.description")}
         </p>

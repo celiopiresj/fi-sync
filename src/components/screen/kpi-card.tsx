@@ -64,20 +64,20 @@ export function KpiCard({
     return (
       <Card className={className}>
         <CardContent className="flex flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
             <span
               className={cn(
-                "flex size-7 shrink-0 items-center justify-center rounded-md",
+                "flex size-7 shrink-0 items-center justify-center rounded-lg",
                 TONE_TINT[tone],
               )}
             >
               {icon}
             </span>
-            <span className="min-w-0 truncate">{label}</span>
+            <span className="min-w-0 break-words">{label}</span>
           </span>
           <span
             className={cn(
-              "text-xl font-semibold tabular-nums",
+              "font-heading text-2xl font-bold tracking-tight tabular-nums",
               tone !== "default" && TONE_TEXT[tone],
             )}
           >
@@ -95,19 +95,19 @@ export function KpiCard({
         <CardContent className="flex items-center gap-3">
           <span
             className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-lg",
+              "flex size-10 shrink-0 items-center justify-center rounded-xl",
               TONE_TINT[tone],
             )}
           >
             {icon}
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
               {label}
             </span>
             <span
               className={cn(
-                "text-lg font-semibold tabular-nums",
+                "font-heading text-xl font-bold tracking-tight tabular-nums",
                 tone !== "default" && TONE_TEXT[tone],
               )}
             >
@@ -127,12 +127,12 @@ export function KpiCard({
   return (
     <Card className={className}>
       <CardContent className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
           {label}
         </span>
         <span
           className={cn(
-            "text-xl font-semibold tabular-nums",
+            "font-heading text-2xl font-bold tracking-tight tabular-nums",
             tone !== "default" && TONE_TEXT[tone],
           )}
         >

@@ -19,8 +19,8 @@ export function CardsSummary({ summary }: CardsSummaryProps) {
   }
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-lg bg-surface-1 p-4">
-      <span className="text-xs text-muted-foreground">
+    <div className="flex w-full flex-col gap-4 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
+      <span className="font-heading text-sm font-semibold text-foreground">
         {t("sections.summary.title")}
       </span>
 
@@ -37,7 +37,7 @@ export function CardsSummary({ summary }: CardsSummaryProps) {
           <span className="text-xs text-muted-foreground">
             {t("sections.summary.totalLimit")}
           </span>
-          <span className="text-lg font-medium tabular-nums">
+          <span className="font-heading text-xl font-bold tracking-tight tabular-nums">
             {money(summary.totalLimit)}
           </span>
         </div>
@@ -45,7 +45,7 @@ export function CardsSummary({ summary }: CardsSummaryProps) {
           <span className="text-xs text-muted-foreground">
             {t("sections.summary.totalSpent")}
           </span>
-          <span className="text-lg font-medium tabular-nums">
+          <span className="font-heading text-xl font-bold tracking-tight tabular-nums">
             {money(summary.totalSpent)}
           </span>
         </div>

@@ -157,7 +157,7 @@ export function CardPayoffView({ options, initialPayoff }: CardPayoffViewProps) 
         )}
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold">{t("table.title")}</h2>
+          <h2 className="font-heading text-sm font-semibold text-foreground">{t("table.title")}</h2>
           <div className="hidden min-[700px]:block">
             <DataTable
               columns={columns}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SectionCard } from "@/components/screen/section-card";
 import { cn } from "@/lib/utils";
 import {
   ArrowsClockwiseIcon,
@@ -12,40 +13,20 @@ import {
   CreditCardIcon,
   ReceiptIcon,
 } from "@phosphor-icons/react";
+import { ATTENTION_TONE_BADGE } from "../_constants/constants";
+import { useHomeMoney } from "../_hooks/use-home-money";
 import type { HomeOverview } from "../_types/types";
 
-type Tone = "warning" | "negative" | "default";
-
-// The row's tone rides on the icon badge, not on the row's own
-// background — same treatment the category breakdown and the recent
-// transactions list already give their icons, so the three cards stacked
-// on the mobile home read as one family instead of three tinted blocks.
-const TONE_ICON_BADGE: Record<Tone, string> = {
-  warning: "bg-warning/10 text-warning",
-  negative: "bg-negative/10 text-negative",
-  default: "bg-muted text-muted-foreground",
-};
-
-// "A, B e C" — same join every naturally-listed detail line below uses
-// (card names, over-budget categories, recurrence titles).
-function naturalJoin(items: string[], conjunction: string): string {
-  if (items.length <= 1) return items[0] ?? "";
-  return `${items.slice(0, -1).join(", ")} ${conjunction} ${items[items.length - 1]}`;
-}
+type Tone = keyof typeof ATTENTION_TONE_BADGE;
 
 type AttentionListProps = {
   attention: HomeOverview["attention"];
+  balancesVisible?: boolean;
 };
 
-export function AttentionList({ attention }: AttentionListProps) {
+export function AttentionList({ attention, balancesVisible = true }: AttentionListProps) {
   const t = useTranslations("scrn-home");
-  const format = useFormatter();
-
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
-
-  const conjunction = t("attention.and");
+  const money = useHomeMoney(balancesVisible);
 
   const rows = (
     [
@@ -55,9 +36,11 @@ export function AttentionList({ attention }: AttentionListProps) {
             tone: "warning" as Tone,
             icon: ReceiptIcon,
             title: t("attention.closedInvoices", { count: attention.closedInvoicesCount }),
-            detail: t("attention.closedInvoicesDetail", {
-              value: money(attention.closedInvoicesTotal),
-            }),
+            details: [
+              t("attention.closedInvoicesDetail", {
+                value: money(attention.closedInvoicesTotal),
+              }),
+            ],
             actionLabel: t("attention.payNow"),
             href: "/invoices",
           }
@@ -68,11 +51,8 @@ export function AttentionList({ attention }: AttentionListProps) {
             tone: "negative" as Tone,
             icon: CreditCardIcon,
             title: t("attention.highUsageCards", { count: attention.highUsageCards.length }),
-            detail: naturalJoin(
-              attention.highUsageCards.map(
-                (card) => `${card.name} (${Math.round(card.usagePercent)}%)`,
-              ),
-              conjunction,
+            details: attention.highUsageCards.map(
+              (card) => `${card.name} (${Math.round(card.usagePercent)}%)`,
             ),
             actionLabel: t("attention.adjustLimit"),
             href: "/cards",
@@ -84,11 +64,8 @@ export function AttentionList({ attention }: AttentionListProps) {
             tone: "default" as Tone,
             icon: ChartPieSliceIcon,
             title: t("attention.overBudget", { count: attention.overBudgetCategories.length }),
-            detail: naturalJoin(
-              attention.overBudgetCategories.map(
-                (category) => `${category.name} (+${money(category.overAmount)})`,
-              ),
-              conjunction,
+            details: attention.overBudgetCategories.map(
+              (category) => `${category.name} (+${money(category.overAmount)})`,
             ),
             actionLabel: t("attention.viewBudget"),
             href: "/budgets",
@@ -102,9 +79,8 @@ export function AttentionList({ attention }: AttentionListProps) {
             title: t("attention.recurrencesNeedingExtension", {
               count: attention.recurrencesNeedingExtension.length,
             }),
-            detail: naturalJoin(
-              attention.recurrencesNeedingExtension.map((recurrence) => recurrence.description),
-              conjunction,
+            details: attention.recurrencesNeedingExtension.map(
+              (recurrence) => recurrence.description,
             ),
             actionLabel: t("attention.generate"),
             href: "/recurrences",
@@ -114,15 +90,16 @@ export function AttentionList({ attention }: AttentionListProps) {
   ).filter((row): row is NonNullable<typeof row> => row !== null);
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-card border border-border/80 p-5 shadow-xs">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground">{t("attention.title")}</h2>
-        {rows.length > 0 && (
+    <SectionCard
+      title={t("attention.title")}
+      action={
+        rows.length > 0 ? (
           <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">
             {t("attention.count", { count: rows.length })}
           </Badge>
-        )}
-      </div>
+        ) : null
+      }
+    >
 
       {rows.length === 0 ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -134,29 +111,38 @@ export function AttentionList({ attention }: AttentionListProps) {
           {rows.map((row) => (
             <div
               key={row.key}
-              className="flex items-center justify-between gap-3 rounded-xl bg-muted/30 border border-border/40 p-3"
+              className="flex flex-col gap-3 rounded-xl border border-border/40 bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between"
             >
+              {/* Phones: text on its own line, the button underneath (at
+                  most two items per line, see AGENTS.md). */}
               <div className="flex min-w-0 items-center gap-2.5">
                 <span
                   className={cn(
-                    "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                    TONE_ICON_BADGE[row.tone],
+                    "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                    ATTENTION_TONE_BADGE[row.tone],
                   )}
                 >
                   <row.icon className="size-4" />
                 </span>
                 <div className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium">{row.title}</span>
-                  <span className="truncate text-xs text-muted-foreground">{row.detail}</span>
+                  {/* One item per line, never cut off with an ellipsis. */}
+                  <ul className="flex flex-col text-xs text-muted-foreground">
+                    {row.details.map((detail) => (
+                      <li key={detail} className="break-words">
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-              <Button asChild size="sm" variant="outline" className="shrink-0">
+              <Button asChild size="sm" variant="outline" className="w-full shrink-0 sm:w-auto">
                 <Link href={row.href}>{row.actionLabel}</Link>
               </Button>
             </div>
           ))}
         </div>
       )}
-    </div>
+    </SectionCard>
   );
 }

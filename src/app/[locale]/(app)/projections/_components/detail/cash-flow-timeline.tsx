@@ -91,12 +91,12 @@ export function CashFlowTimeline({ milestones, monthLabel }: CashFlowTimelinePro
   const balanceLabel = t("balance").replace(/:$/, "");
 
   return (
-    <Card className="w-full min-w-0 overflow-hidden rounded-2xl border-border bg-card shadow-xs">
+    <Card className="w-full min-w-0 overflow-hidden">
       <CardContent className="w-full min-w-0 p-4 sm:p-5">
         <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div className="min-w-0 flex-1 pr-2">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-sm font-bold text-foreground">
+              <h2 className="font-heading text-sm font-semibold text-foreground">
                 {t("title", { month: monthLabel })}
               </h2>
               <span className="rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">

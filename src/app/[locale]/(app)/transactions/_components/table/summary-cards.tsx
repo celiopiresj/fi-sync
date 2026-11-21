@@ -146,15 +146,15 @@ export function SummaryCards({
   }
 
   return (
-    <div className="flex flex-col divide-y-[0.5px] divide-border rounded-lg bg-surface-1 lg:flex-row lg:divide-x-[0.5px] lg:divide-y-0">
-      <div className="flex w-full min-w-0 flex-col gap-4 p-4 lg:flex-1">
+    <div className="flex flex-col divide-y-[0.5px] divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs lg:flex-row lg:divide-x-[0.5px] lg:divide-y-0">
+      <div className="flex w-full min-w-0 flex-col gap-4 p-5 lg:flex-1">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
             {t(accountKind === "credit" ? "summary.totalSpentLabel" : "summary.balanceLabel")}
           </span>
           <span
             className={cn(
-              "text-[26px] font-medium tabular-nums",
+              "font-heading text-3xl font-bold tracking-tight tabular-nums",
               accountKind === "credit"
                 ? spent > 0
                   ? "text-negative"
@@ -202,8 +202,8 @@ export function SummaryCards({
         )}
       </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-2 p-4 lg:flex-1">
-        <span className="text-xs text-muted-foreground">
+      <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
+        <span className="font-heading text-sm font-semibold text-foreground">
           {t("chart.monthlyBalance.title")}
         </span>
         <MonthlyBalanceChart
@@ -213,8 +213,8 @@ export function SummaryCards({
         />
       </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-2 p-4 lg:flex-1">
-        <span className="text-xs text-muted-foreground">
+      <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
+        <span className="font-heading text-sm font-semibold text-foreground">
           {t("chart.byCategory.title")}
         </span>
         <CategoryBreakdownList

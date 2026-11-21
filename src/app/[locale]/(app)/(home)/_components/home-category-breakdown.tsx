@@ -2,10 +2,11 @@
 
 import { createElement, useMemo } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { SectionCard, SectionLink } from "@/components/screen/section-card";
 import { cn } from "@/lib/utils";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { resolveCategoryColorClasses } from "@/lib/category-color";
+import { useHomeMoney } from "../_hooks/use-home-money";
 import type { HomeOverview } from "../_types/types";
 
 // Top N real categories, straight from the server's already-sorted
@@ -20,14 +21,17 @@ type HomeCategoryBreakdownProps = {
   // by category there); the mobile home screen links it straight to
   // /categories instead, matching the design prototype.
   viewAllHref?: string;
+  balancesVisible?: boolean;
 };
 
 export function HomeCategoryBreakdown({
   breakdown,
   viewAllHref = "/transactions",
+  balancesVisible = true,
 }: HomeCategoryBreakdownProps) {
   const t = useTranslations("scrn-home");
   const format = useFormatter();
+  const money = useHomeMoney(balancesVisible);
 
   const rows = useMemo(
     () => breakdown.items.slice(0, TOP_CATEGORY_COUNT),
@@ -35,16 +39,10 @@ export function HomeCategoryBreakdown({
   );
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl bg-card border border-border/80 p-5 shadow-xs">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground">{t("categoryBreakdown.title")}</h2>
-        <Link
-          href={viewAllHref}
-          className="shrink-0 text-xs font-medium text-primary transition-colors hover:underline"
-        >
-          {t("categoryBreakdown.viewAll")}
-        </Link>
-      </div>
+    <SectionCard
+      title={t("categoryBreakdown.title")}
+      action={<SectionLink href={viewAllHref}>{t("categoryBreakdown.viewAll")}</SectionLink>}
+    >
 
       {rows.length === 0 ? (
         <p className="text-xs text-muted-foreground">{t("categoryBreakdown.empty")}</p>
@@ -67,23 +65,27 @@ export function HomeCategoryBreakdown({
                 <div className="flex items-center gap-3">
                   <span
                     className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                      "flex size-8 shrink-0 items-center justify-center rounded-xl",
                       color.badge,
                     )}
                   >
                     {createElement(Icon, { className: "size-4" })}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-xs font-medium">
+                  <span className="min-w-0 flex-1 break-words text-sm font-medium">
                     {item.name}
                   </span>
-                  <span className="shrink-0 text-xs font-semibold tabular-nums">
-                    {format.number(item.total, { style: "currency", currency: "BRL" })}
-                  </span>
-                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {format.number(share / 100, {
-                      style: "percent",
-                      maximumFractionDigits: 0,
-                    })}
+                  {/* Amount and share stacked in one column, so the row
+                      keeps two items: the category and its figures. */}
+                  <span className="flex shrink-0 flex-col items-end">
+                    <span className="text-xs font-semibold tabular-nums">
+                      {money(item.total)}
+                    </span>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {format.number(share / 100, {
+                        style: "percent",
+                        maximumFractionDigits: 0,
+                      })}
+                    </span>
                   </span>
                 </div>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
@@ -97,6 +99,6 @@ export function HomeCategoryBreakdown({
           })}
         </div>
       )}
-    </div>
+    </SectionCard>
   );
 }
