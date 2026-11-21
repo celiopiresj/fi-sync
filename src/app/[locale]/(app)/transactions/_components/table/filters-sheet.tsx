@@ -54,6 +54,8 @@ type FiltersSheetProps = {
   // single source of truth for "which universe," this sheet only narrows
   // within it.
   accountKind: AccountKind;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const ALL_VALUE = "__all__";
@@ -81,6 +83,34 @@ function countActiveFilters(value: SheetFilters) {
   return count;
 }
 
+export function MobileFiltersTrigger({
+  filters,
+  onClick,
+}: {
+  filters: SheetFilters;
+  onClick: () => void;
+}) {
+  const t = useTranslations("scrn-transactions");
+  const activeCount = countActiveFilters(filters);
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      aria-label={t("filters.title")}
+      className="relative size-11 rounded-xl border-border/80 bg-card shadow-xs sm:hidden"
+    >
+      <Funnel aria-hidden="true" className="size-5" />
+      {activeCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold tabular-nums text-primary-foreground">
+          {activeCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
 export function FiltersSheet({
   filters,
   onChange,
@@ -88,14 +118,23 @@ export function FiltersSheet({
   categories,
   people,
   accountKind,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: FiltersSheetProps) {
   const t = useTranslations("scrn-transactions");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   // Editing happens on a local draft — nothing reaches the transaction
   // list (and no re-fetch happens) until "Aplicar" is pressed. Reopening
   // the sheet re-syncs the draft from the currently applied `filters`,
   // so abandoning edits (closing without applying) just discards them.
   const [draft, setDraft] = useState<SheetFilters>(filters);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setDraft(filters);
+  }
 
   const activeCount = countActiveFilters(filters);
   const hasDraftFilters = countActiveFilters(draft) > 0;
@@ -122,17 +161,20 @@ export function FiltersSheet({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="h-8 gap-2">
-          <Funnel />
+        <Button variant="outline" className="hidden h-9 gap-2 sm:order-2 sm:inline-flex">
+          <Funnel aria-hidden="true" />
           {t("filters.title")}
           {activeCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+            <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs tabular-nums text-primary-foreground">
               {activeCount}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col data-[side=right]:sm:max-w-md overflow-y-auto">
+      <SheetContent
+        closeLabel={t("aria.close")}
+        className="flex flex-col overflow-y-auto data-[side=right]:sm:max-w-md"
+      >
         <SheetHeader>
           <SheetTitle>{t("filters.title")}</SheetTitle>
           <SheetDescription>{t("filters.description")}</SheetDescription>

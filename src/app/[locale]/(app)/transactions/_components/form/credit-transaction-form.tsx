@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
 import { useStore } from "@tanstack/react-form";
-import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useZodForm } from "@/lib/form/use-zod-form";
 import { FormError } from "@/components/form/form-error";
@@ -31,11 +30,7 @@ import {
   emptyCreditTransactionFormValues,
   type CreditTransactionFormValues,
 } from "../../_schema/schema";
-import {
-  previewInvoiceCycle,
-  previewCurrentInvoiceCycle,
-  previewInstallmentCycles,
-} from "../../actions";
+import { useCreditInvoicePreview } from "../../_hooks/use-credit-invoice-preview";
 import {
   evaluateExpression,
   isCompoundExpression,
@@ -434,23 +429,8 @@ export function CreditTransactionForm({
     }
   }
 
-  const { data: invoicePreview } = useQuery({
-    queryKey: ["credit-transaction-invoice-preview", accountId, date],
-    queryFn: () => previewInvoiceCycle(accountId, date),
-    enabled: Boolean(accountId) && Boolean(date),
-  });
-
-  // Feeds the past-due-installments check in useZodForm's onSubmit above
-  // (referenced there via closure — declared here, after accountId/date/
-  // installmentCount exist, rather than before useZodForm, but that's
-  // fine: onSubmit only actually runs on a later submit event, by which
-  // point this render has already finished and the query variable below
-  // is fully initialized).
-  const installmentCyclesQuery = useQuery({
-    queryKey: ["credit-transaction-installment-cycles", accountId, date, installmentCount],
-    queryFn: () => previewInstallmentCycles(accountId, date, installmentCount),
-    enabled: Boolean(accountId) && Boolean(date) && installmentCount > 1,
-  });
+  const { invoicePreview, installmentCyclesQuery, currentInvoiceCycle } =
+    useCreditInvoicePreview("single", accountId, date, installmentCount);
   // When editing, cycles[0] belongs to installment 1 — this same
   // transaction, already existing regardless of any of this — so only
   // cycles[1..] (the ones a submit would actually CREATE) matter for the
@@ -464,21 +444,6 @@ export function CreditTransactionForm({
       (cycle) => new Date(cycle.dueDate) >= new Date(todayCalendarDate()),
     ).length ?? 0;
 
-  // Which of the N installments (1-based) the invoice CURRENTLY open for
-  // this account corresponds to — matched by closingDate against
-  // installmentCyclesQuery's own cycles (installment 1..N, unaffected by
-  // the edit-mode slice above: installmentNumber always starts at 1
-  // regardless of create vs. à-vista→parcelada conversion). Purely
-  // informational context for a backdated/postdated purchase — "where
-  // does 'now' fall in this installment sequence" — so it stays null
-  // (nothing rendered) whenever the sequence doesn't reach the current
-  // invoice at all (every installment already past, or every one still
-  // ahead of it).
-  const { data: currentInvoiceCycle } = useQuery({
-    queryKey: ["credit-transaction-current-invoice-cycle", accountId],
-    queryFn: () => previewCurrentInvoiceCycle(accountId),
-    enabled: Boolean(accountId) && installmentCount > 1,
-  });
   const currentInstallmentIndex = currentInvoiceCycle
     ? (installmentCyclesQuery.data?.findIndex(
         (cycle) =>
@@ -570,7 +535,7 @@ export function CreditTransactionForm({
               placeholder={t("fields.description.placeholderCredit")}
             />
             {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p role="alert" className="text-xs text-destructive">
                 {field.state.meta.errors.join(", ")}
               </p>
             ) : null}
@@ -826,7 +791,7 @@ export function CreditTransactionForm({
             </div>
 
             {isOverAllocated && (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p role="alert" className="text-xs text-destructive">
                 {t("splits.exceeds", {
                   value: format.number(
                     Math.abs(primaryAmountCents) / 100,

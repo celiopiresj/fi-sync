@@ -1,29 +1,18 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFormatter, useTranslations } from "next-intl";
+import { Bar, BarChart, Cell, ReferenceLine, XAxis } from "recharts";
 import { useMonthlyBalances } from "../../_hooks/use-monthly-balances";
 import type { Period } from "../../_lib/period";
 
-// Fixed pt-BR formatter, matching the chart's month labels (see
-// _lib/format-month-label.ts) — this card isn't locale-dependent.
-const moneyFormatter = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-});
-
 type MonthlyBalanceChartProps = {
-  // The header stepper's currently selected month — the chart's trailing
-  // 7-month window is anchored here (see getMonthlyBalances in
-  // actions.ts), so stepping the header re-centers the chart instead of
-  // leaving it pinned to the real current month. Only the account filter
-  // applies otherwise; search/category/type don't.
   period: Period;
   accountId?: string;
   onSelectMonth: (month: string) => void;
@@ -35,13 +24,16 @@ export function MonthlyBalanceChart({
   onSelectMonth,
 }: MonthlyBalanceChartProps) {
   const t = useTranslations("scrn-transactions");
+  const format = useFormatter();
   const { data } = useMonthlyBalances(accountId, period);
 
   const chartConfig = {
     balance: { label: t("chart.monthlyBalance.tooltipLabel") },
   } satisfies ChartConfig;
 
-  if (!data) return null;
+  if (!data) {
+    return <Skeleton className="h-20 w-full rounded-lg" />;
+  }
 
   if (data.every((month) => month.balance === 0)) {
     return (
@@ -51,10 +43,6 @@ export function MonthlyBalanceChart({
     );
   }
 
-  // getMonthlyBalances returns "6 months before `period` + `period`
-  // itself", oldest first — the last entry is always the selected month
-  // by construction, no separate flag needed to know which bar to
-  // highlight.
   const selectedIndex = data.length - 1;
 
   return (
@@ -77,7 +65,10 @@ export function MonthlyBalanceChart({
                     {t("chart.monthlyBalance.tooltipLabel")}
                   </span>
                   <span className="font-mono font-medium tabular-nums">
-                    {moneyFormatter.format(Number(value))}
+                    {format.number(Number(value), {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
                   </span>
                 </div>
               )}
@@ -94,7 +85,7 @@ export function MonthlyBalanceChart({
                 index === selectedIndex
                   ? "var(--chart-1)"
                   : month.balance < 0
-                    ? "var(--destructive)"
+                    ? "var(--negative)"
                     : "var(--muted)"
               }
             />

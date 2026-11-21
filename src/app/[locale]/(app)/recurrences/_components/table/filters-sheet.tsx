@@ -1,44 +1,44 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Funnel } from "@phosphor-icons/react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import type { RecurrenceSheetFilters } from "../../_schema/schema";
-import type {
-  AccountOption,
-  CategoryOption,
-  PersonOption,
-} from "../../_types/types";
+import { Separator } from "@/components/ui/separator";
 import {
-  ALL_CARDS_ACCOUNT_FILTER,
-  ALL_NON_CARD_ACCOUNTS_FILTER,
-  isAccountGroupFilter,
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetFooter,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Funnel } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import {
+    ALL_CARDS_ACCOUNT_FILTER,
+    ALL_NON_CARD_ACCOUNTS_FILTER,
+    isAccountGroupFilter,
 } from "../../_constants/constants";
 import {
-  accountIdForKind,
-  resolveAccountKind,
-  type AccountKind,
+    accountIdForKind,
+    resolveAccountKind,
+    type AccountKind,
 } from "../../_lib/account-kind";
+import type { RecurrenceSheetFilters } from "../../_schema/schema";
+import type {
+    AccountOption,
+    CategoryOption,
+    PersonOption,
+} from "../../_types/types";
 
 type FiltersSheetProps = {
   filters: RecurrenceSheetFilters;
@@ -51,6 +51,8 @@ type FiltersSheetProps = {
   // own filters-sheet.tsx: the tab decides "which universe," this sheet
   // only narrows within it.
   accountKind: AccountKind;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const ALL_VALUE = "__all__";
@@ -71,6 +73,34 @@ function countActiveFilters(value: RecurrenceSheetFilters) {
   return count;
 }
 
+export function MobileFiltersTrigger({
+  filters,
+  onClick,
+}: {
+  filters: RecurrenceSheetFilters;
+  onClick: () => void;
+}) {
+  const t = useTranslations("scrn-recurrences");
+  const activeCount = countActiveFilters(filters);
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      aria-label={t("filters.title")}
+      className="relative size-11 rounded-xl border-border/80 bg-card shadow-xs sm:hidden"
+    >
+      <Funnel aria-hidden="true" className="size-5" />
+      {activeCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold tabular-nums text-primary-foreground">
+          {activeCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
 export function FiltersSheet({
   filters,
   onChange,
@@ -78,14 +108,23 @@ export function FiltersSheet({
   categories,
   people,
   accountKind,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: FiltersSheetProps) {
   const t = useTranslations("scrn-recurrences");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   // Editing happens on a local draft — nothing reaches the recurrences
   // list (and no re-fetch happens) until "Aplicar" is pressed. Reopening
   // the sheet re-syncs the draft from the currently applied `filters`,
   // so abandoning edits (closing without applying) just discards them.
   const [draft, setDraft] = useState<RecurrenceSheetFilters>(filters);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setDraft(filters);
+  }
 
   const activeCount = countActiveFilters(filters);
   const hasDraftFilters = countActiveFilters(draft) > 0;
@@ -93,8 +132,12 @@ export function FiltersSheet({
 
   // Separate "Conta"/"Cartão" selects (only one renders, per accountKind)
   // — both still write into the same `accountId` value.
-  const cardAccounts = accounts.filter((account) => account.type === "CREDIT_CARD");
-  const nonCardAccounts = accounts.filter((account) => account.type !== "CREDIT_CARD");
+  const cardAccounts = accounts.filter(
+    (account) => account.type === "CREDIT_CARD",
+  );
+  const nonCardAccounts = accounts.filter(
+    (account) => account.type !== "CREDIT_CARD",
+  );
 
   function handleOpenChange(next: boolean) {
     if (next) setDraft(filters);
@@ -110,17 +153,19 @@ export function FiltersSheet({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="h-8 gap-2">
-          <Funnel />
+        <Button variant="outline" className="hidden h-9 gap-2 sm:order-2 sm:inline-flex">
+          <Funnel aria-hidden="true" />
           {t("filters.title")}
           {activeCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+            <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs tabular-nums text-primary-foreground">
               {activeCount}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col data-[side=right]:sm:max-w-md overflow-y-auto">
+      <SheetContent
+        closeLabel={t("aria.close")}
+        className="flex flex-col overflow-y-auto data-[side=right]:sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{t("filters.title")}</SheetTitle>
           <SheetDescription>{t("filters.description")}</SheetDescription>
@@ -134,12 +179,15 @@ export function FiltersSheet({
                 <Select
                   value={
                     draft.accountId === ALL_NON_CARD_ACCOUNTS_FILTER ||
-                    nonCardAccounts.some((account) => account.id === draft.accountId)
+                    nonCardAccounts.some(
+                      (account) => account.id === draft.accountId,
+                    )
                       ? draft.accountId
                       : ""
                   }
-                  onValueChange={(value) => setDraft({ ...draft, accountId: value })}
-                >
+                  onValueChange={(value) =>
+                    setDraft({ ...draft, accountId: value })
+                  }>
                   <SelectTrigger id="filter-account" className="w-full">
                     <SelectValue placeholder={t("filters.account")} />
                   </SelectTrigger>
@@ -163,12 +211,15 @@ export function FiltersSheet({
                 <Select
                   value={
                     draft.accountId === ALL_CARDS_ACCOUNT_FILTER ||
-                    cardAccounts.some((account) => account.id === draft.accountId)
+                    cardAccounts.some(
+                      (account) => account.id === draft.accountId,
+                    )
                       ? draft.accountId
                       : ""
                   }
-                  onValueChange={(value) => setDraft({ ...draft, accountId: value })}
-                >
+                  onValueChange={(value) =>
+                    setDraft({ ...draft, accountId: value })
+                  }>
                   <SelectTrigger id="filter-card" className="w-full">
                     <SelectValue placeholder={t("filters.card")} />
                   </SelectTrigger>
@@ -195,13 +246,14 @@ export function FiltersSheet({
                     ...draft,
                     categoryId: value === ALL_VALUE ? undefined : value,
                   })
-                }
-              >
+                }>
                 <SelectTrigger id="filter-category" className="w-full">
                   <SelectValue placeholder={t("filters.category")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL_VALUE}>{t("filters.allCategories")}</SelectItem>
+                  <SelectItem value={ALL_VALUE}>
+                    {t("filters.allCategories")}
+                  </SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.name}
@@ -220,13 +272,14 @@ export function FiltersSheet({
                     ...draft,
                     personId: value === ALL_VALUE ? undefined : value,
                   })
-                }
-              >
+                }>
                 <SelectTrigger id="filter-person" className="w-full">
                   <SelectValue placeholder={t("filters.person")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL_VALUE}>{t("filters.allPeople")}</SelectItem>
+                  <SelectItem value={ALL_VALUE}>
+                    {t("filters.allPeople")}
+                  </SelectItem>
                   {people.map((person) => (
                     <SelectItem key={person.id} value={person.id}>
                       {person.name}
@@ -252,11 +305,16 @@ export function FiltersSheet({
                     });
                   }
                 }}
-                className="w-full justify-start"
-              >
-                <ToggleGroupItem value="all" className="flex-1">{t("tabs.all")}</ToggleGroupItem>
-                <ToggleGroupItem value="income" className="flex-1">{t("tabs.income")}</ToggleGroupItem>
-                <ToggleGroupItem value="expenses" className="flex-1">{t("tabs.expenses")}</ToggleGroupItem>
+                className="w-full justify-start">
+                <ToggleGroupItem value="all" className="flex-1">
+                  {t("tabs.all")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="income" className="flex-1">
+                  {t("tabs.income")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="expenses" className="flex-1">
+                  {t("tabs.expenses")}
+                </ToggleGroupItem>
               </ToggleGroup>
             </div>
 
@@ -274,8 +332,7 @@ export function FiltersSheet({
                     });
                   }
                 }}
-                className="w-full justify-start"
-              >
+                className="w-full justify-start">
                 <ToggleGroupItem value="active" className="flex-1">
                   {t("status.active")}
                 </ToggleGroupItem>
@@ -298,10 +355,13 @@ export function FiltersSheet({
               // wiping accountId — clearing narrows back to the active tab,
               // it doesn't leave it (same as transactions' own sheet).
               onClick={() =>
-                setDraft({ accountId: accountIdForKind(resolveAccountKind(draft.accountId, accounts)) })
+                setDraft({
+                  accountId: accountIdForKind(
+                    resolveAccountKind(draft.accountId, accounts),
+                  ),
+                })
               }
-              disabled={!hasDraftFilters}
-            >
+              disabled={!hasDraftFilters}>
               {t("filters.clear")}
             </Button>
             <Button type="submit" className="flex-1" disabled={!hasChanges}>

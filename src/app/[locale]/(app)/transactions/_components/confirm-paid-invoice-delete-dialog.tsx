@@ -1,15 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { SpinnerIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ConfirmPaidInvoiceDeleteDialogProps = {
   open: boolean;
@@ -29,38 +32,43 @@ export function ConfirmPaidInvoiceDeleteDialog({
   const t = useTranslations("scrn-transactions");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent closeLabel={t("aria.close")}>
-        <DialogHeader>
-          <DialogTitle>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-warning/10 text-warning">
+            <WarningCircleIcon aria-hidden="true" />
+          </AlertDialogMedia>
+          <AlertDialogTitle>
             {isBulk
               ? t("dialog.confirmPaidInvoiceDelete.titleBulk")
               : t("dialog.confirmPaidInvoiceDelete.title")}
-          </DialogTitle>
-          <DialogDescription>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
             {isBulk
               ? t("dialog.confirmPaidInvoiceDelete.descriptionBulk")
               : t("dialog.confirmPaidInvoiceDelete.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            disabled={isPending}
-            onClick={() => onOpenChange(false)}
-          >
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending} className="h-11 sm:h-9">
             {t("dialog.confirmPaidInvoiceDelete.cancel")}
-          </Button>
-          <Button
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant="destructive"
             disabled={isPending}
-            onClick={onConfirm}
+            className="h-11 sm:h-9"
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
           >
+            {isPending && (
+              <SpinnerIcon aria-hidden="true" className="animate-spin" />
+            )}
             {t("dialog.confirmPaidInvoiceDelete.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
-

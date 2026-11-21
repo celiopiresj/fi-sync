@@ -23,7 +23,12 @@ export function useRecurrencesData(
   const queryClient = useQueryClient();
 
   const queryKey = useMemo(() => ["recurrences", filters] as const, [filters]);
-  const { data: recurrences = initialRecurrences } = useQuery({
+  const {
+    data: recurrences = initialRecurrences,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => listRecurrences(filters),
     initialData: useInitialData ? initialRecurrences : undefined,
@@ -47,5 +52,5 @@ export function useRecurrencesData(
     queryClient.invalidateQueries({ queryKey: ["projections"] });
   }, [queryClient]);
 
-  return { recurrences, invalidate };
+  return { recurrences, isFetching, isError, refetch, invalidate };
 }

@@ -1,23 +1,28 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import { Separator } from "@/components/ui/separator";
+import { resolveCategoryColorClasses } from "@/lib/category-color";
 import { resolveCategoryIcon } from "@/lib/category-icons";
 import { formatPersonName } from "@/lib/format-person-name";
+import { cn } from "@/lib/utils";
 import {
   ArrowsClockwiseIcon,
   CalendarCheckIcon,
   CreditCardIcon,
-  DotsThreeIcon,
+  PencilSimpleIcon,
+  TrashIcon,
 } from "@phosphor-icons/react";
+import { createElement, useState, type ReactNode } from "react";
 import type { RecurrenceRow } from "../../_types/types";
 
 // Mobile counterpart to DataTable, mirroring transactions'
@@ -71,97 +76,115 @@ export function RecurrenceMobileList({
   actions,
   emptyState,
 }: RecurrenceMobileListProps) {
+  const [activeRow, setActiveRow] = useState<RecurrenceRow | null>(null);
+
   if (recurrences.length === 0) {
-    return <div className="rounded-md border border-border">{emptyState}</div>;
+    return <Card>{emptyState}</Card>;
   }
 
-  return (
-    <div className="rounded-md border border-border">
-      <div className="divide-y divide-border">
-        {recurrences.map((recurrence) => {
-          const CategoryIcon = resolveCategoryIcon(recurrence.category?.icon);
-          // More than one person splits this one differently below (each
-          // on their own line with their own amount) — same fix as the
-          // desktop table's own columns.tsx. cardSubtitle's `{person}`
-          // slot only ever holds a single name, so a multi-split
-          // recurrence drops it from the subtitle template entirely
-          // (account · frequency only) rather than pass it something
-          // that reads oddly ("Conta · Mensal · Mãe, Irmão").
-          const hasMultipleSplits = recurrence.splits.length > 1;
-          const frequencyLabel = messages.frequencyLabel(recurrence.frequency);
-          const subtitle = hasMultipleSplits
-            ? `${recurrence.account.name} · ${frequencyLabel}`
-            : messages.cardSubtitle(
-                recurrence.account.name,
-                frequencyLabel,
-                formatPersonName(recurrence.splits[0]!.person.name),
-              );
-          const pending = actions.isExtending(recurrence.id);
-          const advancing = actions.isAdvancing(recurrence.id);
+  const activePending = activeRow ? actions.isExtending(activeRow.id) : false;
+  const activeAdvancing = activeRow ? actions.isAdvancing(activeRow.id) : false;
 
-          return (
-            <div
-              key={recurrence.id}
-              className="flex flex-col gap-1.5 px-3 py-2.5"
-            >
-              <div className="flex items-center gap-3">
-                <div className="relative shrink-0">
-                  <CategoryIcon
-                    className={cn("size-5", recurrence.category?.colorStyle || "text-muted-foreground")}
-                  />
-                  {/* Same "is this a card?" signal as the desktop
-                      table's account-column icon (columns.tsx) — this
-                      list has no separate account column to put it in,
-                      so it rides as a small badge on the category icon
-                      instead. */}
+  return (
+    <>
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="divide-y divide-border/60">
+          {recurrences.map((recurrence) => {
+            const color = resolveCategoryColorClasses(
+              recurrence.category?.colorStyle ?? null,
+            );
+            const CategoryIcon = resolveCategoryIcon(recurrence.category?.icon);
+            // More than one person splits this one differently below (each
+            // on their own line with their own amount) — same fix as the
+            // desktop table's own columns.tsx.
+            const hasMultipleSplits = recurrence.splits.length > 1;
+            const frequencyLabel = messages.frequencyLabel(
+              recurrence.frequency,
+            );
+            // Mirrors Home's RecentTransactions: stacked one per line on
+            // phones, joined with "•" from `sm` up.
+            const details = [
+              recurrence.account.name,
+              frequencyLabel,
+              hasMultipleSplits
+                ? null
+                : formatPersonName(recurrence.splits[0]!.person.name),
+            ].filter((part): part is string => Boolean(part));
+
+            return (
+              <button
+                key={recurrence.id}
+                type="button"
+                onClick={() => setActiveRow(recurrence)}
+                className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/30 active:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
+                <span
+                  className={cn(
+                    "relative flex size-9 shrink-0 items-center justify-center rounded-xl",
+                    color.badge,
+                  )}>
+                  <CategoryIcon aria-hidden="true" className="size-4.5" />
                   {recurrence.account.type === "CREDIT_CARD" && (
                     <CreditCardIcon
                       weight="fill"
-                      className="absolute -right-1 -bottom-1 size-2.5 rounded-full bg-background text-muted-foreground"
+                      className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full bg-card text-muted-foreground"
                       aria-label={messages.creditCardAccountLabel}
                     />
                   )}
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="min-w-0 truncate text-sm font-medium">
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="min-w-0 break-words text-sm font-medium text-foreground">
                       {recurrence.description}
                     </span>
                     <span
                       className={cn(
-                        "shrink-0 text-sm font-medium tabular-nums",
-                        recurrence.amount < 0 ? "text-negative" : "text-positive",
-                      )}
-                    >
+                        "shrink-0 font-heading text-sm font-semibold tabular-nums",
+                        recurrence.amount < 0
+                          ? "text-negative"
+                          : "text-positive",
+                      )}>
                       {formatAmount(recurrence.amount)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="min-w-0 truncate text-xs text-muted-foreground">
-                      {subtitle}
+                  <div className="flex items-end justify-between gap-2">
+                    <span className="flex min-w-0 flex-col text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-1.5">
+                      {details.map((part, index) => (
+                        <span
+                          key={index}
+                          className="flex min-w-0 items-center gap-x-1.5">
+                          {index > 0 && (
+                            <span aria-hidden className="hidden sm:inline">
+                              •
+                            </span>
+                          )}
+                          <span className="break-words">{part}</span>
+                        </span>
+                      ))}
                     </span>
                     {!recurrence.isActive && (
-                      <Badge variant="secondary" className="shrink-0 text-[10px]">
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 text-[11px]">
                         {messages.finishedBadge}
                       </Badge>
                     )}
                   </div>
                   {hasMultipleSplits && (
-                    <div className="mt-1 flex flex-col gap-0.5 border-t border-border/60 pt-1">
+                    <div className="mt-1 flex flex-col gap-0.5 border-t border-border/60 pt-1.5">
                       {recurrence.splits.map((split) => (
                         <div
                           key={split.personId}
-                          className="flex items-center justify-between gap-2 text-xs"
-                        >
-                          <span className="min-w-0 truncate text-muted-foreground">
+                          className="flex items-center justify-between gap-2 text-xs">
+                          <span className="min-w-0 break-words text-muted-foreground">
                             {formatPersonName(split.person.name)}
                           </span>
                           <span
                             className={cn(
                               "shrink-0 tabular-nums",
-                              split.amount < 0 ? "text-negative" : "text-positive",
-                            )}
-                          >
+                              split.amount < 0
+                                ? "text-negative"
+                                : "text-positive",
+                            )}>
                             {formatAmount(split.amount)}
                           </span>
                         </div>
@@ -169,52 +192,125 @@ export function RecurrenceMobileList({
                     </div>
                   )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm">
-                      <DotsThreeIcon />
-                      <span className="sr-only">{messages.menuAria}</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => actions.onEdit(recurrence)}>
-                      {messages.menuEdit}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={() => actions.onDelete(recurrence)}
-                    >
-                      {messages.menuDelete}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+
+      <Drawer
+        open={activeRow !== null}
+        onOpenChange={(open) => {
+          if (!open) setActiveRow(null);
+        }}>
+        <DrawerContent showCloseButton={false}>
+          {activeRow && (
+            <>
+              <DrawerHeader className="text-left">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "flex size-9 shrink-0 items-center justify-center rounded-xl",
+                      resolveCategoryColorClasses(
+                        activeRow.category?.colorStyle ?? null,
+                      ).badge,
+                    )}>
+                    {createElement(
+                      resolveCategoryIcon(activeRow.category?.icon),
+                      {
+                        "aria-hidden": true,
+                        className: "size-4.5",
+                      },
+                    )}
+                  </span>
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <DrawerTitle className="truncate text-base">
+                      {activeRow.description}
+                    </DrawerTitle>
+                    <DrawerDescription
+                      className={cn(
+                        "text-sm font-semibold tabular-nums",
+                        activeRow.amount < 0
+                          ? "text-negative"
+                          : "text-positive",
+                      )}>
+                      {formatAmount(activeRow.amount)}
+                    </DrawerDescription>
+                  </div>
+                </div>
+              </DrawerHeader>
+
+              <div className="flex flex-col gap-1 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                {activeRow.needsExtension && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={activePending}
+                    className="h-12 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium text-primary"
+                    onClick={() => {
+                      const row = activeRow;
+                      setActiveRow(null);
+                      actions.onExtend(row);
+                    }}>
+                    <ArrowsClockwiseIcon
+                      aria-hidden="true"
+                      className="size-5"
+                    />
+                    {activePending
+                      ? messages.extendingLabel
+                      : messages.extendLabel}
+                  </Button>
+                )}
+                {activeRow.canAdvance && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    disabled={activeAdvancing}
+                    className="h-12 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium text-primary"
+                    onClick={() => {
+                      const row = activeRow;
+                      setActiveRow(null);
+                      actions.onAdvance(row);
+                    }}>
+                    <CalendarCheckIcon aria-hidden="true" className="size-5" />
+                    {activeAdvancing
+                      ? messages.advancingLabel
+                      : messages.advanceLabel}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-12 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium"
+                  onClick={() => {
+                    const row = activeRow;
+                    setActiveRow(null);
+                    actions.onEdit(row);
+                  }}>
+                  <PencilSimpleIcon
+                    aria-hidden="true"
+                    className="size-5 text-muted-foreground"
+                  />
+                  {messages.menuEdit}
+                </Button>
+                <Separator className="my-1" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-12 w-full justify-start gap-3 rounded-xl px-3 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  onClick={() => {
+                    const row = activeRow;
+                    setActiveRow(null);
+                    actions.onDelete(row);
+                  }}>
+                  <TrashIcon aria-hidden="true" className="size-5" />
+                  {messages.menuDelete}
+                </Button>
               </div>
-              {recurrence.needsExtension && (
-                <button
-                  type="button"
-                  onClick={() => actions.onExtend(recurrence)}
-                  disabled={pending}
-                  className="flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
-                >
-                  <ArrowsClockwiseIcon className="size-3" />
-                  {pending ? messages.extendingLabel : messages.extendLabel}
-                </button>
-              )}
-              {recurrence.canAdvance && (
-                <button
-                  type="button"
-                  onClick={() => actions.onAdvance(recurrence)}
-                  disabled={advancing}
-                  className="flex w-fit items-center gap-1 pl-8 text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
-                >
-                  <CalendarCheckIcon className="size-3" />
-                  {advancing ? messages.advancingLabel : messages.advanceLabel}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 }

@@ -16,7 +16,6 @@ import {
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
 import { PencilSimpleIcon, SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
-import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -25,11 +24,7 @@ import {
   transactionTypeValues,
   type CreditBatchRowFormValues,
 } from "../../_schema/schema";
-import {
-  previewInvoiceCycle,
-  previewCurrentInvoiceCycle,
-  previewInstallmentCycles,
-} from "../../actions";
+import { useCreditInvoicePreview } from "../../_hooks/use-credit-invoice-preview";
 import type {
   AccountOption,
   CategoryOption,
@@ -139,28 +134,13 @@ export function CreditBatchTransactionTable({
   // batch row backdating an installment purchase needs the same context
   // for where it actually lands, not just the typed installment count.
   const installmentCount = Number(draft.installments || "1");
-  const { data: invoicePreview } = useQuery({
-    queryKey: ["credit-batch-invoice-preview", draft.accountId, draft.date],
-    queryFn: () => previewInvoiceCycle(draft.accountId, draft.date),
-    enabled: Boolean(draft.accountId) && Boolean(draft.date),
-  });
-  const installmentCyclesQuery = useQuery({
-    queryKey: [
-      "credit-batch-installment-cycles",
+  const { invoicePreview, installmentCyclesQuery, currentInvoiceCycle } =
+    useCreditInvoicePreview(
+      "batch",
       draft.accountId,
       draft.date,
       installmentCount,
-    ],
-    queryFn: () =>
-      previewInstallmentCycles(draft.accountId, draft.date, installmentCount),
-    enabled:
-      Boolean(draft.accountId) && Boolean(draft.date) && installmentCount > 1,
-  });
-  const { data: currentInvoiceCycle } = useQuery({
-    queryKey: ["credit-batch-current-invoice-cycle", draft.accountId],
-    queryFn: () => previewCurrentInvoiceCycle(draft.accountId),
-    enabled: Boolean(draft.accountId) && installmentCount > 1,
-  });
+    );
   const currentInstallmentIndex = currentInvoiceCycle
     ? (installmentCyclesQuery.data?.findIndex(
         (cycle) =>
@@ -548,7 +528,7 @@ export function CreditBatchTransactionTable({
           )}
 
           {draftError && (
-            <p className="text-xs text-red-600 dark:text-red-400">{draftError}</p>
+            <p role="alert" className="text-xs text-destructive">{draftError}</p>
           )}
 
           <div className="flex gap-2">

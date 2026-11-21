@@ -4,10 +4,10 @@ import { APP_TIME_ZONE } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import { useFormatter, useTranslations } from "next-intl";
 import { useMemo } from "react";
+import type { AccountKind } from "../../_lib/account-kind";
+import type { Period } from "../../_lib/period";
 import type { TransactionRow } from "../../_types/types";
 import type { TransactionFilters } from "../../actions";
-import type { Period } from "../../_lib/period";
-import type { AccountKind } from "../../_lib/account-kind";
 import { CategoryBreakdownList } from "./category-breakdown-list";
 import { MonthlyBalanceChart } from "./monthly-balance-chart";
 
@@ -146,81 +146,89 @@ export function SummaryCards({
   }
 
   return (
-    <div className="flex flex-col divide-y-[0.5px] divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs lg:flex-row lg:divide-x-[0.5px] lg:divide-y-0">
-      <div className="flex w-full min-w-0 flex-col gap-4 p-5 lg:flex-1">
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-            {t(accountKind === "credit" ? "summary.totalSpentLabel" : "summary.balanceLabel")}
-          </span>
-          <span
-            className={cn(
-              "font-heading text-3xl font-bold tracking-tight tabular-nums",
-              accountKind === "credit"
-                ? spent > 0
-                  ? "text-negative"
-                  : "text-positive"
-                : balance >= 0
-                  ? "text-positive"
-                  : "text-negative",
-            )}>
-            {accountKind === "credit" ? money(spent) : money(balance)}
-          </span>
-          {/* Reserves its line even while loading, so the card's height
+    <div className="@container overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+      <div className="flex flex-col divide-y divide-border/60 @4xl:flex-row @4xl:divide-x @4xl:divide-y-0">
+        <div className="flex w-full min-w-0 flex-col gap-4 p-5 lg:flex-1">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t(
+                accountKind === "credit"
+                  ? "summary.totalSpentLabel"
+                  : "summary.balanceLabel",
+              )}
+            </span>
+            <span
+              className={cn(
+                "font-heading text-3xl font-bold tracking-tight tabular-nums",
+                accountKind === "credit"
+                  ? spent > 0
+                    ? "text-negative"
+                    : "text-positive"
+                  : balance >= 0
+                    ? "text-positive"
+                    : "text-negative",
+              )}>
+              {accountKind === "credit" ? money(spent) : money(balance)}
+            </span>
+            {/* Reserves its line even while loading, so the card's height
               doesn't jump once the comparison query resolves. */}
-          <span className="text-xs text-muted-foreground">
-            {comparisonText ?? " "}
-          </span>
-        </div>
+            <span className="text-xs text-muted-foreground">
+              {comparisonText ?? " "}
+            </span>
+          </div>
 
-        {/* Dropped for credit — an income/expense split bar and legend
+          {/* Dropped for credit — an income/expense split bar and legend
             read as noise once income is basically never real money (see
             the accountKind comment on SummaryCardsProps). */}
-        {accountKind !== "credit" && (
-          <>
-            <div className="flex h-2.5 w-full max-w-105 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full bg-positive"
-                style={{ width: `${incomeShare}%` }}
-              />
-              <div
-                className="h-full bg-negative"
-                style={{ width: `${expensesShare}%` }}
-              />
-            </div>
+          {accountKind !== "credit" && (
+            <>
+              <div className="flex h-2.5 w-full max-w-105 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full bg-positive"
+                  style={{ width: `${incomeShare}%` }}
+                />
+                <div
+                  className="h-full bg-negative"
+                  style={{ width: `${expensesShare}%` }}
+                />
+              </div>
 
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 text-xs text-foreground">
-                <span className="size-2 shrink-0 rounded-full bg-positive" />
-                {t("summary.legendIncome", { value: money(income) })}
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-foreground">
-                <span className="size-2 shrink-0 rounded-full bg-negative" />
-                {t("summary.legendExpenses", { value: money(Math.abs(expenses)) })}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5 text-xs text-foreground">
+                  <span className="size-2 shrink-0 rounded-full bg-positive" />
+                  {t("summary.legendIncome", { value: money(income) })}
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-foreground">
+                  <span className="size-2 shrink-0 rounded-full bg-negative" />
+                  {t("summary.legendExpenses", {
+                    value: money(Math.abs(expenses)),
+                  })}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
-        <span className="font-heading text-sm font-semibold text-foreground">
-          {t("chart.monthlyBalance.title")}
-        </span>
-        <MonthlyBalanceChart
-          period={period}
-          accountId={accountId}
-          onSelectMonth={onSelectMonth}
-        />
-      </div>
+        <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
+          <span className="font-heading text-sm font-semibold text-foreground">
+            {t("chart.monthlyBalance.title")}
+          </span>
+          <MonthlyBalanceChart
+            period={period}
+            accountId={accountId}
+            onSelectMonth={onSelectMonth}
+          />
+        </div>
 
-      <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
-        <span className="font-heading text-sm font-semibold text-foreground">
-          {t("chart.byCategory.title")}
-        </span>
-        <CategoryBreakdownList
-          filters={filters}
-          onSelectCategory={onSelectCategory}
-        />
+        <div className="flex w-full min-w-0 flex-col gap-2 p-5 lg:flex-1">
+          <span className="font-heading text-sm font-semibold text-foreground">
+            {t("chart.byCategory.title")}
+          </span>
+          <CategoryBreakdownList
+            filters={filters}
+            onSelectCategory={onSelectCategory}
+          />
+        </div>
       </div>
     </div>
   );

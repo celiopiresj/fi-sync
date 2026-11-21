@@ -1,15 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type DeleteDialogProps = {
   open: boolean;
@@ -34,31 +37,43 @@ export function DeleteDialog({
   const isBulk = count !== undefined;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent closeLabel={t("aria.close")}>
-        <DialogHeader>
-          <DialogTitle>
-            {isBulk ? t("dialog.delete.titleBulk", { count }) : t("dialog.delete.title")}
-          </DialogTitle>
-          <DialogDescription>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <TrashIcon aria-hidden="true" />
+          </AlertDialogMedia>
+          <AlertDialogTitle>
+            {isBulk
+              ? t("dialog.delete.titleBulk", { count })
+              : t("dialog.delete.title")}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
             {isBulk
               ? t("dialog.delete.descriptionBulk", { count })
               : t("dialog.delete.description")}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending} className="h-11 sm:h-9">
             {t("dialog.delete.cancel")}
-          </Button>
-          <Button
+          </AlertDialogCancel>
+          <AlertDialogAction
             variant="destructive"
             disabled={isPending}
-            onClick={onConfirm}
+            className="h-11 sm:h-9"
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
           >
+            {isPending && (
+              <SpinnerIcon aria-hidden="true" className="animate-spin" />
+            )}
             {t("dialog.delete.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

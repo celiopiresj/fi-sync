@@ -88,7 +88,7 @@ import { CreditTransactionSheet } from "./form/credit-transaction-sheet";
 import { DebitTransactionSheet } from "./form/debit-transaction-sheet";
 import { BulkActionsBar } from "./table/bulk-actions-bar";
 import { getTransactionColumns } from "./table/columns";
-import { FiltersSheet } from "./table/filters-sheet";
+import { FiltersSheet, MobileFiltersTrigger } from "./table/filters-sheet";
 import { ImportStatementSheet } from "./import/import-statement-sheet";
 import { TransferSheet } from "./form/transfer-sheet";
 import { SpecialTransactionDialog } from "./special-transaction-dialog";
@@ -220,6 +220,7 @@ export function TransactionsView({
   });
   const [sheetFilters, setSheetFilters] = useState<SheetFilters>(initialSheetFilters);
   const [searchText, setSearchText] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Derived from `sheetFilters.accountId` (never its own separate state)
   // so the Débito/Crédito tabs and FiltersSheet's own Conta/Cartão
@@ -1049,6 +1050,12 @@ export function TransactionsView({
       <PageHeader
         title={t("title")}
         subtitle={headerSubtitle}
+        titleAction={
+          <MobileFiltersTrigger
+            filters={sheetFilters}
+            onClick={() => setFiltersOpen(true)}
+          />
+        }
         right={
           <PeriodStepper
             label={periodStepperLabel}
@@ -1073,54 +1080,49 @@ export function TransactionsView({
       />
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
-          {/* Search + filters + the Débito/Crédito tab stay grouped
-              together and size to their own content/cap — the flex-1
-              spacer below is what pushes "Nova transação" to the right,
-              so the empty space on wide screens lands between the groups
-              (list controls vs. primary action) instead of inside the
-              search box. `flex-wrap` (only on this inner group, not the
-              outer row) is what added the tab without eating into the
-              "Nova transação" button's own spot on a narrow screen —
-              it drops to a second line here first instead. */}
-          <div className="flex flex-wrap items-center gap-3">
-            <SearchInput
-              value={searchText}
-              onChange={setSearchText}
-              placeholder={t("search.placeholder")}
-              clearLabel={t("search.clear")}
-              isLoading={isFetching}
-            />
-            <FiltersSheet
-              filters={sheetFilters}
-              onChange={setSheetFilters}
-              accounts={accounts}
-              categories={categories}
-              people={people}
-              accountKind={accountKind}
-            />
-            <ToggleGroup
-              type="single"
-              variant="tabs"
-              value={accountKind}
-              onValueChange={(value) => {
-                if (value) handleAccountKindChange(value as typeof accountKind);
-              }}
-            >
-              <ToggleGroupItem value="debit">
-                {t("tabs.accountKind.debit")}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="credit">
-                {t("tabs.accountKind.credit")}
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-          <div className="flex-1" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <ToggleGroup
+            type="single"
+            variant="tabs"
+            value={accountKind}
+            onValueChange={(value) => {
+              if (value) handleAccountKindChange(value as typeof accountKind);
+            }}
+            className="w-full sm:order-3 sm:w-auto"
+          >
+            <ToggleGroupItem value="debit" className="h-9 flex-1 sm:h-7 sm:flex-none">
+              {t("tabs.accountKind.debit")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="credit" className="h-9 flex-1 sm:h-7 sm:flex-none">
+              {t("tabs.accountKind.credit")}
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <SearchInput
+            value={searchText}
+            onChange={setSearchText}
+            placeholder={t("search.placeholder")}
+            clearLabel={t("search.clear")}
+            isLoading={isFetching}
+            className="w-full sm:order-1 sm:w-72 lg:w-85"
+          />
+
+          <FiltersSheet
+            filters={sheetFilters}
+            onChange={setSheetFilters}
+            accounts={accounts}
+            categories={categories}
+            people={people}
+            accountKind={accountKind}
+            open={filtersOpen}
+            onOpenChange={setFiltersOpen}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button>
+              <Button className="hidden md:inline-flex sm:order-4 md:h-9 md:w-auto lg:ml-auto">
                 {t("buttons.add.title")}
-                <CaretDownIcon />
+                <CaretDownIcon aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

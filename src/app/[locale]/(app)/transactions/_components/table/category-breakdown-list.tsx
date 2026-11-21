@@ -1,7 +1,8 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
+import { useFormatter, useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { useTranslations, useFormatter } from "next-intl";
 import { useCategoryBreakdown } from "../../_hooks/use-category-breakdown";
 import type { TransactionFilters } from "../../actions";
 
@@ -33,15 +34,32 @@ export function CategoryBreakdownList({
     const rest = data.items.slice(TOP_CATEGORY_COUNT);
     const otherTotal = rest.reduce((sum, item) => sum + item.total, 0);
     return otherTotal > 0
-      ? [...top, { id: OTHER_ID, name: t("chart.byCategory.other"), total: otherTotal }]
+      ? [
+          ...top,
+          {
+            id: OTHER_ID,
+            name: t("chart.byCategory.other"),
+            total: otherTotal,
+          },
+        ]
       : top;
   }, [data, t]);
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="flex flex-col gap-2.5">
+        <Skeleton className="h-5 w-full rounded" />
+        <Skeleton className="h-5 w-full rounded" />
+        <Skeleton className="h-5 w-4/5 rounded" />
+      </div>
+    );
+  }
 
   if (data.items.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground">{t("chart.byCategory.empty")}</p>
+      <p className="text-xs text-muted-foreground">
+        {t("chart.byCategory.empty")}
+      </p>
     );
   }
 
@@ -61,17 +79,19 @@ export function CategoryBreakdownList({
             type="button"
             disabled={isOther}
             onClick={() => onSelectCategory(item.id)}
-            className="flex flex-col gap-1 text-left disabled:cursor-default"
-          >
+            className="flex flex-col gap-1 text-left disabled:cursor-default">
             <div className="flex items-center justify-between gap-2">
               <span className="min-w-0 truncate text-xs">{item.name}</span>
               <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                {format.number(item.total, { style: "currency", currency: "BRL" })}
+                {format.number(item.total, {
+                  style: "currency",
+                  currency: "BRL",
+                })}
               </span>
             </div>
             <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-destructive"
+                className="h-full rounded-full bg-negative"
                 style={{ width: `${share}%` }}
               />
             </div>

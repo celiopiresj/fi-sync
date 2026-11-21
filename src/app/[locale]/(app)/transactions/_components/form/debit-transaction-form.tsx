@@ -471,7 +471,7 @@ export function DebitTransactionForm({
               placeholder={t("fields.description.placeholder")}
             />
             {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p role="alert" className="text-xs text-destructive">
                 {field.state.meta.errors.join(", ")}
               </p>
             ) : null}
@@ -645,7 +645,7 @@ export function DebitTransactionForm({
             </div>
 
             {isOverAllocated && (
-              <p className="text-xs text-red-600 dark:text-red-400">
+              <p role="alert" className="text-xs text-destructive">
                 {t("splits.exceeds", {
                   value: format.number(
                     Math.abs(primaryAmountCents) / 100,

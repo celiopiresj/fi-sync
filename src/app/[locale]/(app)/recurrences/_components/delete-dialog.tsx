@@ -1,15 +1,18 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { SpinnerIcon, TrashIcon } from "@phosphor-icons/react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type DeleteDialogProps = {
   open: boolean;
@@ -27,26 +30,37 @@ export function DeleteDialog({
   const t = useTranslations("scrn-recurrences");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent closeLabel={t("aria.close")}>
-        <DialogHeader>
-          <DialogTitle>{t("dialog.delete.title")}</DialogTitle>
-          {/* Cascade warning (future/pending occurrences are deleted
-              too — see deleteRecurrence in actions.ts) lives in this one
-              string; no bulk/count variant needed here, unlike
-              transactions' delete-dialog.tsx — this screen has no
-              multi-select. */}
-          <DialogDescription>{t("dialog.delete.description")}</DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <TrashIcon aria-hidden="true" />
+          </AlertDialogMedia>
+          <AlertDialogTitle>{t("dialog.delete.title")}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {t("dialog.delete.description")}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending} className="h-11 sm:h-9">
             {t("dialog.delete.cancel")}
-          </Button>
-          <Button variant="destructive" disabled={isPending} onClick={onConfirm}>
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={isPending}
+            className="h-11 sm:h-9"
+            onClick={(event) => {
+              event.preventDefault();
+              onConfirm();
+            }}
+          >
+            {isPending && (
+              <SpinnerIcon aria-hidden="true" className="animate-spin" />
+            )}
             {t("dialog.delete.confirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -32,7 +32,7 @@ import { renderSplitSubRows } from "@/components/data-table/split-sub-rows";
 import { formatPersonName } from "@/lib/format-person-name";
 import { SummaryCards } from "./summary-cards";
 import { RecurrenceMobileList } from "./table/recurrence-mobile-list";
-import { FiltersSheet } from "./table/filters-sheet";
+import { FiltersSheet, MobileFiltersTrigger } from "./table/filters-sheet";
 import { DebitRecurrenceSheet } from "./form/debit-recurrence-sheet";
 import { CreditRecurrenceSheet } from "./form/credit-recurrence-sheet";
 import { DeleteDialog } from "./delete-dialog";
@@ -148,6 +148,7 @@ export function RecurrencesView({
     accountId: ALL_NON_CARD_ACCOUNTS_FILTER,
   });
   const [searchText, setSearchText] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Derived from `sheetFilters.accountId` (never its own state) so the
   // Débito/Crédito tabs and FiltersSheet's Conta/Cartão selects can never
@@ -183,7 +184,7 @@ export function RecurrencesView({
     sheetFilters.accountId === ALL_NON_CARD_ACCOUNTS_FILTER &&
     searchText === "";
 
-  const { recurrences, invalidate } = useRecurrencesData(
+  const { recurrences, isFetching, invalidate } = useRecurrencesData(
     filters,
     initialRecurrences,
     isDefaultFilters,
@@ -517,52 +518,63 @@ export function RecurrencesView({
 
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
-      <PageHeader title={t("title")} subtitle={headerSubtitle} />
+      <PageHeader
+        title={t("title")}
+        subtitle={headerSubtitle}
+        titleAction={
+          <MobileFiltersTrigger
+            filters={sheetFilters}
+            onClick={() => setFiltersOpen(true)}
+          />
+        }
+      />
 
       <SummaryCards recurrences={recurrences} />
 
       <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-3">
-          {/* Same grouping as transactions-view.tsx: search + filters +
-              Débito/Crédito tab wrap together before pushing the
-              "Nova recorrência" button off its spot on narrow screens. */}
-          <div className="flex flex-wrap items-center gap-3">
-            <SearchInput
-              value={searchText}
-              onChange={setSearchText}
-              placeholder={t("search.placeholder")}
-              clearLabel={t("search.clear")}
-            />
-            <FiltersSheet
-              filters={sheetFilters}
-              onChange={setSheetFilters}
-              accounts={accounts}
-              categories={categories}
-              people={people}
-              accountKind={accountKind}
-            />
-            <ToggleGroup
-              type="single"
-              variant="tabs"
-              value={accountKind}
-              onValueChange={(value) => {
-                if (value) handleAccountKindChange(value as typeof accountKind);
-              }}
-            >
-              <ToggleGroupItem value="debit">
-                {t("tabs.accountKind.debit")}
-              </ToggleGroupItem>
-              <ToggleGroupItem value="credit">
-                {t("tabs.accountKind.credit")}
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </div>
-          <div className="flex-1" />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <ToggleGroup
+            type="single"
+            variant="tabs"
+            value={accountKind}
+            onValueChange={(value) => {
+              if (value) handleAccountKindChange(value as typeof accountKind);
+            }}
+            className="w-full sm:order-3 sm:w-auto"
+          >
+            <ToggleGroupItem value="debit" className="h-9 flex-1 sm:h-7 sm:flex-none">
+              {t("tabs.accountKind.debit")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="credit" className="h-9 flex-1 sm:h-7 sm:flex-none">
+              {t("tabs.accountKind.credit")}
+            </ToggleGroupItem>
+          </ToggleGroup>
+
+          <SearchInput
+            value={searchText}
+            onChange={setSearchText}
+            placeholder={t("search.placeholder")}
+            clearLabel={t("search.clear")}
+            isLoading={isFetching}
+            className="w-full sm:order-1 sm:w-72 lg:w-85"
+          />
+
+          <FiltersSheet
+            filters={sheetFilters}
+            onChange={setSheetFilters}
+            accounts={accounts}
+            categories={categories}
+            people={people}
+            accountKind={accountKind}
+            open={filtersOpen}
+            onOpenChange={setFiltersOpen}
+          />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button>
+              <Button className="h-11 w-full sm:order-4 sm:h-9 sm:w-auto lg:ml-auto">
                 {t("buttons.add.title")}
-                <CaretDownIcon />
+                <CaretDownIcon aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

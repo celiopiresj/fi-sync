@@ -248,7 +248,7 @@ export function TransferForm({
             <>
               <span
                 className={cn(
-                  "text-2xl font-bold tabular-nums",
+                  "font-heading text-2xl font-bold tracking-tight tabular-nums",
                   balanceShare < 0 ? "text-negative" : "text-positive",
                 )}
               >

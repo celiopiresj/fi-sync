@@ -47,11 +47,11 @@ function ChipTrigger({
       ref={ref}
       type="button"
       className={cn(
-        "inline-flex h-8 max-w-full items-center gap-1 truncate rounded-full border px-3 text-xs font-medium transition-colors",
+        "inline-flex h-10 max-w-full items-center gap-1 truncate rounded-full border px-3 text-xs font-medium transition-colors sm:h-8",
         isFilled
           ? "border-border bg-muted text-foreground"
           : isInvalid
-            ? "border-red-400 text-red-600 dark:text-red-400"
+            ? "border-destructive text-destructive"
             : "border-dashed border-border text-primary",
       )}
     >
@@ -165,7 +165,7 @@ export function ChipSelect<T extends string = string>({
         <SheetContent
           side="bottom"
           closeLabel={sheetTitle}
-          className="max-h-[85vh] gap-0"
+          className="max-h-[85dvh] gap-0"
         >
           <SheetHeader>
             <SheetTitle>{sheetTitle}</SheetTitle>
@@ -263,7 +263,7 @@ export function DateChipSelect({
         <SheetContent
           side="bottom"
           closeLabel={sheetTitle}
-          className="max-h-[85vh] gap-0"
+          className="max-h-[85dvh] gap-0"
         >
           <SheetHeader>
             <SheetTitle>{sheetTitle}</SheetTitle>

@@ -1,40 +1,40 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslations, useFormatter } from "next-intl";
-import { useStore } from "@tanstack/react-form";
-import { useZodForm } from "@/lib/form/use-zod-form";
 import { FormError } from "@/components/form/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { ItemGroup } from "@/components/ui/item";
-import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
-import { CreatePersonInline } from "./create-person-inline";
-import {
-  debitRecurrenceContentSchema,
-  debitRecurrenceCreateSchema,
-  refineDebitRecurrence,
-  recurrenceFrequencyValues,
-  recurrenceTypeValues,
-  paymentMethodFormValues,
-  emptyDebitRecurrenceCreateValues,
-  type DebitRecurrenceContentFormValues,
-  type DebitRecurrenceCreateFormValues,
-} from "../../_schema/schema";
+import { Switch } from "@/components/ui/switch";
+import { dateOnlyKey, todayCalendarDate } from "@/lib/date";
+import { useZodForm } from "@/lib/form/use-zod-form";
+import { formatPersonName } from "@/lib/format-person-name";
 import {
   evaluateExpression,
   isCompoundExpression,
 } from "@/lib/math/safe-expression";
 import { isNextRedirectError } from "@/lib/next/is-redirect-error";
-import { todayCalendarDate, dateOnlyKey } from "@/lib/date";
-import { formatPersonName } from "@/lib/format-person-name";
+import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
+import { useStore } from "@tanstack/react-form";
+import { useFormatter, useTranslations } from "next-intl";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  debitRecurrenceContentSchema,
+  debitRecurrenceCreateSchema,
+  emptyDebitRecurrenceCreateValues,
+  paymentMethodFormValues,
+  recurrenceFrequencyValues,
+  recurrenceTypeValues,
+  refineDebitRecurrence,
+  type DebitRecurrenceContentFormValues,
+  type DebitRecurrenceCreateFormValues,
+} from "../../_schema/schema";
 import type {
   AccountOption,
   CategoryOption,
   PersonOption,
   RecurrenceRow,
 } from "../../_types/types";
+import { CreatePersonInline } from "./create-person-inline";
 
 // Split amounts are tracked in integer cents so the "primary absorbs the
 // remainder" math, and the pristine-vs-hand-edited comparison in
@@ -163,7 +163,9 @@ export function DebitRecurrenceCreateForm({
     : null;
   const rawParsedAmount =
     evaluatedAmount ?? (amount ? Number(amount.replace(",", ".")) : NaN);
-  const parsedAmount = Number.isFinite(rawParsedAmount) ? rawParsedAmount : null;
+  const parsedAmount = Number.isFinite(rawParsedAmount)
+    ? rawParsedAmount
+    : null;
 
   // --- Person split math -------------------------------------------
   // splits[0] mirrors the top Pessoa field ("Pagou") — its amount is
@@ -178,7 +180,9 @@ export function DebitRecurrenceCreateForm({
   );
   const secondaryCentsSum = secondaryCentsList.reduce((sum, c) => sum + c, 0);
   const primaryAmountCents = totalCents - secondaryCentsSum;
-  const primaryAmountDisplay = centsToAmountString(Math.max(primaryAmountCents, 0));
+  const primaryAmountDisplay = centsToAmountString(
+    Math.max(primaryAmountCents, 0),
+  );
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
@@ -264,7 +268,9 @@ export function DebitRecurrenceCreateForm({
     const peopleCountBefore = splits.length;
     const shareBefore =
       peopleCountBefore > 0 ? Math.floor(totalCents / peopleCountBefore) : 0;
-    const isPristine = secondaryCentsList.every((cents) => cents === shareBefore);
+    const isPristine = secondaryCentsList.every(
+      (cents) => cents === shareBefore,
+    );
 
     if (isPristine) {
       const peopleCountAfter = peopleCountBefore + 1;
@@ -273,7 +279,10 @@ export function DebitRecurrenceCreateForm({
       for (let i = 1; i < splits.length; i++) {
         form.setFieldValue(`splits[${i}].amount`, shareAfterStr);
       }
-      form.pushFieldValue("splits", { personId: newPersonId, amount: shareAfterStr });
+      form.pushFieldValue("splits", {
+        personId: newPersonId,
+        amount: shareAfterStr,
+      });
     } else {
       form.pushFieldValue("splits", { personId: newPersonId, amount: "0,00" });
     }
@@ -286,8 +295,7 @@ export function DebitRecurrenceCreateForm({
         e.stopPropagation();
         form.handleSubmit();
       }}
-      className="flex flex-col gap-4"
-    >
+      className="flex flex-col gap-4">
       <form.AppField name="type">
         {(field) => (
           <field.ToggleGroupField
@@ -325,8 +333,9 @@ export function DebitRecurrenceCreateForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholder")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-              <p className="text-xs text-red-600 dark:text-red-400">
+            {field.state.meta.isTouched &&
+            field.state.meta.errors.length > 0 ? (
+              <p role="alert" className="text-xs text-destructive">
                 {field.state.meta.errors.join(", ")}
               </p>
             ) : null}
@@ -340,10 +349,12 @@ export function DebitRecurrenceCreateForm({
             <field.PickerRowField
               label={t("fields.account.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={selectableAccounts(accounts, accountId).map((account) => ({
-                value: account.id,
-                label: account.name,
-              }))}
+              options={selectableAccounts(accounts, accountId).map(
+                (account) => ({
+                  value: account.id,
+                  label: account.name,
+                }),
+              )}
             />
           )}
         </form.AppField>
@@ -410,7 +421,9 @@ export function DebitRecurrenceCreateForm({
       <div className="flex flex-col gap-3 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium">{t("fields.endDate.toggleLabel")}</p>
+            <p className="text-sm font-medium">
+              {t("fields.endDate.toggleLabel")}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t("fields.endDate.toggleHelp")}
             </p>
@@ -466,117 +479,114 @@ export function DebitRecurrenceCreateForm({
       </ItemGroup>
 
       {people.length > 1 && (
-      <div className="flex flex-col gap-3 rounded-md border border-border p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">{t("splits.toggleLabel")}</p>
-            {!personId && (
-              <p className="text-xs text-muted-foreground">
-                {t("splits.needsPersonFirst")}
-              </p>
-            )}
+        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">{t("splits.toggleLabel")}</p>
+              {!personId && (
+                <p className="text-xs text-muted-foreground">
+                  {t("splits.needsPersonFirst")}
+                </p>
+              )}
+            </div>
+            <Switch
+              checked={isDividing}
+              onCheckedChange={setIsDividing}
+              disabled={!personId}
+            />
           </div>
-          <Switch
-            checked={isDividing}
-            onCheckedChange={setIsDividing}
-            disabled={!personId}
-          />
-        </div>
 
-        {isDividing && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
-                  {t("splits.payerLabel")}
-                </span>
-                <span className="text-sm font-medium">
-                  {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
+          {isDividing && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">
+                    {t("splits.payerLabel")}
+                  </span>
+                  <span className="text-sm font-medium">
+                    {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
+                  </span>
+                </div>
+                <span className="text-sm font-medium tabular-nums">
+                  {format.number(
+                    sign * Number(primaryAmountDisplay.replace(",", ".")),
+                    { style: "currency", currency: "BRL" },
+                  )}
                 </span>
               </div>
-              <span className="text-sm font-medium tabular-nums">
-                {format.number(
-                  sign * Number(primaryAmountDisplay.replace(",", ".")),
-                  { style: "currency", currency: "BRL" },
-                )}
-              </span>
-            </div>
 
-            {isOverAllocated && (
-              <p className="text-xs text-red-600 dark:text-red-400">
-                {t("splits.exceeds", {
-                  value: format.number(Math.abs(primaryAmountCents) / 100, {
-                    style: "currency",
-                    currency: "BRL",
-                  }),
-                })}
-              </p>
-            )}
-
-            {secondaries.map((_, i) => {
-              const index = i + 1;
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col gap-2 rounded-md border border-border/60 p-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {t("splits.owesLabel")}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => form.removeFieldValue("splits", index)}
-                    >
-                      <TrashIcon />
-                      <span className="sr-only">{t("splits.remove")}</span>
-                    </Button>
-                  </div>
-                  <form.AppField name={`splits[${index}].personId`}>
-                    {(field) => (
-                      <field.SelectField
-                        label={t("fields.person.label")}
-                        placeholder={t("fields.person.placeholder")}
-                        options={people.map((person) => ({
-                          value: person.id,
-                          label: formatPersonName(person.name),
-                        }))}
-                      />
-                    )}
-                  </form.AppField>
-                  <form.AppField name={`splits[${index}].amount`}>
-                    {(field) => (
-                      <field.AmountField
-                        label={t("fields.amount.label")}
-                        placeholder={t("fields.amount.placeholder")}
-                      />
-                    )}
-                  </form.AppField>
-                </div>
-              );
-            })}
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
-              {people.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleAddSecondaryPerson()}
-                  className="flex items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline"
-                >
-                  <PlusIcon className="size-3.5" />
-                  {t("splits.addPerson")}
-                </button>
+              {isOverAllocated && (
+                <p role="alert" className="text-xs text-destructive">
+                  {t("splits.exceeds", {
+                    value: format.number(Math.abs(primaryAmountCents) / 100, {
+                      style: "currency",
+                      currency: "BRL",
+                    }),
+                  })}
+                </p>
               )}
-              <CreatePersonInline
-                label={t("splits.newPerson")}
-                onCreated={(person) => handleAddSecondaryPerson(person.id)}
-              />
+
+              {secondaries.map((_, i) => {
+                const index = i + 1;
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 rounded-md border border-border/60 p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {t("splits.owesLabel")}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => form.removeFieldValue("splits", index)}>
+                        <TrashIcon />
+                        <span className="sr-only">{t("splits.remove")}</span>
+                      </Button>
+                    </div>
+                    <form.AppField name={`splits[${index}].personId`}>
+                      {(field) => (
+                        <field.SelectField
+                          label={t("fields.person.label")}
+                          placeholder={t("fields.person.placeholder")}
+                          options={people.map((person) => ({
+                            value: person.id,
+                            label: formatPersonName(person.name),
+                          }))}
+                        />
+                      )}
+                    </form.AppField>
+                    <form.AppField name={`splits[${index}].amount`}>
+                      {(field) => (
+                        <field.AmountField
+                          label={t("fields.amount.label")}
+                          placeholder={t("fields.amount.placeholder")}
+                        />
+                      )}
+                    </form.AppField>
+                  </div>
+                );
+              })}
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
+                {people.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleAddSecondaryPerson()}
+                    className="flex items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline">
+                    <PlusIcon className="size-3.5" />
+                    {t("splits.addPerson")}
+                  </button>
+                )}
+                <CreatePersonInline
+                  label={t("splits.newPerson")}
+                  onCreated={(person) => handleAddSecondaryPerson(person.id)}
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       <FormError title={t("toast.error")} description={serverError} />
@@ -588,7 +598,9 @@ export function DebitRecurrenceCreateForm({
   );
 }
 
-function toEditFormValues(row: RecurrenceRow): DebitRecurrenceContentFormValues {
+function toEditFormValues(
+  row: RecurrenceRow,
+): DebitRecurrenceContentFormValues {
   return {
     type: row.amount < 0 ? "expense" : "income",
     amount: Math.abs(row.amount).toString(),
@@ -646,8 +658,12 @@ export function DebitRecurrenceEditForm({
   const tValidation = useTranslations("common.validation");
   const format = useFormatter();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [hasEndDate, setHasEndDate] = useState(() => Boolean(initialValues.endDate));
-  const [isDividing, setIsDividing] = useState(() => initialValues.splits.length > 1);
+  const [hasEndDate, setHasEndDate] = useState(() =>
+    Boolean(initialValues.endDate),
+  );
+  const [isDividing, setIsDividing] = useState(
+    () => initialValues.splits.length > 1,
+  );
 
   const schema = useMemo(
     () =>
@@ -661,7 +677,10 @@ export function DebitRecurrenceEditForm({
   );
 
   const form = useZodForm(schema, {
-    defaultValues: useMemo(() => toEditFormValues(initialValues), [initialValues]),
+    defaultValues: useMemo(
+      () => toEditFormValues(initialValues),
+      [initialValues],
+    ),
     onSubmit: async ({ value }) => {
       setServerError(null);
       try {
@@ -690,7 +709,9 @@ export function DebitRecurrenceEditForm({
     : null;
   const rawParsedAmount =
     evaluatedAmount ?? (amount ? Number(amount.replace(",", ".")) : NaN);
-  const parsedAmount = Number.isFinite(rawParsedAmount) ? rawParsedAmount : null;
+  const parsedAmount = Number.isFinite(rawParsedAmount)
+    ? rawParsedAmount
+    : null;
 
   const totalCents = toCents(parsedAmount);
   const secondaries = splits.slice(1);
@@ -699,7 +720,9 @@ export function DebitRecurrenceEditForm({
   );
   const secondaryCentsSum = secondaryCentsList.reduce((sum, c) => sum + c, 0);
   const primaryAmountCents = totalCents - secondaryCentsSum;
-  const primaryAmountDisplay = centsToAmountString(Math.max(primaryAmountCents, 0));
+  const primaryAmountDisplay = centsToAmountString(
+    Math.max(primaryAmountCents, 0),
+  );
   const isOverAllocated = primaryAmountCents < 0;
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
@@ -788,7 +811,9 @@ export function DebitRecurrenceEditForm({
     const peopleCountBefore = splits.length;
     const shareBefore =
       peopleCountBefore > 0 ? Math.floor(totalCents / peopleCountBefore) : 0;
-    const isPristine = secondaryCentsList.every((cents) => cents === shareBefore);
+    const isPristine = secondaryCentsList.every(
+      (cents) => cents === shareBefore,
+    );
 
     if (isPristine) {
       const peopleCountAfter = peopleCountBefore + 1;
@@ -797,7 +822,10 @@ export function DebitRecurrenceEditForm({
       for (let i = 1; i < splits.length; i++) {
         form.setFieldValue(`splits[${i}].amount`, shareAfterStr);
       }
-      form.pushFieldValue("splits", { personId: newPersonId, amount: shareAfterStr });
+      form.pushFieldValue("splits", {
+        personId: newPersonId,
+        amount: shareAfterStr,
+      });
     } else {
       form.pushFieldValue("splits", { personId: newPersonId, amount: "0,00" });
     }
@@ -814,8 +842,7 @@ export function DebitRecurrenceEditForm({
         e.stopPropagation();
         form.handleSubmit();
       }}
-      className="flex flex-col gap-4"
-    >
+      className="flex flex-col gap-4">
       <form.AppField name="type">
         {(field) => (
           <field.ToggleGroupField
@@ -853,8 +880,9 @@ export function DebitRecurrenceEditForm({
               onChange={(e) => field.handleChange(e.target.value)}
               placeholder={t("fields.description.placeholder")}
             />
-            {field.state.meta.isTouched && field.state.meta.errors.length > 0 ? (
-              <p className="text-xs text-red-600 dark:text-red-400">
+            {field.state.meta.isTouched &&
+            field.state.meta.errors.length > 0 ? (
+              <p role="alert" className="text-xs text-destructive">
                 {field.state.meta.errors.join(", ")}
               </p>
             ) : null}
@@ -868,10 +896,12 @@ export function DebitRecurrenceEditForm({
             <field.PickerRowField
               label={t("fields.account.label")}
               placeholder={t("fields.choosePlaceholder")}
-              options={selectableAccounts(accounts, accountId).map((account) => ({
-                value: account.id,
-                label: account.name,
-              }))}
+              options={selectableAccounts(accounts, accountId).map(
+                (account) => ({
+                  value: account.id,
+                  label: account.name,
+                }),
+              )}
             />
           )}
         </form.AppField>
@@ -925,12 +955,16 @@ export function DebitRecurrenceEditForm({
           )}
         </form.AppField>
       </ItemGroup>
-      <p className="text-xs text-muted-foreground">{t("fields.startDate.editHelp")}</p>
+      <p className="text-xs text-muted-foreground">
+        {t("fields.startDate.editHelp")}
+      </p>
 
       <div className="flex flex-col gap-3 rounded-md border border-border p-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium">{t("fields.endDate.toggleLabel")}</p>
+            <p className="text-sm font-medium">
+              {t("fields.endDate.toggleLabel")}
+            </p>
             <p className="text-xs text-muted-foreground">
               {t("fields.endDate.toggleHelp")}
             </p>
@@ -986,117 +1020,114 @@ export function DebitRecurrenceEditForm({
       </ItemGroup>
 
       {people.length > 1 && (
-      <div className="flex flex-col gap-3 rounded-md border border-border p-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">{t("splits.toggleLabel")}</p>
-            {!personId && (
-              <p className="text-xs text-muted-foreground">
-                {t("splits.needsPersonFirst")}
-              </p>
-            )}
+        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">{t("splits.toggleLabel")}</p>
+              {!personId && (
+                <p className="text-xs text-muted-foreground">
+                  {t("splits.needsPersonFirst")}
+                </p>
+              )}
+            </div>
+            <Switch
+              checked={isDividing}
+              onCheckedChange={setIsDividing}
+              disabled={!personId}
+            />
           </div>
-          <Switch
-            checked={isDividing}
-            onCheckedChange={setIsDividing}
-            disabled={!personId}
-          />
-        </div>
 
-        {isDividing && (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
-                  {t("splits.payerLabel")}
-                </span>
-                <span className="text-sm font-medium">
-                  {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
+          {isDividing && (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-2 rounded-md border border-border/60 p-2">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">
+                    {t("splits.payerLabel")}
+                  </span>
+                  <span className="text-sm font-medium">
+                    {primaryPerson ? formatPersonName(primaryPerson.name) : "—"}
+                  </span>
+                </div>
+                <span className="text-sm font-medium tabular-nums">
+                  {format.number(
+                    sign * Number(primaryAmountDisplay.replace(",", ".")),
+                    { style: "currency", currency: "BRL" },
+                  )}
                 </span>
               </div>
-              <span className="text-sm font-medium tabular-nums">
-                {format.number(
-                  sign * Number(primaryAmountDisplay.replace(",", ".")),
-                  { style: "currency", currency: "BRL" },
-                )}
-              </span>
-            </div>
 
-            {isOverAllocated && (
-              <p className="text-xs text-red-600 dark:text-red-400">
-                {t("splits.exceeds", {
-                  value: format.number(Math.abs(primaryAmountCents) / 100, {
-                    style: "currency",
-                    currency: "BRL",
-                  }),
-                })}
-              </p>
-            )}
-
-            {secondaries.map((_, i) => {
-              const index = i + 1;
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col gap-2 rounded-md border border-border/60 p-2"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
-                      {t("splits.owesLabel")}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => form.removeFieldValue("splits", index)}
-                    >
-                      <TrashIcon />
-                      <span className="sr-only">{t("splits.remove")}</span>
-                    </Button>
-                  </div>
-                  <form.AppField name={`splits[${index}].personId`}>
-                    {(field) => (
-                      <field.SelectField
-                        label={t("fields.person.label")}
-                        placeholder={t("fields.person.placeholder")}
-                        options={people.map((person) => ({
-                          value: person.id,
-                          label: formatPersonName(person.name),
-                        }))}
-                      />
-                    )}
-                  </form.AppField>
-                  <form.AppField name={`splits[${index}].amount`}>
-                    {(field) => (
-                      <field.AmountField
-                        label={t("fields.amount.label")}
-                        placeholder={t("fields.amount.placeholder")}
-                      />
-                    )}
-                  </form.AppField>
-                </div>
-              );
-            })}
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
-              {people.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleAddSecondaryPerson()}
-                  className="flex items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline"
-                >
-                  <PlusIcon className="size-3.5" />
-                  {t("splits.addPerson")}
-                </button>
+              {isOverAllocated && (
+                <p role="alert" className="text-xs text-destructive">
+                  {t("splits.exceeds", {
+                    value: format.number(Math.abs(primaryAmountCents) / 100, {
+                      style: "currency",
+                      currency: "BRL",
+                    }),
+                  })}
+                </p>
               )}
-              <CreatePersonInline
-                label={t("splits.newPerson")}
-                onCreated={(person) => handleAddSecondaryPerson(person.id)}
-              />
+
+              {secondaries.map((_, i) => {
+                const index = i + 1;
+                return (
+                  <div
+                    key={index}
+                    className="flex flex-col gap-2 rounded-md border border-border/60 p-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        {t("splits.owesLabel")}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => form.removeFieldValue("splits", index)}>
+                        <TrashIcon />
+                        <span className="sr-only">{t("splits.remove")}</span>
+                      </Button>
+                    </div>
+                    <form.AppField name={`splits[${index}].personId`}>
+                      {(field) => (
+                        <field.SelectField
+                          label={t("fields.person.label")}
+                          placeholder={t("fields.person.placeholder")}
+                          options={people.map((person) => ({
+                            value: person.id,
+                            label: formatPersonName(person.name),
+                          }))}
+                        />
+                      )}
+                    </form.AppField>
+                    <form.AppField name={`splits[${index}].amount`}>
+                      {(field) => (
+                        <field.AmountField
+                          label={t("fields.amount.label")}
+                          placeholder={t("fields.amount.placeholder")}
+                        />
+                      )}
+                    </form.AppField>
+                  </div>
+                );
+              })}
+
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-1">
+                {people.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleAddSecondaryPerson()}
+                    className="flex items-center gap-1.5 text-left text-xs/relaxed text-primary transition-colors hover:underline">
+                    <PlusIcon className="size-3.5" />
+                    {t("splits.addPerson")}
+                  </button>
+                )}
+                <CreatePersonInline
+                  label={t("splits.newPerson")}
+                  onCreated={(person) => handleAddSecondaryPerson(person.id)}
+                />
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
       )}
 
       <FormError title={t("toast.error")} description={serverError} />

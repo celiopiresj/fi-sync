@@ -1,15 +1,18 @@
 "use client";
 
-import { useTranslations } from "next-intl";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { TrashIcon } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 type DeleteInstallmentScopeDialogProps = {
   open: boolean;
@@ -20,14 +23,6 @@ type DeleteInstallmentScopeDialogProps = {
   onChooseScope: (scope: "this" | "all") => void;
 };
 
-// Shown after deleteTransaction (actions.ts) reports the row being
-// deleted is part of an installment group with nothing paid yet
-// (`needsInstallmentScope`) — lets the user pick between removing just
-// this one installment or the whole purchase, instead of silently
-// leaving the rest of the schedule behind. Same shape as
-// form/edit-installment-scope-dialog.tsx, minus the "future" option
-// (which only makes sense for an edit propagating forward, not a
-// delete).
 export function DeleteInstallmentScopeDialog({
   open,
   onOpenChange,
@@ -39,48 +34,48 @@ export function DeleteInstallmentScopeDialog({
   const t = useTranslations("scrn-transactions");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent closeLabel={t("aria.close")}>
-        <DialogHeader>
-          <DialogTitle>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive">
+            <TrashIcon aria-hidden="true" />
+          </AlertDialogMedia>
+          <AlertDialogTitle>
             {t("dialog.deleteInstallmentScope.title", {
               number: installmentNumber,
               total: installmentCount,
             })}
-          </DialogTitle>
-          <DialogDescription>
+          </AlertDialogTitle>
+          <AlertDialogDescription>
             {t("dialog.deleteInstallmentScope.description", {
               total: installmentCount,
             })}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             variant="outline"
-            className="w-full"
+            className="h-11 w-full sm:h-9"
             disabled={isPending}
-            onClick={() => onChooseScope("this")}
-          >
+            onClick={() => onChooseScope("this")}>
             {t("dialog.deleteInstallmentScope.this")}
           </Button>
           <Button
             variant="destructive"
-            className="w-full"
+            className="h-11 w-full sm:h-9"
             disabled={isPending}
-            onClick={() => onChooseScope("all")}
-          >
-            {t("dialog.deleteInstallmentScope.all", { total: installmentCount })}
+            onClick={() => onChooseScope("all")}>
+            {t("dialog.deleteInstallmentScope.all", {
+              total: installmentCount,
+            })}
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full"
-            disabled={isPending}
-            onClick={() => onOpenChange(false)}
-          >
+          <AlertDialogCancel
+            className="h-11 w-full sm:h-9"
+            disabled={isPending}>
             {t("dialog.deleteInstallmentScope.cancel")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
