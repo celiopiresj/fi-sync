@@ -1,19 +1,25 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
-import { DotsThreeIcon, PencilSimpleIcon, ReceiptIcon } from "@phosphor-icons/react";
-import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
-import { getUsageTier } from "../_lib/card-usage";
+import { Link } from "@/i18n/navigation";
 import { resolveTileHeaderClass } from "@/lib/card-color";
+import { cn } from "@/lib/utils";
+import {
+    DotsThreeIcon,
+    PencilSimpleIcon,
+    ReceiptIcon,
+} from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
+import { useCardMoney } from "../_hooks/use-card-money";
+import { getUsageTier } from "../_lib/card-usage";
 import type { CreditCardAccountRow } from "../_types/types";
 import { CardUsageBar } from "./card-usage-bar";
 
@@ -35,7 +41,7 @@ type CardTileProps = {
 // compact).
 export function CardTile({ account, onEdit, onToggleStatus, onDelete }: CardTileProps) {
   const t = useTranslations("scrn-cards");
-  const format = useFormatter();
+  const money = useCardMoney();
   const tier = getUsageTier(account.usagePercent);
   const isActive = account.status === "ACTIVE";
   const [firstCard, ...restCards] = account.cards;
@@ -44,16 +50,12 @@ export function CardTile({ account, onEdit, onToggleStatus, onDelete }: CardTile
     ? resolveTileHeaderClass(firstCard?.colorStyle ?? null)
     : "bg-muted text-muted-foreground";
 
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
-
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <Card className="@container gap-0 py-0">
       <div className={cn("flex flex-col gap-4 p-4", headerClass)}>
         <div className="flex items-start justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-bold uppercase tracking-wide">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="break-words text-sm font-bold uppercase tracking-wide">
               {account.name}
             </span>
             {!isActive && (
@@ -67,9 +69,9 @@ export function CardTile({ account, onEdit, onToggleStatus, onDelete }: CardTile
               <Button
                 variant="ghost"
                 size="icon-sm"
-                className="shrink-0 text-current hover:bg-white/20 hover:text-current"
+                className="size-11 shrink-0 text-current hover:bg-white/20 hover:text-current md:size-8"
               >
-                <DotsThreeIcon />
+                <DotsThreeIcon aria-hidden="true" />
                 <span className="sr-only">{t("aria.menu")}</span>
               </Button>
             </DropdownMenuTrigger>
@@ -104,7 +106,11 @@ export function CardTile({ account, onEdit, onToggleStatus, onDelete }: CardTile
               {account.usagePercent}%
             </span>
           </div>
-          <CardUsageBar usagePercent={account.usagePercent} tier={tier} />
+          <CardUsageBar
+            usagePercent={account.usagePercent}
+            tier={tier}
+            label={account.name}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-2 text-xs">
@@ -125,26 +131,31 @@ export function CardTile({ account, onEdit, onToggleStatus, onDelete }: CardTile
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs tabular-nums text-muted-foreground">
           {t("cards.cycleSummary", {
             closingDay: account.closingDay ?? 0,
             dueDay: account.dueDay ?? 0,
           })}
         </p>
 
-        <div className="mt-auto flex items-center gap-2 pt-1">
-          <Button variant="outline" size="sm" className="flex-1" onClick={onEdit}>
-            <PencilSimpleIcon />
+        <div className="mt-auto flex flex-col gap-2 pt-1 @xs:flex-row">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 flex-1 sm:h-8"
+            onClick={onEdit}
+          >
+            <PencilSimpleIcon aria-hidden="true" />
             {t("buttons.adjustLimit")}
           </Button>
-          <Button asChild variant="outline" size="sm" className="flex-1">
+          <Button asChild variant="outline" size="sm" className="h-11 flex-1 sm:h-8">
             <Link href="/invoices">
-              <ReceiptIcon />
+              <ReceiptIcon aria-hidden="true" />
               {t("buttons.viewInvoice")}
             </Link>
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

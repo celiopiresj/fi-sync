@@ -1,9 +1,10 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { DotsThreeIcon, PencilSimpleIcon } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { getUsageTier } from "../_lib/card-usage";
+import { useCardMoney } from "../_hooks/use-card-money";
 import type { CreditCardAccountRow } from "../_types/types";
 import { CardChip } from "./card-chip";
 import { CardUsageBar } from "./card-usage-bar";
@@ -36,14 +38,10 @@ type CardTableProps = {
 // once.
 export function CardTable({ accounts, onEdit, onToggleStatus, onDelete }: CardTableProps) {
   const t = useTranslations("scrn-cards");
-  const format = useFormatter();
-
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
+  const money = useCardMoney();
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-border">
+    <Card className="gap-0 overflow-x-auto py-0">
       <Table>
         <TableHeader>
           <TableRow>
@@ -130,6 +128,6 @@ export function CardTable({ accounts, onEdit, onToggleStatus, onDelete }: CardTa
           })}
         </TableBody>
       </Table>
-    </div>
+    </Card>
   );
 }

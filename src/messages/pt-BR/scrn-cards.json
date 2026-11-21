@@ -129,7 +129,12 @@
   "empty": {
     "title": "Nenhum cartão de crédito cadastrado",
     "description": "Crie seu primeiro cartão de crédito para começar a lançar compras",
-    "button": "Novo cartão"
+    "button": "Novo cartão",
+    "filtered": {
+      "title": "Nenhum cartão neste filtro",
+      "description": "Não há cartões com o status selecionado.",
+      "button": "Limpar filtro"
+    }
   },
 
   "menu": {
@@ -143,17 +148,20 @@
     "create": {
       "title": "Novo cartão de crédito",
       "description": "Preencha os dados do cartão e cadastre pelo menos um cartão",
-      "confirm": "Criar"
+      "confirm": "Criar",
+      "submitting": "Criando…"
     },
     "edit": {
       "title": "Editar cartão de crédito",
       "description": "Atualize os dados do cartão",
-      "confirm": "Salvar"
+      "confirm": "Salvar",
+      "submitting": "Salvando…"
     },
     "delete": {
-      "title": "Excluir cartão de crédito?",
+      "title": "Excluir “{name}”?",
       "description": "Essa ação não pode ser desfeita.",
       "confirm": "Excluir",
+      "confirming": "Excluindo…",
       "cancel": "Cancelar"
     }
   },

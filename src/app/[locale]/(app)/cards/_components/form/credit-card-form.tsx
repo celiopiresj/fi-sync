@@ -227,10 +227,14 @@ export function CreditCardForm({
       <form.Field name="cards[0].colorStyle">
         {(field) => (
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium">
+            <span id="primary-card-color-label" className="text-sm font-medium">
               {t("fields.card.color.label")}
-            </label>
-            <ColorPicker value={field.state.value} onChange={(val) => field.handleChange(val)} />
+            </span>
+            <ColorPicker
+              ariaLabelledBy="primary-card-color-label"
+              value={field.state.value}
+              onChange={(val) => field.handleChange(val)}
+            />
           </div>
         )}
       </form.Field>
@@ -244,14 +248,16 @@ export function CreditCardForm({
         const isToggling = togglingCardId === cards[0]?.id;
 
         return (
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="sm"
             onClick={() => handleToggleCard(cards[0].id)}
             disabled={isToggling}
-            className="w-fit text-xs text-primary transition-colors hover:underline disabled:pointer-events-none disabled:opacity-60"
+            className="h-11 w-fit px-0 sm:h-8"
           >
             {t(isActive ? "cards.disable" : "cards.enable")}
-          </button>
+          </Button>
         );
       })()}
 
@@ -325,11 +331,15 @@ export function CreditCardForm({
 
                   <form.Field name={`cards[${index}].colorStyle`}>
                     {(field) => (
-                      <div className="space-y-2 pt-2">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <div className="flex flex-col gap-1.5 pt-1">
+                        <span
+                          id={`card-${index}-color-label`}
+                          className="text-sm font-medium"
+                        >
                           {t("fields.card.color.label")}
-                        </label>
+                        </span>
                         <ColorPicker
+                          ariaLabelledBy={`card-${index}-color-label`}
                           value={field.state.value}
                           onChange={(val) => field.handleChange(val)}
                         />
@@ -342,26 +352,31 @@ export function CreditCardForm({
           </div>
         )}
 
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => form.pushFieldValue("cards", emptyCardRow)}
-          className="flex w-fit items-center gap-1.5 text-xs text-primary transition-colors hover:underline"
+          className="h-11 w-fit px-2 text-primary sm:h-8"
         >
-          <PlusIcon className="size-3.5" />
+          <PlusIcon aria-hidden="true" className="size-4" />
           {t("cards.add")}
-        </button>
+        </Button>
       </div>
 
       <FormError title={t("toast.error")} description={serverError} />
 
-      <form.AppForm>
-        <form.SubmitButton
-          label={t(isEditing ? "dialog.edit.confirm" : "dialog.create.confirm")}
-          submittingLabel={t(
-            isEditing ? "dialog.edit.confirm" : "dialog.create.confirm",
-          )}
-        />
-      </form.AppForm>
+      <div className="sticky bottom-0 -mx-4 border-t border-border/60 bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <form.AppForm>
+          <form.SubmitButton
+            className="w-full"
+            label={t(isEditing ? "dialog.edit.confirm" : "dialog.create.confirm")}
+            submittingLabel={t(
+              isEditing ? "dialog.edit.submitting" : "dialog.create.submitting",
+            )}
+          />
+        </form.AppForm>
+      </div>
     </form>
   );
 }

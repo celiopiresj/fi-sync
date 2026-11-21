@@ -35,6 +35,13 @@ export function InvoiceStatusBadge({ status, label }: InvoiceStatusBadgeProps) {
       </Badge>
     );
   }
-  const variant = status === "PAID" ? "default" : status === "CLOSED" ? "secondary" : "outline";
+  if (status === "PAID") {
+    return (
+      <Badge variant="outline" className={cn("border-positive/30 bg-positive/10 text-positive")}>
+        {label}
+      </Badge>
+    );
+  }
+  const variant = status === "CLOSED" ? "secondary" : "outline";
   return <Badge variant={variant}>{label}</Badge>;
 }

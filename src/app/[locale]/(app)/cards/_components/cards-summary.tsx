@@ -1,8 +1,10 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { getUsageTier } from "../_lib/card-usage";
+import { useCardMoney } from "../_hooks/use-card-money";
 import type { CardsSummary as CardsSummaryData } from "../_types/types";
 import { CardUsageBar } from "./card-usage-bar";
 
@@ -12,68 +14,67 @@ type CardsSummaryProps = {
 
 export function CardsSummary({ summary }: CardsSummaryProps) {
   const t = useTranslations("scrn-cards");
-  const format = useFormatter();
-
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
+  const money = useCardMoney();
 
   return (
-    <div className="flex w-full flex-col gap-4 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
-      <span className="font-heading text-sm font-semibold text-foreground">
-        {t("sections.summary.title")}
-      </span>
+    <Card className="@container">
+      <CardContent className="flex flex-col gap-4">
+        <span className="font-heading text-sm font-semibold text-foreground">
+          {t("sections.summary.title")}
+        </span>
 
-      {/* flex, not grid — a grid's 1fr columns stretch to fill this now
-          full-width container, spreading the three stat blocks apart on
-          a wide screen; flex sizes each block to its own content and
-          keeps the whole group anchored to the left instead. Waits for
-          `lg` (1024px), not `sm`, before going horizontal — three
-          currency values need more room than transactions'/recurrences'
-          own summary-cards.tsx multi-panel row does at that same
-          breakpoint, so going horizontal any earlier would cramp them. */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-10">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {t("sections.summary.totalLimit")}
-          </span>
-          <span className="font-heading text-xl font-bold tracking-tight tabular-nums">
-            {money(summary.totalLimit)}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {t("sections.summary.totalSpent")}
-          </span>
-          <span className="font-heading text-xl font-bold tracking-tight tabular-nums">
-            {money(summary.totalSpent)}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {t("sections.summary.totalAvailable")}
-          </span>
-          <span
-            className={cn(
-              "text-lg font-medium tabular-nums",
-              summary.totalAvailable < 0 && "text-negative",
-            )}
-          >
-            {money(summary.totalAvailable)}
-          </span>
-        </div>
-      </div>
+        {/* Verdict-First: available limit leads as the headline figure,
+            paired with total spent and total limit beside it on wider
+            containers. */}
+        <div className="flex flex-col gap-4 @2xl:flex-row @2xl:items-end @2xl:gap-10">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t("sections.summary.totalAvailable")}
+            </span>
+            <span
+              className={cn(
+                "font-heading text-3xl font-bold tracking-tight tabular-nums",
+                summary.totalAvailable < 0 ? "text-negative" : "text-foreground",
+              )}
+            >
+              {money(summary.totalAvailable)}
+            </span>
+          </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{t("sections.summary.overallUsage")}</span>
-          <span className="tabular-nums">{summary.overallUsagePercent}%</span>
+          <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-3 @2xl:flex @2xl:gap-8 @2xl:border-t-0 @2xl:border-l @2xl:pt-0 @2xl:pl-8">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground">
+                {t("sections.summary.totalSpent")}
+              </span>
+              <span className="font-heading text-lg font-semibold tracking-tight tabular-nums">
+                {money(summary.totalSpent)}
+              </span>
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs text-muted-foreground">
+                {t("sections.summary.totalLimit")}
+              </span>
+              <span className="font-heading text-lg font-semibold tracking-tight tabular-nums">
+                {money(summary.totalLimit)}
+              </span>
+            </div>
+          </div>
         </div>
-        <CardUsageBar
-          usagePercent={summary.overallUsagePercent}
-          tier={getUsageTier(summary.overallUsagePercent)}
-        />
-      </div>
-    </div>
+
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{t("sections.summary.overallUsage")}</span>
+            <span className="font-medium tabular-nums">
+              {summary.overallUsagePercent}%
+            </span>
+          </div>
+          <CardUsageBar
+            usagePercent={summary.overallUsagePercent}
+            tier={getUsageTier(summary.overallUsagePercent)}
+            label={t("sections.summary.overallUsage")}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }

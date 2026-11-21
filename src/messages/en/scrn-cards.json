@@ -129,7 +129,12 @@
   "empty": {
     "title": "No credit cards registered",
     "description": "Create your first credit card to start entering purchases",
-    "button": "New card"
+    "button": "New card",
+    "filtered": {
+      "title": "No cards in this filter",
+      "description": "There are no cards with the selected status.",
+      "button": "Clear filter"
+    }
   },
 
   "menu": {
@@ -143,17 +148,20 @@
     "create": {
       "title": "New credit card",
       "description": "Fill in the card's details and register at least one card",
-      "confirm": "Create"
+      "confirm": "Create",
+      "submitting": "Creating…"
     },
     "edit": {
       "title": "Edit credit card",
       "description": "Update the card's details",
-      "confirm": "Save"
+      "confirm": "Save",
+      "submitting": "Saving…"
     },
     "delete": {
-      "title": "Delete credit card?",
+      "title": "Delete “{name}”?",
       "description": "This action cannot be undone.",
       "confirm": "Delete",
+      "confirming": "Deleting…",
       "cancel": "Cancel"
     }
   },

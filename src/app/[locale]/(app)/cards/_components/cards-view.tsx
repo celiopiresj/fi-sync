@@ -173,6 +173,7 @@ export function CardsView({ initialAccounts }: CardsViewProps) {
         }}
         onConfirm={handleDeleteConfirm}
         isPending={isDeleting}
+        cardName={deletingAccount?.name ?? ""}
       />
     </div>
   );

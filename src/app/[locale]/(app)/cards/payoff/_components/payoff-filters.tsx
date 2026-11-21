@@ -55,7 +55,7 @@ export function PayoffFilters({
           value={accountId ?? ALL_VALUE}
           onValueChange={(value) => onAccountChange(value === ALL_VALUE ? undefined : value)}
         >
-          <SelectTrigger className="h-8 w-full sm:w-55" aria-label={t("filters.card")}>
+          <SelectTrigger className="h-11 w-full sm:h-9 sm:w-55" aria-label={t("filters.card")}>
             <SelectValue placeholder={t("filters.card")} />
           </SelectTrigger>
           <SelectContent>
@@ -78,9 +78,10 @@ export function PayoffFilters({
             if (value) onScopeChange(value as PayoffScope);
           }}
           aria-label={t("filters.scope.label")}
+          className="w-full sm:w-auto"
         >
           {payoffScopeValues.map((value) => (
-            <ToggleGroupItem key={value} value={value}>
+            <ToggleGroupItem key={value} value={value} className="h-9 grow sm:h-7 sm:grow-0">
               {t(`filters.scope.${value}`)}
             </ToggleGroupItem>
           ))}

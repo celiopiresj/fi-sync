@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { useTranslations, useFormatter } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useRouter, Link } from "@/i18n/navigation";
 import { subDays } from "date-fns";
@@ -15,12 +14,15 @@ import {
   ReceiptIcon,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
+  EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { SectionCard } from "@/components/screen/section-card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { SearchInput } from "@/components/screen/search-input";
 import { DataTable } from "@/components/data-table/data-table";
@@ -31,8 +33,12 @@ import { cn } from "@/lib/utils";
 import type { Column, Row, SortingState } from "@tanstack/react-table";
 import { EditPaymentDateDialog } from "./edit-payment-date-dialog";
 import { PayInvoiceDialog } from "./pay-invoice-dialog";
-import { InvoiceTransactionFiltersSheet } from "./invoice-transaction-filters-sheet";
+import {
+  InvoiceTransactionFiltersSheet,
+  MobileInvoiceTransactionFiltersTrigger,
+} from "./invoice-transaction-filters-sheet";
 import { useSortGroupingMode } from "../_hooks/use-sort-grouping-mode";
+import { useInvoiceDetailInvalidation } from "../_hooks/use-invoice-detail-invalidation";
 import {
   InvoiceStatusBadge,
   invoiceStatusMessageKey,
@@ -119,7 +125,8 @@ export function InvoiceDetailView({
   const tCommon = useTranslations("common");
   const format = useFormatter();
   const router = useRouter();
-  const queryClient = useQueryClient();
+  const { invalidateAfterPayment, invalidateAfterTransactionMutation } =
+    useInvoiceDetailInvalidation();
   const [payOpen, setPayOpen] = useState(false);
   // Which payment's date is being edited (its id), or null when the
   // dialog is closed — see EditPaymentDateDialog's own comment on why
@@ -145,6 +152,7 @@ export function InvoiceDetailView({
   const [searchText, setSearchText] = useState("");
   const [selectedCardId, setSelectedCardId] = useState("");
   const [filters, setFilters] = useState<InvoiceTransactionFilters>({});
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [sortGroupingMode, setSortGroupingMode] = useSortGroupingMode();
 
@@ -361,13 +369,12 @@ export function InvoiceDetailView({
         status: "COMPLETED",
       });
       if (!result.error) {
-        queryClient.invalidateQueries({ queryKey: ["invoices"] });
-        queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+        invalidateAfterTransactionMutation();
         toast.success(tTransactions("toast.markedCompleted"));
         router.refresh();
       }
     },
-    [queryClient, router, tTransactions],
+    [invalidateAfterTransactionMutation, router, tTransactions],
   );
 
   const columns = useMemo(
@@ -435,8 +442,7 @@ export function InvoiceDetailView({
 
     if (!result.error) {
       toast.success(t(isEditing ? "toast.transactionUpdated" : "toast.transactionCreated"));
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+      invalidateAfterTransactionMutation();
       // The edited date/account can move this purchase into a different
       // invoice entirely — re-running the Server Component is what makes
       // it disappear from this page if that just happened.
@@ -481,8 +487,7 @@ export function InvoiceDetailView({
     setDeleteInstallmentScope(null);
     setConfirmPaidInvoiceOpen(false);
     setPendingPaidInvoiceScope(undefined);
-    queryClient.invalidateQueries({ queryKey: ["invoices"] });
-    queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+    invalidateAfterTransactionMutation();
     toast.success(tTransactions("toast.deleted"));
     router.refresh();
   }
@@ -491,11 +496,6 @@ export function InvoiceDetailView({
     await performDelete();
   }
 
-  // Same three bulk actions as transactions-view.tsx's own (see its
-  // comment on the pattern) — invalidates the same two query keys
-  // handleSubmitTransaction/handleDeleteConfirm above already use, and
-  // clears the selection so the toolbar closes. Categorize/status are
-  // useCallback'd because `tableSelection` below closes over both.
   const handleBulkCategorize = useCallback(
     async (categoryId: string | null) => {
       setIsBulkActionPending(true);
@@ -504,14 +504,13 @@ export function InvoiceDetailView({
       });
       setIsBulkActionPending(false);
       if (!result.error) {
-        queryClient.invalidateQueries({ queryKey: ["invoices"] });
-        queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+        invalidateAfterTransactionMutation();
         toast.success(tTransactions("toast.bulkCategorized", { count: result.count }));
         setSelectedIds(new Set());
         router.refresh();
       }
     },
-    [selectedIds, queryClient, router, tTransactions],
+    [selectedIds, invalidateAfterTransactionMutation, router, tTransactions],
   );
 
   const handleBulkStatusChange = useCallback(
@@ -520,14 +519,13 @@ export function InvoiceDetailView({
       const result = await updateTransactionsBulk([...selectedIds], { status });
       setIsBulkActionPending(false);
       if (!result.error) {
-        queryClient.invalidateQueries({ queryKey: ["invoices"] });
-        queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+        invalidateAfterTransactionMutation();
         toast.success(tTransactions("toast.bulkStatusChanged", { count: result.count }));
         setSelectedIds(new Set());
         router.refresh();
       }
     },
-    [selectedIds, queryClient, router, tTransactions],
+    [selectedIds, invalidateAfterTransactionMutation, router, tTransactions],
   );
 
   async function handleBulkDeleteConfirm(confirmPaidInvoice?: boolean) {
@@ -545,8 +543,7 @@ export function InvoiceDetailView({
       return;
     }
     setConfirmPaidInvoiceBulkOpen(false);
-    queryClient.invalidateQueries({ queryKey: ["invoices"] });
-    queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
+    invalidateAfterTransactionMutation();
     toast.success(tTransactions("toast.bulkDeleted", { count: result.count }));
     setSelectedIds(new Set());
     router.refresh();
@@ -556,33 +553,13 @@ export function InvoiceDetailView({
     return format.number(value, { style: "currency", currency: "BRL" });
   }
 
-  // No dedicated hook for this one-off invalidation (unlike
-  // useInvoicesData's own `invalidate`) — this page has no list query of
-  // its own to own the queryClient for; it just needs to tell the
-  // /invoices list and /cards' available-limit figure to refetch, plus
-  // re-render its own Server Component (router.refresh()) so
-  // `invoice.displayStatus`/`paidAmount` reflect the just-saved PAID
-  // state without a full navigation.
   function handlePaid() {
-    queryClient.invalidateQueries({ queryKey: ["invoices"] });
-    queryClient.invalidateQueries({ queryKey: ["credit-card-accounts"] });
-    // Paying an invoice now creates an expense Transaction on the chosen
-    // account (see payInvoice in actions.ts), which changes that
-    // account's balance on /accounts.
-    queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    // Who still owes what on this invoice just changed — refetch before
-    // the dialog (or its own next open) shows stale amounts.
-    queryClient.invalidateQueries({ queryKey: ["invoice-people-owed", invoice.id] });
+    invalidateAfterPayment();
     router.refresh();
   }
 
-  // Same reasoning as handlePaid above, minus invoice-people-owed/
-  // credit-card-accounts — moving a payment's date never changes how
-  // much it covers or who, only which account balance/month it lands
-  // in.
   function handlePaymentDateUpdated() {
-    queryClient.invalidateQueries({ queryKey: ["invoices"] });
-    queryClient.invalidateQueries({ queryKey: ["accounts"] });
+    invalidateAfterPayment();
     router.refresh();
   }
 
@@ -651,182 +628,201 @@ export function InvoiceDetailView({
       <div className="flex items-center justify-between gap-3">
         <Link
           href="/invoices"
-          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex min-h-11 w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground sm:min-h-0"
         >
-          <ArrowLeftIcon className="size-4" />
+          <ArrowLeftIcon aria-hidden="true" className="size-4" />
           {t("detail.back")}
         </Link>
 
         {(invoice.previousInvoiceId || invoice.nextInvoiceId) && (
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon-sm" asChild disabled={!invoice.previousInvoiceId}>
-              {invoice.previousInvoiceId ? (
+            {invoice.previousInvoiceId ? (
+              <Button variant="outline" size="icon-sm" className="size-11 md:size-8" asChild>
                 <Link
                   href={`/invoices/${invoice.previousInvoiceId}`}
                   aria-label={t("detail.nav.previous")}
                 >
-                  <CaretLeftIcon className="size-4" />
+                  <CaretLeftIcon aria-hidden="true" className="size-4" />
                 </Link>
-              ) : (
-                <span aria-hidden>
-                  <CaretLeftIcon className="size-4" />
-                </span>
-              )}
-            </Button>
-            <Button variant="outline" size="icon-sm" asChild disabled={!invoice.nextInvoiceId}>
-              {invoice.nextInvoiceId ? (
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="size-11 md:size-8"
+                disabled
+                aria-label={t("detail.nav.previous")}
+              >
+                <CaretLeftIcon aria-hidden="true" className="size-4" />
+              </Button>
+            )}
+            {invoice.nextInvoiceId ? (
+              <Button variant="outline" size="icon-sm" className="size-11 md:size-8" asChild>
                 <Link
                   href={`/invoices/${invoice.nextInvoiceId}`}
                   aria-label={t("detail.nav.next")}
                 >
-                  <CaretRightIcon className="size-4" />
+                  <CaretRightIcon aria-hidden="true" className="size-4" />
                 </Link>
-              ) : (
-                <span aria-hidden>
-                  <CaretRightIcon className="size-4" />
-                </span>
-              )}
-            </Button>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="size-11 md:size-8"
+                disabled
+                aria-label={t("detail.nav.next")}
+              >
+                <CaretRightIcon aria-hidden="true" className="size-4" />
+              </Button>
+            )}
           </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card shadow-xs p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-1">
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">{invoice.account.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              {t("detail.summary.period", {
-                closing: format.dateTime(invoice.closingDate, DATE_ONLY_FORMAT_OPTIONS),
-                due: format.dateTime(invoice.dueDate, DATE_ONLY_FORMAT_OPTIONS),
-              })}
-            </p>
-          </div>
-          <InvoiceStatusBadge
-            status={invoice.displayStatus}
-            label={t(`status.${invoiceStatusMessageKey(invoice.displayStatus)}`)}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
-            {t("detail.summary.total")}
-          </span>
-          <span className="font-heading text-3xl font-bold tracking-tight tabular-nums text-negative">
-            {money(invoice.total)}
-          </span>
-        </div>
-
-        {(invoice.paidAmount || invoice.creditApplied > 0) && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            {invoice.paidAmount ? (
-              <span>
-                {t("detail.summary.paidSoFar")}{" "}
-                <span className="font-medium text-positive">
-                  {money(invoice.paidAmount)}
-                </span>
-              </span>
-            ) : null}
-            {invoice.creditApplied > 0 ? (
-              <span>
-                {t("detail.summary.creditApplied")}{" "}
-                <span className="font-medium text-positive">
-                  {money(invoice.creditApplied)}
-                </span>
-              </span>
-            ) : null}
-            {invoice.displayStatus !== "PAID" ? (
-              <span>
-                {t("detail.summary.remainingDue")}{" "}
-                <span className="font-medium text-negative">
-                  {money(invoice.remainingDue)}
-                </span>
-              </span>
-            ) : null}
-          </div>
-        )}
-
-        {invoice.displayStatus !== "PAID" && (
-          <Button onClick={() => setPayOpen(true)} className="w-fit">
-            {t("detail.markPaid.button")}
-          </Button>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.payments.title")}</h2>
-
-        {invoice.payments.length === 0 ? (
-          <p className="rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
-            {t("detail.payments.empty")}
-          </p>
-        ) : (
-          <div className="rounded-md border border-border">
-            <div className="divide-y divide-border">
-              {invoice.payments.map((payment) => {
-                const accountName =
-                  accounts.find((account) => account.id === payment.accountId)?.name ?? "";
-                return (
-                  <div
-                    key={payment.id}
-                    className="flex items-center justify-between gap-3 px-3 py-2.5"
-                  >
-                    <span className="text-sm text-muted-foreground">
-                      {t("detail.payments.row", {
-                        date: format.dateTime(payment.paidAt, DATE_ONLY_FORMAT_OPTIONS),
-                        account: accountName,
-                      })}
-                    </span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <span className="text-sm font-medium tabular-nums text-negative">
-                        {money(payment.amount)}
-                      </span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => setEditingPaymentId(payment.id)}
-                      >
-                        <PencilSimpleIcon />
-                        <span className="sr-only">
-                          {t("detail.payments.editDate.title")}
-                        </span>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+      <Card>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-col gap-1">
+              <h1 className="font-heading text-2xl font-bold tracking-tight break-words text-foreground">
+                {invoice.account.name}
+              </h1>
+              <p className="text-sm tabular-nums text-muted-foreground">
+                {t("detail.summary.period", {
+                  closing: format.dateTime(invoice.closingDate, DATE_ONLY_FORMAT_OPTIONS),
+                  due: format.dateTime(invoice.dueDate, DATE_ONLY_FORMAT_OPTIONS),
+                })}
+              </p>
             </div>
+            <InvoiceStatusBadge
+              status={invoice.displayStatus}
+              label={t(`status.${invoiceStatusMessageKey(invoice.displayStatus)}`)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground">
+              {t("detail.summary.total")}
+            </span>
+            <span
+              className={cn(
+                "font-heading text-3xl font-bold tracking-tight tabular-nums",
+                invoice.displayStatus === "PAID"
+                  ? "text-positive"
+                  : invoice.displayStatus === "OPEN"
+                    ? "text-foreground"
+                    : "text-negative",
+              )}
+            >
+              {money(invoice.total)}
+            </span>
+          </div>
+
+          {(invoice.paidAmount || invoice.creditApplied > 0) && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {invoice.paidAmount ? (
+                <span>
+                  {t("detail.summary.paidSoFar")}{" "}
+                  <span className="font-medium tabular-nums text-positive">
+                    {money(invoice.paidAmount)}
+                  </span>
+                </span>
+              ) : null}
+              {invoice.creditApplied > 0 ? (
+                <span>
+                  {t("detail.summary.creditApplied")}{" "}
+                  <span className="font-medium tabular-nums text-positive">
+                    {money(invoice.creditApplied)}
+                  </span>
+                </span>
+              ) : null}
+              {invoice.displayStatus !== "PAID" ? (
+                <span>
+                  {t("detail.summary.remainingDue")}{" "}
+                  <span className="font-medium tabular-nums text-negative">
+                    {money(invoice.remainingDue)}
+                  </span>
+                </span>
+              ) : null}
+            </div>
+          )}
+
+          {invoice.displayStatus !== "PAID" && (
+            <Button onClick={() => setPayOpen(true)} className="h-11 w-fit sm:h-9">
+              {t("detail.markPaid.button")}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      <SectionCard title={t("detail.payments.title")} contentClassName="gap-0">
+        {invoice.payments.length === 0 ? (
+          <Empty className="border-none py-6">
+            <EmptyHeader>
+              <EmptyDescription>{t("detail.payments.empty")}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="-mx-5 divide-y divide-border/60">
+            {invoice.payments.map((payment) => {
+              const accountName =
+                accounts.find((account) => account.id === payment.accountId)?.name ?? "";
+              return (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between gap-3 px-5 py-2.5"
+                >
+                  <span className="min-w-0 break-words text-sm text-muted-foreground">
+                    {t("detail.payments.row", {
+                      date: format.dateTime(payment.paidAt, DATE_ONLY_FORMAT_OPTIONS),
+                      account: accountName,
+                    })}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <span className="text-sm font-medium tabular-nums text-positive">
+                      {money(payment.amount)}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="size-11 md:size-8"
+                      onClick={() => setEditingPaymentId(payment.id)}
+                    >
+                      <PencilSimpleIcon aria-hidden="true" />
+                      <span className="sr-only">
+                        {t("detail.payments.editDate.title")}
+                      </span>
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
-      </div>
+      </SectionCard>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="font-heading text-sm font-semibold text-foreground">{t("detail.transactions.title")}</h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDialogState({ mode: "create" })}
-          >
-            <PlusIcon />
-            {t("detail.transactions.add")}
-          </Button>
+          <div className="flex items-center gap-2">
+            <MobileInvoiceTransactionFiltersTrigger
+              filters={filters}
+              onClick={() => setFiltersOpen(true)}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="hidden md:inline-flex"
+              onClick={() => setDialogState({ mode: "create" })}
+            >
+              <PlusIcon aria-hidden="true" />
+              {t("detail.transactions.add")}
+            </Button>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <SearchInput
-            value={searchText}
-            onChange={setSearchText}
-            placeholder={t("detail.transactions.searchPlaceholder")}
-            clearLabel={t("detail.transactions.searchClear")}
-          />
-          <InvoiceTransactionFiltersSheet
-            filters={filters}
-            onChange={setFilters}
-            categories={categories}
-            people={people}
-          />
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
           {cards.length > 1 && (
             <ToggleGroup
               type="single"
@@ -835,15 +831,35 @@ export function InvoiceDetailView({
               onValueChange={(value) => {
                 if (value) setSelectedCardId(value);
               }}
+              className="w-full sm:order-3 sm:w-auto"
             >
               {cards.map((card) => (
-                <ToggleGroupItem key={card.id} value={card.id}>
+                <ToggleGroupItem
+                  key={card.id}
+                  value={card.id}
+                  className="h-9 grow sm:h-7 sm:grow-0"
+                >
                   {card.name}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
           )}
-          <div className="hidden items-center gap-2 min-[700px]:ml-auto min-[700px]:flex">
+          <SearchInput
+            value={searchText}
+            onChange={setSearchText}
+            placeholder={t("detail.transactions.searchPlaceholder")}
+            clearLabel={t("detail.transactions.searchClear")}
+            className="w-full sm:order-1 sm:w-72 lg:w-85"
+          />
+          <InvoiceTransactionFiltersSheet
+            filters={filters}
+            onChange={setFilters}
+            categories={categories}
+            people={people}
+            open={filtersOpen}
+            onOpenChange={setFiltersOpen}
+          />
+          <div className="hidden items-center gap-2 sm:order-4 min-[700px]:ml-auto min-[700px]:flex">
             <span className="text-xs text-muted-foreground">
               {t("detail.transactions.sortGrouping.label")}
             </span>
@@ -917,6 +933,7 @@ export function InvoiceDetailView({
       </div>
 
       <PayInvoiceDialog
+        key={`${invoice.id}-${invoice.remainingDue}`}
         open={payOpen}
         onOpenChange={setPayOpen}
         invoiceId={invoice.id}

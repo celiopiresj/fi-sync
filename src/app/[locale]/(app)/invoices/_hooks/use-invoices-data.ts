@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listInvoices, type InvoiceFilters } from "../actions";
+import { useCallback, useMemo } from "react";
 import type { InvoiceRow } from "../_types/types";
+import { listInvoices, type InvoiceFilters } from "../actions";
 
 // Owns the `["invoices", filters]` query and its invalidation, so
 // InvoicesView stays declarative (AGENTS.md) — same split as
@@ -19,7 +19,12 @@ export function useInvoicesData(
   const queryClient = useQueryClient();
 
   const queryKey = useMemo(() => ["invoices", filters] as const, [filters]);
-  const { data: invoices = initialInvoices } = useQuery({
+  const {
+    data: invoices = initialInvoices,
+    isFetching,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey,
     queryFn: () => listInvoices(filters),
     initialData: useInitialData ? initialInvoices : undefined,
@@ -43,5 +48,5 @@ export function useInvoicesData(
     queryClient.invalidateQueries({ queryKey: ["invoice-people-owed"] });
   }, [queryClient]);
 
-  return { invoices, invalidate };
+  return { invoices, isFetching, isError, refetch, invalidate };
 }

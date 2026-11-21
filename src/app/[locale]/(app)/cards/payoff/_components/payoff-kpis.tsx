@@ -30,7 +30,7 @@ export function PayoffKpis({ payoff, singlePersonName, selectedCount }: PayoffKp
               : t("kpis.total")
         }
         value={formatMoney(format, payoff.total)}
-        tone="negative"
+        tone={payoff.total > 0 ? "negative" : "default"}
         subtitle={
           payoff.paidTotal > 0
             ? t("kpis.totalLegendWithPaid", {

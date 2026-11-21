@@ -23,18 +23,33 @@ export function PayoffMonthsCard({ months, className }: PayoffMonthsCardProps) {
   const format = useFormatter();
 
   return (
-    <Card className={className}>
+    <Card className={className ? `@container ${className}` : "@container"}>
       <CardHeader>
         <CardTitle>{t("months.title")}</CardTitle>
         <CardDescription>{t("months.description")}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-2.5">
+      <CardContent className="flex flex-col gap-3">
         {months.map((month) => (
-          <div key={month.monthKey} className="flex items-center gap-3">
-            <span className="w-16 shrink-0 text-xs font-medium">
-              {formatMonthShort(format, month.monthKey)}
-            </span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+          <div
+            key={month.monthKey}
+            className="flex flex-col gap-1.5 @md:flex-row @md:items-center @md:gap-3"
+          >
+            <div className="flex items-center justify-between gap-2 @md:contents">
+              <span className="w-16 shrink-0 text-xs font-medium">
+                {formatMonthShort(format, month.monthKey)}
+              </span>
+              <div className="flex shrink-0 items-center justify-end gap-2 text-right @md:order-3">
+                {month.paid > 0 && (
+                  <span className="text-xs font-medium text-positive tabular-nums">
+                    {t("months.paid", { amount: formatMoney(format, month.paid) })}
+                  </span>
+                )}
+                <span className="w-24 text-xs font-semibold tabular-nums">
+                  {formatMoney(format, month.total)}
+                </span>
+              </div>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted @md:order-2 @md:flex-1">
               {month.total > 0 ? (
                 <div
                   className="h-full rounded-full bg-negative/70"
@@ -43,16 +58,6 @@ export function PayoffMonthsCard({ months, className }: PayoffMonthsCardProps) {
               ) : month.paid > 0 ? (
                 <div className="h-full w-full rounded-full bg-positive/40" />
               ) : null}
-            </div>
-            <div className="flex shrink-0 items-center justify-end gap-2 text-right">
-              {month.paid > 0 && (
-                <span className="text-xs font-medium text-positive tabular-nums">
-                  {t("months.paid", { amount: formatMoney(format, month.paid) })}
-                </span>
-              )}
-              <span className="w-24 text-xs font-semibold tabular-nums">
-                {formatMoney(format, month.total)}
-              </span>
             </div>
           </div>
         ))}

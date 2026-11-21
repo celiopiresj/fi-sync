@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
-import { Funnel } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -14,18 +18,17 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Funnel } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 // Deliberate cross-route dependency, same exception as the rest of this
 // route (see invoice-detail-view.tsx's own comment) — CategoryOption/
 // PersonOption already carry exactly the shape this needs.
-import type { CategoryOption, PersonOption } from "../../../transactions/_types/types";
+import type {
+  CategoryOption,
+  PersonOption,
+} from "../../../transactions/_types/types";
 import type { InvoiceTransactionFilters } from "../_types/types";
 
 type InvoiceTransactionFiltersSheetProps = {
@@ -33,6 +36,8 @@ type InvoiceTransactionFiltersSheetProps = {
   onChange: (filters: InvoiceTransactionFilters) => void;
   categories: CategoryOption[];
   people: PersonOption[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 const ALL_VALUE = "__all__";
@@ -50,17 +55,53 @@ function countActiveFilters(value: InvoiceTransactionFilters) {
   return count;
 }
 
+export function MobileInvoiceTransactionFiltersTrigger({
+  filters,
+  onClick,
+}: {
+  filters: InvoiceTransactionFilters;
+  onClick: () => void;
+}) {
+  const t = useTranslations("scrn-invoices");
+  const activeCount = countActiveFilters(filters);
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={onClick}
+      aria-label={t("detail.transactions.filters.title")}
+      className="relative size-11 rounded-xl border-border/80 bg-card shadow-xs sm:hidden">
+      <Funnel aria-hidden="true" className="size-5" />
+      {activeCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold tabular-nums text-primary-foreground">
+          {activeCount}
+        </span>
+      )}
+    </Button>
+  );
+}
+
 export function InvoiceTransactionFiltersSheet({
   filters,
   onChange,
   categories,
   people,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: InvoiceTransactionFiltersSheetProps) {
   const t = useTranslations("scrn-invoices");
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   // Same "edit on a local draft, only apply on submit" behavior as
   // /transactions' own FiltersSheet.
   const [draft, setDraft] = useState<InvoiceTransactionFilters>(filters);
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setDraft(filters);
+  }
 
   const activeCount = countActiveFilters(filters);
   const hasDraftFilters = countActiveFilters(draft) > 0;
@@ -80,20 +121,26 @@ export function InvoiceTransactionFiltersSheet({
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="outline" className="h-8 gap-2">
-          <Funnel />
+        <Button
+          variant="outline"
+          className="hidden h-9 gap-2 sm:order-2 sm:inline-flex">
+          <Funnel aria-hidden="true" />
           {t("detail.transactions.filters.title")}
           {activeCount > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+            <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs tabular-nums text-primary-foreground">
               {activeCount}
             </span>
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent className="flex flex-col data-[side=right]:sm:max-w-md overflow-y-auto">
+      <SheetContent
+        closeLabel={t("aria.close")}
+        className="flex flex-col overflow-y-auto data-[side=right]:sm:max-w-md">
         <SheetHeader>
           <SheetTitle>{t("detail.transactions.filters.title")}</SheetTitle>
-          <SheetDescription>{t("detail.transactions.filters.description")}</SheetDescription>
+          <SheetDescription>
+            {t("detail.transactions.filters.description")}
+          </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleApply} className="flex flex-1 flex-col">
@@ -109,10 +156,11 @@ export function InvoiceTransactionFiltersSheet({
                     ...draft,
                     categoryId: value === ALL_VALUE ? undefined : value,
                   })
-                }
-              >
+                }>
                 <SelectTrigger id="invoice-filter-category" className="w-full">
-                  <SelectValue placeholder={t("detail.transactions.filters.category")} />
+                  <SelectValue
+                    placeholder={t("detail.transactions.filters.category")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_VALUE}>
@@ -138,10 +186,11 @@ export function InvoiceTransactionFiltersSheet({
                     ...draft,
                     personId: value === ALL_VALUE ? undefined : value,
                   })
-                }
-              >
+                }>
                 <SelectTrigger id="invoice-filter-person" className="w-full">
-                  <SelectValue placeholder={t("detail.transactions.filters.person")} />
+                  <SelectValue
+                    placeholder={t("detail.transactions.filters.person")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL_VALUE}>
@@ -170,8 +219,7 @@ export function InvoiceTransactionFiltersSheet({
                     });
                   }
                 }}
-                className="w-full justify-start"
-              >
+                className="w-full justify-start">
                 <ToggleGroupItem value="all" className="flex-1">
                   {t("detail.transactions.filters.allTypes")}
                 </ToggleGroupItem>
@@ -191,8 +239,7 @@ export function InvoiceTransactionFiltersSheet({
               variant="outline"
               className="flex-1"
               onClick={() => setDraft({})}
-              disabled={!hasDraftFilters}
-            >
+              disabled={!hasDraftFilters}>
               {t("detail.transactions.filters.clear")}
             </Button>
             <Button type="submit" className="flex-1" disabled={!hasChanges}>

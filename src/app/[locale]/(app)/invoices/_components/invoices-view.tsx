@@ -51,6 +51,10 @@ import {
 import { useFormatter, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { PayInvoiceDialog } from "../[id]/_components/pay-invoice-dialog";
+import {
+  InvoiceFiltersDrawer,
+  MobileInvoiceFiltersTrigger,
+} from "./invoice-filters-drawer";
 import { useInvoicesData } from "../_hooks/use-invoices-data";
 import { getAccountColorClasses } from "../_lib/account-color";
 import { getDueHint } from "../_lib/due-hint";
@@ -100,6 +104,7 @@ export function InvoicesView({
   const [accountId, setAccountId] = useState<string | undefined>(undefined);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [searchText, setSearchText] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("cards");
   const [payingInvoice, setPayingInvoice] = useState<InvoiceRow | null>(null);
 
@@ -118,7 +123,7 @@ export function InvoicesView({
   const isDefaultFilters =
     !accountId && invoicePeriodsEqual(period, initialPeriod);
 
-  const { invoices, invalidate } = useInvoicesData(
+  const { invoices, isFetching, invalidate } = useInvoicesData(
     filters,
     initialInvoices,
     isDefaultFilters,
@@ -233,6 +238,9 @@ export function InvoicesView({
     </Empty>
   );
 
+  const activeMobileFiltersCount =
+    (accountId ? 1 : 0) + (statusFilter !== "all" ? 1 : 0);
+
   return (
     <div className="mx-auto flex max-w-350 flex-col gap-6">
       <PageHeader
@@ -242,6 +250,12 @@ export function InvoicesView({
           <Badge variant="secondary">
             {t("header.subtitle", { count: invoices.length })}
           </Badge>
+        }
+        titleAction={
+          <MobileInvoiceFiltersTrigger
+            activeCount={activeMobileFiltersCount}
+            onClick={() => setFiltersOpen(true)}
+          />
         }
         right={
           <PeriodStepper
@@ -261,20 +275,16 @@ export function InvoicesView({
       <KpiGrid>
         <KpiCard
           label={t("kpis.toPay")}
-          value={money(toPay)}
-          tone="warning"
-          subtitle={t("kpis.toPayLegend", { count: toPayCount })}
+          value={money(toPay + partiallyPaid)}
+          tone={toPay + partiallyPaid > 0 ? "warning" : "default"}
+          subtitle={t("kpis.toPayLegend", {
+            count: toPayCount + partiallyPaidCount,
+          })}
         />
         <KpiCard
           label={t("kpis.open")}
           value={money(open)}
           subtitle={t("kpis.openLegend")}
-        />
-        <KpiCard
-          label={t("kpis.partiallyPaid")}
-          value={money(partiallyPaid)}
-          tone="warning"
-          subtitle={t("kpis.partiallyPaidLegend", { count: partiallyPaidCount })}
         />
         <KpiCard
           label={t("kpis.paid")}
@@ -295,15 +305,19 @@ export function InvoicesView({
           onChange={setSearchText}
           placeholder={t("search.placeholder")}
           clearLabel={t("search.clear")}
+          isLoading={isFetching}
         />
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="hidden flex-wrap items-center gap-3 sm:flex">
           <Select
             value={accountId ?? ALL_VALUE}
             onValueChange={(value) =>
               setAccountId(value === ALL_VALUE ? undefined : value)
             }>
-            <SelectTrigger className="h-8 w-55">
+            <SelectTrigger
+              aria-label={t("filters.account")}
+              className="h-11 w-full sm:h-9 sm:w-55"
+            >
               <SelectValue placeholder={t("filters.account")} />
             </SelectTrigger>
             <SelectContent>
@@ -322,19 +336,28 @@ export function InvoicesView({
             type="single"
             variant="tabs"
             size="sm"
+            aria-label={t("status.all")}
             value={statusFilter}
             onValueChange={(value) => {
               if (value) setStatusFilter(value as StatusFilter);
-            }}>
-            <ToggleGroupItem value="all">{t("status.all")}</ToggleGroupItem>
-            <ToggleGroupItem value="CLOSED">
+            }}
+            className="w-full sm:w-auto"
+          >
+            <ToggleGroupItem value="all" className="h-9 grow sm:h-7 sm:grow-0">
+              {t("status.all")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="CLOSED" className="h-9 grow sm:h-7 sm:grow-0">
               {t("status.closed")}
             </ToggleGroupItem>
-            <ToggleGroupItem value="OPEN">{t("status.open")}</ToggleGroupItem>
-            <ToggleGroupItem value="PARTIALLY_PAID">
+            <ToggleGroupItem value="OPEN" className="h-9 grow sm:h-7 sm:grow-0">
+              {t("status.open")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="PARTIALLY_PAID" className="h-9 grow sm:h-7 sm:grow-0">
               {t("status.partiallyPaid")}
             </ToggleGroupItem>
-            <ToggleGroupItem value="PAID">{t("status.paid")}</ToggleGroupItem>
+            <ToggleGroupItem value="PAID" className="h-9 grow sm:h-7 sm:grow-0">
+              {t("status.paid")}
+            </ToggleGroupItem>
           </ToggleGroup>
 
           <ViewModeToggle
@@ -346,15 +369,82 @@ export function InvoicesView({
         </div>
       </div>
 
+      <div
+        aria-busy={isFetching}
+        className={cn("transition-opacity", isFetching && "opacity-70")}
+      >
       {filteredInvoices.length === 0 ? (
-        <div className="rounded-md border border-border">{emptyStateNode}</div>
+        <Card>{emptyStateNode}</Card>
       ) : viewMode === "list" ? (
-        <DataTable
-          columns={columns}
-          data={filteredInvoices}
-          emptyState={emptyStateNode}
-          getRowId={(row) => row.id}
-        />
+        <>
+          <div className="hidden min-[700px]:block">
+            <DataTable
+              columns={columns}
+              data={filteredInvoices}
+              emptyState={emptyStateNode}
+              getRowId={(row) => row.id}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-3 min-[700px]:hidden">
+            {filteredInvoices.map((invoice) => {
+              const canPay = canPayInvoice(invoice.displayStatus);
+              return (
+                <Card key={invoice.id} className="@container">
+                  <CardHeader>
+                    <CardTitle className="break-words text-base">
+                      {invoice.account.name}
+                    </CardTitle>
+                    <CardAction>
+                      <InvoiceStatusBadge
+                        status={invoice.displayStatus}
+                        label={statusLabel(invoice.displayStatus)}
+                      />
+                    </CardAction>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-2">
+                    <span
+                      className={cn(
+                        "font-heading text-2xl font-bold tabular-nums",
+                        invoice.displayStatus === "PAID"
+                          ? "text-positive"
+                          : invoice.displayStatus === "OPEN"
+                            ? "text-foreground"
+                            : "text-negative",
+                      )}
+                    >
+                      {money(
+                        invoice.displayStatus === "PARTIALLY_PAID"
+                          ? invoice.remainingDue
+                          : invoice.total,
+                      )}
+                    </span>
+                  </CardContent>
+                  <CardFooter
+                    className={cn(
+                      "grid gap-2",
+                      canPay ? "grid-cols-2" : "grid-cols-1",
+                    )}
+                  >
+                    <Button asChild variant="outline" size="sm" className="h-11">
+                      <Link href={`/invoices/${invoice.id}`}>
+                        {t("card.viewItems")}
+                      </Link>
+                    </Button>
+                    {canPay ? (
+                      <Button
+                        size="sm"
+                        className="h-11"
+                        onClick={() => setPayingInvoice(invoice)}
+                      >
+                        {t("card.pay")}
+                      </Button>
+                    ) : null}
+                  </CardFooter>
+                </Card>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filteredInvoices.map((invoice) => {
@@ -393,10 +483,11 @@ export function InvoicesView({
                 : "text-muted-foreground";
 
             return (
-              <Card key={invoice.id} radius="lg">
+              <Card key={invoice.id} className="@container">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-base">
+                  <CardTitle className="flex min-w-0 items-center gap-3 text-base">
                     <span
+                      aria-hidden="true"
                       className={cn(
                         "flex size-9 shrink-0 items-center justify-center rounded-xl",
                         color.bg,
@@ -406,7 +497,9 @@ export function InvoicesView({
                         className={cn("size-5", color.icon)}
                       />
                     </span>
-                    {invoice.account.name}
+                    <span className="min-w-0 break-words">
+                      {invoice.account.name}
+                    </span>
                   </CardTitle>
                   <CardAction>
                     <InvoiceStatusBadge
@@ -422,16 +515,32 @@ export function InvoicesView({
                         ? t("detail.summary.remainingDue")
                         : t("card.valueLabel")}
                     </span>
-                    <span className="text-2xl font-bold tabular-nums text-negative">
+                    <span
+                      className={cn(
+                        "font-heading text-2xl font-bold tracking-tight tabular-nums",
+                        invoice.displayStatus === "PAID"
+                          ? "text-positive"
+                          : invoice.displayStatus === "OPEN"
+                            ? "text-foreground"
+                            : "text-negative",
+                      )}
+                    >
                       {money(
                         invoice.displayStatus === "PARTIALLY_PAID"
                           ? invoice.remainingDue
                           : invoice.total,
                       )}
                     </span>
-                    <div className="flex items-center justify-between gap-2 text-xs">
+                    {invoice.displayStatus === "PARTIALLY_PAID" &&
+                    invoice.paidAmount != null &&
+                    invoice.paidAmount > 0 ? (
+                      <span className="text-xs font-medium text-positive tabular-nums">
+                        {t("detail.summary.paidSoFar")} {money(invoice.paidAmount)} / {money(invoice.total)}
+                      </span>
+                    ) : null}
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                       <span className="flex items-center gap-1 text-muted-foreground">
-                        <ReceiptIcon className="size-3.5" />
+                        <ReceiptIcon aria-hidden="true" className="size-3.5" />
                         {t("card.itemsCount", {
                           count: invoice.transactionCount,
                         })}
@@ -445,24 +554,24 @@ export function InvoicesView({
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-0.5 rounded-lg border border-border p-2">
-                      <span className="flex items-center gap-1 text-[10px] uppercase text-muted-foreground">
-                        <LockIcon className="size-3" />
+                    <div className="flex flex-col gap-0.5 rounded-lg border border-border/80 p-2">
+                      <span className="flex items-center gap-1 text-[11px] uppercase text-muted-foreground">
+                        <LockIcon aria-hidden="true" className="size-3" />
                         {t("card.closing")}
                       </span>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium tabular-nums">
                         {format.dateTime(
                           invoice.closingDate,
                           DATE_ONLY_FORMAT_OPTIONS,
                         )}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-0.5 rounded-lg border border-border p-2">
-                      <span className="flex items-center gap-1 text-[10px] uppercase text-muted-foreground">
-                        <CalendarIcon className="size-3" />
+                    <div className="flex flex-col gap-0.5 rounded-lg border border-border/80 p-2">
+                      <span className="flex items-center gap-1 text-[11px] uppercase text-muted-foreground">
+                        <CalendarIcon aria-hidden="true" className="size-3" />
                         {t("card.due")}
                       </span>
-                      <span className="text-sm font-medium">
+                      <span className="text-sm font-medium tabular-nums">
                         {format.dateTime(
                           invoice.dueDate,
                           DATE_ONLY_FORMAT_OPTIONS,
@@ -476,13 +585,17 @@ export function InvoicesView({
                     "grid gap-2",
                     canPay ? "grid-cols-2" : "grid-cols-1",
                   )}>
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="outline" size="sm" className="h-11 sm:h-8">
                     <Link href={`/invoices/${invoice.id}`}>
                       {t("card.viewItems")}
                     </Link>
                   </Button>
                   {canPay ? (
-                    <Button size="sm" onClick={() => setPayingInvoice(invoice)}>
+                    <Button
+                      size="sm"
+                      className="h-11 sm:h-8"
+                      onClick={() => setPayingInvoice(invoice)}
+                    >
                       {t("card.pay")}
                     </Button>
                   ) : null}
@@ -492,6 +605,17 @@ export function InvoicesView({
           })}
         </div>
       )}
+      </div>
+
+      <InvoiceFiltersDrawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        accounts={accounts}
+        accountId={accountId}
+        onAccountChange={setAccountId}
+        statusFilter={statusFilter}
+        onStatusChange={setStatusFilter}
+      />
 
       {payingInvoice ? (
         <PayInvoiceDialog

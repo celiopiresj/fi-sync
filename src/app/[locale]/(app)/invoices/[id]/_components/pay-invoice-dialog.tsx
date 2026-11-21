@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
@@ -67,7 +68,10 @@ export function PayInvoiceDialog({
   // everyone else is redistributed around them (distributeAllocations).
   const [manualIds, setManualIds] = useState<Set<string>>(new Set());
 
-  const peopleOwed = useInvoicePeopleOwed(invoiceId, open);
+  const { peopleOwed, isLoading: isLoadingPeople } = useInvoicePeopleOwed(
+    invoiceId,
+    open,
+  );
   const remainingDueCents = Math.round(remainingDue * 100);
 
   function money(value: number) {
@@ -279,7 +283,12 @@ export function PayInvoiceDialog({
                 </p>
               )}
 
-              {peopleOwed.length === 0 ? (
+              {isLoadingPeople ? (
+                <div aria-busy="true" className="flex flex-col gap-2">
+                  <Skeleton className="h-10 w-full rounded-md" />
+                  <Skeleton className="h-10 w-full rounded-md" />
+                </div>
+              ) : peopleOwed.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   {t("detail.markPaid.allocations.empty")}
                 </p>
@@ -303,9 +312,9 @@ export function PayInvoiceDialog({
                                 handleTogglePerson(person.personId, value === true)
                               }
                             />
-                            <span className="min-w-0 truncate">{person.personName}</span>
+                            <span className="min-w-0 break-words">{person.personName}</span>
                           </label>
-                          <span className="shrink-0 text-xs text-muted-foreground">
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                             {money(person.remainingCents / 100)}
                           </span>
                         </div>
@@ -335,6 +344,7 @@ export function PayInvoiceDialog({
             // the reason it was blocked (the schema's own error sits on
             // `allocations`, which has no field of its own to show it).
             <p
+              aria-live="polite"
               className={cn(
                 "text-xs font-medium",
                 allocations.length === 0

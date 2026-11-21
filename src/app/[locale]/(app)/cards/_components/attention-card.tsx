@@ -1,17 +1,19 @@
 "use client";
 
-import { useFormatter, useTranslations } from "next-intl";
-import { DotsThreeIcon } from "@phosphor-icons/react";
-import { Link } from "@/i18n/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { DotsThreeIcon } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
+import { useCardMoney } from "../_hooks/use-card-money";
 import type { CreditCardAccountRow } from "../_types/types";
 import { CardChip } from "./card-chip";
 import { CardUsageBar } from "./card-usage-bar";
@@ -41,121 +43,135 @@ export function AttentionCard({
   onDelete,
 }: AttentionCardProps) {
   const t = useTranslations("scrn-cards");
-  const format = useFormatter();
+  const money = useCardMoney();
   const isActive = account.status === "ACTIVE";
   const isOverLimit = account.usagePercent > 100;
 
-  function money(value: number) {
-    return format.number(value, { style: "currency", currency: "BRL" });
-  }
-
   return (
-    <div
+    <Card
       className={cn(
-        "flex w-full max-w-85 flex-col gap-3 rounded-lg border p-4",
-        isOverLimit ? "border-negative/40 bg-negative/5" : "border-warning/40 bg-warning/5",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <CardChip cards={account.cards} status={account.status} />
-          <span className="min-w-0 truncate text-sm font-medium">{account.name}</span>
-          {!isActive && <Badge variant="secondary">{t("status.disabled")}</Badge>}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Badge
-            variant="outline"
-            className={cn(
-              isOverLimit
-                ? "border-negative/30 bg-negative/10 text-negative"
-                : "border-warning/30 bg-warning/10 text-warning",
+        "@container w-full max-w-85",
+        isOverLimit ? "border-negative/40" : "border-warning/40",
+      )}>
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <CardChip cards={account.cards} status={account.status} />
+            <span className="min-w-0 break-words text-sm font-medium">
+              {account.name}
+            </span>
+            {!isActive && (
+              <Badge variant="secondary">{t("status.disabled")}</Badge>
             )}
-          >
-            {t(isOverLimit ? "sections.attention.overBadge" : "sections.attention.nearBadge", {
-              percentage: account.usagePercent,
-            })}
-          </Badge>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <DotsThreeIcon />
-                <span className="sr-only">{t("aria.menu")}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onToggleStatus(account)}>
-                {t(isActive ? "menu.archive" : "menu.reactivate")}
-              </DropdownMenuItem>
-              <DropdownMenuItem variant="destructive" onSelect={() => onDelete(account)}>
-                {t("menu.delete")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge
+              variant="outline"
+              className={cn(
+                isOverLimit
+                  ? "border-negative/30 bg-negative/10 text-negative"
+                  : "border-warning/30 bg-warning/10 text-warning",
+              )}>
+              {t(
+                isOverLimit
+                  ? "sections.attention.overBadge"
+                  : "sections.attention.nearBadge",
+                { percentage: account.usagePercent },
+              )}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-11 md:size-8">
+                  <DotsThreeIcon aria-hidden="true" />
+                  <span className="sr-only">{t("aria.menu")}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => onToggleStatus(account)}>
+                  {t(isActive ? "menu.archive" : "menu.reactivate")}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => onDelete(account)}>
+                  {t("menu.delete")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between gap-2 text-xs">
-        <span
-          className={cn(
-            "font-medium tabular-nums",
-            isOverLimit ? "text-negative" : "text-warning",
-          )}
-        >
-          {t("sections.attention.spentLabel", { value: money(account.spent) })}
-        </span>
-        <span className="tabular-nums text-muted-foreground">
-          {t("sections.attention.limitLabel", { value: money(account.limit) })}
-        </span>
-      </div>
-
-      <CardUsageBar
-        usagePercent={account.usagePercent}
-        tier={isOverLimit ? "critical" : "warning"}
-      />
-
-      <p
-        className={cn(
-          "text-xs font-medium",
-          isOverLimit ? "text-negative" : "text-warning",
-        )}
-      >
-        {isOverLimit
-          ? t("sections.attention.exceededMessage", {
-              amount: money(account.spent - account.limit),
-            })
-          : t("sections.attention.nearLimitMessage", {
-              available: money(account.availableLimit),
+        <div className="flex items-center justify-between gap-2 text-xs">
+          <span
+            className={cn(
+              "font-medium tabular-nums",
+              isOverLimit ? "text-negative" : "text-warning",
+            )}>
+            {t("sections.attention.spentLabel", {
+              value: money(account.spent),
             })}
-      </p>
+          </span>
+          <span className="tabular-nums text-muted-foreground">
+            {t("sections.attention.limitLabel", {
+              value: money(account.limit),
+            })}
+          </span>
+        </div>
 
-      <p className="text-xs tabular-nums text-muted-foreground">
-        {t("cards.cycleSummary", {
-          closingDay: account.closingDay ?? 0,
-          dueDay: account.dueDay ?? 0,
-        })}
-      </p>
+        <CardUsageBar
+          usagePercent={account.usagePercent}
+          tier={isOverLimit ? "critical" : "warning"}
+          label={account.name}
+        />
 
-      {!isActive && (
-        <p className="text-xs text-muted-foreground">{t("status.disabledNote")}</p>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="outline" size="sm" onClick={onEdit}>
-          {t(isActive ? "buttons.adjustLimit" : "buttons.edit")}
-        </Button>
-        <Button
-          asChild
-          size="sm"
+        <p
           className={cn(
-            "text-white",
-            isOverLimit ? "bg-negative hover:bg-negative/90" : "bg-warning hover:bg-warning/90",
-          )}
-        >
-          <Link href="/invoices">
-            {t(isOverLimit ? "buttons.payInvoice" : "buttons.viewInvoice")}
-          </Link>
-        </Button>
-      </div>
-    </div>
+            "text-xs font-medium",
+            isOverLimit ? "text-negative" : "text-warning",
+          )}>
+          {isOverLimit
+            ? t("sections.attention.exceededMessage", {
+                amount: money(account.spent - account.limit),
+              })
+            : t("sections.attention.nearLimitMessage", {
+                available: money(account.availableLimit),
+              })}
+        </p>
+
+        <p className="text-xs tabular-nums text-muted-foreground">
+          {t("cards.cycleSummary", {
+            closingDay: account.closingDay ?? 0,
+            dueDay: account.dueDay ?? 0,
+          })}
+        </p>
+
+        {!isActive && (
+          <p className="text-xs text-muted-foreground">
+            {t("status.disabledNote")}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-11 sm:h-8"
+            onClick={onEdit}>
+            {t(isActive ? "buttons.adjustLimit" : "buttons.edit")}
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={isOverLimit ? "destructive" : "default"}
+            className="h-11 sm:h-8">
+            <Link href="/invoices">
+              {t(isOverLimit ? "buttons.payInvoice" : "buttons.viewInvoice")}
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

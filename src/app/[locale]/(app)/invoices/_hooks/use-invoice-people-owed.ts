@@ -8,11 +8,11 @@ import { getInvoicePeopleOwed } from "../actions";
 // breakdown is only needed once the user enters an amount that differs
 // from what's due.
 export function useInvoicePeopleOwed(invoiceId: string, enabled: boolean) {
-  const { data: peopleOwed = [] } = useQuery({
+  const { data: peopleOwed = [], isLoading } = useQuery({
     queryKey: ["invoice-people-owed", invoiceId],
     queryFn: () => getInvoicePeopleOwed(invoiceId),
     enabled,
   });
 
-  return peopleOwed;
+  return { peopleOwed, isLoading };
 }
