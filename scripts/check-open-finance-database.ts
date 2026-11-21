@@ -127,7 +127,6 @@ async function main() {
       await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, personId: foreignPerson.id, splits: [] } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
       await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, splits: [{ personId: selfPerson.id, amount: "10,00" }] } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
       await assert.rejects(processReviewedTransaction(tx, userId, bankRow, mapping, { ...value, edits: { ...value.edits, paymentMethod: "CREDIT_CARD" } }), (error) => error instanceof OpenFinanceError && error.code === "invalid");
-      await assert.rejects(processReviewedTransaction(tx, userId, { ...bankRow, status: "PENDING" }, mapping, value), (error) => error instanceof OpenFinanceError && error.code === "pending");
       assert.equal(await tx.transaction.count({ where: { userId } }), unchangedCount);
       assert.equal(await tx.openFinanceImport.count({ where: { sourceId: source.id, externalKey: "bank:reviewed" } }), 0);
       await processReviewedTransaction(tx, userId, bankRow, mapping, value);
@@ -153,6 +152,12 @@ async function main() {
       await processReviewedTransaction(tx, userId, anotherRow, mapping, { ...value, transactionId: anotherRow.id, mode: "ignore" });
       assert.equal(await tx.transaction.count({ where: { userId } }), unchangedCount + 1);
       assert.equal((await tx.openFinanceImport.findUniqueOrThrow({ where: { sourceId_externalKey: { sourceId: source.id, externalKey: "bank:edited-duplicate" } } })).transactionId, null);
+      const pendingRow = { ...bankRow, id: randomUUID(), providerId: "pending-row", amount: -7.25, date: "2026-10-29", status: "PENDING" as const };
+      await processReviewedTransaction(tx, userId, pendingRow, mapping, {
+        ...value, transactionId: pendingRow.id, expectedAmount: "-7.25", expectedDate: "2026-10-29",
+        edits: { ...value.edits, description: "Pending fixture", amount: "7,25", date: "2026-10-29", splits: [] },
+      });
+      assert.equal((await tx.transaction.findFirstOrThrow({ where: { userId, description: "Pending fixture" } })).status, "PENDING");
       const creditAccount = await tx.account.create({ data: { userId, name: "Credit review fixture", type: "CREDIT_CARD", creditCardDetails: { create: { limit: "1000", closingDay: 10, dueDay: 20 } } } });
       const card = await tx.card.create({ data: { accountId: creditAccount.id, name: "Review card" } });
       const creditSource = await tx.openFinanceSource.create({ data: {
@@ -168,8 +173,8 @@ async function main() {
       assert.equal(dateOnlyKey(cardTransaction.date), "2026-11-05");
       assert.equal(dateOnlyKey(cardTransaction.transactionInvoice!.invoice.closingDate), "2026-11-10");
       assert.equal(cardTransaction.transactionCard!.cardId, card.id);
-      const cardPayment = { ...creditRow, id: randomUUID(), providerId: "card-payment", operationType: "PAGAMENTO_FATURA" };
-      await assert.rejects(processReviewedTransaction(tx, userId, cardPayment, creditMapping, { ...creditValue, transactionId: cardPayment.id }), (error) => error instanceof OpenFinanceError && error.code === "payment");
+      const cardPayment = { ...creditRow, id: randomUUID(), providerId: "card-payment", operationType: "PAGAMENTO_FATURA", amount: -19.99 };
+      await assert.rejects(processReviewedTransaction(tx, userId, cardPayment, creditMapping, { ...creditValue, transactionId: cardPayment.id, expectedAmount: "19.99" }),(error) => error instanceof OpenFinanceError && error.code === "payment");
       const foreignAccount = await tx.account.create({ data: { userId: other.id, name: "Private account", type: "CHECKING" } });
       await assert.rejects(saveSourceMapping(tx, userId, { ...mappingInput, accountId: foreignAccount.id }));
       await assert.rejects(saveSourceMapping(tx, userId, { ...mappingInput, accountId: creditAccount.id }));

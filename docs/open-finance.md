@@ -187,8 +187,11 @@ confirmá-lo.
 - Transferências entre suas próprias contas devem ser registradas como
   transferências no fi-sync e cada lado vinculado ao registro do banco.
   A integração não tenta adivinhar pares a partir das descrições.
-- Pendentes podem ser vistos, mas só são criados após o banco confirmar
-  `POSTED`. A importação normaliza o sinal de cartão (débito positivo na
+- Pendentes podem ser importados e são salvos com status pendente (compras
+  no cartão passam a concluídas quando a data chega). Só é considerado
+  pagamento de fatura um crédito no cartão (`PAGAMENTO`/`PAGAMENTO_FATURA`
+  com valor negativo na Pluggy); compras com esse tipo de operação são
+  importadas normalmente. A importação normaliza o sinal de cartão (débito positivo na
   Pluggy → despesa negativa no fi-sync) usando Dinero.js.
 - Esta versão suporta destinos em BRL. Uma compra em moeda estrangeira
   só é importável se o provedor fornecer `amountInAccountCurrency` em

@@ -33,7 +33,6 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     if (!existing) throw new OpenFinanceError("invalid");
     transactionId = existing.id;
   } else if (value.mode === "create") {
-    if (row.status !== "POSTED") throw new OpenFinanceError("pending");
     if (isCardPayment(row, source.type)) throw new OpenFinanceError("payment");
     const edited = reviewedTransaction(value.edits);
     // Check both the original bank record and the edited values. Editing
@@ -71,7 +70,9 @@ export async function processReviewedTransaction(tx: Prisma.TransactionClient, u
     const metadata = row.creditCardMetadata;
     const { splits, paymentMethod, ...transactionData } = edited;
     const transaction = await tx.transaction.create({ data: {
-      userId, accountId: source.accountId, ...transactionData, status: "COMPLETED",
+      // A bank-pending row is saved as PENDING; card purchases are completed
+      // once their date arrives (completePastPendingCardPurchases).
+      userId, accountId: source.accountId, ...transactionData, status: row.status === "PENDING" ? "PENDING" : "COMPLETED",
       ...(source.type === "BANK" && paymentMethod ? { paymentMethod } : {}),
       ...(splits.length > 0 ? { splits: { create: splits } } : {}),
       ...(metadata?.installmentNumber && metadata.totalInstallments && metadata.installmentNumber <= metadata.totalInstallments ? {

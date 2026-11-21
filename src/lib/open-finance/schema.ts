@@ -91,7 +91,7 @@ export type ProcessValues = z.infer<typeof processSchema>;
 export type ReviewEdits = z.infer<typeof reviewEditsSchema>;
 
 export class OpenFinanceError extends Error {
-  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "mappingChanged" | "duplicate" | "pending" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget") {
+  constructor(public readonly code: "invalid" | "configuration" | "provider" | "access" | "mapping" | "mappingChanged" | "duplicate" | "payment" | "currency" | "invoice" | "busy" | "stale" | "widget") {
     super(code);
   }
 }

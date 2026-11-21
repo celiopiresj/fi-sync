@@ -34,8 +34,13 @@ export function normalizedAmount(row: PluggyTransaction, accountType: string): s
   return toDecimal(accountType === "CREDIT" ? multiply(amount, -1) : amount);
 }
 
+// An invoice payment credits the card (negative amount at Pluggy). The
+// provider also labels ordinary card purchases with `PAGAMENTO`, so the
+// operation type alone must not block a purchase (positive at Pluggy).
 export function isCardPayment(row: PluggyTransaction, accountType: string): boolean {
-  return accountType === "CREDIT" && ["PAGAMENTO", "PAGAMENTO_FATURA"].includes(row.operationType ?? "");
+  return accountType === "CREDIT" &&
+    ["PAGAMENTO", "PAGAMENTO_FATURA"].includes(row.operationType ?? "") &&
+    (row.amountInAccountCurrency ?? row.amount) < 0;
 }
 
 export function checkedCursor(cursor: string, accountId: string, fromDate: string, toDate: string): string {

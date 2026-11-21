@@ -90,7 +90,7 @@ export function ReviewForm(props: ReviewFormProps) {
           : t("dialog.create.destination", { account: review.destination })}
       </p>
       {review.pending && (
-        <p className="text-sm text-warning">{t("errors.pending.description")}</p>
+        <p className="text-sm text-warning">{t("dialog.create.pending")}</p>
       )}
       {review.payment && (
         <p className="text-sm text-warning">{t("errors.payment.description")}</p>
@@ -426,7 +426,6 @@ export function ReviewForm(props: ReviewFormProps) {
                 type="submit"
                 disabled={
                   process.isPending ||
-                  review.pending ||
                   review.payment
                 }
                 className="h-11 flex-1 text-sm font-medium"

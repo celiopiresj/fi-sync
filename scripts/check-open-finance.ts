@@ -123,7 +123,10 @@ async function main() {
     assert.equal(normalizedAmount({ ...row, currencyCode: "USD", amountInAccountCurrency: 100.01 }, "CREDIT"), "-100.01");
     assert.equal(transactionKey({ ...row, providerId: "stable-bank-id" }), "bank:stable-bank-id");
     assert.equal(transactionKey(row), `pluggy:${id}`);
-    assert.equal(isCardPayment({ ...row, operationType: "PAGAMENTO_FATURA" }, "CREDIT"), true);
+    assert.equal(isCardPayment({ ...row, amount: -19.99, operationType: "PAGAMENTO_FATURA" }, "CREDIT"), true);
+    assert.equal(isCardPayment({ ...row, amount: -19.99, operationType: "PAGAMENTO" }, "CREDIT"), true);
+    // A card purchase labeled PAGAMENTO (positive at Pluggy) is not an invoice payment.
+    assert.equal(isCardPayment({ ...row, operationType: "PAGAMENTO" }, "CREDIT"), false);
     assert.equal(isCardPayment({ ...row, operationType: "ESTORNO" }, "CREDIT"), false);
     assert.equal(pluggyTransactionSchema.safeParse({ ...row, date: "2026-02-30" }).success, false);
     assert.equal(pluggyTransactionSchema.safeParse({ ...row, date: "2026-10-28Tinvalid" }).success, false);
