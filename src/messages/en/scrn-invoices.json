@@ -105,6 +105,10 @@
         "allTypes": "All",
         "income": "Income",
         "expenses": "Expenses",
+        "purchaseKind": "Purchase",
+        "purchaseKindAll": "All",
+        "purchaseKindSingle": "One-time",
+        "purchaseKindInstallment": "Installment",
         "clear": "Clear",
         "apply": "Apply"
       }

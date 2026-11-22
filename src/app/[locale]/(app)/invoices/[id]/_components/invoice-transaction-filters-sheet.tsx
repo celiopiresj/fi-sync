@@ -52,6 +52,7 @@ function countActiveFilters(value: InvoiceTransactionFilters) {
   if (value.categoryId) count++;
   if (value.personId) count++;
   if (value.type && value.type !== "all") count++;
+  if (value.purchaseKind && value.purchaseKind !== "all") count++;
   return count;
 }
 
@@ -228,6 +229,35 @@ export function InvoiceTransactionFiltersSheet({
                 </ToggleGroupItem>
                 <ToggleGroupItem value="expenses" className="flex-1">
                   {t("detail.transactions.filters.expenses")}
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("detail.transactions.filters.purchaseKind")}</Label>
+              <ToggleGroup
+                type="single"
+                variant="tabs"
+                value={draft.purchaseKind ?? "all"}
+                onValueChange={(value) => {
+                  if (value) {
+                    setDraft({
+                      ...draft,
+                      purchaseKind:
+                        value as InvoiceTransactionFilters["purchaseKind"],
+                    });
+                  }
+                }}
+                className="w-full justify-start"
+              >
+                <ToggleGroupItem value="all" className="flex-1">
+                  {t("detail.transactions.filters.purchaseKindAll")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="single" className="flex-1">
+                  {t("detail.transactions.filters.purchaseKindSingle")}
+                </ToggleGroupItem>
+                <ToggleGroupItem value="installment" className="flex-1">
+                  {t("detail.transactions.filters.purchaseKindInstallment")}
                 </ToggleGroupItem>
               </ToggleGroup>
             </div>

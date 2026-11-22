@@ -249,6 +249,12 @@ export function InvoiceDetailView({
         if (filters.type === "expenses" && !isExpense) return false;
         if (filters.type === "income" && isExpense) return false;
       }
+      if (filters.purchaseKind === "single" && transaction.installmentGroupId !== null) {
+        return false;
+      }
+      if (filters.purchaseKind === "installment" && transaction.installmentGroupId === null) {
+        return false;
+      }
       if (filterPerson) {
         // Same "unattributed transaction is implicitly the user's own"
         // rule listTransactions' personId filter applies server-side

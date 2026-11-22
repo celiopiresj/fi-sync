@@ -105,6 +105,10 @@
         "allTypes": "Todas",
         "income": "Receitas",
         "expenses": "Despesas",
+        "purchaseKind": "Compra",
+        "purchaseKindAll": "Todas",
+        "purchaseKindSingle": "À vista",
+        "purchaseKindInstallment": "Parcelado",
         "clear": "Limpar",
         "apply": "Aplicar"
       }
