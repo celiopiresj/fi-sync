@@ -1852,6 +1852,7 @@ export async function updateCreditTransaction(
   const editScope = options?.editScope ?? "this";
   if (existing.installmentGroupId && editScope !== "this") {
     const amountChanged = Math.abs(existing.amount.toNumber() - amount) > 0.001;
+    const statusChanged = existing.status !== value.status;
 
     const siblings = await prisma.transaction.findMany({
       where: {
@@ -1880,7 +1881,7 @@ export async function updateCreditTransaction(
         data: {
           categoryId: value.categoryId || null,
           description: value.description,
-          status: value.status,
+          ...(statusChanged ? { status: value.status } : {}),
           ...(amountChanged ? { amount: siblingAmount } : {}),
           splits: siblingSplitsCreateInput
             ? { create: siblingSplitsCreateInput }

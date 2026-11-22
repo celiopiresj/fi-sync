@@ -304,15 +304,6 @@ export function CreditTransactionForm({
   const primaryPerson = people.find((person) => person.id === personId);
   const sign = type === "expense" ? -1 : 1;
 
-  // Whether the pending edit actually changed the amount — decides
-  // whether EditInstallmentScopeDialog offers "esta e as próximas"
-  // alongside "esta"/"todas" (see the dialog's own isAmountChange doc).
-  const isPendingAmountChange =
-    pendingEditScopeValue !== null &&
-    initialValues !== null &&
-    Number(pendingEditScopeValue.amount.replace(",", ".")) !==
-      Math.abs(initialValues.amount);
-
   // Only categories matching the transaction's own type make sense to
   // pick from — same rule debit-transaction-form.tsx's own picker
   // follows. "income" here covers "Estorno" too — same underlying
@@ -936,7 +927,6 @@ export function CreditTransactionForm({
           }}
           installmentNumber={initialValues.installmentNumber ?? 1}
           installmentCount={initialValues.installmentCount ?? 1}
-          isAmountChange={isPendingAmountChange}
           isSubmitting={isSubmitting}
           onChooseScope={async (scope) => {
             await performSubmit(pendingEditScopeValue, { editScope: scope });

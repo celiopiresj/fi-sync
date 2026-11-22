@@ -16,12 +16,6 @@ type EditInstallmentScopeDialogProps = {
   onOpenChange: (open: boolean) => void;
   installmentNumber: number;
   installmentCount: number;
-  // "future" only makes sense — and only gets offered — when the amount
-  // itself changed; a description/category/status/split edit always
-  // just chooses between "this one" and "every installment", the same
-  // way a recurring-event editor's "this event" vs "all events" choice
-  // works, minus the "and following" variant those don't need either.
-  isAmountChange: boolean;
   isSubmitting: boolean;
   onChooseScope: (scope: "this" | "all" | "future") => void;
 };
@@ -36,11 +30,11 @@ export function EditInstallmentScopeDialog({
   onOpenChange,
   installmentNumber,
   installmentCount,
-  isAmountChange,
   isSubmitting,
   onChooseScope,
 }: EditInstallmentScopeDialogProps) {
   const t = useTranslations("scrn-transactions");
+  const hasFutureInstallments = installmentNumber < installmentCount;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,16 +53,16 @@ export function EditInstallmentScopeDialog({
         <DialogFooter className="flex-col gap-2 sm:flex-col">
           <Button
             variant="outline"
-            className="w-full"
+            className="h-11 w-full sm:h-9"
             disabled={isSubmitting}
             onClick={() => onChooseScope("this")}
           >
             {t("dialog.editInstallmentScope.this")}
           </Button>
-          {isAmountChange && (
+          {hasFutureInstallments && (
             <Button
               variant="outline"
-              className="w-full"
+              className="h-11 w-full sm:h-9"
               disabled={isSubmitting}
               onClick={() => onChooseScope("future")}
             >
@@ -76,7 +70,7 @@ export function EditInstallmentScopeDialog({
             </Button>
           )}
           <Button
-            className="w-full"
+            className="h-11 w-full sm:h-9"
             disabled={isSubmitting}
             onClick={() => onChooseScope("all")}
           >
